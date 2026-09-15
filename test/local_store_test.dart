@@ -164,7 +164,7 @@ void main() {
     expect(plan.items.last.title, 'Physics');
   });
 
-  test('persisted plans normalize an unsafe total budget', () async {
+  test('persisted plans with a negative total cannot keep positive item allocation', () async {
     final store = await makeStore({
       'study_plan': jsonEncode({
         'totalMinutes': -50,
@@ -175,10 +175,21 @@ void main() {
       }),
       'study_plan_date': '2026-09-15',
     });
-    final loaded = store.loadPlan();
-    expect(loaded?.totalMinutes, 0);
-    expect(loaded?.items.length, 2);
-    expect(loaded?.items[1].minutes, 0);
+    expect(store.loadPlan(), isNull);
+  });
+
+  test('persisted over-allocated plans are rejected safely', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({
+        'totalMinutes': 25,
+        'items': [
+          {'title': 'Math', 'minutes': 25},
+          {'title': 'Physics', 'minutes': 10},
+        ],
+      }),
+      'study_plan_date': '2026-09-15',
+    });
+    expect(store.loadPlan(), isNull);
   });
 
   test('persisted item progress ignores negative and non-numeric values', () async {
