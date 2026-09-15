@@ -8,6 +8,7 @@ class LocalStore {
 
   static const _planKey = 'today_plan';
   static const _themeKey = 'theme_mode';
+  static const _themePresetKey = 'theme_preset';
   static const _minutesKey = 'completed_minutes';
   static const _planMinutesKey = 'plan_completed_minutes';
   static const _xpKey = 'study_xp';
@@ -35,6 +36,14 @@ class LocalStore {
 
   bool get darkMode => prefs.getBool(_themeKey) ?? true;
   Future<void> setDarkMode(bool value) => prefs.setBool(_themeKey, value);
+
+  String get themePreset {
+    final saved = prefs.getString(_themePresetKey);
+    if (saved != null && saved.isNotEmpty) return saved;
+    return darkMode ? 'midnight' : 'sunrise';
+  }
+
+  Future<void> setThemePreset(String value) => prefs.setString(_themePresetKey, value);
 
   int get completedMinutes => prefs.getInt(_minutesKey) ?? 0;
   int get planCompletedMinutes => prefs.getInt(_planMinutesKey) ?? 0;
