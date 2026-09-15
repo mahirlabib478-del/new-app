@@ -244,9 +244,8 @@ class LocalStore {
     if (requested <= 0) return;
 
     final plan = loadPlan();
-    final planRemaining = plan == null
-        ? requested
-        : (plan.totalMinutes - planCompletedMinutes).clamp(0, 1440).toInt();
+    final planBudget = plan?.allocatedMinutes ?? requested;
+    final planRemaining = (planBudget - planCompletedMinutes).clamp(0, 1440).toInt();
     if (planRemaining <= 0) return;
 
     if (itemIndex != null && (plan == null || itemIndex < 0 || itemIndex >= plan.items.length)) return;
