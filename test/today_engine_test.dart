@@ -75,6 +75,43 @@ void main() {
     expect(snapshot.remainingMinutes, 40);
   });
 
+  test('Today Engine skips zero-minute items without shifting the real index', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(
+      totalMinutes: 25,
+      items: [
+        StudyItem(title: 'Placeholder', minutes: 0),
+        StudyItem(title: 'Math', minutes: 25),
+      ],
+    );
+
+    await store.savePlan(plan);
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.nextItem?.title, 'Math');
+    expect(snapshot.currentIndex, 1);
+    expect(snapshot.currentBlockIndex, 0);
+    expect(snapshot.currentItemCompletedMinutes, 0);
+    expect(snapshot.remainingMinutes, 25);
+  });
+
+  test('Today Engine reports the correct block after an exact 25-minute boundary', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(
+      totalMinutes: 50,
+      items: [StudyItem(title: 'Physics', minutes: 50)],
+    );
+
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.currentIndex, 0);
+    expect(snapshot.currentBlockIndex, 1);
+    expect(snapshot.currentItemCompletedMinutes, 25);
+    expect(snapshot.remainingMinutes, 25);
+  });
+
   test('Today Engine exposes no next item after the whole plan is complete', () async {
     final store = await makeStore();
     final plan = StudyPlan(
