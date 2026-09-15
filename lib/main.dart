@@ -213,8 +213,8 @@ class StudyHub extends StatelessWidget {
     Text('Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
     const SizedBox(height: 18),
     _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
-    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan); }))),
-    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan); }))),
+    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan); })))),
+    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan); })))),
   ]));
 }
 
