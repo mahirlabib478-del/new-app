@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/study_models.dart';
 
 class FocusTimerState {
@@ -26,11 +28,11 @@ class FocusTimerState {
       };
 
   factory FocusTimerState.fromJson(Map<String, dynamic> json) => FocusTimerState(
-        index: (json['index'] as num?)?.toInt() ?? 0,
-        blockIndex: (json['blockIndex'] as num?)?.toInt() ?? 0,
-        remainingSeconds: (json['remainingSeconds'] as num?)?.toInt() ?? 0,
+        index: (json['index'] as int? ?? 0).clamp(0, 100000).toInt(),
+        blockIndex: (json['blockIndex'] as int? ?? 0).clamp(0, 100000).toInt(),
+        remainingSeconds: (json['remainingSeconds'] as int? ?? 0).clamp(0, 86400).toInt(),
         running: json['running'] as bool? ?? false,
-        deadlineMillis: (json['deadlineMillis'] as num?)?.toInt(),
+        deadlineMillis: json['deadlineMillis'] as int?,
       );
 }
 
@@ -61,34 +63,35 @@ class BreakTimerState {
       };
 
   factory BreakTimerState.fromJson(Map<String, dynamic> json) => BreakTimerState(
-        index: (json['index'] as num?)?.toInt() ?? 0,
-        blockIndex: (json['blockIndex'] as num?)?.toInt() ?? 0,
-        breakMinutes: (json['breakMinutes'] as num?)?.toInt() ?? 5,
-        remainingSeconds: (json['remainingSeconds'] as num?)?.toInt() ?? 300,
+        index: (json['index'] as int? ?? 0).clamp(0, 100000).toInt(),
+        blockIndex: (json['blockIndex'] as int? ?? 0).clamp(0, 100000).toInt(),
+        breakMinutes: (json['breakMinutes'] as int? ?? 5).clamp(5, 10).toInt(),
+        remainingSeconds: (json['remainingSeconds'] as int? ?? 0).clamp(0, 3600).toInt(),
         running: json['running'] as bool? ?? false,
-        deadlineMillis: (json['deadlineMillis'] as num?)?.toInt(),
+        deadlineMillis: json['deadlineMillis'] as int?,
       );
 }
 
 class LocalStore {
   LocalStore(this.prefs);
+
   final SharedPreferences prefs;
 
-  static const _planKey = 'today_plan';
-  static const _planDateKey = 'today_plan_date';
-  static const _themeKey = 'theme_mode';
-  static const _themePresetKey = 'theme_preset';
+  static const _planKey = 'study_plan';
+  static const _planDateKey = 'study_plan_date';
   static const _minutesKey = 'completed_minutes';
   static const _planMinutesKey = 'plan_completed_minutes';
-  static const _itemMinutesKey = 'plan_item_completed_minutes';
-  static const _historyKey = 'study_daily_history';
-  static const _dailyGoalKey = 'daily_goal_minutes';
-  static const _xpKey = 'study_xp';
-  static const _streakKey = 'study_streak';
+  static const _itemMinutesKey = 'item_completed_minutes';
+  static const _xpKey = 'xp';
+  static const _streakKey = 'streak';
+  static const _sessionsKey = 'sessions';
   static const _lastStudyKey = 'last_study_date';
-  static const _sessionsKey = 'study_sessions';
   static const _indexKey = 'current_plan_index';
   static const _blockKey = 'current_block_index';
+  static const _themeKey = 'dark_mode';
+  static const _themePresetKey = 'theme_preset';
+  static const _historyKey = 'study_daily_history';
+  static const _dailyGoalKey = 'daily_goal_minutes';
   static const _focusTimerKey = 'focus_timer_state';
   static const _breakTimerKey = 'break_timer_state';
 
@@ -114,7 +117,7 @@ class LocalStore {
       final json = jsonDecode(raw) as Map<String, dynamic>;
       final items = (json['items'] as List<dynamic>? ?? [])
           .map((e) => StudyItem.fromJson(Map<String, dynamic>.from(e as Map)))
-          .where((item) => item.minutes > 0)
+          .where((item) => item.minutes >= 0)
           .toList();
       if (items.isEmpty) return null;
       return StudyPlan(totalMinutes: json['totalMinutes'] as int? ?? 0, items: items);
