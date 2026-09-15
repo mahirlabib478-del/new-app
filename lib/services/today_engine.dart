@@ -2,17 +2,7 @@ import '../models/study_models.dart';
 import 'local_store.dart';
 
 class TodaySnapshot {
-  const TodaySnapshot({
-    required this.plan,
-    required this.completedMinutes,
-    required this.remainingMinutes,
-    required this.progress,
-    required this.streak,
-    required this.xp,
-    required this.level,
-    required this.nextItem,
-  });
-
+  const TodaySnapshot({required this.plan, required this.completedMinutes, required this.remainingMinutes, required this.progress, required this.streak, required this.xp, required this.level, required this.nextItem, required this.currentIndex, required this.currentBlockIndex});
   final StudyPlan? plan;
   final int completedMinutes;
   final int remainingMinutes;
@@ -21,7 +11,8 @@ class TodaySnapshot {
   final int xp;
   final int level;
   final StudyItem? nextItem;
-
+  final int currentIndex;
+  final int currentBlockIndex;
   bool get hasPlan => plan != null && plan!.items.isNotEmpty;
 }
 
@@ -35,26 +26,8 @@ class TodayEngine {
     final completed = store.completedMinutes;
     final remaining = planned <= 0 ? 0 : (planned - completed).clamp(0, planned);
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0);
-
-    StudyItem? next;
-    if (plan != null) {
-      for (final item in plan.items) {
-        if (item.minutes > 0) {
-          next = item;
-          break;
-        }
-      }
-    }
-
-    return TodaySnapshot(
-      plan: plan,
-      completedMinutes: completed,
-      remainingMinutes: remaining,
-      progress: progress,
-      streak: store.streak,
-      xp: store.xp,
-      level: store.level,
-      nextItem: next,
-    );
+    final index = plan == null || plan.items.isEmpty ? 0 : store.currentPlanIndex.clamp(0, plan.items.length - 1);
+    final next = plan == null || plan.items.isEmpty ? null : plan.items[index];
+    return TodaySnapshot(plan: plan, completedMinutes: completed, remainingMinutes: remaining, progress: progress, streak: store.streak, xp: store.xp, level: store.level, nextItem: next, currentIndex: index, currentBlockIndex: store.currentBlockIndex);
   }
 }
