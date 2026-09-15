@@ -63,7 +63,7 @@ class LocalStore {
   Future<void> clearPlanPosition() async => setPlanPosition(0, 0);
 
   Future<void> addCompletedMinutes(int value) async {
-    final minutes = value.clamp(0, 1440);
+    final minutes = value.clamp(0, 1440).toInt();
     if (minutes <= 0) return;
     await prefs.setInt(_minutesKey, completedMinutes + minutes);
     await prefs.setInt(_planMinutesKey, planCompletedMinutes + minutes);
