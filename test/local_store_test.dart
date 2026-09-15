@@ -21,6 +21,18 @@ void main() {
     expect(store.completedMinutes, 25);
   });
 
+  test('invalid item indexes do not mutate study totals', () async {
+    final store = await makeStore();
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
+    await store.addItemCompletedMinutes(-1, 10);
+    await store.addItemCompletedMinutes(1, 10);
+    expect(store.completedMinutes, 0);
+    expect(store.planCompletedMinutes, 0);
+    expect(store.sessions, 0);
+    expect(store.xp, 0);
+    expect(store.studyMinutesOn(DateTime.now()), 0);
+  });
+
   test('saving a new plan resets plan-specific progress', () async {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', minutes: 50)]);
