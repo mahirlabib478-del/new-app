@@ -48,7 +48,6 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
     final totalMinutes = studyHours * 60;
     final ranked = [...subjects]..sort((a, b) => (priorities[b] ?? 2).compareTo(priorities[a] ?? 2));
     final weights = subjects.map((subject) => (priorities[subject] ?? 2) + urgency - 1).toList();
-    final totalWeight = weights.fold<int>(0, (sum, weight) => sum + weight);
     final counts = List<int>.filled(subjects.length, 0);
     var remainingBlocks = totalMinutes ~/ 25;
 
@@ -79,7 +78,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
     final remainder = totalMinutes % 25;
     if (remainder > 0) {
       items.add(StudyItem(
-        title: subjects[ranked.first == subjects.first ? 0 : subjects.indexOf(ranked.first)],
+        title: ranked.first,
         minutes: remainder,
         topic: widget.nextDay ? 'Final review' : 'Flexible review',
       ));
