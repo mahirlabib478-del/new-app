@@ -1,7 +1,7 @@
 name: study_os
-description: A zero-cost, offline-first study companion built with Flutter.
+description: A professional, offline-first study companion.
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -10,7 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.3
 
 dev_dependencies:
