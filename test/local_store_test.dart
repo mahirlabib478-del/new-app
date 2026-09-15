@@ -123,4 +123,27 @@ void main() {
     await store.setDailyGoalMinutes(1000);
     expect(store.dailyGoalMinutes, 720);
   });
+
+  test('zero-minute items keep their indexes when a plan is loaded', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(
+      totalMinutes: 50,
+      items: [
+        StudyItem(title: 'Math', minutes: 25),
+        StudyItem(title: 'Optional', minutes: 0),
+        StudyItem(title: 'Physics', minutes: 25),
+      ],
+    );
+    await store.savePlan(plan);
+
+    final loaded = store.loadPlan();
+    expect(loaded?.items.length, 3);
+    expect(loaded?.items[1].title, 'Optional');
+    expect(loaded?.items[2].title, 'Physics');
+
+    await store.addItemCompletedMinutes(2, 25);
+    expect(store.itemCompletedMinutes(2), 25);
+    expect(store.itemCompletedMinutes(1), 0);
+    expect(store.planCompletedMinutes, 25);
+  });
 }
