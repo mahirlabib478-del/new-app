@@ -88,4 +88,27 @@ void main() {
     ));
     expect(store.focusTimerState, isNull);
   });
+
+  test('daily history accumulates completed focus minutes by date', () async {
+    final store = await makeStore();
+    final date = DateTime(2026, 9, 15);
+
+    await store.addDailyStudyMinutes(25, date: date);
+    await store.addDailyStudyMinutes(15, date: date);
+
+    expect(store.studyMinutesOn(date), 40);
+    expect(store.dailyStudyMinutes, containsPair('2026-09-15', 40));
+  });
+
+  test('recording completion also updates daily history', () async {
+    final store = await makeStore();
+    await store.savePlan(StudyPlan(
+      totalMinutes: 25,
+      items: [StudyItem(title: 'Physics', minutes: 25)],
+    ));
+
+    await store.addItemCompletedMinutes(0, 25);
+
+    expect(store.studyMinutesOn(DateTime.now()), 25);
+  });
 }
