@@ -7,6 +7,7 @@ class LocalStore {
   final SharedPreferences prefs;
 
   static const _planKey = 'today_plan';
+  static const _planDateKey = 'today_plan_date';
   static const _themeKey = 'theme_mode';
   static const _themePresetKey = 'theme_preset';
   static const _minutesKey = 'completed_minutes';
@@ -20,6 +21,7 @@ class LocalStore {
 
   Future<void> savePlan(StudyPlan plan) async {
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
+    await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
     await setPlanPosition(0, 0);
   }
@@ -27,11 +29,22 @@ class LocalStore {
   StudyPlan? loadPlan() {
     final raw = prefs.getString(_planKey);
     if (raw == null) return null;
-    final json = jsonDecode(raw) as Map<String, dynamic>;
-    final items = (json['items'] as List<dynamic>? ?? [])
-        .map((e) => StudyItem.fromJson(Map<String, dynamic>.from(e as Map)))
-        .toList();
-    return StudyPlan(totalMinutes: json['totalMinutes'] as int? ?? 0, items: items);
+
+    final savedDate = prefs.getString(_planDateKey);
+    final today = _dateKey(DateTime.now());
+    if (savedDate != null && savedDate != today) return null;
+
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final items = (json['items'] as List<dynamic>? ?? [])
+          .map((e) => StudyItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .where((item) => item.minutes > 0)
+          .toList();
+      if (items.isEmpty) return null;
+      return StudyPlan(totalMinutes: json['totalMinutes'] as int? ?? 0, items: items);
+    } catch (_) {
+      return null;
+    }
   }
 
   bool get darkMode => prefs.getBool(_themeKey) ?? true;
@@ -56,8 +69,8 @@ class LocalStore {
   int get currentBlockIndex => prefs.getInt(_blockKey) ?? 0;
 
   Future<void> setPlanPosition(int index, int blockIndex) async {
-    await prefs.setInt(_indexKey, index);
-    await prefs.setInt(_blockKey, blockIndex);
+    await prefs.setInt(_indexKey, index.clamp(0, 100000).toInt());
+    await prefs.setInt(_blockKey, blockIndex.clamp(0, 100000).toInt());
   }
 
   Future<void> clearPlanPosition() async => setPlanPosition(0, 0);
