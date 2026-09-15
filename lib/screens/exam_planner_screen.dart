@@ -22,7 +22,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
 
   void addSubject() {
     final value = controller.text.trim();
-    if (value.isEmpty || subjects.contains(value)) return;
+    if (value.isEmpty || subjects.any((subject) => subject.toLowerCase() == value.toLowerCase())) return;
     setState(() {
       subjects.add(value);
       priorities[value] = widget.nextDay ? 3 : 2;
