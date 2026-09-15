@@ -1,0 +1,130 @@
+import 'package:flutter/material.dart';
+import '../models/study_models.dart';
+import '../services/local_store.dart';
+import 'focus_flow.dart';
+
+class RegularStudyPlanner extends StatefulWidget {
+  const RegularStudyPlanner({super.key, required this.store, required this.total, required this.subjects});
+  final LocalStore store;
+  final int total;
+  final List<String> subjects;
+  @override State<RegularStudyPlanner> createState() => _RegularStudyPlannerState();
+}
+
+class _TopicEntry { _TopicEntry(this.name, this.minutes); String name; int minutes; }
+
+class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
+  late final Map<String, List<_TopicEntry>> topics;
+  late final Map<String, TextEditingController> controllers;
+  late final Map<String, int> subjectMinutes;
+
+  @override
+  void initState() {
+    super.initState();
+    topics = {for (final s in widget.subjects) s: []};
+    controllers = {for (final s in widget.subjects) s: TextEditingController()};
+    final base = widget.total ~/ widget.subjects.length;
+    final extra = widget.total % widget.subjects.length;
+    subjectMinutes = {for (var i = 0; i < widget.subjects.length; i++) widget.subjects[i]: base + (i < extra ? 1 : 0)};
+  }
+
+  @override
+  void dispose() { for (final c in controllers.values) c.dispose(); super.dispose(); }
+
+  int get allocated => subjectMinutes.values.fold(0, (a, b) => a + b);
+  int get remaining => widget.total - allocated;
+
+  void changeSubject(String subject, int value) {
+    final others = allocated - subjectMinutes[subject]!;
+    final max = widget.total - others;
+    setState(() => subjectMinutes[subject] = value.clamp(0, max));
+  }
+
+  void addTopic(String subject) {
+    final c = controllers[subject]!;
+    final name = c.text.trim();
+    if (name.isEmpty || topics[subject]!.any((t) => t.name.toLowerCase() == name.toLowerCase())) return;
+    setState(() { topics[subject]!.add(_TopicEntry(name, 0)); c.clear(); });
+  }
+
+  void changeTopic(String subject, _TopicEntry topic, int value) {
+    final others = topics[subject]!.where((t) => !identical(t, topic)).fold(0, (a, t) => a + t.minutes);
+    final max = subjectMinutes[subject]! - others;
+    setState(() => topic.minutes = value.clamp(0, max));
+  }
+
+  void autoBalanceTopics(String subject) {
+    final list = topics[subject]!;
+    if (list.isEmpty) return;
+    final total = subjectMinutes[subject]!;
+    final base = total ~/ list.length;
+    final extra = total % list.length;
+    setState(() { for (var i = 0; i < list.length; i++) list[i].minutes = base + (i < extra ? 1 : 0); });
+  }
+
+  Future<void> save() async {
+    final items = <StudyItem>[];
+    for (final subject in widget.subjects) {
+      final subjectTotal = subjectMinutes[subject]!;
+      final list = topics[subject]!;
+      final topicAllocated = list.fold(0, (a, t) => a + t.minutes);
+      final leftover = subjectTotal - topicAllocated;
+      if (leftover < 0) return;
+      for (final topic in list) {
+        if (topic.minutes > 0) items.add(StudyItem(title: subject, topic: topic.name, minutes: topic.minutes));
+      }
+      if (leftover > 0) items.add(StudyItem(title: subject, topic: list.isEmpty ? 'General study' : 'Other / review', minutes: leftover));
+    }
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Allocate at least 1 minute to a topic or subject.')));
+      return;
+    }
+    final plan = StudyPlan(totalMinutes: widget.total, items: items);
+    await widget.store.savePlan(plan);
+    if (!mounted) return;
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: plan, index: 0, blockIndex: 0)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Allocate by topic')),
+      body: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 28), children: [
+        Text('Build your focus map', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 6),
+        const Text('Set each subject budget, then split that time across chapters or topics. The total can never exceed your original study time.'),
+        const SizedBox(height: 16),
+        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total budget', style: TextStyle(fontWeight: FontWeight.w900)), Text('${widget.total} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
+          const SizedBox(height: 10), LinearProgressIndicator(value: widget.total == 0 ? 0 : allocated / widget.total, minHeight: 9),
+          const SizedBox(height: 8), Text(remaining == 0 ? 'Fully allocated — ready to focus.' : '$remaining minutes available to assign', style: TextStyle(fontWeight: FontWeight.w700, color: remaining == 0 ? scheme.primary : null)),
+        ]))),
+        const SizedBox(height: 14),
+        ...widget.subjects.map((subject) => _subjectCard(subject)),
+        const SizedBox(height: 4),
+        FilledButton.icon(onPressed: allocated == 0 ? null : save, icon: const Icon(Icons.play_arrow_rounded), label: Text(remaining == 0 ? 'Start focused study' : 'Start with $allocated min')),
+      ],),
+    );
+  }
+
+  Widget _subjectCard(String subject) {
+    final list = topics[subject]!;
+    final assigned = list.fold(0, (a, t) => a + t.minutes);
+    final leftover = subjectMinutes[subject]! - assigned;
+    return Card(margin: const EdgeInsets.only(bottom: 12), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [Expanded(child: Text(subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))), Text('${subjectMinutes[subject]}m', style: const TextStyle(fontWeight: FontWeight.w900))]),
+      Slider(value: subjectMinutes[subject]!.toDouble(), min: 0, max: widget.total.toDouble(), divisions: widget.total, onChanged: (v) => changeSubject(subject, v.round())),
+      Row(children: [Expanded(child: Text('Topics use $assigned min • $leftover min unassigned', style: Theme.of(context).textTheme.labelMedium)), if (list.isNotEmpty) TextButton.icon(onPressed: () => autoBalanceTopics(subject), icon: const Icon(Icons.balance_rounded, size: 18), label: const Text('Split evenly'))]),
+      const SizedBox(height: 6),
+      TextField(controller: controllers[subject], onSubmitted: (_) => addTopic(subject), decoration: const InputDecoration(labelText: 'Add chapter / topic', prefixIcon: Icon(Icons.bookmark_outline_rounded), suffixIcon: Icon(Icons.add_rounded))),
+      if (list.isNotEmpty) ...[
+        const SizedBox(height: 12),
+        ...list.map((topic) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Container(padding: const EdgeInsets.fromLTRB(12, 8, 8, 2), decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)), child: Column(children: [
+          Row(children: [Expanded(child: Text(topic.name, style: const TextStyle(fontWeight: FontWeight.w700))), Text('${topic.minutes}m', style: const TextStyle(fontWeight: FontWeight.w800)), IconButton(onPressed: () => setState(() => list.remove(topic)), icon: const Icon(Icons.close_rounded, size: 19))]),
+          Slider(value: topic.minutes.toDouble(), min: 0, max: subjectMinutes[subject]!.toDouble().clamp(1, widget.total).toDouble(), divisions: subjectMinutes[subject]!.clamp(1, widget.total), onChanged: (v) => changeTopic(subject, topic, v.round())),
+        ])))),
+      ],
+    ])));
+  }
+}
