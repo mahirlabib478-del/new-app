@@ -176,11 +176,29 @@ class CompletionScreen extends StatelessWidget {
   const CompletionScreen({super.key, required this.plan, required this.store});
   final StudyPlan plan;
   final LocalStore store;
-  @override Widget build(BuildContext context) => Scaffold(body: Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-    const Icon(Icons.emoji_events_rounded, size: 72), const SizedBox(height: 20),
-    Text('Session complete', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8),
-    Text('${plan.allocatedMinutes} planned minutes are done.', textAlign: TextAlign.center), const SizedBox(height: 18),
-    Card(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18), child: Column(children: [Text('+${plan.allocatedMinutes * 2} XP', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 4), Text('Total focus time: ${store.planCompletedMinutes} min')])),
-    const SizedBox(height: 26), FilledButton.icon(onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home')),
-  ])));
+  @override Widget build(BuildContext context) {
+    final completed = store.planCompletedMinutes.clamp(0, plan.allocatedMinutes).toInt();
+    final earnedXp = completed * 2;
+    final planned = plan.allocatedMinutes;
+    final completionText = completed >= planned
+        ? 'You completed all $planned planned focus minutes.'
+        : 'You completed $completed of $planned planned focus minutes.';
+
+    return Scaffold(body: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(28), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      const Icon(Icons.emoji_events_rounded, size: 72), const SizedBox(height: 20),
+      Text('Session complete', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8),
+      Text(completionText, textAlign: TextAlign.center), const SizedBox(height: 18),
+      Card(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18), child: Column(children: [
+        Text('+$earnedXp XP', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 4),
+        Text('Actual focus time: $completed min'),
+        if (completed < planned) ...[
+          const SizedBox(height: 8),
+          Text('You can always finish the remaining time later.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ]))),
+      const SizedBox(height: 26),
+      FilledButton.icon(onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home')),
+    ]))));
+  }
 }
