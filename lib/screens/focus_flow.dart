@@ -86,8 +86,25 @@ class BreakScreen extends StatefulWidget {
 }
 
 class _BreakScreenState extends State<BreakScreen> {
-  int seconds = 5 * 60; bool running = true; bool advancing = false; Timer? timer;
-  @override void initState() { super.initState(); timer = Timer.periodic(const Duration(seconds: 1), (_) { if (!mounted || !running || advancing) return; if (seconds > 0) setState(() => seconds--); if (seconds == 0) { timer?.cancel(); _next(); } }); }
+  int breakMinutes = 5;
+  int seconds = 5 * 60;
+  bool running = true;
+  bool advancing = false;
+  Timer? timer;
+
+  @override void initState() { super.initState(); _startTimer(); }
+  void _startTimer() {
+    timer?.cancel();
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || !running || advancing) return;
+      if (seconds > 0) setState(() => seconds--);
+      if (seconds == 0) { timer?.cancel(); _next(); }
+    });
+  }
+  void _setBreakMinutes(int minutes) {
+    if (advancing || seconds < breakMinutes * 60 - 5) return;
+    setState(() { breakMinutes = minutes; seconds = minutes * 60; });
+  }
   @override void dispose() { timer?.cancel(); super.dispose(); }
   Future<void> _next() async {
     if (advancing) return;
@@ -114,14 +131,16 @@ class _BreakScreenState extends State<BreakScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
   }
+
   @override Widget build(BuildContext context) {
     final clock = '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
-    final breakProgress = 1 - seconds / (5 * 60);
+    final breakProgress = 1 - seconds / (breakMinutes * 60);
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(body: SafeArea(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(28), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Container(width: 88, height: 88, decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.primaryContainer), child: Icon(Icons.spa_rounded, size: 46, color: scheme.onPrimaryContainer)),
-      const SizedBox(height: 18), Text('Break time', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8), Text('You completed ${widget.completed} minute${widget.completed == 1 ? '' : 's'}. Reset before the next focus block.', textAlign: TextAlign.center), const SizedBox(height: 22),
-      ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: breakProgress, minHeight: 7)), const SizedBox(height: 18), Text(clock, style: Theme.of(context).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900, fontFeatures: [const FontFeature.tabularFigures()])), const SizedBox(height: 24),
+      const SizedBox(height: 18), Text('Break time', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8), Text('You completed ${widget.completed} minute${widget.completed == 1 ? '' : 's'}. Reset before the next focus block.', textAlign: TextAlign.center), const SizedBox(height: 20),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Break length', style: TextStyle(fontWeight: FontWeight.w800)), const SizedBox(width: 10), ChoiceChip(label: const Text('5 min'), selected: breakMinutes == 5, onSelected: advancing ? null : (_) => _setBreakMinutes(5)), const SizedBox(width: 8), ChoiceChip(label: const Text('10 min'), selected: breakMinutes == 10, onSelected: advancing ? null : (_) => _setBreakMinutes(10))]),
+      const SizedBox(height: 18), ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: breakProgress.clamp(0.0, 1.0), minHeight: 7)), const SizedBox(height: 18), Text(clock, style: Theme.of(context).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900, fontFeatures: [const FontFeature.tabularFigures()])), const SizedBox(height: 24),
       Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(children: const [ListTile(leading: Icon(Icons.water_drop_rounded), title: Text('Drink some water'), subtitle: Text('Hydrate before you return.'), dense: true), ListTile(leading: Icon(Icons.directions_walk_rounded), title: Text('Walk, stretch or move'), subtitle: Text('Give your body a reset.'), dense: true), ListTile(leading: Icon(Icons.visibility_rounded), title: Text('Rest your eyes'), subtitle: Text('Look away from the screen.'), dense: true), ListTile(leading: Icon(Icons.air_rounded), title: Text('Take a few slow breaths'), subtitle: Text('Relax your shoulders and jaw.'), dense: true)]))), const SizedBox(height: 20),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [OutlinedButton(onPressed: advancing ? null : () => setState(() => running = !running), child: Text(running ? 'Pause break' : 'Resume break')), const SizedBox(width: 10), FilledButton(onPressed: advancing ? null : _next, child: Text(advancing ? 'Saving…' : 'Continue'))]),
       const SizedBox(height: 12), Text('A short reset helps you return with a clear mind.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
