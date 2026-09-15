@@ -82,6 +82,7 @@ class LocalStore {
   static const _planMinutesKey = 'plan_completed_minutes';
   static const _itemMinutesKey = 'plan_item_completed_minutes';
   static const _historyKey = 'study_daily_history';
+  static const _dailyGoalKey = 'daily_goal_minutes';
   static const _xpKey = 'study_xp';
   static const _streakKey = 'study_streak';
   static const _lastStudyKey = 'last_study_date';
@@ -135,6 +136,7 @@ class LocalStore {
 
   int get completedMinutes => prefs.getInt(_minutesKey) ?? 0;
   int get planCompletedMinutes => prefs.getInt(_planMinutesKey) ?? 0;
+  int get dailyGoalMinutes => (prefs.getInt(_dailyGoalKey) ?? 120).clamp(15, 720).toInt();
   int get xp => prefs.getInt(_xpKey) ?? 0;
   int get streak => prefs.getInt(_streakKey) ?? 0;
   int get sessions => prefs.getInt(_sessionsKey) ?? 0;
@@ -142,6 +144,11 @@ class LocalStore {
   int get levelProgress => xp % 250;
   int get currentPlanIndex => prefs.getInt(_indexKey) ?? 0;
   int get currentBlockIndex => prefs.getInt(_blockKey) ?? 0;
+
+  Future<void> setDailyGoalMinutes(int value) async {
+    final goal = value.clamp(15, 720).toInt();
+    await prefs.setInt(_dailyGoalKey, goal);
+  }
 
   FocusTimerState? get focusTimerState {
     final raw = prefs.getString(_focusTimerKey);
