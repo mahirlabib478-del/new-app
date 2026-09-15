@@ -9,6 +9,7 @@ class LocalStore {
   static const _planKey = 'today_plan';
   static const _themeKey = 'theme_mode';
   static const _minutesKey = 'completed_minutes';
+  static const _planMinutesKey = 'plan_completed_minutes';
   static const _xpKey = 'study_xp';
   static const _streakKey = 'study_streak';
   static const _lastStudyKey = 'last_study_date';
@@ -18,6 +19,7 @@ class LocalStore {
 
   Future<void> savePlan(StudyPlan plan) async {
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
+    await prefs.setInt(_planMinutesKey, 0);
     await setPlanPosition(0, 0);
   }
 
@@ -35,6 +37,7 @@ class LocalStore {
   Future<void> setDarkMode(bool value) => prefs.setBool(_themeKey, value);
 
   int get completedMinutes => prefs.getInt(_minutesKey) ?? 0;
+  int get planCompletedMinutes => prefs.getInt(_planMinutesKey) ?? 0;
   int get xp => prefs.getInt(_xpKey) ?? 0;
   int get streak => prefs.getInt(_streakKey) ?? 0;
   int get sessions => prefs.getInt(_sessionsKey) ?? 0;
@@ -54,6 +57,7 @@ class LocalStore {
     final minutes = value.clamp(0, 1440);
     if (minutes <= 0) return;
     await prefs.setInt(_minutesKey, completedMinutes + minutes);
+    await prefs.setInt(_planMinutesKey, planCompletedMinutes + minutes);
     await prefs.setInt(_xpKey, xp + minutes * 2);
     await prefs.setInt(_sessionsKey, sessions + 1);
     final today = _dateKey(DateTime.now());
