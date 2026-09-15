@@ -3,9 +3,10 @@ import '../models/study_models.dart';
 import '../services/local_store.dart';
 
 class ExamPlannerScreen extends StatefulWidget {
-  const ExamPlannerScreen({super.key, required this.nextDay, this.store});
+  const ExamPlannerScreen({super.key, required this.nextDay, required this.store, this.onStartPlan});
   final bool nextDay;
-  final LocalStore? store;
+  final LocalStore store;
+  final void Function(StudyPlan plan)? onStartPlan;
   @override State<ExamPlannerScreen> createState() => _ExamPlannerScreenState();
 }
 
@@ -53,7 +54,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
   Future<void> _showGeneratedPlan() async {
     final items = _generatePlan();
     final plan = StudyPlan(totalMinutes: studyHours * 60, items: items);
-    if (widget.store != null) await widget.store!.savePlan(plan);
+    await widget.store.savePlan(plan);
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context, isScrollControlled: true, showDragHandle: true,
@@ -68,7 +69,15 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
             return ListTile(contentPadding: EdgeInsets.zero, leading: CircleAvatar(child: Text('$minutes')), title: Text(s, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text('Priority: ${priorities[s] == 3 ? 'High' : priorities[s] == 2 ? 'Medium' : 'Low'}'), trailing: const Text('min'));
           }),
           const SizedBox(height: 8),
-          FilledButton.icon(onPressed: () => Navigator.pop(sheetContext), icon: const Icon(Icons.check_rounded), label: const SizedBox(width: double.infinity, child: Center(child: Text('Save & continue later')))),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(sheetContext);
+              widget.onStartPlan?.call(plan);
+            },
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: const SizedBox(width: double.infinity, child: Center(child: Text('Start exam plan'))),
+          ),
+          TextButton(onPressed: () => Navigator.pop(sheetContext), child: const SizedBox(width: double.infinity, child: Center(child: Text('Save & continue later')))),
         ]),
       )),
     );
