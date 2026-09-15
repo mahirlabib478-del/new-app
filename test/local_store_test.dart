@@ -89,4 +89,15 @@ void main() {
     await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'English', minutes: 25)]));
     expect(store.breakTimerState, isNull);
   });
+
+  test('daily goal defaults to 120 minutes and persists within safe bounds', () async {
+    final store = await makeStore();
+    expect(store.dailyGoalMinutes, 120);
+    await store.setDailyGoalMinutes(180);
+    expect(store.dailyGoalMinutes, 180);
+    await store.setDailyGoalMinutes(5);
+    expect(store.dailyGoalMinutes, 15);
+    await store.setDailyGoalMinutes(1000);
+    expect(store.dailyGoalMinutes, 720);
+  });
 }
