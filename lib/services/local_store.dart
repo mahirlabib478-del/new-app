@@ -45,6 +45,7 @@ class LocalStore {
   static const _minutesKey = 'completed_minutes';
   static const _planMinutesKey = 'plan_completed_minutes';
   static const _itemMinutesKey = 'plan_item_completed_minutes';
+  static const _historyKey = 'study_daily_history';
   static const _xpKey = 'study_xp';
   static const _streakKey = 'study_streak';
   static const _lastStudyKey = 'last_study_date';
@@ -120,6 +121,28 @@ class LocalStore {
 
   Future<void> clearFocusTimerState() async => prefs.remove(_focusTimerKey);
 
+  Map<String, int> get dailyStudyMinutes {
+    final raw = prefs.getString(_historyKey);
+    if (raw == null) return <String, int>{};
+    try {
+      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      return map.map((key, value) => MapEntry(key, (value as num).toInt().clamp(0, 1440).toInt()));
+    } catch (_) {
+      return <String, int>{};
+    }
+  }
+
+  int studyMinutesOn(DateTime date) => dailyStudyMinutes[_dateKey(date)] ?? 0;
+
+  Future<void> addDailyStudyMinutes(int value, {DateTime? date}) async {
+    final minutes = value.clamp(0, 1440).toInt();
+    if (minutes <= 0) return;
+    final key = _dateKey(date ?? DateTime.now());
+    final history = dailyStudyMinutes;
+    history[key] = ((history[key] ?? 0) + minutes).clamp(0, 1440).toInt();
+    await prefs.setString(_historyKey, jsonEncode(history));
+  }
+
   int itemCompletedMinutes(int index) {
     if (index < 0) return 0;
     final raw = prefs.getString(_itemMinutesKey);
@@ -178,6 +201,7 @@ class LocalStore {
     await prefs.setInt(_planMinutesKey, planCompletedMinutes + minutes);
     await prefs.setInt(_xpKey, xp + minutes * 2);
     await prefs.setInt(_sessionsKey, sessions + 1);
+    await addDailyStudyMinutes(minutes);
 
     if (itemIndex != null && itemIndex >= 0) {
       final map = itemCompletedMinutesMap;
