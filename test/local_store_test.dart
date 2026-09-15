@@ -189,6 +189,8 @@ void main() {
         'bad': 'value',
       }),
     });
-    expect(store.itemCompletedMinutesMap, {0: 0, 1: 30});
+    expect(store.itemCompletedMinutesMap, {1: 30});
+    expect(store.itemCompletedMinutes(0), 0);
+    expect(store.itemCompletedMinutes(1), 30);
   });
 }
