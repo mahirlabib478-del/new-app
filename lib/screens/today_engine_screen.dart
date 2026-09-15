@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/study_models.dart';
 import '../services/local_store.dart';
 import '../services/today_engine.dart';
 
@@ -18,10 +17,7 @@ class TodayEngineScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            'What do I need to do today?',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-          ),
+          Text('What do I need to do today?', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(22),
@@ -56,7 +52,7 @@ class TodayEngineScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(child: const Icon(Icons.play_arrow_rounded)),
+                        leading: const CircleAvatar(child: Icon(Icons.play_arrow_rounded)),
                         title: Text(snapshot.nextItem!.title, style: const TextStyle(fontWeight: FontWeight.w900)),
                         subtitle: Text(snapshot.nextItem!.topic.isEmpty ? 'Focus session' : snapshot.nextItem!.topic),
                         trailing: Text('${snapshot.nextItem!.minutes}m', style: const TextStyle(fontWeight: FontWeight.w900)),
