@@ -88,7 +88,7 @@ class _StudyOSState extends State<StudyOS> {
       home: Scaffold(
         body: IndexedStack(index: tab, children: [
           Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: (nextDay) => _openExam(nextDay)),
-          StudyHub(store: widget.store, onStartPlan: openFocus, onRegularStudy: openRegularStudy),
+          StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy),
           ProgressDashboard(store: widget.store),
           ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme),
         ]),
@@ -206,15 +206,15 @@ class _Mode extends StatelessWidget {
 class StudyHub extends StatelessWidget {
   const StudyHub({super.key, required this.store, required this.onStartPlan, required this.onRegularStudy});
   final LocalStore store;
-  final Future<void> Function({StudyPlan? plan}) onStartPlan;
+  final Future<void> Function(StudyPlan plan) onStartPlan;
   final VoidCallback onRegularStudy;
   @override
   Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Study')), body: ListView(padding: const EdgeInsets.all(20), children: [
     Text('Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
     const SizedBox(height: 18),
     _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
-    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan: plan); }))),
-    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan: plan); }))),
+    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan); }))),
+    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan); }))),
   ]));
 }
 
