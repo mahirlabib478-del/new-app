@@ -192,7 +192,14 @@ class LocalStore {
     if (raw == null) return <String, int>{};
     try {
       final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      return map.map((key, value) => MapEntry(key, (value as num).toInt().clamp(0, 1440).toInt()));
+      final result = <String, int>{};
+      for (final entry in map.entries) {
+        final value = entry.value;
+        if (value is num) {
+          result[entry.key] = value.toInt().clamp(0, 1440).toInt();
+        }
+      }
+      return result;
     } catch (_) {
       return <String, int>{};
     }
@@ -215,7 +222,8 @@ class LocalStore {
     if (raw == null) return 0;
     try {
       final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      return (map['$index'] as num?)?.toInt().clamp(0, 1440).toInt() ?? 0;
+      final value = map['$index'];
+      return value is num ? value.toInt().clamp(0, 1440).toInt() : 0;
     } catch (_) {
       return 0;
     }
@@ -226,11 +234,15 @@ class LocalStore {
     if (raw == null) return <int, int>{};
     try {
       final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      return map.map((key, value) => MapEntry(
-            int.tryParse(key) ?? -1,
-            (value as num?)?.toInt().clamp(0, 1440).toInt() ?? 0,
-          ))
-        ..removeWhere((key, _) => key < 0);
+      final result = <int, int>{};
+      for (final entry in map.entries) {
+        final index = int.tryParse(entry.key);
+        final value = entry.value;
+        if (index != null && index >= 0 && value is num) {
+          result[index] = value.toInt().clamp(0, 1440).toInt();
+        }
+      }
+      return result;
     } catch (_) {
       return <int, int>{};
     }
