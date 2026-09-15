@@ -44,7 +44,8 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
     final urgencyBoost = urgency == 3 ? 0.35 : urgency == 2 ? 0.15 : 0.0;
     final weights = subjects.map((subject) {
       final priority = priorities[subject] ?? 2;
-      return priority.toDouble() + urgencyBoost * priority;
+      final nextDayBoost = widget.nextDay && priority == 3 ? 0.25 : 0.0;
+      return priority.toDouble() + urgencyBoost * priority + nextDayBoost;
     }).toList();
     final weightTotal = weights.fold<double>(0, (sum, value) => sum + value);
     final blocks = totalMinutes ~/ 25;
@@ -89,7 +90,6 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
     final items = _generatePlan();
     if (items.isEmpty) return;
     final plan = StudyPlan(totalMinutes: studyHours * 60, items: items);
-    await widget.store.savePlan(plan);
     if (!mounted) return;
 
     await showModalBottomSheet<void>(
@@ -142,7 +142,9 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
                 ),
                 const SizedBox(height: 14),
                 FilledButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
+                    await widget.store.savePlan(plan);
+                    if (!sheetContext.mounted) return;
                     Navigator.pop(sheetContext);
                     widget.onStartPlan?.call(plan);
                   },
@@ -150,7 +152,14 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
                   label: const SizedBox(width: double.infinity, child: Center(child: Text('Start exam plan'))),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pop(sheetContext),
+                  onPressed: () async {
+                    await widget.store.savePlan(plan);
+                    if (!sheetContext.mounted) return;
+                    Navigator.pop(sheetContext);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plan saved. You can resume it from Home.')));
+                    }
+                  },
                   child: const SizedBox(width: double.infinity, child: Center(child: Text('Save & continue later'))),
                 ),
               ],
@@ -210,7 +219,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
             child: Column(children: [
               Text('$studyHours hours', style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
               Slider(value: studyHours.toDouble(), min: 1, max: 12, divisions: 11, label: '$studyHours h', onChanged: (value) => setState(() => studyHours = value.round())),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: const [Text('1h'), Text('6h'), Text('12h')]),
+              const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('1h'), Text('6h'), Text('12h')]),
             ]),
           ),
           const SizedBox(height: 14),
@@ -238,49 +247,47 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
           ]),
           const SizedBox(height: 10),
           if (subjects.isEmpty)
+            const Card(child: Padding(padding: EdgeInsets.all(18), child: Row(children: [Icon(Icons.lightbulb_outline_rounded), SizedBox(width: 12), Expanded(child: Text('Add at least one subject. You can change its priority after adding it.'))])))
+          else
+            ...subjects.map((subject) => Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(child: Text('${priorities[subject] ?? 2}')),
+                    title: Text(subject, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    subtitle: Text('${_priorityLabel(priorities[subject] ?? 2)} priority'),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      PopupMenuButton<int>(
+                        initialValue: priorities[subject],
+                        tooltip: 'Set priority',
+                        onSelected: (value) => setState(() => priorities[subject] = value),
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(value: 3, child: Text('High priority')),
+                          PopupMenuItem(value: 2, child: Text('Medium priority')),
+                          PopupMenuItem(value: 1, child: Text('Low priority')),
+                        ],
+                      ),
+                      IconButton(onPressed: () => removeSubject(subject), icon: const Icon(Icons.delete_outline_rounded)),
+                    ]),
+                  ),
+                )),
+          const SizedBox(height: 16),
+          if (subjects.isNotEmpty)
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(16),
                 child: Row(children: [
-                  const Icon(Icons.info_outline_rounded),
+                  const Icon(Icons.tune_rounded),
                   const SizedBox(width: 12),
-                  Expanded(child: Text(widget.nextDay ? 'Add the subjects you must revise tonight.' : 'Add at least one subject, then set its priority.')),
+                  Expanded(child: Text(widget.nextDay ? 'Tip: mark only truly important subjects as High so the final sprint stays focused.' : 'Tip: use High for subjects that need the most revision time.')),
                 ]),
               ),
-            )
-          else
-            ...subjects.map((subject) {
-              final priority = priorities[subject] ?? 2;
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(child: Icon(priority == 3 ? Icons.priority_high_rounded : Icons.menu_book_rounded)),
-                  title: Text(subject, style: const TextStyle(fontWeight: FontWeight.w800)),
-                  subtitle: Text('${_priorityLabel(priority)} priority'),
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    PopupMenuButton<int>(
-                      tooltip: 'Set priority',
-                      initialValue: priority,
-                      onSelected: (value) => setState(() => priorities[subject] = value),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 3, child: Text('High priority')),
-                        PopupMenuItem(value: 2, child: Text('Medium priority')),
-                        PopupMenuItem(value: 1, child: Text('Low priority')),
-                      ],
-                    ),
-                    IconButton(onPressed: () => removeSubject(subject), icon: const Icon(Icons.close_rounded)),
-                  ]),
-                ),
-              );
-            }),
-          const SizedBox(height: 16),
+            ),
+          const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: subjects.isEmpty ? null : _showGeneratedPlan,
             icon: const Icon(Icons.auto_awesome_rounded),
             label: const Padding(padding: EdgeInsets.all(14), child: Text('Generate exam plan')),
           ),
-          const SizedBox(height: 8),
-          Center(child: Text('You can save the generated plan and continue later.', style: Theme.of(context).textTheme.bodySmall)),
         ],
       ),
     );
@@ -292,7 +299,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
         padding: const EdgeInsets.all(18),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           child,
         ]),
       ),
