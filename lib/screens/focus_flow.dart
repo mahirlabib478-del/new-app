@@ -22,18 +22,60 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   late int seconds;
   late int currentBlockMinutes;
   bool running = true;
+  bool transitioning = false;
   Timer? timer;
 
   StudyItem get item => widget.plan.items[activeIndex];
   int get completedForItem => widget.store.itemCompletedMinutes(activeIndex).clamp(0, item.minutes).toInt();
   int get totalBlocks => math.max(1, (item.minutes / FocusScreen.focusBlock).ceil());
 
+  int _firstRemainingIndex() {
+    for (var i = 0; i < widget.plan.items.length; i++) {
+      final minutes = widget.store.itemCompletedMinutes(i).clamp(0, widget.plan.items[i].minutes).toInt();
+      if (minutes < widget.plan.items[i].minutes) return i;
+    }
+    return -1;
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    if (widget.plan.items.isEmpty) {
+      activeIndex = 0;
+      activeBlockIndex = 0;
+      currentBlockMinutes = 1;
+      seconds = 60;
+      running = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showCompletion());
+      return;
+    }
+
     final savedIndex = widget.store.currentPlanIndex;
-    activeIndex = savedIndex >= 0 && savedIndex < widget.plan.items.length ? savedIndex : widget.index;
+    final savedIsRemaining = savedIndex >= 0 && savedIndex < widget.plan.items.length &&
+        widget.store.itemCompletedMinutes(savedIndex).clamp(0, widget.plan.items[savedIndex].minutes).toInt() < widget.plan.items[savedIndex].minutes;
+    final requestedIsRemaining = widget.index >= 0 && widget.index < widget.plan.items.length &&
+        widget.store.itemCompletedMinutes(widget.index).clamp(0, widget.plan.items[widget.index].minutes).toInt() < widget.plan.items[widget.index].minutes;
+
+    if (savedIsRemaining) {
+      activeIndex = savedIndex;
+    } else if (requestedIsRemaining) {
+      activeIndex = widget.index;
+    } else {
+      activeIndex = _firstRemainingIndex();
+    }
+
+    if (activeIndex < 0) {
+      activeIndex = 0;
+      activeBlockIndex = 0;
+      currentBlockMinutes = 1;
+      seconds = 60;
+      running = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showCompletion());
+      return;
+    }
+
     final completed = completedForItem;
     activeBlockIndex = (completed ~/ FocusScreen.focusBlock).clamp(0, totalBlocks - 1).toInt();
     final remaining = (item.minutes - completed).clamp(0, item.minutes).toInt();
@@ -67,7 +109,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   void _startTimer() {
     timer?.cancel();
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || !running) return;
+      if (!mounted || !running || transitioning) return;
       if (seconds > 0) setState(() => seconds--);
       if (seconds == 0) {
         timer?.cancel();
@@ -78,6 +120,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   }
 
   void _persistTimerState() {
+    if (transitioning) return;
     final deadline = running ? DateTime.now().add(Duration(seconds: seconds)).millisecondsSinceEpoch : null;
     unawaited(widget.store.saveFocusTimerState(FocusTimerState(index: activeIndex, blockIndex: activeBlockIndex, remainingSeconds: seconds, running: running, deadlineMillis: deadline)));
   }
@@ -86,7 +129,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _persistTimerState();
-    } else if (state == AppLifecycleState.resumed && mounted && running) {
+    } else if (state == AppLifecycleState.resumed && mounted && running && !transitioning) {
       final saved = widget.store.focusTimerState;
       if (saved != null && saved.index == activeIndex && saved.blockIndex == activeBlockIndex && saved.deadlineMillis != null) {
         final nextSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
@@ -103,15 +146,28 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   }
 
   void _toggleRunning() {
+    if (transitioning || seconds <= 0) return;
     setState(() => running = !running);
     _persistTimerState();
     if (running) _startTimer(); else timer?.cancel();
   }
 
-  void _openBreak(int completed) {
+  void _showCompletion() {
+    if (!mounted || transitioning) return;
+    transitioning = true;
     timer?.cancel();
     unawaited(widget.store.clearFocusTimerState());
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: completed)));
+    unawaited(widget.store.clearPlanPosition());
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
+  }
+
+  void _openBreak(int completed) {
+    if (transitioning || !mounted) return;
+    transitioning = true;
+    timer?.cancel();
+    final safeCompleted = completed.clamp(0, currentBlockMinutes).toInt();
+    unawaited(widget.store.clearFocusTimerState());
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: safeCompleted)));
   }
 
   @override
@@ -126,6 +182,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     final clock = '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final progress = (1 - seconds / (currentBlockMinutes * 60)).clamp(0.0, 1.0).toDouble();
     final itemProgress = item.minutes <= 0 ? 0.0 : (completedForItem / item.minutes).clamp(0.0, 1.0).toDouble();
+    final elapsedMinutes = ((currentBlockMinutes * 60 - seconds) / 60).floor();
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Focus mode'), centerTitle: true),
@@ -145,7 +202,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         const SizedBox(height: 24),
         Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 24),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: () => _openBreak(((currentBlockMinutes * 60 - seconds) / 60).floor()), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: transitioning ? null : _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: transitioning || elapsedMinutes < 1 ? null : () => _openBreak(elapsedMinutes), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]),
         const SizedBox(height: 22),
         Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your timer is saved locally. If the app closes, you can return and continue from this block.', style: Theme.of(context).textTheme.bodyMedium))),
       ]))))),
@@ -212,6 +269,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
   }
 
   void _persistBreakState() {
+    if (advancing) return;
     final deadline = running ? DateTime.now().add(Duration(seconds: seconds)).millisecondsSinceEpoch : null;
     unawaited(widget.store.saveBreakTimerState(BreakTimerState(index: widget.index, blockIndex: widget.blockIndex, breakMinutes: breakMinutes, remainingSeconds: seconds, running: running, deadlineMillis: deadline)));
   }
@@ -220,7 +278,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _persistBreakState();
-    } else if (state == AppLifecycleState.resumed && mounted && running) {
+    } else if (state == AppLifecycleState.resumed && mounted && running && !advancing) {
       final saved = widget.store.breakTimerState;
       if (saved != null && saved.index == widget.index && saved.blockIndex == widget.blockIndex && saved.deadlineMillis != null) {
         final nextSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
@@ -244,7 +302,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
   }
 
   void _toggleRunning() {
-    if (advancing) return;
+    if (advancing || seconds <= 0) return;
     setState(() => running = !running);
     _persistBreakState();
     if (running) _startTimer(); else timer?.cancel();
@@ -257,6 +315,14 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
     await widget.store.clearBreakTimerState();
     final completed = widget.completed.clamp(0, FocusScreen.focusBlock).toInt();
     if (completed > 0) await widget.store.addItemCompletedMinutes(widget.index, completed);
+
+    if (widget.index < 0 || widget.index >= widget.plan.items.length) {
+      await widget.store.clearPlanPosition();
+      if (!mounted) return;
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
+      return;
+    }
+
     final item = widget.plan.items[widget.index];
     final itemCompleted = widget.store.itemCompletedMinutes(widget.index).clamp(0, item.minutes).toInt();
     if (itemCompleted < item.minutes) {
@@ -266,13 +332,22 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: widget.index, blockIndex: nextBlock)));
       return;
     }
-    final nextIndex = widget.index + 1;
+
+    var nextIndex = widget.index + 1;
+    while (nextIndex < widget.plan.items.length) {
+      final nextItem = widget.plan.items[nextIndex];
+      final nextCompleted = widget.store.itemCompletedMinutes(nextIndex).clamp(0, nextItem.minutes).toInt();
+      if (nextCompleted < nextItem.minutes) break;
+      nextIndex++;
+    }
+
     if (nextIndex < widget.plan.items.length) {
       await widget.store.setPlanPosition(nextIndex, 0);
       if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: nextIndex, blockIndex: 0)));
       return;
     }
+
     await widget.store.clearPlanPosition();
     if (!mounted) return;
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
