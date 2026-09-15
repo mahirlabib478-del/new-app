@@ -12,6 +12,7 @@ class LocalStore {
   static const _themePresetKey = 'theme_preset';
   static const _minutesKey = 'completed_minutes';
   static const _planMinutesKey = 'plan_completed_minutes';
+  static const _itemMinutesKey = 'plan_item_completed_minutes';
   static const _xpKey = 'study_xp';
   static const _streakKey = 'study_streak';
   static const _lastStudyKey = 'last_study_date';
@@ -23,6 +24,7 @@ class LocalStore {
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
     await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
+    await prefs.remove(_itemMinutesKey);
     await setPlanPosition(0, 0);
   }
 
@@ -68,6 +70,30 @@ class LocalStore {
   int get currentPlanIndex => prefs.getInt(_indexKey) ?? 0;
   int get currentBlockIndex => prefs.getInt(_blockKey) ?? 0;
 
+  int itemCompletedMinutes(int index) {
+    if (index < 0) return 0;
+    final raw = prefs.getString(_itemMinutesKey);
+    if (raw == null) return 0;
+    try {
+      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      return (map['$index'] as num?)?.toInt().clamp(0, 1440).toInt() ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Map<int, int> get itemCompletedMinutesMap {
+    final raw = prefs.getString(_itemMinutesKey);
+    if (raw == null) return <int, int>{};
+    try {
+      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      return map.map((key, value) => MapEntry(int.tryParse(key) ?? -1, (value as num).toInt()))
+        ..removeWhere((key, _) => key < 0);
+    } catch (_) {
+      return <int, int>{};
+    }
+  }
+
   Future<void> setPlanPosition(int index, int blockIndex) async {
     await prefs.setInt(_indexKey, index.clamp(0, 100000).toInt());
     await prefs.setInt(_blockKey, blockIndex.clamp(0, 100000).toInt());
@@ -75,13 +101,24 @@ class LocalStore {
 
   Future<void> clearPlanPosition() async => setPlanPosition(0, 0);
 
-  Future<void> addCompletedMinutes(int value) async {
+  Future<void> addCompletedMinutes(int value) => _recordCompletion(value, null);
+
+  Future<void> addItemCompletedMinutes(int index, int value) => _recordCompletion(value, index);
+
+  Future<void> _recordCompletion(int value, int? itemIndex) async {
     final minutes = value.clamp(0, 1440).toInt();
     if (minutes <= 0) return;
     await prefs.setInt(_minutesKey, completedMinutes + minutes);
     await prefs.setInt(_planMinutesKey, planCompletedMinutes + minutes);
     await prefs.setInt(_xpKey, xp + minutes * 2);
     await prefs.setInt(_sessionsKey, sessions + 1);
+
+    if (itemIndex != null && itemIndex >= 0) {
+      final map = itemCompletedMinutesMap;
+      map[itemIndex] = (map[itemIndex] ?? 0) + minutes;
+      await prefs.setString(_itemMinutesKey, jsonEncode(map.map((key, value) => MapEntry(key.toString(), value))));
+    }
+
     final today = _dateKey(DateTime.now());
     final last = prefs.getString(_lastStudyKey);
     if (last != today) {
