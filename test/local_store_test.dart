@@ -193,4 +193,35 @@ void main() {
     expect(store.itemCompletedMinutes(0), 0);
     expect(store.itemCompletedMinutes(1), 30);
   });
+
+  test('malformed persisted timer payloads are ignored safely', () async {
+    final store = await makeStore({
+      'focus_timer_state': '{not-json',
+      'break_timer_state': jsonEncode({'index': 'bad'}),
+    });
+    expect(store.focusTimerState, isNull);
+    expect(store.breakTimerState, isNotNull);
+    expect(store.breakTimerState?.index, 0);
+  });
+
+  test('non-positive completion never changes totals or streak', () async {
+    final store = await makeStore();
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
+    await store.addItemCompletedMinutes(0, 0);
+    await store.addItemCompletedMinutes(0, -10);
+    expect(store.completedMinutes, 0);
+    expect(store.planCompletedMinutes, 0);
+    expect(store.sessions, 0);
+    expect(store.xp, 0);
+    expect(store.streak, 0);
+  });
+
+  test('multiple completions on the same day do not increment streak twice', () async {
+    final store = await makeStore();
+    await store.savePlan(StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', minutes: 50)]));
+    await store.addItemCompletedMinutes(0, 25);
+    expect(store.streak, 1);
+    await store.addItemCompletedMinutes(0, 25);
+    expect(store.streak, 1);
+  });
 }
