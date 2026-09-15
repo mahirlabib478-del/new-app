@@ -5,33 +5,20 @@ import '../services/local_store.dart';
 class ProgressDashboard extends StatefulWidget {
   const ProgressDashboard({super.key, required this.store});
   final LocalStore store;
-
-  @override
-  State<ProgressDashboard> createState() => _ProgressDashboardState();
+  @override State<ProgressDashboard> createState() => _ProgressDashboardState();
 }
 
 class _ProgressDashboardState extends State<ProgressDashboard> {
   Future<void> _changeGoal() async {
     final controller = TextEditingController(text: '${widget.store.dailyGoalMinutes}');
-    final value = await showDialog<int>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Daily study goal'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, int.tryParse(controller.text.trim())),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+    final value = await showDialog<int>(context: context, builder: (context) => AlertDialog(
+      title: const Text('Daily study goal'),
+      content: TextField(controller: controller, autofocus: true, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(context, int.tryParse(controller.text.trim())), child: const Text('Save')),
+      ],
+    ));
     controller.dispose();
     if (value == null) return;
     await widget.store.setDailyGoalMinutes(value);
@@ -58,78 +45,75 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text('Your momentum', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 18),
-          Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(child: Text('Today\'s goal', style: const TextStyle(fontWeight: FontWeight.w900))),
-              Text('$today / $goal min', style: const TextStyle(fontWeight: FontWeight.w900)),
-              IconButton(onPressed: _changeGoal, tooltip: 'Change goal', icon: const Icon(Icons.edit_rounded)),
-            ]),
-            const SizedBox(height: 10),
-            LinearProgressIndicator(value: goalProgress, minHeight: 9),
-            const SizedBox(height: 8),
-            Text(goalProgress >= 1 ? 'Goal reached. Keep the momentum.' : '${goal - today > 0 ? goal - today : 0} min left to reach today\'s goal'),
-          ]))),
-          const SizedBox(height: 12),
-          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Last 7 days', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
-                const SizedBox(height: 4),
-                Text('$weekTotal focused minutes this week'),
-              ])),
-              const Icon(Icons.bar_chart_rounded),
-            ]),
-            const SizedBox(height: 18),
-            SizedBox(height: 150, child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              for (final entry in week) Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _DayBar(date: entry.$1, minutes: entry.$2, goal: goal))),
-            ])),
-          ]))),
-          const SizedBox(height: 12),
-          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(value: progress, minHeight: 9),
-            const SizedBox(height: 10),
-            Text('${(progress * 100).round()}% plan complete'),
-          ]))),
-          const SizedBox(height: 12),
-          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              CircleAvatar(radius: 24, child: Text('${store.level}', style: const TextStyle(fontWeight: FontWeight.w900))),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Level ${store.level}', style: const TextStyle(fontWeight: FontWeight.w900)),
-                Text(nextLevelXp <= 0 ? 'Level complete' : '$nextLevelXp XP to next level'),
-              ])),
-              Text('${store.levelProgress}/250 XP', style: const TextStyle(fontWeight: FontWeight.w800)),
-            ]),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7),
-          ]))),
-          const SizedBox(height: 12),
+      body: ListView(padding: const EdgeInsets.all(20), children: [
+        Text('Your momentum', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 18),
+        Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Streak')),
-            const SizedBox(width: 10),
-            Expanded(child: _Stat(icon: Icons.bolt_rounded, value: '${store.xp}', label: 'XP')),
-            const SizedBox(width: 10),
-            Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes')),
+            const Expanded(child: Text('Today\'s goal', style: TextStyle(fontWeight: FontWeight.w900))),
+            Text('$today / $goal min', style: const TextStyle(fontWeight: FontWeight.w900)),
+            IconButton(onPressed: _changeGoal, tooltip: 'Change goal', icon: const Icon(Icons.edit_rounded)),
           ]),
-          const SizedBox(height: 20),
-          Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
-          _Achievement(icon: Icons.play_arrow_rounded, title: 'First Focus', subtitle: 'Complete your first focused minute.', unlocked: store.completedMinutes >= 1),
-          _Achievement(icon: Icons.timer_rounded, title: 'Deep Work', subtitle: 'Complete 60 focused minutes.', unlocked: store.completedMinutes >= 60),
-          _Achievement(icon: Icons.local_fire_department_rounded, title: '3-Day Streak', subtitle: 'Study on 3 consecutive days.', unlocked: store.streak >= 3),
-          _Achievement(icon: Icons.workspace_premium_rounded, title: 'Level 5', subtitle: 'Reach level 5.', unlocked: store.level >= 5),
+          LinearProgressIndicator(value: goalProgress, minHeight: 9),
+          const SizedBox(height: 8),
+          Text(goalProgress >= 1 ? 'Goal reached. Keep the momentum.' : '${goal - today > 0 ? goal - today : 0} min left to reach today\'s goal'),
+        ]))),
+        const SizedBox(height: 12),
+        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Last 7 days', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 4),
+              Text('$weekTotal focused minutes this week'),
+            ])),
+            const Icon(Icons.bar_chart_rounded),
+          ]),
           const SizedBox(height: 18),
-          if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
-        ],
-      ),
+          SizedBox(height: 150, child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            for (final entry in week) Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _DayBar(date: entry.$1, minutes: entry.$2, goal: goal))),
+          ])),
+        ]))),
+        const SizedBox(height: 12),
+        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 12),
+          LinearProgressIndicator(value: progress, minHeight: 9),
+          const SizedBox(height: 10),
+          Text('${(progress * 100).round()}% plan complete'),
+        ]))),
+        const SizedBox(height: 12),
+        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            CircleAvatar(radius: 24, child: Text('${store.level}', style: const TextStyle(fontWeight: FontWeight.w900))),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Level ${store.level}', style: const TextStyle(fontWeight: FontWeight.w900)),
+              Text(nextLevelXp <= 0 ? 'Level complete' : '$nextLevelXp XP to next level'),
+            ])),
+            Text('${store.levelProgress}/250 XP', style: const TextStyle(fontWeight: FontWeight.w800)),
+          ]),
+          const SizedBox(height: 12),
+          LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7),
+        ]))),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Streak')),
+          const SizedBox(width: 10),
+          Expanded(child: _Stat(icon: Icons.bolt_rounded, value: '${store.xp}', label: 'XP')),
+          const SizedBox(width: 10),
+          Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes')),
+        ]),
+        const SizedBox(height: 20),
+        Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 10),
+        _Achievement(icon: Icons.play_arrow_rounded, title: 'First Focus', subtitle: 'Complete your first focused minute.', unlocked: store.completedMinutes >= 1),
+        _Achievement(icon: Icons.timer_rounded, title: 'Deep Work', subtitle: 'Complete 60 focused minutes.', unlocked: store.completedMinutes >= 60),
+        _Achievement(icon: Icons.local_fire_department_rounded, title: '3-Day Streak', subtitle: 'Study on 3 consecutive days.', unlocked: store.streak >= 3),
+        _Achievement(icon: Icons.workspace_premium_rounded, title: 'Level 5', subtitle: 'Reach level 5.', unlocked: store.level >= 5),
+        const SizedBox(height: 18),
+        if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
+      ]),
     );
   }
 }
@@ -139,7 +123,6 @@ class _DayBar extends StatelessWidget {
   final DateTime date;
   final int minutes;
   final int goal;
-
   @override
   Widget build(BuildContext context) {
     final ratio = goal <= 0 ? 0.0 : (minutes / goal).clamp(0.0, 1.0).toDouble();
@@ -148,14 +131,7 @@ class _DayBar extends StatelessWidget {
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: [
       Text('$minutes', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
       const SizedBox(height: 5),
-      AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        height: minutes == 0 ? 10 : height,
-        decoration: BoxDecoration(
-          color: isToday ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
+      AnimatedContainer(duration: const Duration(milliseconds: 300), height: minutes == 0 ? 10 : height, decoration: BoxDecoration(color: isToday ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(10))),
       const SizedBox(height: 6),
       Text(['M', 'T', 'W', 'T', 'F', 'S', 'S'][date.weekday - 1], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
     ]);
@@ -169,12 +145,7 @@ class _Achievement extends StatelessWidget {
   final String subtitle;
   final bool unlocked;
   @override
-  Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(
-    leading: CircleAvatar(child: Icon(icon)),
-    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-    subtitle: Text(subtitle),
-    trailing: Icon(unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded),
-  ));
+  Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(leading: CircleAvatar(child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(subtitle), trailing: Icon(unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded)));
 }
 
 class _ProgressItem extends StatelessWidget {
@@ -190,7 +161,7 @@ class _ProgressItem extends StatelessWidget {
       if (item.topic.isNotEmpty) Text(item.topic),
       const SizedBox(height: 10),
       LinearProgressIndicator(value: progress),
-    ]));
+    ])));
   }
 }
 
@@ -200,5 +171,5 @@ class _Stat extends StatelessWidget {
   final String value;
   final String label;
   @override
-  Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
+  Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)])));
 }
