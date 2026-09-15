@@ -4,10 +4,11 @@ import '../services/local_store.dart';
 import 'focus_flow.dart';
 
 class RegularStudyPlanner extends StatefulWidget {
-  const RegularStudyPlanner({super.key, required this.store, required this.total, required this.subjects});
+  const RegularStudyPlanner({super.key, required this.store, required this.total, required this.subjects, this.onStartPlan});
   final LocalStore store;
   final int total;
   final List<String> subjects;
+  final Future<void> Function(StudyPlan plan)? onStartPlan;
   @override State<RegularStudyPlanner> createState() => _RegularStudyPlannerState();
 }
 
@@ -23,9 +24,10 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
     super.initState();
     topics = {for (final s in widget.subjects) s: []};
     controllers = {for (final s in widget.subjects) s: TextEditingController()};
-    final base = widget.total ~/ widget.subjects.length;
-    final extra = widget.total % widget.subjects.length;
-    subjectMinutes = {for (var i = 0; i < widget.subjects.length; i++) widget.subjects[i]: base + (i < extra ? 1 : 0)};
+    final count = widget.subjects.length;
+    final base = count == 0 ? 0 : widget.total ~/ count;
+    final extra = count == 0 ? 0 : widget.total % count;
+    subjectMinutes = {for (var i = 0; i < count; i++) widget.subjects[i]: base + (i < extra ? 1 : 0)};
   }
 
   @override
@@ -119,6 +121,10 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
     final plan = StudyPlan(totalMinutes: widget.total, items: items);
     await widget.store.savePlan(plan);
     if (!mounted) return;
+    if (widget.onStartPlan != null) {
+      await widget.onStartPlan!(plan);
+      return;
+    }
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: plan, index: 0, blockIndex: 0)));
   }
 
