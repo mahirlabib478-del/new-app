@@ -43,12 +43,18 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     if (currentBlockMinutes <= 0) currentBlockMinutes = 1;
     seconds = currentBlockMinutes * 60;
 
+    var expiredOnResume = false;
     final saved = widget.store.focusTimerState;
     if (saved != null && saved.index == activeIndex && saved.blockIndex == activeBlockIndex) {
       if (saved.running && saved.deadlineMillis != null) {
         final remainingSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
         seconds = remainingSeconds.clamp(0, currentBlockMinutes * 60).toInt();
-        running = seconds > 0;
+        if (remainingSeconds <= 0) {
+          running = true;
+          expiredOnResume = true;
+        } else {
+          running = true;
+        }
       } else {
         seconds = saved.remainingSeconds.clamp(0, currentBlockMinutes * 60).toInt();
         running = false;
@@ -56,11 +62,11 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     }
 
     unawaited(widget.store.setPlanPosition(activeIndex, activeBlockIndex));
-    if (seconds == 0 && running) {
+    if (expiredOnResume) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _openBreak(currentBlockMinutes));
     } else {
       _persistTimerState();
-      _startTimer();
+      if (running) _startTimer();
     }
   }
 
@@ -103,13 +109,6 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     }
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    timer?.cancel();
-    super.dispose();
-  }
-
   void _toggleRunning() {
     setState(() => running = !running);
     _persistTimerState();
@@ -120,6 +119,13 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     timer?.cancel();
     unawaited(widget.store.clearFocusTimerState());
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: completed)));
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -146,7 +152,8 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         const SizedBox(height: 24), Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 24),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: () => _openBreak(((currentBlockMinutes * 60 - seconds) / 60).floor()), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]),
-        const SizedBox(height: 22), Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your timer is saved locally. If the app closes, you can return and continue from this block.', style: Theme.of(context).textTheme.bodyMedium))),
+        const SizedBox(height: 22),
+        Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your timer is saved locally. If the app closes, you can return and continue from this block.', style: Theme.of(context).textTheme.bodyMedium))),
       ]))))),
     );
   }
@@ -175,22 +182,25 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    var expiredOnResume = false;
     final saved = widget.store.breakTimerState;
     if (saved != null && saved.index == widget.index && saved.blockIndex == widget.blockIndex) {
       breakMinutes = saved.breakMinutes == 10 ? 10 : 5;
       if (saved.running && saved.deadlineMillis != null) {
-        seconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil().clamp(0, breakMinutes * 60).toInt();
-        running = seconds > 0;
+        final remainingSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
+        seconds = remainingSeconds.clamp(0, breakMinutes * 60).toInt();
+        running = true;
+        expiredOnResume = remainingSeconds <= 0;
       } else {
         seconds = saved.remainingSeconds.clamp(0, breakMinutes * 60).toInt();
         running = false;
       }
     }
-    if (seconds == 0 && running) {
+    if (expiredOnResume) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _next());
     } else {
       _persistBreakState();
-      _startTimer();
+      if (running) _startTimer();
     }
   }
 
@@ -246,13 +256,6 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
     if (running) _startTimer(); else timer?.cancel();
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    timer?.cancel();
-    super.dispose();
-  }
-
   Future<void> _next() async {
     if (advancing) return;
     setState(() => advancing = true);
@@ -282,6 +285,13 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final clock = '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final progress = (1 - seconds / (breakMinutes * 60)).clamp(0.0, 1.0).toDouble();
@@ -295,7 +305,12 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
       const SizedBox(height: 18), LinearProgressIndicator(value: progress, minHeight: 7), const SizedBox(height: 18),
       Text(clock, style: Theme.of(context).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 24),
-      const Card(child: Padding(padding: EdgeInsets.all(16), child: Column(children: [ListTile(leading: Icon(Icons.water_drop_rounded), title: Text('Drink some water'), subtitle: Text('Hydrate before you return.')), ListTile(leading: Icon(Icons.directions_walk_rounded), title: Text('Walk, stretch or move'), subtitle: Text('Give your body a reset.')), ListTile(leading: Icon(Icons.visibility_rounded), title: Text('Rest your eyes'), subtitle: Text('Look away from the screen.')), ListTile(leading: Icon(Icons.air_rounded), title: Text('Take a few slow breaths'), subtitle: Text('Relax your shoulders and jaw.'))]))),
+      const Card(child: Padding(padding: EdgeInsets.all(16), child: Column(children: [
+        ListTile(leading: Icon(Icons.water_drop_rounded), title: Text('Drink some water'), subtitle: Text('Hydrate before you return.')),
+        ListTile(leading: Icon(Icons.directions_walk_rounded), title: Text('Walk, stretch or move'), subtitle: Text('Give your body a reset.')),
+        ListTile(leading: Icon(Icons.visibility_rounded), title: Text('Rest your eyes'), subtitle: Text('Look away from the screen.')),
+        ListTile(leading: Icon(Icons.air_rounded), title: Text('Take a few slow breaths'), subtitle: Text('Relax your shoulders and jaw.')),
+      ]))),
       const SizedBox(height: 20),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [OutlinedButton(onPressed: advancing ? null : _toggleRunning, child: Text(running ? 'Pause break' : 'Resume break')), const SizedBox(width: 10), FilledButton(onPressed: advancing ? null : _next, child: Text(advancing ? 'Saving…' : 'Continue'))]),
     ])))));
@@ -313,12 +328,17 @@ class CompletionScreen extends StatelessWidget {
     final planned = plan.allocatedMinutes;
     final progress = planned == 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
     return Scaffold(body: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(28), child: Column(children: [
-      const Icon(Icons.emoji_events_rounded, size: 72), const SizedBox(height: 20),
+      const Icon(Icons.emoji_events_rounded, size: 72),
+      const SizedBox(height: 20),
       Text(completed >= planned ? 'Plan complete' : 'Focus session complete', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-      const SizedBox(height: 8), Text('You completed $completed of $planned planned focus minutes.', textAlign: TextAlign.center),
-      const SizedBox(height: 20), SizedBox(width: 420, child: LinearProgressIndicator(value: progress, minHeight: 9)),
-      const SizedBox(height: 18), Text('+${completed * 2} XP', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-      const SizedBox(height: 26), FilledButton(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), child: const Text('Back to home')),
+      const SizedBox(height: 8),
+      Text('You completed $completed of $planned planned focus minutes.', textAlign: TextAlign.center),
+      const SizedBox(height: 20),
+      SizedBox(width: 420, child: LinearProgressIndicator(value: progress, minHeight: 9)),
+      const SizedBox(height: 18),
+      Text('+${completed * 2} XP', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+      const SizedBox(height: 24),
+      FilledButton.icon(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home')),
     ]))));
   }
 }
