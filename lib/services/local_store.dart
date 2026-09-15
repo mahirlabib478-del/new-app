@@ -2,6 +2,38 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/study_models.dart';
 
+class FocusTimerState {
+  const FocusTimerState({
+    required this.index,
+    required this.blockIndex,
+    required this.remainingSeconds,
+    required this.running,
+    this.deadlineMillis,
+  });
+
+  final int index;
+  final int blockIndex;
+  final int remainingSeconds;
+  final bool running;
+  final int? deadlineMillis;
+
+  Map<String, dynamic> toJson() => {
+        'index': index,
+        'blockIndex': blockIndex,
+        'remainingSeconds': remainingSeconds,
+        'running': running,
+        'deadlineMillis': deadlineMillis,
+      };
+
+  factory FocusTimerState.fromJson(Map<String, dynamic> json) => FocusTimerState(
+        index: (json['index'] as num?)?.toInt() ?? 0,
+        blockIndex: (json['blockIndex'] as num?)?.toInt() ?? 0,
+        remainingSeconds: (json['remainingSeconds'] as num?)?.toInt() ?? 0,
+        running: json['running'] as bool? ?? false,
+        deadlineMillis: (json['deadlineMillis'] as num?)?.toInt(),
+      );
+}
+
 class LocalStore {
   LocalStore(this.prefs);
   final SharedPreferences prefs;
@@ -19,12 +51,14 @@ class LocalStore {
   static const _sessionsKey = 'study_sessions';
   static const _indexKey = 'current_plan_index';
   static const _blockKey = 'current_block_index';
+  static const _focusTimerKey = 'focus_timer_state';
 
   Future<void> savePlan(StudyPlan plan) async {
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
     await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
     await prefs.remove(_itemMinutesKey);
+    await clearFocusTimerState();
     await setPlanPosition(0, 0);
   }
 
@@ -69,6 +103,22 @@ class LocalStore {
   int get levelProgress => xp % 250;
   int get currentPlanIndex => prefs.getInt(_indexKey) ?? 0;
   int get currentBlockIndex => prefs.getInt(_blockKey) ?? 0;
+
+  FocusTimerState? get focusTimerState {
+    final raw = prefs.getString(_focusTimerKey);
+    if (raw == null) return null;
+    try {
+      return FocusTimerState.fromJson(Map<String, dynamic>.from(jsonDecode(raw) as Map));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveFocusTimerState(FocusTimerState state) async {
+    await prefs.setString(_focusTimerKey, jsonEncode(state.toJson()));
+  }
+
+  Future<void> clearFocusTimerState() async => prefs.remove(_focusTimerKey);
 
   int itemCompletedMinutes(int index) {
     if (index < 0) return 0;
