@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/models/study_models.dart';
@@ -145,5 +147,48 @@ void main() {
     expect(store.itemCompletedMinutes(2), 25);
     expect(store.itemCompletedMinutes(1), 0);
     expect(store.planCompletedMinutes, 25);
+  });
+
+  test('model parsing accepts numeric json values and ignores malformed item entries', () {
+    final plan = StudyPlan.fromJson({
+      'totalMinutes': 90.9,
+      'items': [
+        {'title': 'Math', 'minutes': 25.8, 'topic': 'Algebra'},
+        'not-an-item',
+        {'title': 'Physics', 'minutes': 20},
+      ],
+    });
+    expect(plan.totalMinutes, 90);
+    expect(plan.items.length, 2);
+    expect(plan.items.first.minutes, 25);
+    expect(plan.items.last.title, 'Physics');
+  });
+
+  test('persisted plans normalize an unsafe total budget', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({
+        'totalMinutes': -50,
+        'items': [
+          {'title': 'Math', 'minutes': 25},
+          {'title': 'Optional', 'minutes': 0},
+        ],
+      }),
+      'study_plan_date': '2026-09-15',
+    });
+    final loaded = store.loadPlan();
+    expect(loaded?.totalMinutes, 0);
+    expect(loaded?.items.length, 2);
+    expect(loaded?.items[1].minutes, 0);
+  });
+
+  test('persisted item progress ignores negative and non-numeric values', () async {
+    final store = await makeStore({
+      'item_completed_minutes': jsonEncode({
+        '0': -10,
+        '1': 30.5,
+        'bad': 'value',
+      }),
+    });
+    expect(store.itemCompletedMinutesMap, {0: 0, 1: 30});
   });
 }
