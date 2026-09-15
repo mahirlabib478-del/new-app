@@ -25,4 +25,11 @@ class StudyPlan {
         'totalMinutes': totalMinutes,
         'items': items.map((e) => e.toJson()).toList(),
       };
+
+  factory StudyPlan.fromJson(Map<String, dynamic> json) => StudyPlan(
+        totalMinutes: json['totalMinutes'] as int? ?? 0,
+        items: (json['items'] as List<dynamic>? ?? const [])
+            .map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList(),
+      );
 }
