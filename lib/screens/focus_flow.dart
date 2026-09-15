@@ -15,7 +15,7 @@ class FocusScreen extends StatefulWidget {
   State<FocusScreen> createState() => _FocusScreenState();
 }
 
-class _FocusScreenState extends State<FocusScreen> {
+class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   late int activeIndex;
   late int activeBlockIndex;
   late int seconds;
@@ -30,6 +30,8 @@ class _FocusScreenState extends State<FocusScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     final savedIndex = widget.store.currentPlanIndex;
     final savedBlock = widget.store.currentBlockIndex;
     activeIndex = savedIndex >= 0 && savedIndex < widget.plan.items.length ? savedIndex : widget.index;
@@ -42,25 +44,91 @@ class _FocusScreenState extends State<FocusScreen> {
     if (currentBlockMinutes <= 0) currentBlockMinutes = 1;
     seconds = currentBlockMinutes * 60;
 
+    final saved = widget.store.focusTimerState;
+    if (saved != null && saved.index == activeIndex && saved.blockIndex == activeBlockIndex) {
+      if (saved.running && saved.deadlineMillis != null) {
+        final remainingSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
+        seconds = remainingSeconds.clamp(0, currentBlockMinutes * 60).toInt();
+        running = seconds > 0;
+      } else {
+        seconds = saved.remainingSeconds.clamp(0, currentBlockMinutes * 60).toInt();
+        running = false;
+      }
+    }
+
     unawaited(widget.store.setPlanPosition(activeIndex, activeBlockIndex));
+    if (seconds == 0 && running) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _openBreak(currentBlockMinutes));
+    } else {
+      _persistTimerState();
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    timer?.cancel();
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted || !running) return;
-      if (seconds > 0) setState(() => seconds--);
+      if (seconds > 0) {
+        setState(() => seconds--);
+      }
       if (seconds == 0) {
         timer?.cancel();
+        unawaited(widget.store.clearFocusTimerState());
         _openBreak(currentBlockMinutes);
       }
     });
   }
 
+  void _persistTimerState() {
+    final deadline = running ? DateTime.now().add(Duration(seconds: seconds)).millisecondsSinceEpoch : null;
+    unawaited(widget.store.saveFocusTimerState(FocusTimerState(
+      index: activeIndex,
+      blockIndex: activeBlockIndex,
+      remainingSeconds: seconds,
+      running: running,
+      deadlineMillis: deadline,
+    )));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _persistTimerState();
+    } else if (state == AppLifecycleState.resumed && mounted && running) {
+      final saved = widget.store.focusTimerState;
+      if (saved != null && saved.index == activeIndex && saved.blockIndex == activeBlockIndex && saved.deadlineMillis != null) {
+        final nextSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
+        if (nextSeconds <= 0) {
+          seconds = 0;
+          timer?.cancel();
+          _openBreak(currentBlockMinutes);
+          return;
+        }
+        setState(() => seconds = nextSeconds.clamp(0, currentBlockMinutes * 60).toInt());
+        _persistTimerState();
+      }
+      _startTimer();
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     timer?.cancel();
     super.dispose();
   }
 
+  void _toggleRunning() {
+    setState(() => running = !running);
+    _persistTimerState();
+    if (running) _startTimer();
+    else timer?.cancel();
+  }
+
   void _openBreak(int completed) {
     timer?.cancel();
+    unawaited(widget.store.clearFocusTimerState());
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -124,12 +192,12 @@ class _FocusScreenState extends State<FocusScreen> {
                   Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 24),
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    FilledButton.icon(onPressed: () => setState(() => running = !running), icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')),
+                    FilledButton.icon(onPressed: _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')),
                     const SizedBox(width: 12),
                     OutlinedButton.icon(onPressed: () => _openBreak(((currentBlockMinutes * 60 - seconds) / 60).floor()), icon: const Icon(Icons.done_rounded), label: const Text('Finish early')),
                   ]),
                   const SizedBox(height: 22),
-                  Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('One block at a time. Finish this block, take your reset break, then continue.', style: Theme.of(context).textTheme.bodyMedium))),
+                  Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your timer is saved locally. If the app closes, you can return and continue from this block.', style: Theme.of(context).textTheme.bodyMedium))),
                 ],
               ),
             ),
@@ -236,7 +304,7 @@ class _BreakScreenState extends State<BreakScreen> {
                   const SizedBox(height: 18),
                   Text('Break time', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 8),
-                  Text('You completed ${widget.completed} minute${widget.completed == 1 ? '' : 's'}. Reset before the next focus block.', textAlign: TextAlign.center),
+                  Text('You completed ${widget.completed} minute${widget.completed == 1 ? '' : 's'}. Reset before you return.', textAlign: TextAlign.center),
                   const SizedBox(height: 20),
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Text('Break length', style: TextStyle(fontWeight: FontWeight.w800)),
