@@ -12,8 +12,6 @@ List<StudyItem> generateExamPlan({
   if (subjects.isEmpty || studyHours <= 0) return const [];
 
   final totalMinutes = studyHours * 60;
-  final ranked = [...subjects]
-    ..sort((a, b) => (priorities[b] ?? 2).compareTo(priorities[a] ?? 2));
   final safeUrgency = urgency.clamp(1, 3).toInt();
   final weights = subjects
       .map((subject) => (priorities[subject] ?? 2).clamp(1, 3).toInt() + safeUrgency - 1)
@@ -32,7 +30,7 @@ List<StudyItem> generateExamPlan({
       assignedBlocks += counts[i];
     }
 
-    var remainingBlocks = blockCount - assignedBlocks;
+    final remainingBlocks = blockCount - assignedBlocks;
     final order = List<int>.generate(subjects.length, (index) => index)
       ..sort((a, b) {
         final fractionCompare = fractions[b].compareTo(fractions[a]);
@@ -56,8 +54,17 @@ List<StudyItem> generateExamPlan({
 
   final remainder = totalMinutes % 25;
   if (remainder > 0) {
+    // Put the leftover minutes on the highest-weight subject. This keeps the
+    // priority rule intact even when the total study time is not divisible by
+    // a 25-minute focus block.
+    var remainderTarget = 0;
+    for (var i = 1; i < subjects.length; i++) {
+      if (weights[i] > weights[remainderTarget]) {
+        remainderTarget = i;
+      }
+    }
     items.add(StudyItem(
-      title: ranked.first,
+      title: subjects[remainderTarget],
       minutes: remainder,
       topic: nextDay ? 'Final review' : 'Flexible review',
     ));
