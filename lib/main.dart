@@ -212,6 +212,8 @@ class ProgressScreen extends StatelessWidget {
     final planned = plan?.allocatedMinutes ?? 0;
     final completed = plan == null ? 0 : store.planCompletedMinutes.clamp(0, planned).toInt();
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
+    final levelProgress = store.levelProgress / 250;
+    final nextLevelXp = ((store.level) * 250) - store.xp;
     return Scaffold(appBar: AppBar(title: const Text('Progress')), body: ListView(padding: const EdgeInsets.all(20), children: [
       Text('Your momentum', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 18),
@@ -223,11 +225,47 @@ class ProgressScreen extends StatelessWidget {
         Text('${(progress * 100).round()}% complete'),
       ]))),
       const SizedBox(height: 12),
+      Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          CircleAvatar(radius: 24, child: Text('${store.level}', style: const TextStyle(fontWeight: FontWeight.w900))),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Level ${store.level}', style: const TextStyle(fontWeight: FontWeight.w900)),
+            Text(nextLevelXp <= 0 ? 'Level complete' : '$nextLevelXp XP to next level'),
+          ])),
+          Text('${store.levelProgress}/250 XP', style: const TextStyle(fontWeight: FontWeight.w800)),
+        ]),
+        const SizedBox(height: 12),
+        LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7),
+      ]))),
+      const SizedBox(height: 12),
       Row(children: [Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Streak')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.bolt_rounded, value: '${store.xp}', label: 'XP')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes'))]),
+      const SizedBox(height: 20),
+      Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+      const SizedBox(height: 10),
+      _Achievement(icon: Icons.play_arrow_rounded, title: 'First Focus', subtitle: 'Complete your first focused minute.', unlocked: store.completedMinutes >= 1),
+      _Achievement(icon: Icons.timer_rounded, title: 'Deep Work', subtitle: 'Complete 60 focused minutes.', unlocked: store.completedMinutes >= 60),
+      _Achievement(icon: Icons.local_fire_department_rounded, title: '3-Day Streak', subtitle: 'Study on 3 consecutive days.', unlocked: store.streak >= 3),
+      _Achievement(icon: Icons.workspace_premium_rounded, title: 'Level 5', subtitle: 'Reach level 5.', unlocked: store.level >= 5),
       const SizedBox(height: 18),
       if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
     ]));
   }
+}
+
+class _Achievement extends StatelessWidget {
+  const _Achievement({required this.icon, required this.title, required this.subtitle, required this.unlocked});
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool unlocked;
+  @override
+  Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(
+    leading: CircleAvatar(child: Icon(icon)),
+    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+    subtitle: Text(subtitle),
+    trailing: Icon(unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded),
+  ));
 }
 
 class _ProgressItem extends StatelessWidget {
