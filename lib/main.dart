@@ -14,12 +14,10 @@ Future<void> main() async {
 
 class AppTheme {
   const AppTheme({required this.name, required this.description, required this.icon, required this.seed, required this.brightness});
-  final String name;
-  final String description;
+  final String name, description;
   final IconData icon;
   final Color seed;
   final Brightness brightness;
-
   ThemeData get data => ThemeData(
     useMaterial3: true,
     colorSchemeSeed: seed,
@@ -42,166 +40,61 @@ class StudyOS extends StatefulWidget {
   final LocalStore store;
   @override State<StudyOS> createState() => _StudyOSState();
 }
-
 class _StudyOSState extends State<StudyOS> {
   late String themeKey = appThemes.containsKey(widget.store.themePreset) ? widget.store.themePreset : 'midnight';
   int tab = 0;
-
   AppTheme get selectedTheme => appThemes[themeKey]!;
-
-  void setTheme(String key) async {
-    if (!appThemes.containsKey(key)) return;
-    setState(() => themeKey = key);
-    await widget.store.setThemePreset(key);
-    await widget.store.setDarkMode(appThemes[key]!.brightness == Brightness.dark);
-  }
-
-  void startPlan(StudyPlan plan) {
-    final snapshot = TodayEngine(widget.store).build();
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: plan, index: snapshot.currentIndex, blockIndex: snapshot.currentBlockIndex)));
-  }
-
-  @override Widget build(BuildContext context) {
-    final theme = selectedTheme.data;
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Study OS',
-      theme: theme,
-      darkTheme: theme,
-      themeMode: ThemeMode.system,
-      home: Scaffold(
-        body: [
-          Home(store: widget.store, onTheme: () => setTheme(themeKey == 'midnight' ? 'sunrise' : 'midnight')),
-          StudyHub(store: widget.store, onStartPlan: startPlan),
-          ProgressScreen(store: widget.store),
-          ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme),
-        ][tab],
-        bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: (i) => setState(() => tab = i), destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book_rounded), label: 'Study'),
-          NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights_rounded), label: 'Progress'),
-          NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
-        ]),
-      ),
-    );
-  }
+  void setTheme(String key) async { if (!appThemes.containsKey(key)) return; setState(() => themeKey = key); await widget.store.setThemePreset(key); await widget.store.setDarkMode(appThemes[key]!.brightness == Brightness.dark); }
+  void startPlan(StudyPlan plan) { final s = TodayEngine(widget.store).build(); Navigator.of(context).push(MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: plan, index: s.currentIndex, blockIndex: s.currentBlockIndex))); }
+  @override Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false, title: 'Study OS', theme: selectedTheme.data, darkTheme: selectedTheme.data, themeMode: ThemeMode.light,
+    home: Scaffold(
+      body: [Home(store: widget.store, onTheme: () => setTheme(themeKey == 'midnight' ? 'sunrise' : 'midnight')), StudyHub(store: widget.store, onStartPlan: startPlan), ProgressScreen(store: widget.store), ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme)][tab],
+      bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: (i) => setState(() => tab = i), destinations: const [NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'), NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book_rounded), label: 'Study'), NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights_rounded), label: 'Progress'), NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile')]),
+    ),
+  );
 }
 
 class Home extends StatelessWidget {
   const Home({super.key, required this.store, required this.onTheme});
-  final LocalStore store;
-  final VoidCallback onTheme;
-
+  final LocalStore store; final VoidCallback onTheme;
   @override Widget build(BuildContext context) {
-    final snapshot = TodayEngine(store).build();
-    final plan = snapshot.plan;
+    final s = TodayEngine(store).build(); final plan = s.plan;
     return Scaffold(body: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [
-      Row(children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Good evening', style: Theme.of(context).textTheme.titleMedium),
-          Text('Ready to focus?', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-        ])),
-        IconButton(onPressed: onTheme, icon: const Icon(Icons.brightness_6_rounded)),
-        const CircleAvatar(child: Icon(Icons.person_rounded)),
-      ]),
-      const SizedBox(height: 22),
-      _Hero(snapshot: snapshot),
+      Row(children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(_greeting(), style: Theme.of(context).textTheme.titleMedium), Text('Ready to focus?', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900))])), IconButton(onPressed: onTheme, icon: const Icon(Icons.brightness_6_rounded)), const CircleAvatar(child: Icon(Icons.person_rounded))]),
+      const SizedBox(height: 22), _Hero(snapshot: s),
       const SizedBox(height: 20),
-      if (snapshot.hasPlan) _NextUp(snapshot: snapshot, onStart: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FocusScreen(store: store, plan: plan!, index: snapshot.currentIndex, blockIndex: snapshot.currentBlockIndex)))),
-      if (snapshot.hasPlan) const SizedBox(height: 20),
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text('Study modes', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-        Text('${snapshot.streak} day streak', style: Theme.of(context).textTheme.labelLarge),
-      ]),
-      const SizedBox(height: 12),
+      if (s.hasPlan) _NextUp(snapshot: s, onStart: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FocusScreen(store: store, plan: plan!, index: s.currentIndex, blockIndex: s.currentBlockIndex)))),
+      if (s.hasPlan) const SizedBox(height: 20),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Study modes', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)), Text('${s.streak} day streak', style: Theme.of(context).textTheme.labelLarge)]), const SizedBox(height: 12),
       _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Build subjects, topics and focused sessions.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => Setup(store: store)))),
       _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Build a focused exam plan around your priorities.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (p) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: store, plan: p, index: 0, blockIndex: 0)))))),
       _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'Prioritize the highest-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (p) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: store, plan: p, index: 0, blockIndex: 0)))))),
-      const SizedBox(height: 18),
-      Text('Today', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-      const SizedBox(height: 10),
-      Card(child: ListTile(leading: const Icon(Icons.event_note_rounded, size: 30), title: Text(plan == null ? 'No plan yet' : '${plan.items.length} focus blocks planned'), subtitle: Text(plan == null ? 'Create a plan to get started.' : '${snapshot.remainingMinutes} minutes remaining'), trailing: plan == null ? null : const Icon(Icons.arrow_forward_rounded), onTap: plan == null ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => FocusScreen(store: store, plan: plan, index: snapshot.currentIndex, blockIndex: snapshot.currentBlockIndex))))),
+      const SizedBox(height: 18), Text('Today', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)), const SizedBox(height: 10),
+      Card(child: Padding(padding: const EdgeInsets.all(16), child: plan == null ? const ListTile(leading: Icon(Icons.event_note_rounded, size: 30), title: Text('No plan yet'), subtitle: Text('Create a plan to get your day moving.')) : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [const Icon(Icons.event_note_rounded, size: 30), const SizedBox(width: 12), Expanded(child: Text('${plan.items.length} focus blocks planned', style: const TextStyle(fontWeight: FontWeight.w900))), Text('${s.completedMinutes}/${plan.allocatedMinutes}m', style: const TextStyle(fontWeight: FontWeight.w800))]), const SizedBox(height: 14), LinearProgressIndicator(value: s.progress, minHeight: 8), const SizedBox(height: 10), Text(s.remainingMinutes == 0 ? 'Plan complete — great work.' : '${s.remainingMinutes} minutes remaining'), const SizedBox(height: 12), SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FocusScreen(store: store, plan: plan, index: s.currentIndex, blockIndex: s.currentBlockIndex))), icon: Icon(s.completedMinutes == 0 ? Icons.play_arrow_rounded : Icons.play_circle_outline_rounded), label: Text(s.completedMinutes == 0 ? 'Start today\'s plan' : 'Resume plan')))]))),
     ])));
   }
+  String _greeting() { final h = DateTime.now().hour; if (h < 12) return 'Good morning'; if (h < 18) return 'Good afternoon'; return 'Good evening'; }
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.snapshot});
-  final TodaySnapshot snapshot;
-  @override Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
-    return TweenAnimationBuilder<double>(tween: Tween(begin: 0, end: snapshot.progress), duration: const Duration(milliseconds: 650), curve: Curves.easeOutCubic, builder: (_, value, __) => Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(gradient: LinearGradient(colors: [c.primary, c.secondary]), borderRadius: BorderRadius.circular(28)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('LEVEL ${snapshot.level}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-      const SizedBox(height: 7),
-      Text('${snapshot.remainingMinutes} min left', style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
-      const SizedBox(height: 14),
-      ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: value, minHeight: 9, backgroundColor: Colors.white24)),
-      const SizedBox(height: 9),
-      Text(snapshot.hasPlan ? '${snapshot.completedMinutes} min completed • ${snapshot.xp} XP' : 'Start your first study session.', style: const TextStyle(color: Colors.white70)),
-    ])));
-  }
+  const _Hero({required this.snapshot}); final TodaySnapshot snapshot;
+  @override Widget build(BuildContext context) { final c = Theme.of(context).colorScheme; return TweenAnimationBuilder<double>(tween: Tween(begin: 0, end: snapshot.progress), duration: const Duration(milliseconds: 650), curve: Curves.easeOutCubic, builder: (_, value, __) => Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(gradient: LinearGradient(colors: [c.primary, c.secondary]), borderRadius: BorderRadius.circular(28)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('TODAY ENGINE', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, letterSpacing: 1.2)), const SizedBox(height: 7), Text(snapshot.hasPlan ? '${snapshot.remainingMinutes} min left' : 'Plan your day', style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)), const SizedBox(height: 14), ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: value, minHeight: 9, backgroundColor: Colors.white24)), const SizedBox(height: 9), Text(snapshot.hasPlan ? '${snapshot.completedMinutes} min completed • ${snapshot.xp} XP' : 'Choose a study mode to begin.', style: const TextStyle(color: Colors.white70))]))); }
 }
 
-class _NextUp extends StatelessWidget {
-  const _NextUp({required this.snapshot, required this.onStart});
-  final TodaySnapshot snapshot;
-  final VoidCallback onStart;
-  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    const Text('NEXT UP', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.1)), const SizedBox(height: 8),
-    ListTile(contentPadding: EdgeInsets.zero, leading: const CircleAvatar(child: Icon(Icons.play_arrow_rounded)), title: Text(snapshot.nextItem?.title ?? 'Ready', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(snapshot.nextItem?.topic ?? 'Focus session'), trailing: Text('${snapshot.nextItem?.minutes ?? 0}m', style: const TextStyle(fontWeight: FontWeight.w900)), onTap: onStart),
-    SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: onStart, icon: const Icon(Icons.play_arrow_rounded), label: const Text('Continue studying'))),
-  ])));
-}
+class _NextUp extends StatelessWidget { const _NextUp({required this.snapshot, required this.onStart}); final TodaySnapshot snapshot; final VoidCallback onStart; @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('NEXT UP', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.1)), const SizedBox(height: 8), ListTile(contentPadding: EdgeInsets.zero, leading: const CircleAvatar(child: Icon(Icons.play_arrow_rounded)), title: Text(snapshot.nextItem?.title ?? 'Ready', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(snapshot.nextItem?.topic?.isNotEmpty == true ? snapshot.nextItem!.topic : '${snapshot.nextItem?.minutes ?? 0} minute focus block'), trailing: Text('${snapshot.nextItem?.minutes ?? 0}m', style: const TextStyle(fontWeight: FontWeight.w900)), onTap: onStart), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: onStart, icon: const Icon(Icons.play_arrow_rounded), label: const Text('Continue studying'))]))); }
+class _Mode extends StatelessWidget { const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap}); final IconData icon; final String title, subtitle; final VoidCallback onTap; @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded))); }
 
-class _Mode extends StatelessWidget {
-  const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap});
-  final IconData icon; final String title, subtitle; final VoidCallback onTap;
-  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
-}
+class StudyHub extends StatelessWidget { const StudyHub({super.key, required this.store, required this.onStartPlan}); final LocalStore store; final void Function(StudyPlan) onStartPlan; @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Study')), body: ListView(padding: const EdgeInsets.all(20), children: [Text('Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 18), _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Plan subjects, chapters and focus blocks.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => Setup(store: store)))), _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Multi-day exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: onStartPlan)))), _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: onStartPlan))))])); }
 
-class StudyHub extends StatelessWidget {
-  const StudyHub({super.key, required this.store, required this.onStartPlan});
-  final LocalStore store; final void Function(StudyPlan) onStartPlan;
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Study')), body: ListView(padding: const EdgeInsets.all(20), children: [
-    Text('Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 18),
-    _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Plan subjects, chapters and focus blocks.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => Setup(store: store)))),
-    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Multi-day exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: onStartPlan)))),
-    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: onStartPlan)))),
-  ]));
-}
-
-class ProgressScreen extends StatelessWidget {
-  const ProgressScreen({super.key, required this.store}); final LocalStore store;
-  @override Widget build(BuildContext context) { final xp = store.xp; return Scaffold(appBar: AppBar(title: const Text('Progress')), body: ListView(padding: const EdgeInsets.all(20), children: [
-    Text('Your momentum', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 16),
-    Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Level ${store.level}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), Text('$xp XP total'), const SizedBox(height: 14), LinearProgressIndicator(value: store.levelProgress / 250, minHeight: 9), const SizedBox(height: 8), Text('${store.levelProgress} / 250 XP to next level')]))),
-    const SizedBox(height: 14), Row(children: [Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Day streak')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.check_circle_rounded, value: '${store.sessions}', label: 'Sessions'))]),
-    const SizedBox(height: 24), Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-    ...[('First Focus', store.sessions >= 1), ('60 Minutes', store.completedMinutes >= 60), ('250 XP', xp >= 250), ('3 Day Streak', store.streak >= 3), ('10 Sessions', store.sessions >= 10)].map((a) => Card(child: ListTile(leading: CircleAvatar(child: Icon(a.$2 ? Icons.emoji_events_rounded : Icons.lock_outline_rounded)), title: Text(a.$1), trailing: Icon(a.$2 ? Icons.check_circle_rounded : Icons.chevron_right_rounded)))),
-  ]); }
-}
-
+class ProgressScreen extends StatelessWidget { const ProgressScreen({super.key, required this.store}); final LocalStore store; @override Widget build(BuildContext context) { final xp = store.xp; return Scaffold(appBar: AppBar(title: const Text('Progress')), body: ListView(padding: const EdgeInsets.all(20), children: [Text('Your momentum', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 16), Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Level ${store.level}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), Text('$xp XP total'), const SizedBox(height: 14), LinearProgressIndicator(value: store.levelProgress / 250, minHeight: 9), const SizedBox(height: 8), Text('${store.levelProgress} / 250 XP to next level')])), const SizedBox(height: 14), Row(children: [Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Day streak')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.check_circle_rounded, value: '${store.sessions}', label: 'Sessions'))]), const SizedBox(height: 24), Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)), ...[('First Focus', store.sessions >= 1), ('60 Minutes', store.completedMinutes >= 60), ('250 XP', xp >= 250), ('3 Day Streak', store.streak >= 3), ('10 Sessions', store.sessions >= 10)].map((a) => Card(child: ListTile(leading: CircleAvatar(child: Icon(a.$2 ? Icons.emoji_events_rounded : Icons.lock_outline_rounded)), title: Text(a.$1), trailing: Icon(a.$2 ? Icons.check_circle_rounded : Icons.chevron_right_rounded))))])); } }
 class _Stat extends StatelessWidget { const _Stat({required this.icon, required this.value, required this.label}); final IconData icon; final String value, label; @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), Text(label, style: Theme.of(context).textTheme.labelSmall)]))); }
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key, required this.store, required this.themeKey, required this.onThemeChanged});
-  final LocalStore store; final String themeKey; final void Function(String) onThemeChanged;
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Profile')), body: ListView(padding: const EdgeInsets.all(20), children: [
-    const CircleAvatar(radius: 42, child: Icon(Icons.person_rounded, size: 44)), const SizedBox(height: 14), const Center(child: Text('Study OS learner', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900))), const SizedBox(height: 28),
-    Text('App theme', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10),
-    ...appThemes.entries.map((entry) { final theme = entry.value; final selected = entry.key == themeKey; return Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: () => onThemeChanged(entry.key), leading: CircleAvatar(child: Icon(theme.icon)), title: Text(theme.name, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(theme.description), trailing: Icon(selected ? Icons.check_circle_rounded : Icons.chevron_right_rounded)); }),
-    const SizedBox(height: 18),
-    const Card(child: ListTile(leading: Icon(Icons.offline_bolt_rounded), title: Text('Offline-first'), subtitle: Text('Your study data stays on this device.'))),
-    const Card(child: ListTile(leading: Icon(Icons.verified_rounded), title: Text('Zero-cost foundation'), subtitle: Text('No backend or paid API required for the core app.'))),
-  ]));
-}
+class ProfileScreen extends StatelessWidget { const ProfileScreen({super.key, required this.store, required this.themeKey, required this.onThemeChanged}); final LocalStore store; final String themeKey; final void Function(String) onThemeChanged; @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Profile')), body: ListView(padding: const EdgeInsets.all(20), children: [const CircleAvatar(radius: 42, child: Icon(Icons.person_rounded, size: 44)), const SizedBox(height: 14), const Center(child: Text('Study OS learner', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900))), const SizedBox(height: 28), Text('App theme', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10), ...appThemes.entries.map((entry) { final theme = entry.value; final selected = entry.key == themeKey; return Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: () => onThemeChanged(entry.key), leading: CircleAvatar(child: Icon(theme.icon)), title: Text(theme.name, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(theme.description), trailing: Icon(selected ? Icons.check_circle_rounded : Icons.chevron_right_rounded)); }), const SizedBox(height: 18), const Card(child: ListTile(leading: Icon(Icons.offline_bolt_rounded), title: Text('Offline-first'), subtitle: Text('Your study data stays on this device.'))), const Card(child: ListTile(leading: Icon(Icons.verified_rounded), title: Text('Zero-cost foundation'), subtitle: Text('No backend or paid API required for the core app.'))])); }
 
 class Setup extends StatefulWidget { const Setup({super.key, required this.store}); final LocalStore store; @override State<Setup> createState() => _SetupState(); }
-class _SetupState extends State<Setup> { int total = 120; final subjects = <String>[]; final input = TextEditingController(); void add() { final s = input.text.trim(); if (s.isNotEmpty && !subjects.contains(s)) setState(() { subjects.add(s); input.clear(); }); } @override void dispose() { input.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Regular Study')), body: ListView(padding: const EdgeInsets.all(20), children: [Text('Build your session', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8), const Text('Set total time first. Subject allocations can never exceed this limit.'), const SizedBox(height: 24), Card(child: Column(children: [Padding(padding: const EdgeInsets.only(top: 18), child: Text('${total ~/ 60}h ${total % 60}m', style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900))), Slider(value: total.toDouble(), min: 25, max: 480, divisions: 91, onChanged: (v) => setState(() => total = v.round()))])), const SizedBox(height: 24), Row(children: [Expanded(child: TextField(controller: input, onSubmitted: (_) => add(), decoration: const InputDecoration(hintText: 'e.g. Mathematics', border: OutlineInputBorder()))), const SizedBox(width: 8), IconButton.filled(onPressed: add, icon: const Icon(Icons.add))]), const SizedBox(height: 12), ...subjects.asMap().entries.map((e) => Card(child: ListTile(leading: CircleAvatar(child: Text('${e.key + 1}')), title: Text(e.value), trailing: IconButton(onPressed: () => setState(() => subjects.removeAt(e.key)), icon: const Icon(Icons.close))))), const SizedBox(height: 20), FilledButton.icon(onPressed: subjects.isEmpty ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => Allocation(store: widget.store, subjects: subjects, total: total))), icon: const Icon(Icons.arrow_forward), label: const Padding(padding: EdgeInsets.all(14), child: Text('Continue to topics & time'))])); }
+class _SetupState extends State<Setup> { int total = 120; final subjects = <String>[]; final input = TextEditingController(); void add() { final s = input.text.trim(); if (s.isNotEmpty && !subjects.contains(s)) setState(() { subjects.add(s); input.clear(); }); } @override void dispose() { input.dispose(); super.dispose(); } @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Regular Study')), body: ListView(padding: const EdgeInsets.all(20), children: [Text('Plan your focus time', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 6), const Text('Set your total time first. You can never allocate more than this.'), const SizedBox(height: 22), Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total study time', style: TextStyle(fontWeight: FontWeight.w800)), Text('$total min', style: const TextStyle(fontWeight: FontWeight.w900))]), Slider(value: total.toDouble(), min: 25, max: 480, divisions: 91, label: '$total min', onChanged: (v) => setState(() => total = v.round())), Text('${total ~/ 60}h ${total % 60}m available')]))), const SizedBox(height: 20), Text('Subjects', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)), const SizedBox(height: 10), Row(children: [Expanded(child: TextField(controller: input, onSubmitted: (_) => add(), decoration: const InputDecoration(hintText: 'e.g. Mathematics'))), const SizedBox(width: 10), FilledButton(onPressed: add, child: const Icon(Icons.add_rounded))]), const SizedBox(height: 12), if (subjects.isNotEmpty) Wrap(spacing: 8, runSpacing: 8, children: subjects.map((s) => InputChip(label: Text(s), onDeleted: () => setState(() => subjects.remove(s)))).toList()), if (subjects.isEmpty) const Card(child: Padding(padding: EdgeInsets.all(16), child: Text('Add at least one subject to continue.'))), const SizedBox(height: 24), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: subjects.isEmpty ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => Allocation(store: widget.store, total: total, subjects: subjects))), icon: const Icon(Icons.arrow_forward_rounded), label: const Text('Continue to allocation'))])); }
 }
 
-class Allocation extends StatefulWidget { const Allocation({super.key, required this.store, required this.subjects, required this.total}); final LocalStore store; final List<String> subjects; final int total; @override State<Allocation> createState() => _AllocationState(); }
-class _AllocationState extends State<Allocation> { late List<int> values; late List<List<String>> topicNames; late List<TextEditingController> topicInputs; @override void initState() { super.initState(); values = List.filled(widget.subjects.length, 0); topicNames = List.generate(widget.subjects.length, (_) => []); topicInputs = List.generate(widget.subjects.length, (_) => TextEditingController()); } int get used => values.fold(0, (a, b) => a + b); void addTopic(int i) { final t = topicInputs[i].text.trim(); if (t.isNotEmpty && !topicNames[i].contains(t)) setState(() { topicNames[i].add(t); topicInputs[i].clear(); }); } @override void dispose() { for (final c in topicInputs) c.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Topics & time allocation')), body: ListView(padding: const EdgeInsets.all(20), children: [Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Allocated: $used min', style: const TextStyle(fontWeight: FontWeight.w800)), Text('Remaining: ${widget.total - used} min', style: const TextStyle(fontWeight: FontWeight.w800))]))), const SizedBox(height: 12), ...widget.subjects.asMap().entries.map((e) { final i = e.key; return Card(child: Padding(padding: const EdgeInsets.fromLTRB(16, 10, 16, 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [ListTile(contentPadding: EdgeInsets.zero, title: Text(e.value, style: const TextStyle(fontWeight: FontWeight.w800)), trailing: Text('${values[i]}m')), Slider(value: values[i].toDouble(), min: 0, max: widget.total.toDouble(), divisions: widget.total, onChanged: (v) { final other = used - values[i]; setState(() => values[i] = v.round().clamp(0, widget.total - other)); }), const SizedBox(height: 4), Text('Topics / chapters', style: Theme.of(context).textTheme.labelLarge), const SizedBox(height: 6), Row(children: [Expanded(child: TextField(controller: topicInputs[i], onSubmitted: (_) => addTopic(i), decoration: const InputDecoration(hintText: 'e.g. Quadratic Equations', border: OutlineInputBorder(), isDense: true))), const SizedBox(width: 8), IconButton.filled(onPressed: () => addTopic(i), icon: const Icon(Icons.add))]), if (topicNames[i].isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Wrap(spacing: 8, runSpacing: 8, children: topicNames[i].map((t) => InputChip(label: Text(t), onDeleted: () => setState(() => topicNames[i].remove(t))).toList())))])); }), const SizedBox(height: 24), FilledButton.icon(onPressed: used == 0 ? null : () { final items = <StudyItem>[]; for (var i = 0; i < widget.subjects.length; i++) { if (values[i] <= 0) continue; final names = topicNames[i]; if (names.isEmpty) { items.add(StudyItem(title: widget.subjects[i], minutes: values[i], topic: 'Study block')); } else { final base = values[i] ~/ names.length; var r = values[i] % names.length; for (final name in names) { final m = base + (r > 0 ? 1 : 0); r--; if (m > 0) items.add(StudyItem(title: widget.subjects[i], minutes: m, topic: name)); } } } final plan = StudyPlan(totalMinutes: widget.total, items: items); widget.store.savePlan(plan); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: plan, index: 0, blockIndex: 0))); }, icon: const Icon(Icons.play_arrow), label: const Padding(padding: EdgeInsets.all(14), child: Text('Save plan & start')))])); }
-}
+class Allocation extends StatefulWidget { const Allocation({super.key, required this.store, required this.total, required this.subjects}); final LocalStore store; final int total; final List<String> subjects; @override State<Allocation> createState() => _AllocationState(); }
+class _AllocationState extends State<Allocation> { late List<int> minutes; final topics = <String, List<String>>{}; final controllers = <String, TextEditingController>{}; @override void initState() { super.initState(); final base = widget.total ~/ widget.subjects.length; final extra = widget.total % widget.subjects.length; minutes = List.generate(widget.subjects.length, (i) => base + (i < extra ? 1 : 0)); for (final s in widget.subjects) { topics[s] = []; controllers[s] = TextEditingController(); } } @override void dispose() { for (final c in controllers.values) { c.dispose(); } super.dispose(); } int get allocated => minutes.fold(0, (a, b) => a + b); int get remaining => widget.total - allocated; void change(int i, int value) { final others = allocated - minutes[i]; final max = widget.total - others; setState(() => minutes[i] = value.clamp(0, max)); } void addTopic(String s) { final c = controllers[s]!; final t = c.text.trim(); if (t.isNotEmpty && !topics[s]!.contains(t)) setState(() { topics[s]!.add(t); c.clear(); }); } void save() async { final items = <StudyItem>[]; for (var i = 0; i < widget.subjects.length; i++) { final subject = widget.subjects[i]; final m = minutes[i]; if (m <= 0) continue; final ts = topics[subject]!; items.add(StudyItem(title: subject, minutes: m, topic: ts.join(' • '))); } if (items.isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Allocate at least 1 minute to a subject.'))); return; } final plan = StudyPlan(totalMinutes: widget.total, items: items); await widget.store.savePlan(plan); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: plan, index: 0, blockIndex: 0))); } @override Widget build(BuildContext context) { final c = Theme.of(context).colorScheme; return Scaffold(appBar: AppBar(title: const Text('Allocate time')), body: ListView(padding: const EdgeInsets.all(20), children: [Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Allocation budget', style: TextStyle(fontWeight: FontWeight.w900)), Text('$allocated / ${widget.total} min', style: const TextStyle(fontWeight: FontWeight.w900))]), const SizedBox(height: 10), LinearProgressIndicator(value: widget.total == 0 ? 0 : allocated / widget.total, minHeight: 9), const SizedBox(height: 8), Text(remaining == 0 ? 'Budget fully allocated.' : '$remaining minutes still available', style: TextStyle(color: remaining == 0 ? c.primary : null, fontWeight: FontWeight.w700))])), const SizedBox(height: 16), ...List.generate(widget.subjects.length, (i) { final s = widget.subjects[i]; final ts = topics[s]!; return Card(margin: const EdgeInsets.only(bottom: 12), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text(s, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))), Text('${minutes[i]}m', style: const TextStyle(fontWeight: FontWeight.w900))]), Slider(value: minutes[i].toDouble(), min: 0, max: widget.total.toDouble(), divisions: widget.total, onChanged: (v) => change(i, v.round())), TextField(controller: controllers[s], onSubmitted: (_) => addTopic(s), decoration: const InputDecoration(labelText: 'Add chapter / topic', prefixIcon: Icon(Icons.bookmark_outline_rounded), suffixIcon: Icon(Icons.add_rounded))), if (ts.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 10), child: Wrap(spacing: 6, runSpacing: 6, children: ts.map((t) => InputChip(label: Text(t), onDeleted: () => setState(() => ts.remove(t)))).toList()))])); }), const SizedBox(height: 6), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: allocated == 0 ? null : save, icon: const Icon(Icons.play_arrow_rounded), label: Text(remaining == 0 ? 'Start focused study' : 'Start with $allocated min'))])); } }
