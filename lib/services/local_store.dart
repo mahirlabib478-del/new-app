@@ -106,8 +106,24 @@ class LocalStore {
   Future<void> addItemCompletedMinutes(int index, int value) => _recordCompletion(value, index);
 
   Future<void> _recordCompletion(int value, int? itemIndex) async {
-    final minutes = value.clamp(0, 1440).toInt();
+    final requested = value.clamp(0, 1440).toInt();
+    if (requested <= 0) return;
+
+    final plan = loadPlan();
+    final planRemaining = plan == null
+        ? requested
+        : (plan.totalMinutes - planCompletedMinutes).clamp(0, 1440).toInt();
+    if (planRemaining <= 0) return;
+
+    var minutes = requested > planRemaining ? planRemaining : requested;
+    if (itemIndex != null && plan != null && itemIndex < plan.items.length) {
+      final itemRemaining =
+          (plan.items[itemIndex].minutes - itemCompletedMinutes(itemIndex)).clamp(0, 1440).toInt();
+      if (itemRemaining <= 0) return;
+      if (minutes > itemRemaining) minutes = itemRemaining;
+    }
     if (minutes <= 0) return;
+
     await prefs.setInt(_minutesKey, completedMinutes + minutes);
     await prefs.setInt(_planMinutesKey, planCompletedMinutes + minutes);
     await prefs.setInt(_xpKey, xp + minutes * 2);
