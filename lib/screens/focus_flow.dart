@@ -33,7 +33,7 @@ class _FocusScreenState extends State<FocusScreen> {
     currentBlockMinutes = remaining > FocusScreen.focusBlock ? FocusScreen.focusBlock : remaining;
     if (currentBlockMinutes <= 0) {
       activeBlockIndex = 0;
-      currentBlockMinutes = item.minutes.clamp(1, FocusScreen.focusBlock);
+      currentBlockMinutes = item.minutes.clamp(1, FocusScreen.focusBlock).toInt();
     }
     seconds = currentBlockMinutes * 60;
     unawaited(widget.store.setPlanPosition(activeIndex, activeBlockIndex));
@@ -50,38 +50,26 @@ class _FocusScreenState extends State<FocusScreen> {
   @override void dispose() { timer?.cancel(); super.dispose(); }
 
   void _openBreak(int completed) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BreakScreen(
-          store: widget.store,
-          plan: widget.plan,
-          index: activeIndex,
-          blockIndex: activeBlockIndex,
-          completed: completed,
-        ),
-      ),
-    );
+    timer?.cancel();
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: completed)));
   }
 
   @override Widget build(BuildContext context) {
     final clock = '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final progress = currentBlockMinutes == 0 ? 0.0 : 1 - seconds / (currentBlockMinutes * 60);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Focus mode')),
-      body: SafeArea(child: Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.center_focus_strong_rounded, size: 34), const SizedBox(height: 18),
-        Text(item.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-        if (item.topic.isNotEmpty) ...[const SizedBox(height: 6), Text(item.topic)], const SizedBox(height: 34),
-        Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900, fontFeatures: [const FontFeature.tabularFigures()])), const SizedBox(height: 20),
-        ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: progress, minHeight: 9)), const SizedBox(height: 26),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          FilledButton.icon(onPressed: () => setState(() => running = !running), icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')),
-          const SizedBox(width: 12),
-          OutlinedButton.icon(onPressed: () => _openBreak(((currentBlockMinutes * 60 - seconds) / 60).floor()), icon: const Icon(Icons.done_rounded), label: const Text('Finish early')),
-        ]),
-        const SizedBox(height: 18), Text('Block ${activeBlockIndex + 1} • Stay with one task. Your next break is earned.', style: Theme.of(context).textTheme.bodyMedium),
-      ])))));
+    return Scaffold(appBar: AppBar(title: const Text('Focus mode')), body: SafeArea(child: Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      const Icon(Icons.center_focus_strong_rounded, size: 34), const SizedBox(height: 18),
+      Text(item.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
+      if (item.topic.isNotEmpty) ...[const SizedBox(height: 6), Text(item.topic)], const SizedBox(height: 34),
+      Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900, fontFeatures: [const FontFeature.tabularFigures()])), const SizedBox(height: 20),
+      ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: progress, minHeight: 9)), const SizedBox(height: 26),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        FilledButton.icon(onPressed: () => setState(() => running = !running), icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')),
+        const SizedBox(width: 12),
+        OutlinedButton.icon(onPressed: () => _openBreak(((currentBlockMinutes * 60 - seconds) / 60).floor()), icon: const Icon(Icons.done_rounded), label: const Text('Finish early')),
+      ]),
+      const SizedBox(height: 18), Text('Block ${activeBlockIndex + 1} • Stay with one task. Your next break is earned.', style: Theme.of(context).textTheme.bodyMedium),
+    ])))));
   }
 }
 
@@ -92,12 +80,12 @@ class BreakScreen extends StatefulWidget {
 }
 
 class _BreakScreenState extends State<BreakScreen> {
-  int seconds = 5 * 60; bool running = true; Timer? timer;
+  int seconds = 5 * 60; bool running = true; bool advancing = false; Timer? timer;
 
   @override void initState() {
     super.initState();
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || !running) return;
+      if (!mounted || !running || advancing) return;
       if (seconds > 0) setState(() => seconds--);
       if (seconds == 0) { timer?.cancel(); _next(); }
     });
@@ -106,8 +94,10 @@ class _BreakScreenState extends State<BreakScreen> {
   @override void dispose() { timer?.cancel(); super.dispose(); }
 
   Future<void> _next() async {
+    if (advancing) return;
+    setState(() => advancing = true);
     timer?.cancel();
-    final completed = widget.completed.clamp(0, FocusScreen.focusBlock);
+    final completed = widget.completed.clamp(0, FocusScreen.focusBlock).toInt();
     if (completed > 0) await widget.store.addCompletedMinutes(completed);
 
     final item = widget.plan.items[widget.index];
@@ -145,7 +135,11 @@ class _BreakScreenState extends State<BreakScreen> {
         ListTile(leading: Icon(Icons.visibility_rounded), title: Text('Rest your eyes'), dense: true),
         ListTile(leading: Icon(Icons.air_rounded), title: Text('Take a few slow breaths'), dense: true),
       ]))), const SizedBox(height: 20),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [OutlinedButton(onPressed: () => setState(() => running = !running), child: Text(running ? 'Pause break' : 'Resume break')), const SizedBox(width: 10), FilledButton(onPressed: _next, child: const Text('Continue'))]),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        OutlinedButton(onPressed: advancing ? null : () => setState(() => running = !running), child: Text(running ? 'Pause break' : 'Resume break')),
+        const SizedBox(width: 10),
+        FilledButton(onPressed: advancing ? null : _next, child: Text(advancing ? 'Saving…' : 'Continue')),
+      ]),
     ])))));
   }
 }
