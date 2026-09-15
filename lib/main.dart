@@ -213,8 +213,8 @@ class StudyHub extends StatelessWidget {
     Text('Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
     const SizedBox(height: 18),
     _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
-    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) => onStartPlan(plan: plan))))),
-    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) => onStartPlan(plan: plan))))),
+    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan: plan); }))),
+    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) async { Navigator.pop(context); await onStartPlan(plan: plan); }))),
   ]));
 }
 
@@ -244,43 +244,58 @@ class ProfileScreen extends StatelessWidget {
 class Setup extends StatefulWidget {
   const Setup({super.key, required this.store, this.onStartPlan});
   final LocalStore store;
-  final Future<void> Function(StudyPlan)? onStartPlan;
+  final Future<void> Function(StudyPlan plan)? onStartPlan;
   @override State<Setup> createState() => _SetupState();
 }
 
 class _SetupState extends State<Setup> {
-  int total = 120;
+  double hours = 2;
   final subjects = <String>[];
-  final input = TextEditingController();
-  void add() {
-    final value = input.text.trim();
-    if (value.isEmpty || subjects.contains(value)) return;
-    setState(() { subjects.add(value); input.clear(); });
+  final controller = TextEditingController();
+
+  @override
+  void dispose() { controller.dispose(); super.dispose(); }
+
+  void addSubject() {
+    final name = controller.text.trim();
+    if (name.isEmpty || subjects.any((subject) => subject.toLowerCase() == name.toLowerCase())) return;
+    setState(() { subjects.add(name); controller.clear(); });
   }
-  @override void dispose() { input.dispose(); super.dispose(); }
+
+  void removeSubject(String subject) => setState(() => subjects.remove(subject));
+
+  void continueSetup() {
+    final total = (hours * 60).round();
+    if (subjects.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Add at least one subject first.')));
+      return;
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => RegularStudyPlanner(
+      store: widget.store,
+      total: total,
+      subjects: List<String>.from(subjects),
+      onStartPlan: widget.onStartPlan,
+    )));
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Regular Study')), body: ListView(padding: const EdgeInsets.all(20), children: [
-    Text('Plan your focus time', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+    Text('Plan your day', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
     const SizedBox(height: 6),
-    const Text('Set your total time first. Allocation can never exceed it.'),
-    const SizedBox(height: 20),
-    Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Total study time', style: TextStyle(fontWeight: FontWeight.w800)), Text('$total min', style: const TextStyle(fontWeight: FontWeight.w900))]),
-      Slider(value: total.toDouble(), min: 25, max: 480, divisions: 91, label: '$total min', onChanged: (value) => setState(() => total = value.round())),
-      Text('${total ~/ 60}h ${total % 60}m available'),
+    const Text('Set your total study time first. Then you can manually allocate every minute by subject and topic.'),
+    const SizedBox(height: 18),
+    Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(children: [
+      Text('${hours.toStringAsFixed(1)} hours', style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
+      Slider(value: hours, min: 0.5, max: 12, divisions: 23, label: '${hours.toStringAsFixed(1)} h', onChanged: (v) => setState(() => hours = v)),
+      const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('30m'), Text('6h'), Text('12h')]),
     ]))),
-    const SizedBox(height: 20),
-    Text('Subjects', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+    const SizedBox(height: 18),
+    Text('SUBJECTS', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900, letterSpacing: 1.1)),
+    const SizedBox(height: 8),
+    Row(children: [Expanded(child: TextField(controller: controller, onSubmitted: (_) => addSubject(), decoration: const InputDecoration(hintText: 'e.g. Mathematics'))), const SizedBox(width: 8), IconButton.filled(onPressed: addSubject, icon: const Icon(Icons.add_rounded))]),
     const SizedBox(height: 10),
-    Row(children: [Expanded(child: TextField(controller: input, onSubmitted: (_) => add(), decoration: const InputDecoration(hintText: 'e.g. Mathematics'))), const SizedBox(width: 10), FilledButton(onPressed: add, child: const Icon(Icons.add_rounded))]),
+    ...subjects.map((s) => Card(margin: const EdgeInsets.only(bottom: 8), child: ListTile(title: Text(s, style: const TextStyle(fontWeight: FontWeight.w800)), trailing: IconButton(onPressed: () => removeSubject(s), icon: const Icon(Icons.close_rounded))))),
     const SizedBox(height: 12),
-    if (subjects.isNotEmpty) Wrap(spacing: 8, runSpacing: 8, children: [for (final subject in subjects) InputChip(label: Text(subject), onDeleted: () => setState(() => subjects.remove(subject)))]),
-    if (subjects.isEmpty) const Card(child: Padding(padding: EdgeInsets.all(16), child: Text('Add at least one subject to continue.'))),
-    const SizedBox(height: 24),
-    SizedBox(width: double.infinity, child: FilledButton.icon(
-      onPressed: subjects.isEmpty ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => RegularStudyPlanner(store: widget.store, total: total, subjects: List<String>.from(subjects), onStartPlan: widget.onStartPlan))),
-      icon: const Icon(Icons.arrow_forward_rounded),
-      label: const Text('Continue to topic allocation'),
-    )),
+    FilledButton.icon(onPressed: continueSetup, icon: const Icon(Icons.tune_rounded), label: const Padding(padding: EdgeInsets.all(14), child: Text('Allocate time by topic'))),
   ]));
 }
