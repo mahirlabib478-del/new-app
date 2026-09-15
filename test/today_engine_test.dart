@@ -29,6 +29,7 @@ void main() {
     expect(snapshot.nextItem?.title, 'Physics');
     expect(snapshot.currentIndex, 1);
     expect(snapshot.currentBlockIndex, 0);
+    expect(snapshot.currentItemCompletedMinutes, 0);
     expect(snapshot.remainingMinutes, 50);
   });
 
@@ -40,14 +41,38 @@ void main() {
     );
 
     await store.savePlan(plan);
-    await store.addItemCompletedMinutes(0, 25);
+    await store.addItemCompletedMinutes(0, 35);
     final snapshot = TodayEngine(store).build();
 
     expect(snapshot.nextItem?.title, 'Chemistry');
     expect(snapshot.currentIndex, 0);
     expect(snapshot.currentBlockIndex, 1);
-    expect(snapshot.completedMinutes, 25);
-    expect(snapshot.remainingMinutes, 55);
+    expect(snapshot.currentItemCompletedMinutes, 35);
+    expect(snapshot.completedMinutes, 35);
+    expect(snapshot.remainingMinutes, 45);
+  });
+
+  test('Today Engine skips completed items and keeps their progress out of next action', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(
+      totalMinutes: 75,
+      items: [
+        StudyItem(title: 'Math', minutes: 25),
+        StudyItem(title: 'Physics', minutes: 50),
+      ],
+    );
+
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+    await store.addItemCompletedMinutes(1, 10);
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.nextItem?.title, 'Physics');
+    expect(snapshot.currentIndex, 1);
+    expect(snapshot.currentBlockIndex, 0);
+    expect(snapshot.currentItemCompletedMinutes, 10);
+    expect(snapshot.completedMinutes, 35);
+    expect(snapshot.remainingMinutes, 40);
   });
 
   test('Today Engine exposes no next item after the whole plan is complete', () async {
@@ -66,6 +91,10 @@ void main() {
     final snapshot = TodayEngine(store).build();
 
     expect(snapshot.nextItem, isNull);
+    expect(snapshot.isComplete, isTrue);
+    expect(snapshot.hasRemainingWork, isFalse);
+    expect(snapshot.currentIndex, 1);
+    expect(snapshot.currentItemCompletedMinutes, 25);
     expect(snapshot.completedMinutes, 50);
     expect(snapshot.remainingMinutes, 0);
     expect(snapshot.progress, 1.0);
