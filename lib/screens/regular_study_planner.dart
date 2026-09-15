@@ -131,6 +131,7 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final totalDivisions = widget.total > 0 ? widget.total : null;
     return Scaffold(
       appBar: AppBar(title: const Text('Allocate by topic')),
       body: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 28), children: [
@@ -144,14 +145,14 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
           const SizedBox(height: 8), Text(remaining == 0 ? 'Fully allocated — ready to focus.' : '$remaining minutes available to assign', style: TextStyle(fontWeight: FontWeight.w700, color: remaining == 0 ? scheme.primary : null)),
         ]))),
         const SizedBox(height: 14),
-        ...widget.subjects.map((subject) => _subjectCard(subject)),
+        ...widget.subjects.map((subject) => _subjectCard(subject, totalDivisions)),
         const SizedBox(height: 4),
         FilledButton.icon(onPressed: allocated == 0 ? null : save, icon: const Icon(Icons.play_arrow_rounded), label: Text(remaining == 0 ? 'Start focused study' : 'Start with $allocated min')),
       ],),
     );
   }
 
-  Widget _subjectCard(String subject) {
+  Widget _subjectCard(String subject, int? totalDivisions) {
     final list = topics[subject]!;
     final assigned = list.fold(0, (a, t) => a + t.minutes);
     final leftover = subjectMinutes[subject]! - assigned;
@@ -159,7 +160,7 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
     final maxTopic = subjectBudget.clamp(1, widget.total).toInt();
     return Card(margin: const EdgeInsets.only(bottom: 12), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [Expanded(child: Text(subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))), Text('${subjectMinutes[subject]}m', style: const TextStyle(fontWeight: FontWeight.w900))]),
-      Slider(value: subjectMinutes[subject]!.toDouble(), min: 0, max: widget.total.toDouble(), divisions: widget.total, onChanged: (v) => changeSubject(subject, v.round())),
+      Slider(value: subjectMinutes[subject]!.toDouble(), min: 0, max: widget.total.toDouble(), divisions: totalDivisions, onChanged: widget.total <= 0 ? null : (v) => changeSubject(subject, v.round())),
       Row(children: [Expanded(child: Text('Topics use $assigned min • $leftover min unassigned', style: Theme.of(context).textTheme.labelMedium)), if (list.isNotEmpty) TextButton.icon(onPressed: () => autoBalanceTopics(subject), icon: const Icon(Icons.balance_rounded, size: 18), label: const Text('Split evenly'))]),
       const SizedBox(height: 6),
       TextField(controller: controllers[subject], onSubmitted: (_) => addTopic(subject), textInputAction: TextInputAction.done, decoration: InputDecoration(labelText: 'Add chapter / topic', prefixIcon: const Icon(Icons.bookmark_outline_rounded), suffixIcon: IconButton(onPressed: () => addTopic(subject), tooltip: 'Add topic', icon: const Icon(Icons.add_rounded)))),
