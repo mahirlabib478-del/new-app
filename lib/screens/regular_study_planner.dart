@@ -157,7 +157,7 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
     final assigned = list.fold(0, (a, t) => a + t.minutes);
     final leftover = subjectMinutes[subject]! - assigned;
     final subjectBudget = subjectMinutes[subject]!;
-    final maxTopic = subjectBudget.clamp(1, widget.total).toInt();
+    final maxTopic = widget.total > 0 ? subjectBudget.clamp(1, widget.total).toInt() : 1;
     return Card(margin: const EdgeInsets.only(bottom: 12), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [Expanded(child: Text(subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))), Text('${subjectMinutes[subject]}m', style: const TextStyle(fontWeight: FontWeight.w900))]),
       Slider(value: subjectMinutes[subject]!.toDouble(), min: 0, max: widget.total.toDouble(), divisions: totalDivisions, onChanged: widget.total <= 0 ? null : (v) => changeSubject(subject, v.round())),
