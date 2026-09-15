@@ -21,6 +21,17 @@ void main() {
     expect(store.completedMinutes, 25);
   });
 
+  test('completion cannot exceed actual allocation when total budget is larger', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 60, items: [StudyItem(title: 'Math', minutes: 25)]);
+    await store.savePlan(plan);
+    await store.addCompletedMinutes(60);
+    expect(store.planCompletedMinutes, 25);
+    expect(store.completedMinutes, 25);
+    expect(store.sessions, 1);
+    expect(store.xp, 50);
+  });
+
   test('invalid item indexes do not mutate study totals', () async {
     final store = await makeStore();
     await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
