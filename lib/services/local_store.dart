@@ -13,9 +13,12 @@ class LocalStore {
   static const _streakKey = 'study_streak';
   static const _lastStudyKey = 'last_study_date';
   static const _sessionsKey = 'study_sessions';
+  static const _indexKey = 'current_plan_index';
+  static const _blockKey = 'current_block_index';
 
   Future<void> savePlan(StudyPlan plan) async {
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
+    await setPlanPosition(0, 0);
   }
 
   StudyPlan? loadPlan() {
@@ -37,6 +40,15 @@ class LocalStore {
   int get sessions => prefs.getInt(_sessionsKey) ?? 0;
   int get level => (xp ~/ 250) + 1;
   int get levelProgress => xp % 250;
+  int get currentPlanIndex => prefs.getInt(_indexKey) ?? 0;
+  int get currentBlockIndex => prefs.getInt(_blockKey) ?? 0;
+
+  Future<void> setPlanPosition(int index, int blockIndex) async {
+    await prefs.setInt(_indexKey, index);
+    await prefs.setInt(_blockKey, blockIndex);
+  }
+
+  Future<void> clearPlanPosition() async => setPlanPosition(0, 0);
 
   Future<void> addCompletedMinutes(int value) async {
     final minutes = value.clamp(0, 1440);
