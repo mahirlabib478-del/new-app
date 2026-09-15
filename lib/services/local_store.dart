@@ -67,8 +67,14 @@ class LocalStore {
     try {
       final json = Map<String, dynamic>.from(jsonDecode(raw) as Map);
       final totalMinutes = ((json['totalMinutes'] as num?)?.toInt() ?? 0).clamp(0, 1440).toInt();
-      final items = (json['items'] as List<dynamic>? ?? const []).whereType<Map>().map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item))).where((item) => item.minutes >= 0).toList();
+      final items = (json['items'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item)))
+          .where((item) => item.minutes >= 0)
+          .toList();
       if (items.isEmpty) return null;
+      final allocated = items.fold<int>(0, (sum, item) => sum + item.minutes);
+      if (allocated > totalMinutes) return null;
       return StudyPlan(totalMinutes: totalMinutes, items: items);
     } catch (_) {
       return null;
