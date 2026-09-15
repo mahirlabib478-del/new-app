@@ -34,6 +34,42 @@ class FocusTimerState {
       );
 }
 
+class BreakTimerState {
+  const BreakTimerState({
+    required this.index,
+    required this.blockIndex,
+    required this.breakMinutes,
+    required this.remainingSeconds,
+    required this.running,
+    this.deadlineMillis,
+  });
+
+  final int index;
+  final int blockIndex;
+  final int breakMinutes;
+  final int remainingSeconds;
+  final bool running;
+  final int? deadlineMillis;
+
+  Map<String, dynamic> toJson() => {
+        'index': index,
+        'blockIndex': blockIndex,
+        'breakMinutes': breakMinutes,
+        'remainingSeconds': remainingSeconds,
+        'running': running,
+        'deadlineMillis': deadlineMillis,
+      };
+
+  factory BreakTimerState.fromJson(Map<String, dynamic> json) => BreakTimerState(
+        index: (json['index'] as num?)?.toInt() ?? 0,
+        blockIndex: (json['blockIndex'] as num?)?.toInt() ?? 0,
+        breakMinutes: (json['breakMinutes'] as num?)?.toInt() ?? 5,
+        remainingSeconds: (json['remainingSeconds'] as num?)?.toInt() ?? 300,
+        running: json['running'] as bool? ?? false,
+        deadlineMillis: (json['deadlineMillis'] as num?)?.toInt(),
+      );
+}
+
 class LocalStore {
   LocalStore(this.prefs);
   final SharedPreferences prefs;
@@ -53,6 +89,7 @@ class LocalStore {
   static const _indexKey = 'current_plan_index';
   static const _blockKey = 'current_block_index';
   static const _focusTimerKey = 'focus_timer_state';
+  static const _breakTimerKey = 'break_timer_state';
 
   Future<void> savePlan(StudyPlan plan) async {
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
@@ -60,6 +97,7 @@ class LocalStore {
     await prefs.setInt(_planMinutesKey, 0);
     await prefs.remove(_itemMinutesKey);
     await clearFocusTimerState();
+    await clearBreakTimerState();
     await setPlanPosition(0, 0);
   }
 
@@ -120,6 +158,22 @@ class LocalStore {
   }
 
   Future<void> clearFocusTimerState() async => prefs.remove(_focusTimerKey);
+
+  BreakTimerState? get breakTimerState {
+    final raw = prefs.getString(_breakTimerKey);
+    if (raw == null) return null;
+    try {
+      return BreakTimerState.fromJson(Map<String, dynamic>.from(jsonDecode(raw) as Map));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveBreakTimerState(BreakTimerState state) async {
+    await prefs.setString(_breakTimerKey, jsonEncode(state.toJson()));
+  }
+
+  Future<void> clearBreakTimerState() async => prefs.remove(_breakTimerKey);
 
   Map<String, int> get dailyStudyMinutes {
     final raw = prefs.getString(_historyKey);
