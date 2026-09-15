@@ -129,6 +129,9 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final snapshot = TodayEngine(store).build();
+    final goal = store.dailyGoalMinutes;
+    final today = store.studyMinutesOn(DateTime.now());
+    final goalProgress = (today / goal).clamp(0.0, 1.0).toDouble();
     return Scaffold(
       body: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [
         Text(_greeting(), style: Theme.of(context).textTheme.titleMedium),
@@ -142,6 +145,17 @@ class Home extends StatelessWidget {
           LinearProgressIndicator(value: snapshot.progress, minHeight: 8),
           const SizedBox(height: 8),
           Text(snapshot.hasPlan ? '${snapshot.completedMinutes} min completed • ${snapshot.xp} XP' : 'Choose a study mode to begin.'),
+        ]))),
+        const SizedBox(height: 12),
+        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Expanded(child: Text("Today's goal", style: TextStyle(fontWeight: FontWeight.w900))),
+            Text('$today / $goal min', style: const TextStyle(fontWeight: FontWeight.w900)),
+          ]),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(value: goalProgress, minHeight: 7),
+          const SizedBox(height: 8),
+          Text(goalProgress >= 1 ? 'Goal reached. Keep the momentum.' : '${goal - today} min left today'),
         ]))),
         if (snapshot.nextItem != null) ...[
           const SizedBox(height: 16),
@@ -202,97 +216,6 @@ class StudyHub extends StatelessWidget {
     _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) => onStartPlan(plan: plan))))),
     _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) => onStartPlan(plan: plan))))),
   ]));
-}
-
-class ProgressScreen extends StatelessWidget {
-  const ProgressScreen({super.key, required this.store});
-  final LocalStore store;
-  @override
-  Widget build(BuildContext context) {
-    final plan = store.loadPlan();
-    final planned = plan?.allocatedMinutes ?? 0;
-    final completed = plan == null ? 0 : store.planCompletedMinutes.clamp(0, planned).toInt();
-    final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
-    final levelProgress = store.levelProgress / 250;
-    final nextLevelXp = ((store.level) * 250) - store.xp;
-    return Scaffold(appBar: AppBar(title: const Text('Progress')), body: ListView(padding: const EdgeInsets.all(20), children: [
-      Text('Your momentum', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-      const SizedBox(height: 18),
-      Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-        const SizedBox(height: 12),
-        LinearProgressIndicator(value: progress, minHeight: 9),
-        const SizedBox(height: 10),
-        Text('${(progress * 100).round()}% complete'),
-      ]))),
-      const SizedBox(height: 12),
-      Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          CircleAvatar(radius: 24, child: Text('${store.level}', style: const TextStyle(fontWeight: FontWeight.w900))),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Level ${store.level}', style: const TextStyle(fontWeight: FontWeight.w900)),
-            Text(nextLevelXp <= 0 ? 'Level complete' : '$nextLevelXp XP to next level'),
-          ])),
-          Text('${store.levelProgress}/250 XP', style: const TextStyle(fontWeight: FontWeight.w800)),
-        ]),
-        const SizedBox(height: 12),
-        LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7),
-      ]))),
-      const SizedBox(height: 12),
-      Row(children: [Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Streak')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.bolt_rounded, value: '${store.xp}', label: 'XP')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes'))]),
-      const SizedBox(height: 20),
-      Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-      const SizedBox(height: 10),
-      _Achievement(icon: Icons.play_arrow_rounded, title: 'First Focus', subtitle: 'Complete your first focused minute.', unlocked: store.completedMinutes >= 1),
-      _Achievement(icon: Icons.timer_rounded, title: 'Deep Work', subtitle: 'Complete 60 focused minutes.', unlocked: store.completedMinutes >= 60),
-      _Achievement(icon: Icons.local_fire_department_rounded, title: '3-Day Streak', subtitle: 'Study on 3 consecutive days.', unlocked: store.streak >= 3),
-      _Achievement(icon: Icons.workspace_premium_rounded, title: 'Level 5', subtitle: 'Reach level 5.', unlocked: store.level >= 5),
-      const SizedBox(height: 18),
-      if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
-    ]));
-  }
-}
-
-class _Achievement extends StatelessWidget {
-  const _Achievement({required this.icon, required this.title, required this.subtitle, required this.unlocked});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool unlocked;
-  @override
-  Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(
-    leading: CircleAvatar(child: Icon(icon)),
-    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-    subtitle: Text(subtitle),
-    trailing: Icon(unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded),
-  ));
-}
-
-class _ProgressItem extends StatelessWidget {
-  const _ProgressItem({required this.item, required this.completed});
-  final StudyItem item;
-  final int completed;
-  @override
-  Widget build(BuildContext context) {
-    final done = completed.clamp(0, item.minutes).toInt();
-    final progress = item.minutes <= 0 ? 0.0 : (done / item.minutes).clamp(0.0, 1.0).toDouble();
-    return Card(margin: const EdgeInsets.only(bottom: 10), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [Expanded(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w900))), Text('$done/${item.minutes}m')]),
-      if (item.topic.isNotEmpty) Text(item.topic),
-      const SizedBox(height: 10),
-      LinearProgressIndicator(value: progress),
-    ]));
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.icon, required this.value, required this.label});
-  final IconData icon;
-  final String value;
-  final String label;
-  @override
-  Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
 }
 
 class ProfileScreen extends StatelessWidget {
