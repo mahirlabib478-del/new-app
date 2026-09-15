@@ -249,8 +249,10 @@ class LocalStore {
         : (plan.totalMinutes - planCompletedMinutes).clamp(0, 1440).toInt();
     if (planRemaining <= 0) return;
 
+    if (itemIndex != null && (plan == null || itemIndex < 0 || itemIndex >= plan.items.length)) return;
+
     var minutes = requested > planRemaining ? planRemaining : requested;
-    if (itemIndex != null && plan != null && itemIndex < plan.items.length) {
+    if (itemIndex != null && plan != null) {
       final itemRemaining =
           (plan.items[itemIndex].minutes - itemCompletedMinutes(itemIndex)).clamp(0, 1440).toInt();
       if (itemRemaining <= 0) return;
@@ -264,7 +266,7 @@ class LocalStore {
     await prefs.setInt(_sessionsKey, sessions + 1);
     await addDailyStudyMinutes(minutes);
 
-    if (itemIndex != null && itemIndex >= 0) {
+    if (itemIndex != null) {
       final map = itemCompletedMinutesMap;
       map[itemIndex] = (map[itemIndex] ?? 0) + minutes;
       await prefs.setString(_itemMinutesKey, jsonEncode(map.map((key, value) => MapEntry(key.toString(), value))));
