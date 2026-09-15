@@ -13,6 +13,7 @@ class TodaySnapshot {
     required this.nextItem,
     required this.currentIndex,
     required this.currentBlockIndex,
+    required this.currentItemCompletedMinutes,
   });
 
   final StudyPlan? plan;
@@ -25,8 +26,11 @@ class TodaySnapshot {
   final StudyItem? nextItem;
   final int currentIndex;
   final int currentBlockIndex;
+  final int currentItemCompletedMinutes;
 
   bool get hasPlan => plan != null && plan!.items.isNotEmpty;
+  bool get isComplete => hasPlan && remainingMinutes == 0;
+  bool get hasRemainingWork => hasPlan && remainingMinutes > 0;
 }
 
 class TodayEngine {
@@ -42,6 +46,7 @@ class TodayEngine {
 
     var index = 0;
     var blockIndex = 0;
+    var currentItemCompletedMinutes = 0;
     StudyItem? next;
 
     if (plan != null && plan.items.isNotEmpty) {
@@ -52,6 +57,7 @@ class TodayEngine {
         if (itemCompleted < item.minutes) {
           index = i;
           blockIndex = (itemCompleted ~/ 25).clamp(0, 100000).toInt();
+          currentItemCompletedMinutes = itemCompleted;
           next = item;
           break;
         }
@@ -63,6 +69,7 @@ class TodayEngine {
     if (next == null && plan != null && plan.items.isNotEmpty) {
       index = (plan.items.length - 1).clamp(0, 100000).toInt();
       blockIndex = ((plan.items[index].minutes + 24) ~/ 25).clamp(0, 100000).toInt();
+      currentItemCompletedMinutes = plan.items[index].minutes;
     }
 
     return TodaySnapshot(
@@ -76,6 +83,7 @@ class TodayEngine {
       nextItem: next,
       currentIndex: index,
       currentBlockIndex: blockIndex,
+      currentItemCompletedMinutes: currentItemCompletedMinutes,
     );
   }
 }
