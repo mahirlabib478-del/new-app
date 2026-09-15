@@ -337,7 +337,7 @@ class CompletionScreen extends StatelessWidget {
       ]))),
       const SizedBox(height: 24),
       FilledButton.icon(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home')),
-    ])))));
+    ]))))));
   }
 }
 
