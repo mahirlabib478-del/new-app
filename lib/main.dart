@@ -6,6 +6,7 @@ import 'services/today_engine.dart';
 import 'screens/exam_planner_screen.dart';
 import 'screens/focus_flow.dart';
 import 'screens/regular_study_planner.dart';
+import 'screens/progress_dashboard.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,7 +89,7 @@ class _StudyOSState extends State<StudyOS> {
         body: IndexedStack(index: tab, children: [
           Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: (nextDay) => _openExam(nextDay)),
           StudyHub(store: widget.store, onStartPlan: openFocus, onRegularStudy: openRegularStudy),
-          ProgressScreen(store: widget.store),
+          ProgressDashboard(store: widget.store),
           ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme),
         ]),
         bottomNavigationBar: NavigationBar(
@@ -281,7 +282,7 @@ class _ProgressItem extends StatelessWidget {
       if (item.topic.isNotEmpty) Text(item.topic),
       const SizedBox(height: 10),
       LinearProgressIndicator(value: progress),
-    ])));
+    ]));
   }
 }
 
@@ -291,7 +292,7 @@ class _Stat extends StatelessWidget {
   final String value;
   final String label;
   @override
-  Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)])));
+  Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
 }
 
 class ProfileScreen extends StatelessWidget {
