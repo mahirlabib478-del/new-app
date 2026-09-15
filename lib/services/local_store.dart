@@ -28,11 +28,11 @@ class FocusTimerState {
       };
 
   factory FocusTimerState.fromJson(Map<String, dynamic> json) => FocusTimerState(
-        index: (json['index'] as int? ?? 0).clamp(0, 100000).toInt(),
-        blockIndex: (json['blockIndex'] as int? ?? 0).clamp(0, 100000).toInt(),
-        remainingSeconds: (json['remainingSeconds'] as int? ?? 0).clamp(0, 86400).toInt(),
+        index: (json['index'] as num? ?? 0).clamp(0, 100000).toInt(),
+        blockIndex: (json['blockIndex'] as num? ?? 0).clamp(0, 100000).toInt(),
+        remainingSeconds: (json['remainingSeconds'] as num? ?? 0).clamp(0, 86400).toInt(),
         running: json['running'] as bool? ?? false,
-        deadlineMillis: json['deadlineMillis'] as int?,
+        deadlineMillis: (json['deadlineMillis'] as num?)?.toInt(),
       );
 }
 
@@ -63,12 +63,12 @@ class BreakTimerState {
       };
 
   factory BreakTimerState.fromJson(Map<String, dynamic> json) => BreakTimerState(
-        index: (json['index'] as int? ?? 0).clamp(0, 100000).toInt(),
-        blockIndex: (json['blockIndex'] as int? ?? 0).clamp(0, 100000).toInt(),
-        breakMinutes: (json['breakMinutes'] as int? ?? 5).clamp(5, 10).toInt(),
-        remainingSeconds: (json['remainingSeconds'] as int? ?? 0).clamp(0, 3600).toInt(),
+        index: (json['index'] as num? ?? 0).clamp(0, 100000).toInt(),
+        blockIndex: (json['blockIndex'] as num? ?? 0).clamp(0, 100000).toInt(),
+        breakMinutes: (json['breakMinutes'] as num? ?? 5).clamp(5, 10).toInt(),
+        remainingSeconds: (json['remainingSeconds'] as num? ?? 0).clamp(0, 3600).toInt(),
         running: json['running'] as bool? ?? false,
-        deadlineMillis: json['deadlineMillis'] as int?,
+        deadlineMillis: (json['deadlineMillis'] as num?)?.toInt(),
       );
 }
 
@@ -114,13 +114,15 @@ class LocalStore {
     if (savedDate != null && savedDate != today) return null;
 
     try {
-      final json = jsonDecode(raw) as Map<String, dynamic>;
-      final items = (json['items'] as List<dynamic>? ?? [])
-          .map((e) => StudyItem.fromJson(Map<String, dynamic>.from(e as Map)))
+      final json = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final totalMinutes = ((json['totalMinutes'] as num?)?.toInt() ?? 0).clamp(0, 1440).toInt();
+      final items = (json['items'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item)))
           .where((item) => item.minutes >= 0)
           .toList();
       if (items.isEmpty) return null;
-      return StudyPlan(totalMinutes: json['totalMinutes'] as int? ?? 0, items: items);
+      return StudyPlan(totalMinutes: totalMinutes, items: items);
     } catch (_) {
       return null;
     }
@@ -224,7 +226,10 @@ class LocalStore {
     if (raw == null) return <int, int>{};
     try {
       final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      return map.map((key, value) => MapEntry(int.tryParse(key) ?? -1, (value as num).toInt()))
+      return map.map((key, value) => MapEntry(
+            int.tryParse(key) ?? -1,
+            (value as num?)?.toInt().clamp(0, 1440).toInt() ?? 0,
+          ))
         ..removeWhere((key, _) => key < 0);
     } catch (_) {
       return <int, int>{};
