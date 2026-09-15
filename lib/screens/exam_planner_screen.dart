@@ -2,6 +2,61 @@ import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/local_store.dart';
 
+List<StudyItem> generateExamPlan({
+  required bool nextDay,
+  required int studyHours,
+  required int urgency,
+  required List<String> subjects,
+  required Map<String, int> priorities,
+}) {
+  if (subjects.isEmpty || studyHours <= 0) return const [];
+
+  final totalMinutes = studyHours * 60;
+  final ranked = [...subjects]
+    ..sort((a, b) => (priorities[b] ?? 2).compareTo(priorities[a] ?? 2));
+  final safeUrgency = urgency.clamp(1, 3).toInt();
+  final weights = subjects
+      .map((subject) => (priorities[subject] ?? 2).clamp(1, 3).toInt() + safeUrgency - 1)
+      .toList();
+  final counts = List<int>.filled(subjects.length, 0);
+  var remainingBlocks = totalMinutes ~/ 25;
+
+  while (remainingBlocks > 0) {
+    var bestIndex = 0;
+    var bestScore = -1.0;
+    for (var i = 0; i < subjects.length; i++) {
+      final score = weights[i] / (counts[i] + 1);
+      if (score > bestScore) {
+        bestScore = score;
+        bestIndex = i;
+      }
+    }
+    counts[bestIndex]++;
+    remainingBlocks--;
+  }
+
+  final items = <StudyItem>[];
+  for (var i = 0; i < subjects.length; i++) {
+    for (var b = 0; b < counts[i]; b++) {
+      items.add(StudyItem(
+        title: subjects[i],
+        minutes: 25,
+        topic: nextDay ? 'High-impact revision' : 'Exam preparation',
+      ));
+    }
+  }
+
+  final remainder = totalMinutes % 25;
+  if (remainder > 0) {
+    items.add(StudyItem(
+      title: ranked.first,
+      minutes: remainder,
+      topic: nextDay ? 'Final review' : 'Flexible review',
+    ));
+  }
+  return items;
+}
+
 class ExamPlannerScreen extends StatefulWidget {
   const ExamPlannerScreen({super.key, required this.nextDay, required this.store, this.onStartPlan});
 
@@ -43,48 +98,13 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
     super.dispose();
   }
 
-  List<StudyItem> _generatePlan() {
-    if (subjects.isEmpty) return const [];
-    final totalMinutes = studyHours * 60;
-    final ranked = [...subjects]..sort((a, b) => (priorities[b] ?? 2).compareTo(priorities[a] ?? 2));
-    final weights = subjects.map((subject) => (priorities[subject] ?? 2) + urgency - 1).toList();
-    final counts = List<int>.filled(subjects.length, 0);
-    var remainingBlocks = totalMinutes ~/ 25;
-
-    while (remainingBlocks > 0) {
-      var bestIndex = 0;
-      var bestScore = -1.0;
-      for (var i = 0; i < subjects.length; i++) {
-        final score = weights[i] / (counts[i] + 1);
-        if (score > bestScore) {
-          bestScore = score;
-          bestIndex = i;
-        }
-      }
-      counts[bestIndex]++;
-      remainingBlocks--;
-    }
-
-    final items = <StudyItem>[];
-    for (var i = 0; i < subjects.length; i++) {
-      for (var b = 0; b < counts[i]; b++) {
-        items.add(StudyItem(
-          title: subjects[i],
-          minutes: 25,
-          topic: widget.nextDay ? 'High-impact revision' : 'Exam preparation',
-        ));
-      }
-    }
-    final remainder = totalMinutes % 25;
-    if (remainder > 0) {
-      items.add(StudyItem(
-        title: ranked.first,
-        minutes: remainder,
-        topic: widget.nextDay ? 'Final review' : 'Flexible review',
-      ));
-    }
-    return items;
-  }
+  List<StudyItem> _generatePlan() => generateExamPlan(
+        nextDay: widget.nextDay,
+        studyHours: studyHours,
+        urgency: urgency,
+        subjects: subjects,
+        priorities: priorities,
+      );
 
   Future<void> _showGeneratedPlan() async {
     final items = _generatePlan();
