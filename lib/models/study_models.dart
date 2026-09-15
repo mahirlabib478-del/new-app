@@ -8,7 +8,7 @@ class StudyItem {
 
   factory StudyItem.fromJson(Map<String, dynamic> json) => StudyItem(
         title: json['title'] as String? ?? 'Untitled',
-        minutes: json['minutes'] as int? ?? 25,
+        minutes: (json['minutes'] as num?)?.toInt() ?? 25,
         topic: json['topic'] as String? ?? '',
       );
 }
@@ -27,9 +27,10 @@ class StudyPlan {
       };
 
   factory StudyPlan.fromJson(Map<String, dynamic> json) => StudyPlan(
-        totalMinutes: json['totalMinutes'] as int? ?? 0,
+        totalMinutes: (json['totalMinutes'] as num?)?.toInt() ?? 0,
         items: (json['items'] as List<dynamic>? ?? const [])
-            .map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item as Map)))
+            .whereType<Map>()
+            .map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item)))
             .toList(),
       );
 }
