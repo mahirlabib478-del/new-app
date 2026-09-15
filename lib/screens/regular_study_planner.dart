@@ -55,7 +55,14 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
   void addTopic(String subject) {
     final c = controllers[subject]!;
     final name = c.text.trim();
-    if (name.isEmpty || topics[subject]!.any((t) => t.name.toLowerCase() == name.toLowerCase())) return;
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a chapter or topic name first.')));
+      return;
+    }
+    if (topics[subject]!.any((t) => t.name.toLowerCase() == name.toLowerCase())) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('That topic is already added.')));
+      return;
+    }
     setState(() { topics[subject]!.add(_TopicEntry(name, 0)); c.clear(); });
   }
 
@@ -78,12 +85,14 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
 
   Future<void> save() async {
     final items = <StudyItem>[];
+    var hasUnassigned = false;
     for (final subject in widget.subjects) {
       final subjectTotal = subjectMinutes[subject]!;
       final list = topics[subject]!;
       final topicAllocated = list.fold(0, (a, t) => a + t.minutes);
       final leftover = subjectTotal - topicAllocated;
       if (leftover < 0) return;
+      if (leftover > 0) hasUnassigned = true;
       for (final topic in list) {
         if (topic.minutes > 0) items.add(StudyItem(title: subject, topic: topic.name, minutes: topic.minutes));
       }
@@ -92,6 +101,20 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
     if (items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Allocate at least 1 minute to a topic or subject.')));
       return;
+    }
+    if (hasUnassigned && mounted) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Unassigned time'),
+          content: const Text('Some subject time is not assigned to a named topic. It will be saved as General study or Other / review.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep editing')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save plan')),
+          ],
+        ),
+      );
+      if (proceed != true) return;
     }
     final plan = StudyPlan(totalMinutes: widget.total, items: items);
     await widget.store.savePlan(plan);
@@ -133,11 +156,11 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
       Slider(value: subjectMinutes[subject]!.toDouble(), min: 0, max: widget.total.toDouble(), divisions: widget.total, onChanged: (v) => changeSubject(subject, v.round())),
       Row(children: [Expanded(child: Text('Topics use $assigned min • $leftover min unassigned', style: Theme.of(context).textTheme.labelMedium)), if (list.isNotEmpty) TextButton.icon(onPressed: () => autoBalanceTopics(subject), icon: const Icon(Icons.balance_rounded, size: 18), label: const Text('Split evenly'))]),
       const SizedBox(height: 6),
-      TextField(controller: controllers[subject], onSubmitted: (_) => addTopic(subject), decoration: const InputDecoration(labelText: 'Add chapter / topic', prefixIcon: Icon(Icons.bookmark_outline_rounded), suffixIcon: Icon(Icons.add_rounded))),
+      TextField(controller: controllers[subject], onSubmitted: (_) => addTopic(subject), textInputAction: TextInputAction.done, decoration: InputDecoration(labelText: 'Add chapter / topic', prefixIcon: const Icon(Icons.bookmark_outline_rounded), suffixIcon: IconButton(onPressed: () => addTopic(subject), tooltip: 'Add topic', icon: const Icon(Icons.add_rounded)))),
       if (list.isNotEmpty) ...[
         const SizedBox(height: 12),
         ...list.map((topic) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Container(padding: const EdgeInsets.fromLTRB(12, 8, 8, 2), decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)), child: Column(children: [
-          Row(children: [Expanded(child: Text(topic.name, style: const TextStyle(fontWeight: FontWeight.w700))), Text('${topic.minutes}m', style: const TextStyle(fontWeight: FontWeight.w800)), IconButton(onPressed: () => removeTopic(subject, topic), icon: const Icon(Icons.close_rounded, size: 19))]),
+          Row(children: [Expanded(child: Text(topic.name, style: const TextStyle(fontWeight: FontWeight.w700))), Text('${topic.minutes}m', style: const TextStyle(fontWeight: FontWeight.w800)), IconButton(onPressed: () => removeTopic(subject, topic), tooltip: 'Remove topic', icon: const Icon(Icons.close_rounded, size: 19))]),
           Slider(value: topic.minutes.clamp(0, maxTopic).toDouble(), min: 0, max: maxTopic.toDouble(), divisions: maxTopic, onChanged: (v) => changeTopic(subject, topic, v.round())),
         ])))),
       ],
