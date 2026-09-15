@@ -200,8 +200,7 @@ void main() {
       'break_timer_state': jsonEncode({'index': 'bad'}),
     });
     expect(store.focusTimerState, isNull);
-    expect(store.breakTimerState, isNotNull);
-    expect(store.breakTimerState?.index, 0);
+    expect(store.breakTimerState, isNull);
   });
 
   test('non-positive completion never changes totals or streak', () async {
