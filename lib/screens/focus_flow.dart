@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/local_store.dart';
@@ -25,19 +26,16 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
 
   StudyItem get item => widget.plan.items[activeIndex];
   int get completedForItem => widget.store.itemCompletedMinutes(activeIndex).clamp(0, item.minutes).toInt();
-  int get totalBlocks => (item.minutes / FocusScreen.focusBlock).ceil();
+  int get totalBlocks => math.max(1, (item.minutes / FocusScreen.focusBlock).ceil());
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     final savedIndex = widget.store.currentPlanIndex;
-    final savedBlock = widget.store.currentBlockIndex;
     activeIndex = savedIndex >= 0 && savedIndex < widget.plan.items.length ? savedIndex : widget.index;
-    activeBlockIndex = activeIndex == widget.index ? savedBlock : widget.blockIndex;
-
     final completed = completedForItem;
-    activeBlockIndex = (completed ~/ FocusScreen.focusBlock).clamp(0, 100000).toInt();
+    activeBlockIndex = (completed ~/ FocusScreen.focusBlock).clamp(0, totalBlocks - 1).toInt();
     final remaining = (item.minutes - completed).clamp(0, item.minutes).toInt();
     currentBlockMinutes = remaining > FocusScreen.focusBlock ? FocusScreen.focusBlock : remaining;
     if (currentBlockMinutes <= 0) currentBlockMinutes = 1;
@@ -49,12 +47,8 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       if (saved.running && saved.deadlineMillis != null) {
         final remainingSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
         seconds = remainingSeconds.clamp(0, currentBlockMinutes * 60).toInt();
-        if (remainingSeconds <= 0) {
-          running = true;
-          expiredOnResume = true;
-        } else {
-          running = true;
-        }
+        running = true;
+        expiredOnResume = remainingSeconds <= 0;
       } else {
         seconds = saved.remainingSeconds.clamp(0, currentBlockMinutes * 60).toInt();
         running = false;
@@ -103,7 +97,6 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
           return;
         }
         setState(() => seconds = nextSeconds.clamp(0, currentBlockMinutes * 60).toInt());
-        _persistTimerState();
       }
       _startTimer();
     }
@@ -131,7 +124,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final clock = '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
-    final progress = currentBlockMinutes <= 0 ? 0.0 : (1 - seconds / (currentBlockMinutes * 60)).clamp(0.0, 1.0).toDouble();
+    final progress = (1 - seconds / (currentBlockMinutes * 60)).clamp(0.0, 1.0).toDouble();
     final itemProgress = item.minutes <= 0 ? 0.0 : (completedForItem / item.minutes).clamp(0.0, 1.0).toDouble();
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
@@ -149,7 +142,8 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
           SizedBox(width: 258, height: 258, child: CircularProgressIndicator(value: progress, strokeWidth: 10, strokeCap: StrokeCap.round)),
           Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 3), Text(running ? 'Stay with one task' : 'Timer paused')]),
         ])),
-        const SizedBox(height: 24), Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 24),
+        Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 24),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: () => _openBreak(((currentBlockMinutes * 60 - seconds) / 60).floor()), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]),
         const SizedBox(height: 22),
@@ -313,7 +307,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
       ]))),
       const SizedBox(height: 20),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [OutlinedButton(onPressed: advancing ? null : _toggleRunning, child: Text(running ? 'Pause break' : 'Resume break')), const SizedBox(width: 10), FilledButton(onPressed: advancing ? null : _next, child: Text(advancing ? 'Saving…' : 'Continue'))]),
-    ])))));
+    ]))))));
   }
 }
 
@@ -324,21 +318,34 @@ class CompletionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completed = store.planCompletedMinutes.clamp(0, plan.allocatedMinutes).toInt();
-    final planned = plan.allocatedMinutes;
-    final progress = planned == 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
-    return Scaffold(body: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(28), child: Column(children: [
-      const Icon(Icons.emoji_events_rounded, size: 72),
+    final completed = plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + store.itemCompletedMinutes(entry.key).clamp(0, entry.value.minutes).toInt());
+    final progress = plan.totalMinutes <= 0 ? 0.0 : (completed / plan.totalMinutes).clamp(0.0, 1.0).toDouble();
+    final xp = completed * 2;
+    return Scaffold(body: SafeArea(child: Center(child: Padding(padding: const EdgeInsets.all(28), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Icon(Icons.emoji_events_rounded, size: 76, color: Theme.of(context).colorScheme.primary),
       const SizedBox(height: 20),
-      Text(completed >= planned ? 'Plan complete' : 'Focus session complete', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-      const SizedBox(height: 8),
-      Text('You completed $completed of $planned planned focus minutes.', textAlign: TextAlign.center),
-      const SizedBox(height: 20),
-      SizedBox(width: 420, child: LinearProgressIndicator(value: progress, minHeight: 9)),
+      Text('Study complete', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
+      const SizedBox(height: 10),
+      Text('$completed / ${plan.totalMinutes} minutes completed', style: const TextStyle(fontWeight: FontWeight.w700)),
       const SizedBox(height: 18),
-      Text('+${completed * 2} XP', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+      LinearProgressIndicator(value: progress, minHeight: 9),
+      const SizedBox(height: 22),
+      Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+        _Stat(label: 'Focused', value: '$completed min'),
+        _Stat(label: 'Progress', value: '${(progress * 100).round()}%'),
+        _Stat(label: 'XP earned', value: '+$xp'),
+      ]))),
       const SizedBox(height: 24),
       FilledButton.icon(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home')),
-    ]))));
+    ])))));
   }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(children: [Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 3), Text(label)]);
 }
