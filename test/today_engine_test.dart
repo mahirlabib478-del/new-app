@@ -32,6 +32,24 @@ void main() {
     expect(snapshot.remainingMinutes, 50);
   });
 
+  test('Today Engine resumes a partially completed item at its next block', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(
+      totalMinutes: 80,
+      items: [StudyItem(title: 'Chemistry', topic: 'Organic', minutes: 80)],
+    );
+
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.nextItem?.title, 'Chemistry');
+    expect(snapshot.currentIndex, 0);
+    expect(snapshot.currentBlockIndex, 1);
+    expect(snapshot.completedMinutes, 25);
+    expect(snapshot.remainingMinutes, 55);
+  });
+
   test('Today Engine exposes no next item after the whole plan is complete', () async {
     final store = await makeStore();
     final plan = StudyPlan(
