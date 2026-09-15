@@ -37,7 +37,19 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
   void changeSubject(String subject, int value) {
     final others = allocated - subjectMinutes[subject]!;
     final max = widget.total - others;
-    setState(() => subjectMinutes[subject] = value.clamp(0, max));
+    final next = value.clamp(0, max).toInt();
+    final list = topics[subject]!;
+    final topicTotal = list.fold(0, (a, t) => a + t.minutes);
+    if (topicTotal > next && topicTotal > 0) {
+      final ratio = next / topicTotal;
+      var assigned = 0;
+      for (var i = 0; i < list.length; i++) {
+        final target = i == list.length - 1 ? next - assigned : (list[i].minutes * ratio).floor();
+        list[i].minutes = target;
+        assigned += target;
+      }
+    }
+    setState(() => subjectMinutes[subject] = next);
   }
 
   void addTopic(String subject) {
@@ -47,10 +59,12 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
     setState(() { topics[subject]!.add(_TopicEntry(name, 0)); c.clear(); });
   }
 
+  void removeTopic(String subject, _TopicEntry topic) => setState(() => topics[subject]!.remove(topic));
+
   void changeTopic(String subject, _TopicEntry topic, int value) {
     final others = topics[subject]!.where((t) => !identical(t, topic)).fold(0, (a, t) => a + t.minutes);
     final max = subjectMinutes[subject]! - others;
-    setState(() => topic.minutes = value.clamp(0, max));
+    setState(() => topic.minutes = value.clamp(0, max).toInt());
   }
 
   void autoBalanceTopics(String subject) {
@@ -112,6 +126,8 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
     final list = topics[subject]!;
     final assigned = list.fold(0, (a, t) => a + t.minutes);
     final leftover = subjectMinutes[subject]! - assigned;
+    final subjectBudget = subjectMinutes[subject]!;
+    final maxTopic = subjectBudget.clamp(1, widget.total).toInt();
     return Card(margin: const EdgeInsets.only(bottom: 12), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [Expanded(child: Text(subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))), Text('${subjectMinutes[subject]}m', style: const TextStyle(fontWeight: FontWeight.w900))]),
       Slider(value: subjectMinutes[subject]!.toDouble(), min: 0, max: widget.total.toDouble(), divisions: widget.total, onChanged: (v) => changeSubject(subject, v.round())),
@@ -121,8 +137,8 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
       if (list.isNotEmpty) ...[
         const SizedBox(height: 12),
         ...list.map((topic) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Container(padding: const EdgeInsets.fromLTRB(12, 8, 8, 2), decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)), child: Column(children: [
-          Row(children: [Expanded(child: Text(topic.name, style: const TextStyle(fontWeight: FontWeight.w700))), Text('${topic.minutes}m', style: const TextStyle(fontWeight: FontWeight.w800)), IconButton(onPressed: () => setState(() => list.remove(topic)), icon: const Icon(Icons.close_rounded, size: 19))]),
-          Slider(value: topic.minutes.toDouble(), min: 0, max: subjectMinutes[subject]!.toDouble().clamp(1, widget.total).toDouble(), divisions: subjectMinutes[subject]!.clamp(1, widget.total), onChanged: (v) => changeTopic(subject, topic, v.round())),
+          Row(children: [Expanded(child: Text(topic.name, style: const TextStyle(fontWeight: FontWeight.w700))), Text('${topic.minutes}m', style: const TextStyle(fontWeight: FontWeight.w800)), IconButton(onPressed: () => removeTopic(subject, topic), icon: const Icon(Icons.close_rounded, size: 19))]),
+          Slider(value: topic.minutes.clamp(0, maxTopic).toDouble(), min: 0, max: maxTopic.toDouble(), divisions: maxTopic, onChanged: (v) => changeTopic(subject, topic, v.round())),
         ])))),
       ],
     ])));
