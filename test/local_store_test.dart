@@ -62,4 +62,30 @@ void main() {
     expect(store.completedMinutes, 50);
     expect(store.xp, 100);
   });
+
+  test('focus timer state survives store recreation and savePlan clears it', () async {
+    final store = await makeStore();
+    final state = FocusTimerState(
+      index: 1,
+      blockIndex: 2,
+      remainingSeconds: 317,
+      running: true,
+      deadlineMillis: 1234567890,
+    );
+
+    await store.saveFocusTimerState(state);
+    final restored = store.focusTimerState;
+
+    expect(restored?.index, 1);
+    expect(restored?.blockIndex, 2);
+    expect(restored?.remainingSeconds, 317);
+    expect(restored?.running, isTrue);
+    expect(restored?.deadlineMillis, 1234567890);
+
+    await store.savePlan(StudyPlan(
+      totalMinutes: 25,
+      items: [StudyItem(title: 'Chemistry', minutes: 25)],
+    ));
+    expect(store.focusTimerState, isNull);
+  });
 }
