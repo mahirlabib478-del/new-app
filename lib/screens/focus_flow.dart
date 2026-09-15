@@ -21,10 +21,12 @@ class _FocusScreenState extends State<FocusScreen> {
   late int currentBlockMinutes;
   bool running = true;
   Timer? timer;
+
   StudyItem get item => widget.plan.items[activeIndex];
+  int get completedForItem => widget.store.itemCompletedMinutes(activeIndex).clamp(0, item.minutes).toInt();
+  int get completedBeforeBlock => completedForItem;
   int get totalBlocks => (item.minutes / FocusScreen.focusBlock).ceil();
-  int get completedBeforeBlock => (activeBlockIndex * FocusScreen.focusBlock).clamp(0, item.minutes);
-  int get plannedRemaining => (item.minutes - completedBeforeBlock).clamp(0, item.minutes);
+  int get plannedRemaining => (item.minutes - completedForItem).clamp(0, item.minutes).toInt();
 
   @override void initState() {
     super.initState();
@@ -32,11 +34,19 @@ class _FocusScreenState extends State<FocusScreen> {
     final savedBlock = widget.store.currentBlockIndex;
     activeIndex = savedIndex >= 0 && savedIndex < widget.plan.items.length ? savedIndex : widget.index;
     activeBlockIndex = activeIndex == widget.index ? savedBlock : 0;
-    final remaining = item.minutes - activeBlockIndex * FocusScreen.focusBlock;
+
+    final completed = widget.store.itemCompletedMinutes(activeIndex).clamp(0, item.minutes).toInt();
+    final derivedBlock = (completed ~/ FocusScreen.focusBlock).clamp(0, 100000).toInt();
+    if (completed >= item.minutes) {
+      activeBlockIndex = derivedBlock;
+    } else if (activeBlockIndex != derivedBlock) {
+      activeBlockIndex = derivedBlock;
+    }
+
+    final remaining = item.minutes - completed;
     currentBlockMinutes = remaining > FocusScreen.focusBlock ? FocusScreen.focusBlock : remaining;
     if (currentBlockMinutes <= 0) {
-      activeBlockIndex = 0;
-      currentBlockMinutes = item.minutes.clamp(1, FocusScreen.focusBlock).toInt();
+      currentBlockMinutes = 1;
     }
     seconds = currentBlockMinutes * 60;
     unawaited(widget.store.setPlanPosition(activeIndex, activeBlockIndex));
@@ -60,14 +70,14 @@ class _FocusScreenState extends State<FocusScreen> {
   @override Widget build(BuildContext context) {
     final clock = '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final progress = currentBlockMinutes == 0 ? 0.0 : (1 - seconds / (currentBlockMinutes * 60)).clamp(0.0, 1.0);
-    final itemProgress = item.minutes == 0 ? 0.0 : (completedBeforeBlock / item.minutes).clamp(0.0, 1.0);
+    final itemProgress = item.minutes == 0 ? 0.0 : (completedForItem / item.minutes).clamp(0.0, 1.0);
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(appBar: AppBar(title: const Text('Focus mode'), centerTitle: true), body: SafeArea(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 20, 24, 30), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.auto_awesome_rounded, size: 16, color: scheme.primary), const SizedBox(width: 7), Text('DEEP FOCUS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, color: scheme.primary))]),
       const SizedBox(height: 18), Text(item.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
       if (item.topic.isNotEmpty) ...[const SizedBox(height: 6), Text(item.topic, textAlign: TextAlign.center)],
       const SizedBox(height: 18),
-      Row(children: [Expanded(child: Text('Topic progress', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800))), Text('${completedBeforeBlock}/${item.minutes} min', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800))]),
+      Row(children: [Expanded(child: Text('Topic progress', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800))), Text('${completedForItem}/${item.minutes} min', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800))]),
       const SizedBox(height: 8), ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: itemProgress, minHeight: 7)),
       const SizedBox(height: 26),
       Container(width: 280, height: 280, decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.surfaceContainerHighest, boxShadow: [BoxShadow(color: scheme.primary.withOpacity(.14), blurRadius: 40, spreadRadius: 2)]), child: Stack(alignment: Alignment.center, children: [SizedBox(width: 258, height: 258, child: CircularProgressIndicator(value: progress, strokeWidth: 10, strokeCap: StrokeCap.round, backgroundColor: scheme.outlineVariant)), Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900, fontFeatures: [const FontFeature.tabularFigures()])), const SizedBox(height: 3), Text(running ? 'Stay with one task' : 'Timer paused', style: Theme.of(context).textTheme.bodyMedium)])])),
@@ -112,14 +122,17 @@ class _BreakScreenState extends State<BreakScreen> {
     timer?.cancel();
     final completed = widget.completed.clamp(0, FocusScreen.focusBlock).toInt();
     if (completed > 0) await widget.store.addItemCompletedMinutes(widget.index, completed);
+
     final item = widget.plan.items[widget.index];
-    final nextBlock = widget.blockIndex + 1;
-    if (nextBlock * FocusScreen.focusBlock < item.minutes) {
+    final itemCompleted = widget.store.itemCompletedMinutes(widget.index).clamp(0, item.minutes).toInt();
+    if (itemCompleted < item.minutes) {
+      final nextBlock = (itemCompleted ~/ FocusScreen.focusBlock).clamp(0, 100000).toInt();
       await widget.store.setPlanPosition(widget.index, nextBlock);
       if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: widget.index, blockIndex: nextBlock)));
       return;
     }
+
     final nextIndex = widget.index + 1;
     if (nextIndex < widget.plan.items.length) {
       await widget.store.setPlanPosition(nextIndex, 0);
