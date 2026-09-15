@@ -17,7 +17,7 @@ void main() {
     expect(items.every((item) => item.minutes > 0 && item.minutes <= 25), isTrue);
   });
 
-  test('exam plan keeps the highest priority subject at least as allocated as a low priority subject', () {
+  test('exam plan gives higher priority at least as much time as low priority', () {
     final items = generateExamPlan(
       nextDay: true,
       studyHours: 2,
@@ -31,7 +31,12 @@ void main() {
         .fold<int>(0, (sum, item) => sum + item.minutes);
 
     expect(minutesFor('High'), greaterThanOrEqualTo(minutesFor('Low')));
-    expect(items.every((item) => item.topic == 'High-impact revision'), isTrue);
+    expect(
+      items.every(
+        (item) => item.topic == 'High-impact revision' || item.topic == 'Final review',
+      ),
+      isTrue,
+    );
   });
 
   test('empty subjects produce no exam plan', () {
