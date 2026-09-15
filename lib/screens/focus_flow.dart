@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/local_store.dart';
@@ -46,9 +45,7 @@ class _FocusScreenState extends State<FocusScreen> {
     unawaited(widget.store.setPlanPosition(activeIndex, activeBlockIndex));
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted || !running) return;
-      if (seconds > 0) {
-        setState(() => seconds--);
-      }
+      if (seconds > 0) setState(() => seconds--);
       if (seconds == 0) {
         timer?.cancel();
         _openBreak(currentBlockMinutes);
@@ -116,7 +113,7 @@ class _FocusScreenState extends State<FocusScreen> {
                       children: [
                         SizedBox(width: 258, height: 258, child: CircularProgressIndicator(value: progress, strokeWidth: 10, strokeCap: StrokeCap.round)),
                         Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900, fontFeatures: [const FontFeature.tabularFigures()])),
+                          Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900)),
                           const SizedBox(height: 3),
                           Text(running ? 'Stay with one task' : 'Timer paused'),
                         ]),
@@ -251,7 +248,7 @@ class _BreakScreenState extends State<BreakScreen> {
                   const SizedBox(height: 18),
                   LinearProgressIndicator(value: progress, minHeight: 7),
                   const SizedBox(height: 18),
-                  Text(clock, style: Theme.of(context).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900, fontFeatures: [const FontFeature.tabularFigures()])),
+                  Text(clock, style: Theme.of(context).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 24),
                   const Card(child: Padding(padding: EdgeInsets.all(16), child: Column(children: [
                     ListTile(leading: Icon(Icons.water_drop_rounded), title: Text('Drink some water'), subtitle: Text('Hydrate before you return.')),
@@ -299,7 +296,7 @@ class CompletionScreen extends StatelessWidget {
               const SizedBox(height: 20),
               SizedBox(width: 420, child: LinearProgressIndicator(value: progress, minHeight: 9)),
               const SizedBox(height: 18),
-              Text('+$completed XP', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              Text('+${completed * 2} XP', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
               const SizedBox(height: 26),
               FilledButton.icon(onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home')),
             ],
