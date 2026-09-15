@@ -18,21 +18,29 @@ List<StudyItem> generateExamPlan({
   final weights = subjects
       .map((subject) => (priorities[subject] ?? 2).clamp(1, 3).toInt() + safeUrgency - 1)
       .toList();
+  final totalWeight = weights.fold<int>(0, (sum, weight) => sum + weight);
+  final blockCount = totalMinutes ~/ 25;
   final counts = List<int>.filled(subjects.length, 0);
-  var remainingBlocks = totalMinutes ~/ 25;
+  final fractions = List<double>.filled(subjects.length, 0);
 
-  while (remainingBlocks > 0) {
-    var bestIndex = 0;
-    var bestScore = -1.0;
+  if (blockCount > 0 && totalWeight > 0) {
+    var assignedBlocks = 0;
     for (var i = 0; i < subjects.length; i++) {
-      final score = weights[i] / (counts[i] + 1);
-      if (score > bestScore) {
-        bestScore = score;
-        bestIndex = i;
-      }
+      final exact = blockCount * weights[i] / totalWeight;
+      counts[i] = exact.floor();
+      fractions[i] = exact - counts[i];
+      assignedBlocks += counts[i];
     }
-    counts[bestIndex]++;
-    remainingBlocks--;
+
+    var remainingBlocks = blockCount - assignedBlocks;
+    final order = List<int>.generate(subjects.length, (index) => index)
+      ..sort((a, b) {
+        final fractionCompare = fractions[b].compareTo(fractions[a]);
+        return fractionCompare != 0 ? fractionCompare : a.compareTo(b);
+      });
+    for (var i = 0; i < remainingBlocks; i++) {
+      counts[order[i % order.length]]++;
+    }
   }
 
   final items = <StudyItem>[];
