@@ -20,6 +20,7 @@ class TodaySnapshot {
     required this.goalRemainingMinutes,
     required this.recommendedFocusMinutes,
     required this.recommendationReason,
+    required this.remainingItemCount,
   });
 
   final StudyPlan? plan;
@@ -39,25 +40,13 @@ class TodaySnapshot {
   final int goalRemainingMinutes;
   final int recommendedFocusMinutes;
   final String recommendationReason;
+  final int remainingItemCount;
 
   bool get hasPlan => plan != null && plan!.items.isNotEmpty;
   bool get isComplete => hasPlan && remainingMinutes == 0;
   bool get hasRemainingWork => hasPlan && remainingMinutes > 0;
   bool get dailyGoalReached => goalRemainingMinutes == 0;
-
-  int get remainingItemCount {
-    if (plan == null) return 0;
-    return plan!.items.asMap().entries.where((entry) {
-      final completed = (storeItemProgress[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt();
-      return entry.value.minutes > 0 && completed < entry.value.minutes;
-    }).length;
-  }
-
   int get estimatedFocusBlocksRemaining => (remainingMinutes + 24) ~/ 25;
-
-  // Snapshot data is intentionally immutable; this map is populated by the
-  // engine only for the derived remaining-item count.
-  final Map<int, int> storeItemProgress = const {};
 }
 
 class TodayEngine {
@@ -84,6 +73,15 @@ class TodayEngine {
             : aggregateCompleted;
     final remaining = planned <= 0 ? 0 : planned - completed;
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
+
+    final remainingItemCount = plan == null
+        ? 0
+        : plan.items.asMap().entries.where((entry) {
+            final itemCompleted = hasItemProgress
+                ? (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt()
+                : 0;
+            return entry.value.minutes > 0 && itemCompleted < entry.value.minutes;
+          }).length;
 
     final dailyGoal = store.dailyGoalMinutes;
     final todayCompleted = store.studyMinutesOn(DateTime.now()).clamp(0, 1440).toInt();
@@ -166,6 +164,7 @@ class TodayEngine {
       goalRemainingMinutes: goalRemaining,
       recommendedFocusMinutes: recommended,
       recommendationReason: reason,
+      remainingItemCount: remainingItemCount,
     );
   }
 }
