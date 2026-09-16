@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:study_os/models/study_models.dart';
 import 'package:study_os/services/local_store.dart';
 import 'package:study_os/services/reminder_coordinator.dart';
 import 'package:study_os/services/reminder_scheduler.dart';
@@ -59,12 +60,14 @@ void main() {
     expect(scheduler.initializeCalls, 1);
   });
 
-  test('latest settings override schedules a newly enabled reminder', () async {
+  test('latest settings override schedules a newly enabled study reminder', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
     final scheduler = FakeScheduler();
     final coordinator = ReminderCoordinator(
-      store: LocalStore(prefs),
+      store: store,
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
