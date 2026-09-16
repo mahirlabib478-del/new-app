@@ -65,15 +65,15 @@ class ProfileScreen extends StatelessWidget {
                   child: Text('APPEARANCE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1)),
                 ),
                 ..._presets.entries.map(
-                  (entry) => RadioListTile<String>(
-                    value: entry.key,
-                    groupValue: themeKey,
-                    onChanged: (value) {
-                      if (value != null) onThemeChanged(value);
-                    },
+                  (entry) => ListTile(
+                    onTap: () => onThemeChanged(entry.key),
+                    leading: Icon(entry.value.icon),
                     title: Text(entry.value.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                     subtitle: Text(entry.value.description),
-                    secondary: Icon(entry.value.icon),
+                    trailing: Icon(
+                      themeKey == entry.key ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                      color: themeKey == entry.key ? scheme.primary : scheme.outline,
+                    ),
                   ),
                 ),
               ],
