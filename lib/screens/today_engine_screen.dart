@@ -83,6 +83,30 @@ class TodayEngineScreen extends StatelessWidget {
                         subtitle: Text(snapshot.nextItem!.topic.isEmpty ? 'Focus session' : snapshot.nextItem!.topic),
                         trailing: Text('${snapshot.nextItem!.minutes}m', style: const TextStyle(fontWeight: FontWeight.w900)),
                       ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(children: [
+                          Icon(Icons.auto_awesome_rounded, color: colorScheme.onPrimaryContainer),
+                          const SizedBox(width: 10),
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(
+                              'RECOMMENDED FOCUS',
+                              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, color: colorScheme.onPrimaryContainer),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${snapshot.recommendedFocusMinutes} min · ${snapshot.recommendationReason}',
+                              style: TextStyle(color: colorScheme.onPrimaryContainer),
+                            ),
+                          ])),
+                        ]),
+                      ),
                     ]),
             ),
           ),
