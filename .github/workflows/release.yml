@@ -1,20 +1,24 @@
 name: Android Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*+*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (vMAJOR.MINOR.PATCH+VERSION_CODE)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout release tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -37,7 +41,7 @@ jobs:
       - name: Resolve release version
         id: version
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ inputs.tag }}
         run: |
           VERSION="${REF_NAME#v}"
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
@@ -153,6 +157,7 @@ jobs:
       - name: Create GitHub release for tag
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag }}
           files: |
             build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/bundle/release/app-release.aab
