@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../services/local_store.dart';
 import '../services/update_service.dart';
@@ -20,8 +21,13 @@ class UpdateGate extends StatefulWidget {
 }
 
 class _UpdateGateState extends State<UpdateGate> {
-  late final Future<UpdateInfo?> _check =
-      (widget.checkForUpdate ?? const UpdateService().checkForUpdate)();
+  late final Future<UpdateInfo?> _check = _runCheck();
+
+  Future<UpdateInfo?> _runCheck() async {
+    if (widget.checkForUpdate != null) return widget.checkForUpdate!();
+    final packageInfo = await PackageInfo.fromPlatform();
+    return UpdateService(currentVersion: packageInfo.version).checkForUpdate();
+  }
 
   @override
   Widget build(BuildContext context) {
