@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/gamification.dart';
 import '../services/local_store.dart';
 import '../services/progress_analytics.dart';
 
@@ -17,13 +18,8 @@ class ProgressScreen extends StatelessWidget {
     final streak = store.streak;
     final sessions = store.sessions;
     final analytics = ProgressAnalytics(store).build();
-    final achievements = <_Achievement>[
-      _Achievement('First Focus', 'Complete your first study block', minutes >= 1, Icons.flag_rounded),
-      _Achievement('1 Hour', 'Study for 60 total minutes', minutes >= 60, Icons.timer_rounded),
-      _Achievement('5 Sessions', 'Complete five study sessions', sessions >= 5, Icons.local_fire_department_rounded),
-      _Achievement('3 Day Streak', 'Study three days in a row', streak >= 3, Icons.calendar_month_rounded),
-      _Achievement('500 XP', 'Earn 500 XP', xp >= 500, Icons.workspace_premium_rounded),
-    ];
+    final gamification = Gamification(store);
+    final achievements = gamification.achievements();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
@@ -48,7 +44,7 @@ class ProgressScreen extends StatelessWidget {
                 const SizedBox(height: 18),
                 LinearProgressIndicator(value: progress, minHeight: 8, borderRadius: BorderRadius.circular(99)),
                 const SizedBox(height: 8),
-                Text('${250 - store.levelProgress} XP to Level ${level + 1}'),
+                Text('${gamification.xpToNextLevel()} XP to Level ${level + 1}'),
               ]),
             ),
           ),
@@ -110,7 +106,7 @@ class ProgressScreen extends StatelessWidget {
           ...achievements.map((a) => Card(
             margin: const EdgeInsets.only(bottom: 10),
             child: ListTile(
-              leading: CircleAvatar(child: Icon(a.icon)),
+              leading: CircleAvatar(child: Icon(a.unlocked ? Icons.emoji_events_rounded : Icons.lock_outline_rounded)),
               title: Text(a.title, style: const TextStyle(fontWeight: FontWeight.w800)),
               subtitle: Text(a.description),
               trailing: Icon(a.unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded),
@@ -150,12 +146,4 @@ class _Metric extends StatelessWidget {
           Text(label),
         ],
       );
-}
-
-class _Achievement {
-  const _Achievement(this.title, this.description, this.unlocked, this.icon);
-  final String title;
-  final String description;
-  final bool unlocked;
-  final IconData icon;
 }
