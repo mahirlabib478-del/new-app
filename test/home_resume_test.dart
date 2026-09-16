@@ -27,13 +27,10 @@ void main() {
       );
 
   testWidgets('completed plan does not expose a Resume/Start action', (tester) async {
-    final plan = StudyPlan(
-      totalMinutes: 50,
-      items: [
-        StudyItem(title: 'Math', minutes: 25),
-        StudyItem(title: 'Physics', minutes: 25),
-      ],
-    );
+    final plan = StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Math', minutes: 25),
+      StudyItem(title: 'Physics', minutes: 25),
+    ]);
     final store = await makeStore({
       'study_plan': jsonEncode(plan.toJson()),
       'study_plan_date': _todayKey(),
@@ -42,19 +39,17 @@ void main() {
     });
 
     await tester.pumpWidget(home(store));
+    await tester.pumpAndSettle();
 
     expect(find.text('0 minutes left'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Start'), findsNothing);
   });
 
   testWidgets('unfinished plan exposes the current item Start action', (tester) async {
-    final plan = StudyPlan(
-      totalMinutes: 50,
-      items: [
-        StudyItem(title: 'Math', minutes: 25),
-        StudyItem(title: 'Physics', minutes: 25),
-      ],
-    );
+    final plan = StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Math', minutes: 25),
+      StudyItem(title: 'Physics', minutes: 25),
+    ]);
     final store = await makeStore({
       'study_plan': jsonEncode(plan.toJson()),
       'study_plan_date': _todayKey(),
@@ -63,6 +58,7 @@ void main() {
     });
 
     await tester.pumpWidget(home(store));
+    await tester.pumpAndSettle();
 
     expect(find.text('25 minutes left'), findsOneWidget);
     expect(find.text('Physics'), findsOneWidget);
