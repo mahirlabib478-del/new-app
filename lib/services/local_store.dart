@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/study_models.dart';
+import 'app_language.dart';
 
 class FocusTimerState {
   const FocusTimerState({required this.index, required this.blockIndex, required this.remainingSeconds, required this.running, this.deadlineMillis});
@@ -85,6 +86,8 @@ class LocalStore {
   Future<void> setDarkMode(bool value) => prefs.setBool(_themeKey, value);
   String get themePreset => (prefs.getString(_themePresetKey)?.isNotEmpty ?? false) ? prefs.getString(_themePresetKey)! : (darkMode ? 'midnight' : 'sunrise');
   Future<void> setThemePreset(String value) => prefs.setString(_themePresetKey, value);
+  AppLanguage get appLanguage => AppLanguageStore(prefs).language;
+  Future<void> setAppLanguage(AppLanguage value) => AppLanguageStore(prefs).setLanguage(value);
   int get completedMinutes => prefs.getInt(_minutesKey) ?? 0;
   int get planCompletedMinutes => prefs.getInt(_planMinutesKey) ?? 0;
   int get dailyGoalMinutes => (prefs.getInt(_dailyGoalKey) ?? 120).clamp(15, 720).toInt();
@@ -170,15 +173,7 @@ class LocalStore {
     final plan = loadPlan();
     final planBudget = plan?.allocatedMinutes ?? requested;
     final itemMap = plan == null ? const <int, int>{} : itemCompletedMinutesMap;
-
-    // Once item-level progress exists, it is authoritative. An aggregate-only
-    // completion has no safe item to attribute to, so ignore it rather than
-    // creating progress that Today Engine and item-level views cannot see.
     if (itemIndex == null && itemMap.isNotEmpty) return;
-
-    // When item-level progress exists, it is the source of truth for item
-    // completions. This prevents a stale legacy aggregate from blocking a
-    // valid resume/completion action or causing the same minutes to count twice.
     var completedBefore = planCompletedMinutes;
     if (itemIndex != null && plan != null && itemMap.isNotEmpty) {
       completedBefore = plan.items.asMap().entries.fold<int>(
@@ -186,7 +181,6 @@ class LocalStore {
         (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
       );
     }
-
     final planRemaining = (planBudget - completedBefore).clamp(0, 1440).toInt();
     if (planRemaining <= 0) return;
     if (itemIndex != null && (plan == null || itemIndex < 0 || itemIndex >= plan.items.length)) return;
