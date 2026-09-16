@@ -56,6 +56,7 @@ class _SavedSessionsScreenState extends State<SavedSessionsScreen> {
   }
 
   String _resumeLabel(SavedStudySession session) {
+    if (session.plan.items.isEmpty) return 'Invalid saved session';
     final index = session.currentIndex.clamp(0, session.plan.items.length - 1).toInt();
     final item = session.plan.items[index];
     final topic = item.topic.trim();
