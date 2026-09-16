@@ -142,6 +142,7 @@ class Home extends StatelessWidget {
     final goal = store.dailyGoalMinutes;
     final today = store.studyMinutesOn(DateTime.now());
     final goalProgress = (today / goal).clamp(0.0, 1.0).toDouble();
+    final goalRemaining = goal - today > 0 ? goal - today : 0;
     return Scaffold(
       body: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [
         Text(_greeting(), style: Theme.of(context).textTheme.titleMedium),
@@ -165,7 +166,7 @@ class Home extends StatelessWidget {
           const SizedBox(height: 10),
           LinearProgressIndicator(value: goalProgress, minHeight: 7),
           const SizedBox(height: 8),
-          Text(goalProgress >= 1 ? 'Goal reached. Keep the momentum.' : '${goal - today} min left today'),
+          Text(goalProgress >= 1 ? 'Goal reached. Keep the momentum.' : '$goalRemaining min left today'),
         ]))),
         if (snapshot.nextItem != null) ...[
           const SizedBox(height: 16),
