@@ -3,7 +3,9 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-class NotificationService {
+import 'reminder_scheduler.dart';
+
+class NotificationService implements ReminderScheduler {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
@@ -42,6 +44,7 @@ class NotificationService {
     }
   }
 
+  @override
   Future<bool?> requestPermissions() async {
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) return android.requestNotificationsPermission();
@@ -55,6 +58,7 @@ class NotificationService {
     return null;
   }
 
+  @override
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
@@ -87,6 +91,7 @@ class NotificationService {
     );
   }
 
+  @override
   Future<void> showNow({required int id, required String title, required String body}) async {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
@@ -100,6 +105,7 @@ class NotificationService {
     await _plugin.show(id, title, body, details);
   }
 
+  @override
   Future<void> cancel(int id) => _plugin.cancel(id);
 
   Future<void> cancelAll() => _plugin.cancelAll();
