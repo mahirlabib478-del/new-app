@@ -28,7 +28,7 @@ A feature is **shipped** only when it is implemented, user-reachable, its main a
 | Sound effects | Profile + interactions | Profile | SoundEffects | sound tests | DONE |
 | Study reminders | Profile | Profile → Reminders | ReminderCoordinator/Policy/Scheduler | reminder tests | PARTIAL — physical Android delivery not verified |
 | Update gate | Startup | App launch | UpdateService + UpdateGate | update tests | PARTIAL — signed upgrade not device-verified |
-| Android CI / APK | CI workflow | GitHub Actions | Flutter build workflow | CI | DONE |
+| Android CI / APK | CI workflow | GitHub Actions | Flutter build workflow | CI | DONE — CI #367 verified |
 | Signed release upgrade | Release workflow | Release | signing + versioning | manual/device verification | NEEDS REVIEW |
 | Legacy ProgressScreen | Legacy UI | not in shipped nav | old progress implementation | existing tests | NEEDS REVIEW — keep out of navigation unless unique functionality is confirmed |
 | Saved-session archive ownership | Internal | Focus/Break/save-plan paths | LocalStore + StudySessionStore | session regression | NEEDS REVIEW — format unified; ownership refactor remains |
@@ -39,6 +39,7 @@ A feature is **shipped** only when it is implemented, user-reachable, its main a
 - Saved Sessions resume now preserves the correct item/block position using canonical plan identity.
 - Study mode archiving captures the outgoing mode before replacing the active plan.
 - LocalStore saved-session archive now uses the same canonical record shape/fingerprint as StudySessionStore instead of the legacy `sourcePlan` field.
+- Completion idempotency was audited across Focus → Break → Completion; existing guards and regression tests cover timer-expiry, lifecycle-resume and Break Continue duplicate-trigger paths, with no new production bug found.
 
 ## Important verification limits
 
@@ -58,3 +59,13 @@ A feature is **shipped** only when it is implemented, user-reachable, its main a
 ## CI policy
 
 Never mark the current head **green** from code inspection alone. Confirm the GitHub Actions run and verify Analyze, Test, and Android build/artifact steps.
+
+### Latest verified run
+
+- CI **#367** / run `35158080099`
+- Head: `125138eeafb38f3c8125cfa210c3d6905627f8d9`
+- Analyze: PASS
+- Test: PASS
+- Android debug APK: PASS
+- Android release APK: PASS
+- APK artifact upload: PASS
