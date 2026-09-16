@@ -78,7 +78,10 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.text('Continue'));
+
+    final continueFinder = find.text('Continue');
+    await tester.ensureVisible(continueFinder);
+    await tester.tap(continueFinder);
     await tester.pumpAndSettle();
 
     expect(find.text('Study complete'), findsOneWidget);
