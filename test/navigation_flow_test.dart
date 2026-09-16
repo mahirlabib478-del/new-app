@@ -26,8 +26,11 @@ void main() {
     expect(find.text('Physics'), findsOneWidget);
     expect(find.textContaining('50'), findsWidgets);
 
-    final missionButton = find.widgetWithText(FilledButton, 'Start');
+    // The Home mission is the only FilledButton on this screen. Avoid relying
+    // on its localized label or an animation-sensitive text finder.
+    final missionButton = find.byType(FilledButton).first;
     expect(missionButton, findsOneWidget);
+    await tester.ensureVisible(missionButton);
     await tester.tap(missionButton);
     await tester.pumpAndSettle();
     expect(find.text('Focus'), findsOneWidget);
