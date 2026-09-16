@@ -88,6 +88,22 @@ void main() {
     expect(store.xp, 50);
   });
 
+  test('aggregate completion is ignored once item-level progress exists', () async {
+    final store = await makeStore();
+    await store.savePlan(StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Math', minutes: 25),
+      StudyItem(title: 'Physics', minutes: 25),
+    ]));
+    await store.addItemCompletedMinutes(0, 25);
+    await store.addCompletedMinutes(25);
+
+    expect(store.itemCompletedMinutesMap, {0: 25});
+    expect(store.planCompletedMinutes, 25);
+    expect(store.completedMinutes, 25);
+    expect(store.sessions, 1);
+    expect(store.xp, 50);
+  });
+
   test('focus timer state survives store recreation and savePlan clears it', () async {
     final store = await makeStore();
     final state = FocusTimerState(index: 1, blockIndex: 2, remainingSeconds: 317, running: true, deadlineMillis: 1234567890);
