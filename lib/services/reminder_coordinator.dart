@@ -1,24 +1,8 @@
 import 'local_store.dart';
-import 'notification_service.dart';
 import 'reminder_policy.dart';
+import 'reminder_scheduler.dart';
 import 'reminder_settings.dart';
 import 'today_engine.dart';
-
-abstract interface class ReminderScheduler {
-  Future<void> scheduleDailyReminder({
-    required int id,
-    required String title,
-    required String body,
-    required int hour,
-    required int minute,
-  });
-
-  Future<void> showNow({required int id, required String title, required String body});
-
-  Future<void> cancel(int id);
-
-  Future<bool?> requestPermissions();
-}
 
 class ReminderCoordinator {
   const ReminderCoordinator({
