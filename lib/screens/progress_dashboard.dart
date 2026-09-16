@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/study_models.dart';
+import '../services/gamification.dart';
 import '../services/local_store.dart';
 
 class ProgressDashboard extends StatefulWidget {
@@ -39,6 +40,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
     final weekTotal = week.fold<int>(0, (sum, entry) => sum + entry.$2);
     final levelProgress = store.levelProgress / 250;
     final nextLevelXp = (store.level * 250) - store.xp;
+    final achievements = Gamification(store).achievements();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
@@ -65,13 +67,32 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
         const SizedBox(height: 12),
         Row(children: [Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Streak')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.bolt_rounded, value: '${store.xp}', label: 'XP')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes'))]),
         const SizedBox(height: 20), Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10),
-        _Achievement(icon: Icons.play_arrow_rounded, title: 'First Focus', subtitle: 'Complete your first focused minute.', unlocked: store.completedMinutes >= 1),
-        _Achievement(icon: Icons.timer_rounded, title: 'Deep Work', subtitle: 'Complete 60 focused minutes.', unlocked: store.completedMinutes >= 60),
-        _Achievement(icon: Icons.local_fire_department_rounded, title: '3-Day Streak', subtitle: 'Study on 3 consecutive days.', unlocked: store.streak >= 3),
-        _Achievement(icon: Icons.workspace_premium_rounded, title: 'Level 5', subtitle: 'Reach level 5.', unlocked: store.level >= 5),
+        ...achievements.map((achievement) => _Achievement(
+              icon: _achievementIcon(achievement.title),
+              title: achievement.title,
+              subtitle: achievement.description,
+              unlocked: achievement.unlocked,
+            )),
         const SizedBox(height: 18), if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
       ]),
     );
+  }
+
+  IconData _achievementIcon(String title) {
+    switch (title) {
+      case 'First Focus':
+        return Icons.play_arrow_rounded;
+      case '1 Hour':
+        return Icons.timer_rounded;
+      case '5 Sessions':
+        return Icons.repeat_rounded;
+      case '3 Day Streak':
+        return Icons.local_fire_department_rounded;
+      case '500 XP':
+        return Icons.workspace_premium_rounded;
+      default:
+        return Icons.emoji_events_rounded;
+    }
   }
 }
 
@@ -117,5 +138,5 @@ class _ProgressItem extends StatelessWidget {
 class _Stat extends StatelessWidget {
   const _Stat({required this.icon, required this.value, required this.label});
   final IconData icon; final String value; final String label;
-  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)])));
+  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
 }
