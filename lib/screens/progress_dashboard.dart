@@ -30,7 +30,21 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
     final store = widget.store;
     final plan = store.loadPlan();
     final planned = plan?.allocatedMinutes ?? 0;
-    final completed = plan == null ? 0 : store.planCompletedMinutes.clamp(0, planned).toInt();
+    final completedByItem = plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
+    final itemCompletedTotal = plan == null
+        ? 0
+        : plan.items.asMap().entries.fold<int>(
+            0,
+            (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
+          );
+    // Item-level progress is the source of truth when available, matching the
+    // Home/Today engine and preventing stale aggregate progress from showing.
+    final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
+    final completed = planned <= 0
+        ? 0
+        : completedByItem.isNotEmpty
+            ? itemCompletedTotal.clamp(0, planned).toInt()
+            : aggregateCompleted;
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
     final goal = store.dailyGoalMinutes;
     final today = store.studyMinutesOn(DateTime.now());
