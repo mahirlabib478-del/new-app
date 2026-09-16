@@ -184,6 +184,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _editGoal(context, goal),
                 ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.volume_up_rounded),
+                  title: Text(strings.soundEffects, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text(strings.soundEffectsSubtitle),
+                  value: widget.store.soundEffectsEnabled,
+                  onChanged: (value) async {
+                    await widget.store.setSoundEffectsEnabled(value);
+                    if (mounted) setState(() {});
+                  },
+                ),
               ],
             ),
           ),
@@ -254,14 +264,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onChanged: (value) => Navigator.pop(dialogContext, value),
             child: Column(
               children: [
-                RadioListTile<AppLanguage>(
-                  value: AppLanguage.english,
-                  title: Text(strings.english),
-                ),
-                RadioListTile<AppLanguage>(
-                  value: AppLanguage.bangla,
-                  title: Text(strings.bangla),
-                ),
+                RadioListTile<AppLanguage>(value: AppLanguage.english, title: Text(strings.english)),
+                RadioListTile<AppLanguage>(value: AppLanguage.bangla, title: Text(strings.bangla)),
               ],
             ),
           ),
@@ -276,41 +280,21 @@ class _DailyGoalDialog extends StatefulWidget {
   const _DailyGoalDialog({required this.initialMinutes, required this.strings});
   final int initialMinutes;
   final AppStrings strings;
-
   @override
   State<_DailyGoalDialog> createState() => _DailyGoalDialogState();
 }
 
 class _DailyGoalDialogState extends State<_DailyGoalDialog> {
   late final TextEditingController controller;
-
   @override
-  void initState() {
-    super.initState();
-    controller = TextEditingController(text: widget.initialMinutes.toString());
-  }
-
+  void initState() { super.initState(); controller = TextEditingController(text: widget.initialMinutes.toString()); }
   @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  void save() {
-    final parsed = int.tryParse(controller.text.trim());
-    if (parsed == null) return;
-    Navigator.pop(context, parsed);
-  }
-
+  void dispose() { controller.dispose(); super.dispose(); }
+  void save() { final parsed = int.tryParse(controller.text.trim()); if (parsed == null) return; Navigator.pop(context, parsed); }
   @override
   Widget build(BuildContext context) => AlertDialog(
         title: Text(widget.strings.dailyStudyGoal),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(labelText: widget.strings.minutes, suffixText: 'min'),
-          onSubmitted: (_) => save(),
-        ),
+        content: TextField(controller: controller, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: widget.strings.minutes, suffixText: 'min'), onSubmitted: (_) => save()),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text(widget.strings.cancel)),
           FilledButton(onPressed: save, child: Text(widget.strings.save)),
