@@ -5,17 +5,19 @@ import 'package:study_os/screens/setup_screen.dart';
 import 'package:study_os/services/local_store.dart';
 
 void main() {
-  testWidgets('adds and selects a custom subject', (tester) async {
+  Future<void> openSetup(WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final store = LocalStore(prefs);
-
-    await tester.pumpWidget(MaterialApp(home: Setup(store: store)));
+    await tester.pumpWidget(MaterialApp(home: Setup(store: LocalStore(prefs))));
     await tester.pumpAndSettle();
+  }
 
-    await tester.enterText(find.byType(TextField).last, 'Accounting');
-    await tester.scrollUntilVisible(find.byTooltip('Add subject'), 300, scrollable: find.byType(Scrollable).first);
-    await tester.tap(find.byTooltip('Add subject'));
+  testWidgets('adds and selects a custom subject', (tester) async {
+    await openSetup(tester);
+
+    final field = find.byType(TextField).last;
+    await tester.enterText(field, 'Accounting');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
     expect(find.text('Accounting'), findsOneWidget);
@@ -24,16 +26,11 @@ void main() {
   });
 
   testWidgets('rejects a custom subject that duplicates a default subject', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final store = LocalStore(prefs);
+    await openSetup(tester);
 
-    await tester.pumpWidget(MaterialApp(home: Setup(store: store)));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).last, 'physics');
-    await tester.scrollUntilVisible(find.byTooltip('Add subject'), 300, scrollable: find.byType(Scrollable).first);
-    await tester.tap(find.byTooltip('Add subject'));
+    final field = find.byType(TextField).last;
+    await tester.enterText(field, 'physics');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
     expect(find.text('physics'), findsNothing);
