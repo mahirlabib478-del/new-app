@@ -76,7 +76,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '90');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(store.dailyGoalMinutes, 90);
     expect(find.text('0 / 90 min'), findsOneWidget);
