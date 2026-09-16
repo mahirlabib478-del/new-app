@@ -26,7 +26,7 @@ void main() {
     expect(find.text('Home content'), findsNothing);
   });
 
-  testWidgets('Update gate allows optional releases', (tester) async {
+  testWidgets('Update gate surfaces optional releases without blocking the app', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
     final check = Future<UpdateInfo?>.value(const UpdateInfo(
@@ -38,7 +38,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Home content'), findsOneWidget);
-    expect(find.text('Update required'), findsNothing);
+    expect(find.text('Study OS 0.3.0 is available.'), findsOneWidget);
+    expect(find.text('Update'), findsOneWidget);
+  });
+
+  testWidgets('optional update banner can be dismissed', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalStore(await SharedPreferences.getInstance());
+    final check = Future<UpdateInfo?>.value(const UpdateInfo(
+      latestVersion: '0.3.0',
+      releaseUrl: 'https://github.com/mahirlabib478-del/new-app/releases/latest',
+    ));
+
+    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => check, child: const Text('Home content'))));
+    await tester.pumpAndSettle();
+    expect(find.text('Study OS 0.3.0 is available.'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(find.text('Home content'), findsOneWidget);
+    expect(find.text('Study OS 0.3.0 is available.'), findsNothing);
   });
 
   testWidgets('Update gate keeps app available when no update is reported', (tester) async {
