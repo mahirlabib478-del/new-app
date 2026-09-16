@@ -36,6 +36,7 @@ class StudyOS extends StatefulWidget {
 }
 
 class _StudyOSState extends State<StudyOS> {
+  final navigatorKey = GlobalKey<NavigatorState>();
   late String themeKey = themes.containsKey(widget.store.themePreset) ? widget.store.themePreset : 'midnight';
   int tab = 0;
 
@@ -51,7 +52,7 @@ class _StudyOSState extends State<StudyOS> {
     final snapshot = TodayEngine(widget.store).build();
     final activePlan = plan ?? snapshot.plan;
     if (activePlan == null || activePlan.items.isEmpty) return;
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => FocusScreen(
+    await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(
       store: widget.store,
       plan: activePlan,
       index: plan == null ? snapshot.currentIndex : 0,
@@ -61,11 +62,11 @@ class _StudyOSState extends State<StudyOS> {
   }
 
   void openRegularStudy() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => Setup(
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => Setup(
       store: widget.store,
       onStartPlan: (plan) async {
         if (!mounted) return;
-        Navigator.pop(context);
+        navigatorKey.currentState?.pop();
         await openFocus(plan: plan);
       },
     )));
@@ -75,6 +76,7 @@ class _StudyOSState extends State<StudyOS> {
   Widget build(BuildContext context) {
     final theme = themes[themeKey]!;
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Study OS',
       theme: ThemeData(
@@ -87,7 +89,7 @@ class _StudyOSState extends State<StudyOS> {
       ),
       home: Scaffold(
         body: IndexedStack(index: tab, children: [
-          Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: (nextDay) => _openExam(nextDay)),
+          Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam),
           StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy),
           ProgressDashboard(store: widget.store),
           ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme),
@@ -107,12 +109,12 @@ class _StudyOSState extends State<StudyOS> {
   }
 
   void _openExam(bool nextDay) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => ExamPlannerScreen(
       nextDay: nextDay,
       store: widget.store,
       onStartPlan: (plan) async {
         if (!mounted) return;
-        Navigator.pop(context);
+        navigatorKey.currentState?.pop();
         await openFocus(plan: plan);
       },
     )));
