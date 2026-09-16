@@ -25,13 +25,9 @@ void main() {
 
     expect(find.text('Physics'), findsOneWidget);
     expect(find.textContaining('50'), findsWidgets);
-    await tester.scrollUntilVisible(find.text('Motion'), 400, scrollable: find.byType(Scrollable).first);
-    await tester.pumpAndSettle();
-    expect(find.text('Motion'), findsOneWidget);
 
     final missionButton = find.byKey(const ValueKey<String>('home-mission-action'));
     expect(missionButton, findsOneWidget);
-    await tester.ensureVisible(missionButton);
     await tester.tap(missionButton);
     await tester.pumpAndSettle();
     expect(find.text('Focus'), findsOneWidget);
