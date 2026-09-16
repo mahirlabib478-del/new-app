@@ -95,7 +95,9 @@ class StudySessionStore {
     await store.setActiveStudyMode(target.mode);
     await store.clearFocusTimerState();
     await store.clearBreakTimerState();
-    await delete(id);
+    // Keep the saved snapshot until the restored plan is completed or deleted.
+    // Focus/Break archiving updates this same record, so an abrupt app close
+    // immediately after Resume cannot make the saved session disappear.
     return true;
   }
 
