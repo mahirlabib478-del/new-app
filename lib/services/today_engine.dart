@@ -128,11 +128,17 @@ class TodayEngine {
     final recommended = remaining <= 0 || itemRemaining <= 0
         ? 0
         : [25, itemRemaining, remaining, availableForGoal].reduce((a, b) => a < b ? a : b);
+
+    // Recommendation priority is deliberately deterministic: first finish a
+    // small remaining item, otherwise use the block to close the daily goal
+    // when the goal is the tighter constraint, and otherwise advance the plan.
     final reason = recommended == 0
         ? 'Today’s plan is complete.'
-        : goalRemaining > 0 && goalRemaining < remaining
-            ? 'Use this block to move toward your daily goal.'
-            : 'Continue the first unfinished study item.';
+        : itemRemaining <= 25
+            ? 'Finish this remaining study item.'
+            : goalRemaining > 0 && goalRemaining <= remaining
+                ? 'Use this block to move toward your daily goal.'
+                : 'Continue the first unfinished study item.';
 
     return TodaySnapshot(
       plan: plan,
