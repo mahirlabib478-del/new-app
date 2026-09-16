@@ -176,6 +176,32 @@ void main() {
     expect(snapshot.nextItem?.title, 'Math');
     expect(snapshot.currentIndex, 1);
   });
+
+  test('Today Engine exposes daily goal progress from study history', () async {
+    final store = await makeStore({'daily_goal_minutes': 120});
+    await store.addDailyStudyMinutes(45);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.dailyGoalMinutes, 120);
+    expect(snapshot.todayCompletedMinutes, 45);
+    expect(snapshot.goalRemainingMinutes, 75);
+    expect(snapshot.goalProgress, closeTo(0.375, 0.0001));
+    expect(snapshot.dailyGoalReached, isFalse);
+  });
+
+  test('Today Engine caps daily goal progress and reports when goal is reached', () async {
+    final store = await makeStore({'daily_goal_minutes': 60});
+    await store.addDailyStudyMinutes(90);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.dailyGoalMinutes, 60);
+    expect(snapshot.todayCompletedMinutes, 90);
+    expect(snapshot.goalRemainingMinutes, 0);
+    expect(snapshot.goalProgress, 1.0);
+    expect(snapshot.dailyGoalReached, isTrue);
+  });
 }
 
 String _todayKey() {
