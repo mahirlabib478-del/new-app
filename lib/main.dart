@@ -6,11 +6,13 @@ import 'services/local_store.dart';
 import 'services/reminder_coordinator.dart';
 import 'services/reminder_settings.dart';
 import 'services/notification_service.dart';
+import 'services/study_session_store.dart';
 import 'services/today_engine.dart';
 import 'screens/exam_planner_screen.dart';
 import 'screens/focus_flow.dart';
 import 'screens/progress_dashboard.dart';
 import 'screens/profile_screen.dart';
+import 'screens/saved_sessions_screen.dart';
 import 'screens/setup_screen.dart';
 import 'widgets/update_gate.dart';
 import 'widgets/attractive_home.dart';
@@ -182,9 +184,26 @@ class StudyHub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppStrings(language);
+    final savedCount = StudySessionStore(store).sessions.length;
     return Scaffold(appBar: AppBar(title: Text(s.isBangla ? 'স্টাডি' : 'Study')), body: ListView(padding: const EdgeInsets.all(20), children: [
       Text(s.isBangla ? 'পরবর্তী কাজ বেছে নিন' : 'Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 18),
+      if (savedCount > 0) ...[
+        Card(
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(14),
+            leading: CircleAvatar(child: const Icon(Icons.bookmark_rounded)),
+            title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)),
+            subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SavedSessionsScreen(
+              store: store,
+              onOpenFocus: () => onStartPlan(store.loadPlan()!),
+            ))),
+          ),
+        ),
+        const SizedBox(height: 14),
+      ],
       _Mode(icon: Icons.menu_book_rounded, title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
       _Mode(icon: Icons.auto_awesome_rounded, title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক পরীক্ষার পরিকল্পনা।' : 'Priority-based exam planning.', onTap: () => _openExam(context, false)),
       _Mode(icon: Icons.bolt_rounded, title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision.', onTap: () => _openExam(context, true)),
