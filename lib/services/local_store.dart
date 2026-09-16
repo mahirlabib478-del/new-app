@@ -169,7 +169,22 @@ class LocalStore {
     if (requested <= 0) return;
     final plan = loadPlan();
     final planBudget = plan?.allocatedMinutes ?? requested;
-    final planRemaining = (planBudget - planCompletedMinutes).clamp(0, 1440).toInt();
+
+    // When item-level progress exists, it is the source of truth for item
+    // completions. This prevents a stale legacy aggregate from blocking a
+    // valid resume/completion action or causing the same minutes to count twice.
+    var completedBefore = planCompletedMinutes;
+    if (itemIndex != null && plan != null) {
+      final itemMap = itemCompletedMinutesMap;
+      if (itemMap.isNotEmpty) {
+        completedBefore = plan.items.asMap().entries.fold<int>(
+          0,
+          (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
+        );
+      }
+    }
+
+    final planRemaining = (planBudget - completedBefore).clamp(0, 1440).toInt();
     if (planRemaining <= 0) return;
     if (itemIndex != null && (plan == null || itemIndex < 0 || itemIndex >= plan.items.length)) return;
     var minutes = requested > planRemaining ? planRemaining : requested;
@@ -180,7 +195,7 @@ class LocalStore {
     }
     if (minutes <= 0) return;
     await prefs.setInt(_minutesKey, completedMinutes + minutes);
-    await prefs.setInt(_planMinutesKey, planCompletedMinutes + minutes);
+    await prefs.setInt(_planMinutesKey, completedBefore + minutes);
     await prefs.setInt(_xpKey, xp + minutes * 2);
     await prefs.setInt(_sessionsKey, sessions + 1);
     await addDailyStudyMinutes(minutes);
