@@ -12,14 +12,23 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('adds and selects a custom subject', (tester) async {
-    await openSetup(tester);
-
+  Future<void> submitCustomSubject(WidgetTester tester, String value) async {
     final field = find.byType(TextField).last;
-    await tester.enterText(field, 'Accounting');
+    await tester.ensureVisible(field);
+    await tester.enterText(field, value);
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
+  }
 
+  testWidgets('adds and selects a custom subject', (tester) async {
+    await openSetup(tester);
+    await submitCustomSubject(tester, 'Accounting');
+
+    await tester.scrollUntilVisible(
+      find.text('Accounting'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Accounting'), findsOneWidget);
     final checkbox = find.byType(CheckboxListTile).last;
     expect(tester.widget<CheckboxListTile>(checkbox).value, isTrue);
@@ -27,11 +36,7 @@ void main() {
 
   testWidgets('rejects a custom subject that duplicates a default subject', (tester) async {
     await openSetup(tester);
-
-    final field = find.byType(TextField).last;
-    await tester.enterText(field, 'physics');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
+    await submitCustomSubject(tester, 'physics');
 
     expect(find.text('physics'), findsNothing);
     expect(find.text('That subject is already in the list.'), findsOneWidget);
