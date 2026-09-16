@@ -8,33 +8,51 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Profile refreshes daily goal after saving', (tester) async {
-    SharedPreferences.setMockInitialValues({
-      'daily_goal_minutes': 120,
-    });
+    SharedPreferences.setMockInitialValues({'daily_goal_minutes': 120});
     final store = LocalStore(await SharedPreferences.getInstance());
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ProfileScreen(
-          store: store,
-          themeKey: 'midnight',
-          onThemeChanged: (_) async {},
-        ),
+    await tester.pumpWidget(MaterialApp(
+      home: ProfileScreen(
+        store: store,
+        themeKey: 'midnight',
+        onThemeChanged: (_) async {},
       ),
-    );
+    ));
     await tester.pumpAndSettle();
 
     expect(find.text('120 minutes of focused study'), findsOneWidget);
-
     await tester.tap(find.text('Daily goal'));
     await tester.pumpAndSettle();
-    final field = find.byType(TextField);
-    await tester.enterText(field, '90');
+    await tester.enterText(find.byType(TextField), '90');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     expect(store.dailyGoalMinutes, 90);
     expect(find.text('90 minutes of focused study'), findsOneWidget);
     expect(find.text('120 minutes of focused study'), findsNothing);
+  });
+
+  testWidgets('Profile exposes all supported theme presets', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalStore(await SharedPreferences.getInstance());
+    String? selectedTheme;
+
+    await tester.pumpWidget(MaterialApp(
+      home: ProfileScreen(
+        store: store,
+        themeKey: 'midnight',
+        onThemeChanged: (key) async => selectedTheme = key,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Midnight'), findsOneWidget);
+    expect(find.text('Ocean'), findsOneWidget);
+    expect(find.text('Forest'), findsOneWidget);
+    expect(find.text('Sunrise'), findsOneWidget);
+
+    await tester.tap(find.text('Ocean'));
+    await tester.pumpAndSettle();
+    expect(selectedTheme, 'ocean');
   });
 }
