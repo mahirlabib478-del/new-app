@@ -33,6 +33,8 @@ class AppStrings {
   String get studyReminder => isBangla ? 'স্টাডি রিমাইন্ডার' : 'Study reminder';
   String get breakReminder => isBangla ? 'বিরতির রিমাইন্ডার' : 'Break reminder';
   String get planReminder => isBangla ? 'প্ল্যান রিমাইন্ডার' : 'Plan reminder';
+  String get soundEffects => isBangla ? 'সাউন্ড ইফেক্ট' : 'Sound effects';
+  String get soundEffectsSubtitle => isBangla ? 'ট্যাপ, সম্পন্ন ও রিওয়ার্ড সাউন্ড' : 'Tap, completion and reward sounds';
   String get studyTime => isBangla ? 'স্টাডির সময়' : 'Study time';
   String get planTime => isBangla ? 'প্ল্যানের সময়' : 'Plan time';
   String get afterFocusBlock => isBangla ? 'একটি ফোকাস ব্লক শেষ হলে' : 'After a completed focus block';
