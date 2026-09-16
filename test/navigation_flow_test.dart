@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/main.dart';
 import 'package:study_os/models/study_models.dart';
+import 'package:study_os/screens/focus_flow.dart';
 import 'package:study_os/services/local_store.dart';
 import 'package:study_os/services/today_engine.dart';
 
@@ -26,14 +27,12 @@ void main() {
     expect(find.text('Physics'), findsOneWidget);
     expect(find.textContaining('50'), findsWidgets);
 
-    // The Home mission is the only FilledButton on this screen. Avoid relying
-    // on its localized label or an animation-sensitive text finder.
     final missionButton = find.byType(FilledButton).first;
     expect(missionButton, findsOneWidget);
     await tester.ensureVisible(missionButton);
     await tester.tap(missionButton);
     await tester.pumpAndSettle();
-    expect(find.text('Focus'), findsOneWidget);
+    expect(find.byType(FocusScreen), findsOneWidget);
   });
 
   testWidgets('Home progress summary remains visible after partial completion', (tester) async {
