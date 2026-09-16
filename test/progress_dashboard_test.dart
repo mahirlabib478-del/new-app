@@ -8,6 +8,14 @@ import 'package:study_os/services/local_store.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  Future<void> scrollToPlanSummary(WidgetTester tester) async {
+    await tester.scrollUntilVisible(
+      find.textContaining('plan complete'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+  }
+
   testWidgets('Progress uses item-level plan progress when aggregate is stale', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
@@ -19,6 +27,11 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('25 / 50 min'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('25 / 50 min'), findsOneWidget);
     expect(find.text('50% plan complete'), findsOneWidget);
   });
@@ -34,6 +47,11 @@ void main() {
     await store.addCompletedMinutes(10);
     await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('10 / 50 min'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('10 / 50 min'), findsOneWidget);
     expect(find.text('20% plan complete'), findsOneWidget);
   });
