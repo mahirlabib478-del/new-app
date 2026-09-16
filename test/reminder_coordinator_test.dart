@@ -78,6 +78,31 @@ void main() {
     expect(scheduler.scheduled, contains(ReminderCoordinator.studyId));
   });
 
+  test('focus completion resyncs daily reminders after the plan becomes complete', () async {
+    SharedPreferences.setMockInitialValues({
+      'reminder_study_enabled': true,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: store,
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+    expect(scheduler.scheduled, contains(ReminderCoordinator.studyId));
+
+    await store.addItemCompletedMinutes(0, 25);
+    await coordinator.notifyFocusBlockCompleted();
+
+    expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
+    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
+    expect(scheduler.shown, contains(ReminderCoordinator.breakId));
+  });
+
   test('disabled break reminder prevents focus completion notification', () async {
     SharedPreferences.setMockInitialValues({
       'reminder_break_enabled': false,
@@ -110,7 +135,7 @@ void main() {
     await coordinator.notifyFocusBlockCompleted();
 
     expect(scheduler.shown, [ReminderCoordinator.breakId]);
-    expect(scheduler.initializeCalls, 1);
+    expect(scheduler.initializeCalls, 2);
   });
 
   test('permission requests are best effort and forwarded to the scheduler', () async {
