@@ -22,6 +22,36 @@ void main() {
     );
   });
 
+  test('study reminder adapts when the daily goal is nearly complete', () {
+    final reminder = policy.studyReminder(
+      hasRemainingWork: true,
+      goalRemainingMinutes: 20,
+      remainingWorkMinutes: 90,
+    );
+
+    expect(reminder?.body, contains('close to today\'s goal'));
+  });
+
+  test('study reminder adapts to a single remaining block', () {
+    final reminder = policy.studyReminder(
+      hasRemainingWork: true,
+      goalRemainingMinutes: 40,
+      remainingWorkMinutes: 25,
+    );
+
+    expect(reminder?.body, contains('One focused block'));
+  });
+
+  test('study reminder includes larger remaining workload', () {
+    final reminder = policy.studyReminder(
+      hasRemainingWork: true,
+      goalRemainingMinutes: 120,
+      remainingWorkMinutes: 100,
+    );
+
+    expect(reminder?.body, contains('100 minutes'));
+  });
+
   test('break reminder is tied to a completed focus session', () {
     expect(
       policy.breakReminder(focusSessionCompleted: false),
