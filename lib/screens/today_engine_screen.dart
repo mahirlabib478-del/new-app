@@ -36,6 +36,12 @@ class TodayEngineScreen extends StatelessWidget {
             ]),
           ),
           const SizedBox(height: 16),
+          Row(children: [
+            Expanded(child: _MiniStat(icon: Icons.checklist_rounded, value: '${snapshot.remainingItemCount}', label: 'items left')),
+            const SizedBox(width: 10),
+            Expanded(child: _MiniStat(icon: Icons.timelapse_rounded, value: '${snapshot.estimatedFocusBlocksRemaining}', label: 'focus blocks')),
+          ]),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(18),
