@@ -310,6 +310,7 @@ class _SmoothTapState extends State<_SmoothTap> {
           ),
         ),
       );
+}
 
 class _MissionCard extends StatelessWidget {
   const _MissionCard({
