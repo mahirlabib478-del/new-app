@@ -14,13 +14,21 @@ class ReminderPolicy {
   ReminderRequest? studyReminder({
     required bool hasRemainingWork,
     required int goalRemainingMinutes,
+    int remainingWorkMinutes = 25,
   }) {
     if (!hasRemainingWork || goalRemainingMinutes <= 0) return null;
 
-    return const ReminderRequest(
+    final safeRemaining = remainingWorkMinutes.clamp(0, 1440).toInt();
+    final body = goalRemainingMinutes <= 25
+        ? 'You are close to today\'s goal. One focused block can finish it.'
+        : safeRemaining <= 25
+            ? 'One focused block can clear the remaining study work.'
+            : 'You have $safeRemaining minutes of study work remaining. Start a focused block.';
+
+    return ReminderRequest(
       kind: ReminderKind.study,
       title: 'Time to study',
-      body: 'A focused study block can move you closer to today\'s goal.',
+      body: body,
     );
   }
 
