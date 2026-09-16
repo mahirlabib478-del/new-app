@@ -53,20 +53,13 @@ class _StudyOSState extends State<StudyOS> {
   late String themeKey = themes.containsKey(widget.store.themePreset) ? widget.store.themePreset : 'midnight';
   late AppLanguage language = widget.store.appLanguage;
   int tab = 0;
-
   AppStrings get strings => AppStrings(language);
 
   @override
   void initState() {
     super.initState();
-    reminderCoordinator = ReminderCoordinator(
-      store: widget.store,
-      settingsStore: ReminderSettingsStore(widget.prefs),
-      scheduler: NotificationService(),
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(reminderCoordinator.sync());
-    });
+    reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
+    WidgetsBinding.instance.addPostFrameCallback((_) { unawaited(reminderCoordinator.sync()); });
   }
 
   Future<void> setTheme(String key) async {
@@ -87,25 +80,26 @@ class _StudyOSState extends State<StudyOS> {
     final activePlan = plan ?? snapshot.plan;
     if (activePlan == null || activePlan.items.isEmpty) return;
     if (plan == null && snapshot.isComplete) return;
+    final storedPlan = widget.store.loadPlan();
+    final sameAsStored = storedPlan?.toJson().toString() == activePlan.toJson().toString();
+    final index = sameAsStored ? snapshot.currentIndex : 0;
+    final blockIndex = sameAsStored ? snapshot.currentBlockIndex : 0;
     await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(
       store: widget.store,
       plan: activePlan,
-      index: plan == null ? snapshot.currentIndex : 0,
-      blockIndex: plan == null ? snapshot.currentBlockIndex : 0,
+      index: index,
+      blockIndex: blockIndex,
       onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted,
     )));
     if (mounted) setState(() {});
   }
 
   void openRegularStudy() {
-    navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => Setup(
-      store: widget.store,
-      onStartPlan: (plan) async {
-        if (!mounted) return;
-        navigatorKey.currentState?.pop();
-        await openFocus(plan: plan);
-      },
-    )));
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => Setup(store: widget.store, onStartPlan: (plan) async {
+      if (!mounted) return;
+      navigatorKey.currentState?.pop();
+      await openFocus(plan: plan);
+    })));
   }
 
   @override
@@ -115,14 +109,7 @@ class _StudyOSState extends State<StudyOS> {
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Study OS',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: theme.seed,
-        brightness: theme.brightness,
-        scaffoldBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF0B0D13) : null,
-        cardTheme: CardThemeData(margin: EdgeInsets.zero, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
-        inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
-      ),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: theme.seed, brightness: theme.brightness, scaffoldBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF0B0D13) : null, cardTheme: CardThemeData(margin: EdgeInsets.zero, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))), inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder())),
       home: UpdateGate(
         store: widget.store,
         checkForUpdate: widget.checkForUpdate,
@@ -133,31 +120,23 @@ class _StudyOSState extends State<StudyOS> {
             ProgressDashboard(store: widget.store),
             ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage),
           ]),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: tab,
-            onDestinationSelected: (value) => setState(() => tab = value),
-            destinations: [
-              NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded), label: strings.isBangla ? 'হোম' : 'Home'),
-              NavigationDestination(icon: const Icon(Icons.menu_book_outlined), selectedIcon: const Icon(Icons.menu_book_rounded), label: strings.isBangla ? 'স্টাডি' : 'Study'),
-              NavigationDestination(icon: const Icon(Icons.insights_outlined), selectedIcon: const Icon(Icons.insights_rounded), label: strings.isBangla ? 'অগ্রগতি' : 'Progress'),
-              NavigationDestination(icon: const Icon(Icons.person_outline_rounded), selectedIcon: const Icon(Icons.person_rounded), label: strings.profile),
-            ],
-          ),
+          bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: (value) => setState(() => tab = value), destinations: [
+            NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded), label: strings.isBangla ? 'হোম' : 'Home'),
+            NavigationDestination(icon: const Icon(Icons.menu_book_outlined), selectedIcon: const Icon(Icons.menu_book_rounded), label: strings.isBangla ? 'স্টাডি' : 'Study'),
+            NavigationDestination(icon: const Icon(Icons.insights_outlined), selectedIcon: const Icon(Icons.insights_rounded), label: strings.isBangla ? 'অগ্রগতি' : 'Progress'),
+            NavigationDestination(icon: const Icon(Icons.person_outline_rounded), selectedIcon: const Icon(Icons.person_rounded), label: strings.profile),
+          ]),
         ),
       ),
     );
   }
 
   void _openExam(bool nextDay) {
-    navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => ExamPlannerScreen(
-      nextDay: nextDay,
-      store: widget.store,
-      onStartPlan: (plan) async {
-        if (!mounted) return;
-        navigatorKey.currentState?.pop();
-        await openFocus(plan: plan);
-      },
-    )));
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: widget.store, onStartPlan: (plan) async {
+      if (!mounted) return;
+      navigatorKey.currentState?.pop();
+      await openFocus(plan: plan);
+    })));
   }
 }
 
@@ -168,15 +147,7 @@ class Home extends StatelessWidget {
   final VoidCallback onRegularStudy;
   final void Function(bool) onExam;
   final AppLanguage language;
-
-  @override
-  Widget build(BuildContext context) => AttractiveHome(
-    store: store,
-    language: language,
-    onOpenFocus: onOpenFocus,
-    onRegularStudy: onRegularStudy,
-    onExam: onExam,
-  );
+  @override Widget build(BuildContext context) => AttractiveHome(store: store, language: language, onOpenFocus: onOpenFocus, onRegularStudy: onRegularStudy, onExam: onExam);
 }
 
 class StudyHub extends StatelessWidget {
@@ -185,27 +156,14 @@ class StudyHub extends StatelessWidget {
   final Future<void> Function(StudyPlan plan) onStartPlan;
   final VoidCallback onRegularStudy;
   final AppLanguage language;
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     final s = AppStrings(language);
     final savedCount = StudySessionStore(store).sessions.length;
     return Scaffold(appBar: AppBar(title: Text(s.isBangla ? 'স্টাডি' : 'Study')), body: ListView(padding: const EdgeInsets.all(20), children: [
       Text(s.isBangla ? 'পরবর্তী কাজ বেছে নিন' : 'Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 18),
       if (savedCount > 0) ...[
-        Card(
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(14),
-            leading: CircleAvatar(child: const Icon(Icons.bookmark_rounded)),
-            title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)),
-            subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SavedSessionsScreen(
-              store: store,
-              onOpenFocus: () => onStartPlan(store.loadPlan()!),
-            ))),
-          ),
-        ),
+        Card(child: ListTile(contentPadding: const EdgeInsets.all(14), leading: const CircleAvatar(child: Icon(Icons.bookmark_rounded)), title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'), trailing: const Icon(Icons.chevron_right_rounded), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SavedSessionsScreen(store: store, onOpenFocus: () => onStartPlan(store.loadPlan()!))))),
         const SizedBox(height: 14),
       ],
       _Mode(icon: Icons.menu_book_rounded, title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
@@ -213,21 +171,13 @@ class StudyHub extends StatelessWidget {
       _Mode(icon: Icons.bolt_rounded, title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision.', onTap: () => _openExam(context, true)),
     ]));
   }
-
   void _openExam(BuildContext context, bool nextDay) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async {
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      await onStartPlan(plan);
-    })));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async { if (!context.mounted) return; Navigator.of(context).pop(); await onStartPlan(plan); })));
   }
 }
 
 class _Mode extends StatelessWidget {
   const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+  final IconData icon; final String title; final String subtitle; final VoidCallback onTap;
   @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
 }
