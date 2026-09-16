@@ -13,6 +13,9 @@ void main() {
     final store = LocalStore(await SharedPreferences.getInstance());
 
     await tester.pumpWidget(StudyOS(store: store));
+    // UpdateGate intentionally keeps the app hidden until its startup check
+    // settles, so navigation tests must wait for the gate before interacting.
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Study').last);
     await tester.pumpAndSettle();
     expect(find.text('Choose your next move'), findsOneWidget);
