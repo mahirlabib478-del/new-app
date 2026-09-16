@@ -27,6 +27,8 @@ class AttractiveHome extends StatelessWidget {
     final snapshot = TodayEngine(store).build();
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final goal = snapshot.dailyGoalMinutes;
+    final goalProgress = goal <= 0 ? 0.0 : (snapshot.dailyGoalProgress / goal).clamp(0.0, 1.0).toDouble();
 
     return SafeArea(
       child: ListView(
@@ -58,9 +60,40 @@ class AttractiveHome extends StatelessWidget {
           _MissionCard(
             snapshot: snapshot,
             strings: strings,
-            onStart: snapshot.hasRemainingWork
-                ? () => onOpenFocus()
-                : onRegularStudy,
+            onStart: snapshot.hasRemainingWork ? () => onOpenFocus() : onRegularStudy,
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          strings.isBangla ? 'আজকের লক্ষ্য' : 'Today’s goal',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      Text(
+                        '${snapshot.dailyGoalProgress} / $goal ${strings.minutes}',
+                        style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  LinearProgressIndicator(value: goalProgress, minHeight: 8),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.dailyGoalReached
+                        ? (strings.isBangla ? 'লক্ষ্য পূর্ণ। গতি ধরে রাখুন।' : 'Goal reached. Keep the momentum.')
+                        : '${snapshot.dailyGoalRemaining} ${strings.minutes} ${strings.isBangla ? 'বাকি আজ' : 'left today'}',
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -81,9 +114,7 @@ class AttractiveHome extends StatelessWidget {
             ...snapshot.plan!.items.asMap().entries.map((entry) {
               final item = entry.value;
               final completed = store.itemCompletedMinutesMap[entry.key] ?? 0;
-              final progress = item.minutes <= 0
-                  ? 1.0
-                  : (completed / item.minutes).clamp(0.0, 1.0).toDouble();
+              final progress = item.minutes <= 0 ? 1.0 : (completed / item.minutes).clamp(0.0, 1.0).toDouble();
               final active = snapshot.currentIndex == entry.key && snapshot.hasRemainingWork;
               final complete = item.minutes > 0 && completed >= item.minutes;
               return Padding(
@@ -148,10 +179,10 @@ class _MissionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final progress = snapshot.progress.clamp(0.0, 1.0).toDouble();
+    final remainingMinutes = snapshot.remainingMinutes;
     final title = snapshot.isComplete
         ? (strings.isBangla ? 'আজকের মিশন সম্পূর্ণ!' : 'Today’s mission complete!')
-        : snapshot.nextItem?.title ??
-            (strings.isBangla ? 'আজকের প্ল্যান তৈরি করুন' : 'Create today’s plan');
+        : snapshot.nextItem?.title ?? (strings.isBangla ? 'আজকের প্ল্যান তৈরি করুন' : 'Create today’s plan');
     final subtitle = snapshot.isComplete
         ? (strings.isBangla ? 'চমৎকার কাজ। কাল আবার শুরু করুন।' : 'Great work. Keep the streak alive.')
         : snapshot.nextItem == null
@@ -183,10 +214,7 @@ class _MissionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, color: scheme.onPrimaryContainer),
-          ),
+          Text(title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, color: scheme.onPrimaryContainer)),
           const SizedBox(height: 7),
           Text(subtitle, style: TextStyle(color: scheme.onPrimaryContainer.withValues(alpha: 0.78))),
           const SizedBox(height: 18),
@@ -203,7 +231,7 @@ class _MissionCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${snapshot.completedMinutes} / ${snapshot.plan?.allocatedMinutes ?? 0} ${strings.minutes}',
+                  '$remainingMinutes ${strings.minutes} left',
                   style: TextStyle(fontWeight: FontWeight.w800, color: scheme.onPrimaryContainer),
                 ),
               ),
@@ -214,15 +242,18 @@ class _MissionCard extends StatelessWidget {
                 ),
             ],
           ),
+          if (snapshot.completedMinutes > 0) ...[
+            const SizedBox(height: 5),
+            Text(
+              '${snapshot.completedMinutes} ${strings.minutes} completed • ${snapshot.xp} XP',
+              style: TextStyle(fontWeight: FontWeight.w700, color: scheme.onPrimaryContainer.withValues(alpha: 0.8)),
+            ),
+          ],
           const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: onStart,
             icon: Icon(snapshot.isComplete ? Icons.check_rounded : Icons.play_arrow_rounded),
-            label: Text(
-              snapshot.isComplete
-                  ? (strings.isBangla ? 'নতুন প্ল্যান' : 'New plan')
-                  : (strings.isBangla ? 'চালিয়ে যান' : 'Continue'),
-            ),
+            label: Text(snapshot.isComplete ? (strings.isBangla ? 'নতুন প্ল্যান' : 'New plan') : (strings.isBangla ? 'শুরু করুন' : 'Start')),
           ),
         ],
       ),
@@ -257,13 +288,10 @@ class _StatCard extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title);
-
   final String title;
 
   @override
-  Widget build(BuildContext context) {
-    return Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900));
-  }
+  Widget build(BuildContext context) => Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900));
 }
 
 class _JourneyItem extends StatelessWidget {
@@ -306,7 +334,6 @@ class _JourneyItem extends StatelessWidget {
 
 class _EmptyJourney extends StatelessWidget {
   const _EmptyJourney({required this.strings, required this.onTap});
-
   final AppStrings strings;
   final VoidCallback onTap;
 
@@ -341,7 +368,6 @@ class _EmptyJourney extends StatelessWidget {
 
 class _ModeCard extends StatelessWidget {
   const _ModeCard({required this.icon, required this.title, required this.subtitle, required this.onTap});
-
   final IconData icon;
   final String title;
   final String subtitle;
