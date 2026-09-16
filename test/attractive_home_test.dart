@@ -28,6 +28,8 @@ void main() {
     ));
 
     expect(find.text('TODAY’S MISSION'), findsOneWidget);
+    await tester.ensureVisible(find.text('Your study journey'));
+    await tester.pumpAndSettle();
     expect(find.text('Your study journey'), findsOneWidget);
     expect(find.text('Algebra'), findsOneWidget);
     expect(find.text('Regular Study'), findsOneWidget);
