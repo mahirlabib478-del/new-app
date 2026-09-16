@@ -22,6 +22,6 @@ void main() {
     final store = LocalStore(prefs);
     await store.setSoundEffectsEnabled(false);
 
-    await const SoundEffects(store).tap();
+    await SoundEffects(store).tap();
   });
 }
