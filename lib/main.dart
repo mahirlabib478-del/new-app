@@ -168,7 +168,7 @@ class StudyHub extends StatelessWidget {
             child: ListTile(
               contentPadding: const EdgeInsets.all(14),
               leading: const CircleAvatar(child: Icon(Icons.auto_awesome_rounded)),
-              title: Text('Today Engine', style: const TextStyle(fontWeight: FontWeight.w900)),
+              title: const Text('Today Engine', style: TextStyle(fontWeight: FontWeight.w900)),
               subtitle: Text(s.isBangla ? 'আজ কী পড়বেন, কতক্ষণ পড়বেন এবং পরের কাজ কী—এক নজরে দেখুন।' : 'See today’s remaining work, next action and recommended focus at a glance.'),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TodayEngineScreen(store: store))),
@@ -199,16 +199,31 @@ class StudyHub extends StatelessWidget {
             ),
             const SizedBox(height: 14),
           ],
-          _Mode(icon: Icons.menu_book_rounded, title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
-          _Mode(icon: Icons.auto_awesome_rounded, title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক পরীক্ষার পরিকল্পনা।' : 'Priority-based exam planning.', onTap: () => _openExam(context, false)),
-          _Mode(icon: Icons.bolt_rounded, title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision.', onTap: () => _openExam(context, true)),
+          _Mode(
+            icon: Icons.menu_book_rounded,
+            title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
+            subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.',
+            onTap: onRegularStudy,
+          ),
+          _Mode(
+            icon: Icons.auto_awesome_rounded,
+            title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation',
+            subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক পরীক্ষার পরিকল্পনা।' : 'Priority-based exam planning.',
+            onTap: () => _openExam(context, false),
+          ),
+          _Mode(
+            icon: Icons.bolt_rounded,
+            title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam',
+            subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision.',
+            onTap: () => _openExam(context, true),
+          ),
         ],
       ),
     );
   }
 
   void _openExam(BuildContext context, bool nextDay) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async {
+    Navigator.push(MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async {
       if (!context.mounted) return;
       Navigator.of(context).pop();
       await onStartPlan(plan);
@@ -218,6 +233,23 @@ class StudyHub extends StatelessWidget {
 
 class _Mode extends StatelessWidget {
   const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap});
-  final IconData icon; final String title; final String subtitle; final VoidCallback onTap;
-  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded));
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.all(12),
+        leading: CircleAvatar(radius: 27, child: Icon(icon)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right_rounded),
+      ),
+    );
+  }
 }
