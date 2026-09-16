@@ -186,4 +186,63 @@ void main() {
     expect(store.planCompletedMinutes, 25);
     expect(store.sessions, 1);
   });
+
+  testWidgets('Break pause persists a paused state and resume restores a deadline', (tester) async {
+    final store = await makeStore();
+    final plan = singleItemPlan();
+    await store.savePlan(plan);
+
+    await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final pauseFinder = find.widgetWithText(OutlinedButton, 'Pause break');
+    await tester.ensureVisible(pauseFinder);
+    await tester.tap(pauseFinder);
+    await tester.pump();
+
+    final paused = store.breakTimerState;
+    expect(paused, isNotNull);
+    expect(paused!.running, isFalse);
+    expect(paused.deadlineMillis, isNull);
+    expect(paused.remainingSeconds, greaterThan(0));
+
+    final resumeFinder = find.widgetWithText(OutlinedButton, 'Resume break');
+    await tester.ensureVisible(resumeFinder);
+    await tester.tap(resumeFinder);
+    await tester.pump();
+
+    final resumed = store.breakTimerState;
+    expect(resumed, isNotNull);
+    expect(resumed!.running, isTrue);
+    expect(resumed.deadlineMillis, isNotNull);
+    expect(resumed.remainingSeconds, greaterThan(0));
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('backgrounding a running break timer keeps its persisted deadline', (tester) async {
+    final store = await makeStore();
+    final plan = singleItemPlan();
+    await store.savePlan(plan);
+
+    await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
+    await tester.pump(const Duration(seconds: 1));
+
+    final before = store.breakTimerState;
+    expect(before, isNotNull);
+    expect(before!.running, isTrue);
+    expect(before.deadlineMillis, isNotNull);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    final pausedByLifecycle = store.breakTimerState;
+    expect(pausedByLifecycle, isNotNull);
+    expect(pausedByLifecycle!.running, isTrue);
+    expect(pausedByLifecycle.deadlineMillis, isNotNull);
+    expect(pausedByLifecycle.remainingSeconds, greaterThan(0));
+    expect(pausedByLifecycle.remainingSeconds, lessThanOrEqualTo(before.remainingSeconds));
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
