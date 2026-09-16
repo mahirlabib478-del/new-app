@@ -35,7 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late ReminderSettings settings;
   late final NotificationService notificationService;
   late final ReminderCoordinator reminderCoordinator;
-  bool notificationsInitialized = false;
 
   @override
   void initState() {
@@ -56,25 +55,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         (!settings.planEnabled && next.planEnabled);
 
     await ReminderSettingsStore(widget.prefs).save(next);
-    await _syncReminders(requestPermission: requestsPermission);
+    await _syncReminders(settingsToSync: next, requestPermission: requestsPermission);
     if (!mounted) return;
     setState(() => settings = next);
   }
 
-  Future<void> _syncReminders({required bool requestPermission}) async {
-    final anyEnabled = settings.studyEnabled || settings.breakEnabled || settings.planEnabled;
+  Future<void> _syncReminders({required ReminderSettings settingsToSync, required bool requestPermission}) async {
+    final anyEnabled = settingsToSync.studyEnabled || settingsToSync.breakEnabled || settingsToSync.planEnabled;
     if (!anyEnabled && !requestPermission) {
-      await reminderCoordinator.sync();
+      await reminderCoordinator.sync(settingsOverride: settingsToSync);
       return;
     }
 
     try {
-      if (!notificationsInitialized) {
-        await notificationService.initialize();
-        notificationsInitialized = true;
-      }
       if (requestPermission) await reminderCoordinator.requestPermissions();
-      await reminderCoordinator.sync();
+      await reminderCoordinator.sync(settingsOverride: settingsToSync);
     } on Exception {
       // Reminder failures must never block settings changes or normal app use.
     }
