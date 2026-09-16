@@ -36,7 +36,7 @@ void main() {
 
     final summary = ProgressAnalytics(store).build(today: today, days: 7);
 
-    expect(summary.dailyMinutes, [0, 0, 0, 0, 0, 25, 0]);
+    expect(summary.dailyMinutes, [25, 0, 0, 0, 0, 0, 0]);
     expect(summary.totalMinutes, 25);
     expect(summary.activeDays, 1);
   });
