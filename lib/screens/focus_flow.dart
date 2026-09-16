@@ -394,14 +394,15 @@ class CompletionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completed = plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + store.itemCompletedMinutes(entry.key).clamp(0, entry.value.minutes).toInt());
-    final progress = plan.totalMinutes <= 0 ? 0.0 : (completed / plan.totalMinutes).clamp(0.0, 1.0).toDouble();
+    final planned = plan.allocatedMinutes;
+    final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
     final xp = completed * 2;
     return Scaffold(body: SafeArea(child: Center(child: Padding(padding: const EdgeInsets.all(28), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(Icons.emoji_events_rounded, size: 76, color: Theme.of(context).colorScheme.primary),
       const SizedBox(height: 20),
       Text('Study complete', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 10),
-      Text('$completed / ${plan.totalMinutes} minutes completed', style: const TextStyle(fontWeight: FontWeight.w700)),
+      Text('$completed / $planned minutes completed', style: const TextStyle(fontWeight: FontWeight.w700)),
       const SizedBox(height: 18),
       LinearProgressIndicator(value: progress, minHeight: 9),
       const SizedBox(height: 22),
