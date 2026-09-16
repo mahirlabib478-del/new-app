@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/main.dart';
 import 'package:study_os/models/study_models.dart';
+import 'package:study_os/services/app_language.dart';
 import 'package:study_os/services/local_store.dart';
 
 void main() {
@@ -21,6 +22,7 @@ void main() {
           onOpenFocus: ({StudyPlan? plan}) async {},
           onRegularStudy: () {},
           onExam: (_) {},
+          language: AppLanguage.english,
         ),
       );
 
