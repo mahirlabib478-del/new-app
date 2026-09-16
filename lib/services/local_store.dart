@@ -55,7 +55,7 @@ class LocalStore {
     await prefs.remove(_itemMinutesKey);
     await clearFocusTimerState();
     await clearBreakTimerState();
-    await setPlanPosition(0, 0);
+    await clearPlanPosition();
   }
 
   StudyPlan? loadPlan() {
@@ -160,7 +160,7 @@ class LocalStore {
   }
 
   Future<void> setPlanPosition(int index, int blockIndex) async { await prefs.setInt(_indexKey, index.clamp(0, 100000).toInt()); await prefs.setInt(_blockKey, blockIndex.clamp(0, 100000).toInt()); }
-  Future<void> clearPlanPosition() async => setPlanPosition(0, 0);
+  Future<void> clearPlanPosition() async { await prefs.remove(_indexKey); await prefs.remove(_blockKey); }
   Future<void> addCompletedMinutes(int value) => _recordCompletion(value, null);
   Future<void> addItemCompletedMinutes(int index, int value) => _recordCompletion(value, index);
 
