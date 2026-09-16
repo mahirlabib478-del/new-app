@@ -24,6 +24,26 @@ void main() {
     return Map<String, dynamic>.from(jsonDecode(raw) as Map);
   }
 
+  testWidgets('FocusScreen shows completed topic count for the running plan', (tester) async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 75, items: [
+      StudyItem(title: 'Math', minutes: 25),
+      StudyItem(title: 'Physics', minutes: 25),
+      StudyItem(title: 'Chemistry', minutes: 25),
+    ]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+    await store.addItemCompletedMinutes(1, 25);
+
+    await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 2, blockIndex: 0)));
+    await tester.pump();
+
+    expect(find.text('Topics completed'), findsOneWidget);
+    expect(find.text('2 / 3'), findsOneWidget);
+    expect(find.text('Chemistry'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('completion screen treats allocated minutes as the plan budget', (tester) async {
     final store = await makeStore();
     final plan = StudyPlan(totalMinutes: 60, items: [StudyItem(title: 'Math', minutes: 25), StudyItem(title: 'Physics', minutes: 25)]);
