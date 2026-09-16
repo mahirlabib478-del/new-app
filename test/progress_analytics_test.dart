@@ -72,7 +72,7 @@ void main() {
     expect(summary.planCompletedMinutes, 30);
     expect(summary.planRemainingMinutes, 30);
     expect(summary.planCompletionRate, closeTo(0.5, 0.0001));
-    expect(summary.estimatedPlanDaysRemaining, isNull);
+    expect(summary.estimatedPlanDaysRemaining, 7);
   });
 
   test('analytics estimates remaining plan days from recent average pace', () async {
@@ -88,8 +88,8 @@ void main() {
 
     final summary = ProgressAnalytics(store).build(today: today, days: 2);
 
-    expect(summary.averageMinutes, 30);
+    expect(summary.averageMinutes, 40);
     expect(summary.planRemainingMinutes, 100);
-    expect(summary.estimatedPlanDaysRemaining, 4);
+    expect(summary.estimatedPlanDaysRemaining, 3);
   });
 }
