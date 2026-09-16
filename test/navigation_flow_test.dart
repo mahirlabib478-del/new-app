@@ -12,9 +12,12 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
 
-    await tester.pumpWidget(StudyOS(store: store));
-    // UpdateGate intentionally keeps the app hidden until its startup check
-    // settles, so navigation tests must wait for the gate before interacting.
+    await tester.pumpWidget(
+      StudyOS(
+        store: store,
+        checkForUpdate: () async => null,
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Study').last);
     await tester.pumpAndSettle();
@@ -63,7 +66,12 @@ void main() {
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 25);
 
-    await tester.pumpWidget(StudyOS(store: store));
+    await tester.pumpWidget(
+      StudyOS(
+        store: store,
+        checkForUpdate: () async => null,
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('25 min left'), findsOneWidget);
