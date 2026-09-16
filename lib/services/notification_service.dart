@@ -46,10 +46,11 @@ class NotificationService {
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) return android.requestNotificationsPermission();
 
-    final ios = _plugin.resolvePlatformSpecificImplementation<DarwinFlutterLocalNotificationsPlugin>();
-    if (ios != null) {
-      return ios.requestPermissions(alert: true, badge: true, sound: true);
-    }
+    final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    if (ios != null) return ios.requestPermissions(alert: true, badge: true, sound: true);
+
+    final macos = _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>();
+    if (macos != null) return macos.requestPermissions(alert: true, badge: true, sound: true);
 
     return null;
   }
