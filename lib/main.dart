@@ -13,6 +13,7 @@ import 'screens/progress_dashboard.dart';
 import 'screens/profile_screen.dart';
 import 'screens/setup_screen.dart';
 import 'widgets/update_gate.dart';
+import 'widgets/attractive_home.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -163,65 +164,13 @@ class Home extends StatelessWidget {
   final AppLanguage language;
 
   @override
-  Widget build(BuildContext context) {
-    final s = AppStrings(language);
-    final snapshot = TodayEngine(store).build();
-    return Scaffold(
-      body: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [
-        Text(_greeting(s), style: Theme.of(context).textTheme.titleMedium),
-        Text(s.isBangla ? 'ফোকাস করার জন্য প্রস্তুত?' : 'Ready to focus?', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
-        const SizedBox(height: 20),
-        Card(child: Padding(padding: const EdgeInsets.all(22), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('TODAY ENGINE', style: TextStyle(fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.primary, letterSpacing: 1.2)),
-          const SizedBox(height: 8),
-          Text(snapshot.hasPlan ? '${snapshot.remainingMinutes} ${s.minutes} ${s.isBangla ? 'বাকি' : 'left'}' : (s.isBangla ? 'আজকের প্ল্যান করুন' : 'Plan your day'), style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 14),
-          LinearProgressIndicator(value: snapshot.progress, minHeight: 8),
-          const SizedBox(height: 8),
-          Text(snapshot.hasPlan ? '${snapshot.completedMinutes} ${s.minutes} ${s.isBangla ? 'সম্পন্ন' : 'completed'} • ${snapshot.xp} XP' : (s.isBangla ? 'শুরু করতে একটি স্টাডি মোড বেছে নিন।' : 'Choose a study mode to begin.')),
-        ]))),
-        const SizedBox(height: 12),
-        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [Expanded(child: Text(s.isBangla ? 'আজকের লক্ষ্য' : "Today's goal", style: const TextStyle(fontWeight: FontWeight.w900))), Text('${snapshot.todayCompletedMinutes} / ${snapshot.dailyGoalMinutes} ${s.minutes}', style: const TextStyle(fontWeight: FontWeight.w900))]),
-          const SizedBox(height: 10), LinearProgressIndicator(value: snapshot.goalProgress, minHeight: 7), const SizedBox(height: 8),
-          Text(snapshot.dailyGoalReached ? (s.isBangla ? 'লক্ষ্য পূরণ হয়েছে। এগিয়ে চলুন।' : 'Goal reached. Keep the momentum.') : '${snapshot.goalRemainingMinutes} ${s.minutes} ${s.isBangla ? 'আজ বাকি' : 'left today'}'),
-        ]))),
-        if (snapshot.nextItem != null) ...[
-          const SizedBox(height: 16),
-          Card(child: ListTile(leading: const CircleAvatar(child: Icon(Icons.play_arrow_rounded)), title: Text(snapshot.nextItem!.title, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(snapshot.nextItem!.topic.isEmpty ? '${snapshot.nextItem!.minutes} ${s.minutes} planned' : snapshot.nextItem!.topic), trailing: FilledButton(onPressed: () => onOpenFocus(), child: Text(s.isBangla ? 'শুরু' : 'Start')))),
-        ],
-        const SizedBox(height: 20),
-        Text(s.isBangla ? 'স্টাডি মোড' : 'Study modes', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-        const SizedBox(height: 10),
-        _Mode(icon: Icons.menu_book_rounded, title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: s.isBangla ? 'বিষয়, টপিক ও সময় পরিকল্পনা করুন।' : 'Subjects, topics and manual time allocation.', onTap: onRegularStudy),
-        _Mode(icon: Icons.auto_awesome_rounded, title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক ফোকাসড রিভিশন।' : 'Priority-based focused revision.', onTap: () => onExam(false)),
-        _Mode(icon: Icons.bolt_rounded, title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: s.isBangla ? 'আগামীকালের জন্য গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision for tomorrow.', onTap: () => onExam(true)),
-        const SizedBox(height: 20),
-        Card(child: ListTile(leading: const Icon(Icons.local_fire_department_rounded), title: Text('${snapshot.streak} ${s.isBangla ? 'দিনের স্ট্রিক' : 'day streak'}', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text('${snapshot.xp} XP • Level ${snapshot.level}'))),
-      ])),
-    );
-  }
-
-  String _greeting(AppStrings s) {
-    final hour = DateTime.now().hour;
-    if (s.isBangla) {
-      if (hour < 12) return 'সুপ্রভাত';
-      if (hour < 18) return 'শুভ অপরাহ্ণ';
-      return 'শুভ সন্ধ্যা';
-    }
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  }
-}
-
-class _Mode extends StatelessWidget {
-  const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
+  Widget build(BuildContext context) => AttractiveHome(
+    store: store,
+    language: language,
+    onOpenFocus: onOpenFocus,
+    onRegularStudy: onRegularStudy,
+    onExam: onExam,
+  );
 }
 
 class StudyHub extends StatelessWidget {
@@ -249,4 +198,13 @@ class StudyHub extends StatelessWidget {
       await onStartPlan(plan);
     })));
   }
+}
+
+class _Mode extends StatelessWidget {
+  const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
 }
