@@ -30,9 +30,37 @@ class _SavedSessionsScreenState extends State<SavedSessionsScreen> {
     await widget.onOpenFocus();
   }
 
+  Future<void> _reset(SavedStudySession session) async {
+    if (busy) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset saved session?'),
+        content: const Text('This will clear the saved progress and return the session to the first study item. Your current active plan will not be changed.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Reset')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => busy = true);
+    await sessionStore.reset(session.id);
+    if (mounted) setState(() => busy = false);
+  }
+
   Future<void> _delete(SavedStudySession session) async {
+    if (busy) return;
     await sessionStore.delete(session.id);
     if (mounted) setState(() {});
+  }
+
+  String _resumeLabel(SavedStudySession session) {
+    final index = session.currentIndex.clamp(0, session.plan.items.length - 1).toInt();
+    final item = session.plan.items[index];
+    final topic = item.topic.trim();
+    final block = session.currentBlockIndex + 1;
+    return topic.isEmpty ? 'Resume from ${item.title} • Block $block' : 'Resume from ${item.title} • $topic • Block $block';
   }
 
   @override
@@ -61,7 +89,7 @@ class _SavedSessionsScreenState extends State<SavedSessionsScreen> {
               children: [
                 Text('Continue where you left off', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
-                const Text('Your unfinished study sessions are kept separately.'),
+                const Text('Each session keeps its latest topic, block and progress until you resume or reset it.'),
                 const SizedBox(height: 18),
                 ...sessions.map(_sessionCard),
               ],
@@ -85,14 +113,19 @@ class _SavedSessionsScreenState extends State<SavedSessionsScreen> {
               ],
             ),
             Text('${session.plan.allocatedMinutes} min plan • ${session.remainingMinutes} min remaining'),
+            const SizedBox(height: 6),
+            Text(_resumeLabel(session), style: const TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
             LinearProgressIndicator(value: progress, minHeight: 8),
             const SizedBox(height: 8),
             Text('${session.plan.items.length} study items • ${session.savedAt.toLocal().toString().substring(0, 16)}'),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(onPressed: busy ? null : () => _resume(session), icon: const Icon(Icons.play_arrow_rounded), label: const Text('Resume session')),
+            Row(
+              children: [
+                Expanded(child: FilledButton.icon(onPressed: busy ? null : () => _resume(session), icon: const Icon(Icons.play_arrow_rounded), label: const Text('Resume'))),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(onPressed: busy ? null : () => _reset(session), icon: const Icon(Icons.restart_alt_rounded), label: const Text('Reset')),
+              ],
             ),
           ],
         ),
