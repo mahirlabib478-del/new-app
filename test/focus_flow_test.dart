@@ -33,12 +33,16 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 25);
+    await store.setPlanPosition(0, 0);
+    await store.saveFocusTimerState(FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 120, running: false));
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
     await tester.pumpAndSettle();
     expect(find.text('Study complete'), findsOneWidget);
     expect(find.text('25 / 25 minutes completed'), findsOneWidget);
-    expect(store.currentPlanIndex, 0);
-    expect(store.currentBlockIndex, 0);
+    expect(store.focusTimerState, isNull);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getInt('current_plan_index'), isNull);
+    expect(prefs.getInt('current_block_index'), isNull);
   });
 
   testWidgets('Focus pause persists a paused state and resume restores a deadline', (tester) async {
