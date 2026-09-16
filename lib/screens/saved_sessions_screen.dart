@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../services/local_store.dart';
 import '../services/study_session_store.dart';
-import 'focus_flow.dart';
 
 class SavedSessionsScreen extends StatefulWidget {
   const SavedSessionsScreen({super.key, required this.store, required this.onOpenFocus});
@@ -21,7 +20,6 @@ class _SavedSessionsScreenState extends State<SavedSessionsScreen> {
   Future<void> _resume(SavedStudySession session) async {
     if (busy) return;
     setState(() => busy = true);
-    await sessionStore.archiveCurrentPlan();
     final restored = await sessionStore.restore(session.id);
     if (!mounted) return;
     if (!restored) {
@@ -63,7 +61,7 @@ class _SavedSessionsScreenState extends State<SavedSessionsScreen> {
               children: [
                 Text('Continue where you left off', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
-                const Text('Your unfinished Regular Study, Exam Preparation and Next Day Exam sessions are kept separately.'),
+                const Text('Your unfinished study sessions are kept separately.'),
                 const SizedBox(height: 18),
                 ...sessions.map(_sessionCard),
               ],
