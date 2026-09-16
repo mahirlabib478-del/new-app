@@ -3,6 +3,7 @@ import '../models/study_models.dart';
 import '../services/gamification.dart';
 import '../services/local_store.dart';
 import '../services/progress_analytics.dart';
+import 'study_history_screen.dart';
 
 class ProgressDashboard extends StatefulWidget {
   const ProgressDashboard({super.key, required this.store});
@@ -59,6 +60,17 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             const SizedBox(height: 18), SizedBox(height: 150, child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [for (final entry in week) Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _DayBar(date: entry.$1, minutes: entry.$2, goal: goal)))])),
           ]))),
           const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              leading: const CircleAvatar(child: Icon(Icons.history_rounded)),
+              title: const Text('Study history', style: TextStyle(fontWeight: FontWeight.w900)),
+              subtitle: const Text('Review your daily study minutes for the last 30 days.'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StudyHistoryScreen(store: store))),
+            ),
+          ),
+          const SizedBox(height: 12),
           Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Study health', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 14),
@@ -109,7 +121,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
     switch (title) {
       case 'First Focus': return Icons.play_arrow_rounded;
       case '1 Hour': return Icons.timer_rounded;
-      case '5 Sessions': return Icons.repeat_rounded;
+      case '5 Focus Blocks': return Icons.repeat_rounded;
       case '3 Day Streak': return Icons.local_fire_department_rounded;
       case '500 XP': return Icons.workspace_premium_rounded;
       default: return Icons.emoji_events_rounded;
@@ -127,7 +139,7 @@ class _DailyGoalDialogState extends State<_DailyGoalDialog> {
   late final TextEditingController controller;
   @override void initState() { super.initState(); controller = TextEditingController(text: '${widget.initialGoal}'); }
   @override void dispose() { controller.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) => AlertDialog(title: const Text('Daily study goal'), content: TextField(controller: controller, autofocus: true, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min')), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, int.tryParse(controller.text.trim())), child: const Text('Save'))]);
+  @override Widget build(BuildContext context) => AlertDialog(title: const Text('Daily study goal'), content: TextField(controller: controller, autofocus: true, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min', helperText: '15–720 minutes')), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, int.tryParse(controller.text.trim())), child: const Text('Save'))]);
 }
 
 class _DayBar extends StatelessWidget {
@@ -176,5 +188,5 @@ class _Stat extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)])));
+  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
 }
