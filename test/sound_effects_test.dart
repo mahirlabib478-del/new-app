@@ -8,8 +8,10 @@ import 'package:study_os/services/sound_effects.dart';
 void main() {
   const channel = MethodChannel('study_os/sound');
 
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+
   tearDown(() {
-    channel.setMockMethodCallHandler(null);
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
     debugDefaultTargetPlatformOverride = null;
   });
 
@@ -26,13 +28,12 @@ void main() {
   });
 
   test('enabled Android sound sends a tap effect to the native channel', () async {
-    TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({'sound_effects_enabled': true});
     final store = LocalStore(await SharedPreferences.getInstance());
     final calls = <MethodCall>[];
 
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
-    channel.setMockMethodCallHandler((call) async {
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       calls.add(call);
       return null;
     });
@@ -45,13 +46,12 @@ void main() {
   });
 
   test('disabled sound effects do not send anything to the native channel', () async {
-    TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({'sound_effects_enabled': false});
     final store = LocalStore(await SharedPreferences.getInstance());
     var callCount = 0;
 
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
-    channel.setMockMethodCallHandler((call) async {
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
       callCount++;
       return null;
     });
