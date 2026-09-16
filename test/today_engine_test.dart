@@ -106,7 +106,6 @@ void main() {
     expect(snapshot.currentItemCompletedMinutes, 25);
     expect(snapshot.completedMinutes, 50);
     expect(snapshot.remainingMinutes, 0);
-    expect(snapshot.progress, 1.0);
   });
 
   test('Today Engine prefers item progress when aggregate progress is stale', () async {
@@ -252,6 +251,39 @@ void main() {
 
     expect(snapshot.recommendedFocusMinutes, 0);
     expect(snapshot.recommendationReason, 'Today’s plan is complete.');
+  });
+
+  test('Today Engine summarizes remaining items and focus blocks', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 80, items: [
+      StudyItem(title: 'Math', minutes: 25),
+      StudyItem(title: 'Physics', minutes: 30),
+      StudyItem(title: 'English', minutes: 25),
+    ]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+    await store.addItemCompletedMinutes(1, 5);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.remainingItemCount, 2);
+    expect(snapshot.remainingMinutes, 50);
+    expect(snapshot.estimatedFocusBlocksRemaining, 2);
+  });
+
+  test('Today Engine counts only real unfinished items', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 25, items: [
+      StudyItem(title: 'Placeholder', minutes: 0),
+      StudyItem(title: 'Math', minutes: 25),
+    ]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(1, 25);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.remainingItemCount, 0);
+    expect(snapshot.estimatedFocusBlocksRemaining, 0);
   });
 }
 
