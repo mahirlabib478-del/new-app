@@ -5,11 +5,12 @@ import '../models/study_models.dart';
 import '../services/local_store.dart';
 
 class FocusScreen extends StatefulWidget {
-  const FocusScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex});
+  const FocusScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, this.onFocusBlockCompleted});
   final LocalStore store;
   final StudyPlan plan;
   final int index;
   final int blockIndex;
+  final Future<void> Function()? onFocusBlockCompleted;
   static const focusBlock = 25;
 
   @override
@@ -53,10 +54,8 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     }
 
     final savedIndex = widget.store.currentPlanIndex;
-    final savedIsRemaining = savedIndex >= 0 && savedIndex < widget.plan.items.length &&
-        widget.store.itemCompletedMinutes(savedIndex).clamp(0, widget.plan.items[savedIndex].minutes).toInt() < widget.plan.items[savedIndex].minutes;
-    final requestedIsRemaining = widget.index >= 0 && widget.index < widget.plan.items.length &&
-        widget.store.itemCompletedMinutes(widget.index).clamp(0, widget.plan.items[widget.index].minutes).toInt() < widget.plan.items[widget.index].minutes;
+    final savedIsRemaining = savedIndex >= 0 && savedIndex < widget.plan.items.length && widget.store.itemCompletedMinutes(savedIndex).clamp(0, widget.plan.items[savedIndex].minutes).toInt() < widget.plan.items[savedIndex].minutes;
+    final requestedIsRemaining = widget.index >= 0 && widget.index < widget.plan.items.length && widget.store.itemCompletedMinutes(widget.index).clamp(0, widget.plan.items[widget.index].minutes).toInt() < widget.plan.items[widget.index].minutes;
 
     if (savedIsRemaining) {
       activeIndex = savedIndex;
@@ -169,10 +168,13 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     final safeCompleted = completed.clamp(0, currentBlockMinutes).toInt();
     if (safeCompleted > 0) {
       await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted);
+      if (widget.onFocusBlockCompleted != null) {
+        unawaited(widget.onFocusBlockCompleted!());
+      }
     }
     await widget.store.clearFocusTimerState();
     if (!mounted) return;
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: safeCompleted)));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: safeCompleted, onFocusBlockCompleted: widget.onFocusBlockCompleted)));
   }
 
   @override
@@ -200,10 +202,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         Row(children: [const Expanded(child: Text('Topic progress', style: TextStyle(fontWeight: FontWeight.w800))), Text('${completedForItem}/${item.minutes} min', style: const TextStyle(fontWeight: FontWeight.w800))]),
         const SizedBox(height: 8), LinearProgressIndicator(value: itemProgress, minHeight: 7),
         const SizedBox(height: 26),
-        Container(width: 280, height: 280, decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.surfaceContainerHighest), child: Stack(alignment: Alignment.center, children: [
-          SizedBox(width: 258, height: 258, child: CircularProgressIndicator(value: progress, strokeWidth: 10, strokeCap: StrokeCap.round)),
-          Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 3), Text(running ? 'Stay with one task' : 'Timer paused')]),
-        ])),
+        Container(width: 280, height: 280, decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.surfaceContainerHighest), child: Stack(alignment: Alignment.center, children: [SizedBox(width: 258, height: 258, child: CircularProgressIndicator(value: progress, strokeWidth: 10, strokeCap: StrokeCap.round)), Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 3), Text(running ? 'Stay with one task' : 'Timer paused')])])),
         const SizedBox(height: 24),
         Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 24),
@@ -216,12 +215,13 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
 }
 
 class BreakScreen extends StatefulWidget {
-  const BreakScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, required this.completed});
+  const BreakScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, required this.completed, this.onFocusBlockCompleted});
   final LocalStore store;
   final StudyPlan plan;
   final int index;
   final int blockIndex;
   final int completed;
+  final Future<void> Function()? onFocusBlockCompleted;
 
   @override
   State<BreakScreen> createState() => _BreakScreenState();
@@ -340,7 +340,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
       final nextBlock = (itemCompleted ~/ FocusScreen.focusBlock).clamp(0, 100000).toInt();
       await widget.store.setPlanPosition(widget.index, nextBlock);
       if (!mounted) return;
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: widget.index, blockIndex: nextBlock)));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: widget.index, blockIndex: nextBlock, onFocusBlockCompleted: widget.onFocusBlockCompleted)));
       return;
     }
 
@@ -355,7 +355,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
     if (nextIndex < widget.plan.items.length) {
       await widget.store.setPlanPosition(nextIndex, 0);
       if (!mounted) return;
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: nextIndex, blockIndex: 0)));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: nextIndex, blockIndex: 0, onFocusBlockCompleted: widget.onFocusBlockCompleted)));
       return;
     }
 
@@ -385,12 +385,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
       const SizedBox(height: 18), LinearProgressIndicator(value: progress, minHeight: 7), const SizedBox(height: 18),
       Text(clock, style: Theme.of(context).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 24),
-      const Card(child: Padding(padding: EdgeInsets.all(16), child: Column(children: [
-        ListTile(leading: Icon(Icons.water_drop_rounded), title: Text('Drink some water'), subtitle: Text('Hydrate before you return.')),
-        ListTile(leading: Icon(Icons.directions_walk_rounded), title: Text('Walk, stretch or move'), subtitle: Text('Give your body a reset.')),
-        ListTile(leading: Icon(Icons.visibility_rounded), title: Text('Rest your eyes'), subtitle: Text('Look away from the screen.')),
-        ListTile(leading: Icon(Icons.air_rounded), title: Text('Take a few slow breaths'), subtitle: Text('Relax your shoulders and jaw.')),
-      ]))),
+      const Card(child: Padding(padding: EdgeInsets.all(16), child: Column(children: [ListTile(leading: Icon(Icons.water_drop_rounded), title: Text('Drink some water'), subtitle: Text('Hydrate before you return.')), ListTile(leading: Icon(Icons.directions_walk_rounded), title: Text('Walk, stretch or move'), subtitle: Text('Give your body a reset.')), ListTile(leading: Icon(Icons.visibility_rounded), title: Text('Rest your eyes'), subtitle: Text('Look away from the screen.')), ListTile(leading: Icon(Icons.air_rounded), title: Text('Take a few slow breaths'), subtitle: Text('Relax your shoulders and jaw.'))]))),
       const SizedBox(height: 20),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [OutlinedButton(onPressed: advancing ? null : _toggleRunning, child: Text(running ? 'Pause break' : 'Resume break')), const SizedBox(width: 10), FilledButton(onPressed: advancing ? null : _next, child: Text(advancing ? 'Saving…' : 'Continue'))]),
     ]))))));
@@ -417,11 +412,7 @@ class CompletionScreen extends StatelessWidget {
       const SizedBox(height: 18),
       LinearProgressIndicator(value: progress, minHeight: 9),
       const SizedBox(height: 22),
-      Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        _Stat(label: 'Focused', value: '$completed min'),
-        _Stat(label: 'Progress', value: '${(progress * 100).round()}%'),
-        _Stat(label: 'XP earned', value: '+$xp'),
-      ]))),
+      Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_Stat(label: 'Focused', value: '$completed min'), _Stat(label: 'Progress', value: '${(progress * 100).round()}%'), _Stat(label: 'XP earned', value: '+$xp')]))),
       const SizedBox(height: 24),
       FilledButton.icon(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home')),
     ]))))));
@@ -432,7 +423,5 @@ class _Stat extends StatelessWidget {
   const _Stat({required this.label, required this.value});
   final String label;
   final String value;
-
-  @override
-  Widget build(BuildContext context) => Column(children: [Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 3), Text(label)]);
+  @override Widget build(BuildContext context) => Column(children: [Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), const SizedBox(height: 4), Text(label)]);
 }
