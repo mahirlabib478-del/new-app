@@ -136,4 +136,55 @@ void main() {
     expect(snapshot.remainingMinutes, 0);
     expect(snapshot.progress, 1.0);
   });
+
+  test('Today Engine prefers item progress when aggregate progress is stale', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({
+        'totalMinutes': 50,
+        'items': [
+          {'title': 'Biology', 'minutes': 25},
+          {'title': 'Chemistry', 'minutes': 25},
+        ],
+      }),
+      'study_plan_date': _todayKey(),
+      'plan_completed_minutes': 50,
+      'item_completed_minutes': jsonEncode({'0': 25}),
+    });
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.nextItem?.title, 'Chemistry');
+    expect(snapshot.currentIndex, 1);
+    expect(snapshot.completedMinutes, 25);
+    expect(snapshot.remainingMinutes, 25);
+    expect(snapshot.progress, 0.5);
+    expect(snapshot.isComplete, isFalse);
+  });
+
+  test('Today Engine recognizes a completed item map even when aggregate is zero', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({
+        'totalMinutes': 25,
+        'items': [
+          {'title': 'Math', 'minutes': 25},
+        ],
+      }),
+      'study_plan_date': _todayKey(),
+      'plan_completed_minutes': 0,
+      'item_completed_minutes': jsonEncode({'0': 25}),
+    });
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.nextItem, isNull);
+    expect(snapshot.completedMinutes, 25);
+    expect(snapshot.remainingMinutes, 0);
+    expect(snapshot.progress, 1.0);
+    expect(snapshot.isComplete, isTrue);
+  });
+}
+
+String _todayKey() {
+  final now = DateTime.now();
+  return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 }
