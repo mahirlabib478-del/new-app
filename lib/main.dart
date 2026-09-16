@@ -13,7 +13,7 @@ import 'widgets/update_gate.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  runApp(StudyOS(store: LocalStore(prefs)));
+  runApp(StudyOS(store: LocalStore(prefs), prefs: prefs));
 }
 
 const themes = <String, _AppTheme>{
@@ -32,8 +32,9 @@ class _AppTheme {
 }
 
 class StudyOS extends StatefulWidget {
-  const StudyOS({super.key, required this.store, this.checkForUpdate});
+  const StudyOS({super.key, required this.store, required this.prefs, this.checkForUpdate});
   final LocalStore store;
+  final SharedPreferences prefs;
   final Future<UpdateInfo?> Function()? checkForUpdate;
   @override State<StudyOS> createState() => _StudyOSState();
 }
@@ -99,7 +100,7 @@ class _StudyOSState extends State<StudyOS> {
             Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam),
             StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy),
             ProgressDashboard(store: widget.store),
-            ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme),
+            ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme),
           ]),
           bottomNavigationBar: NavigationBar(
             selectedIndex: tab,
