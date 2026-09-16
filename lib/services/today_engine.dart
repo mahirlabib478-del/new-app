@@ -18,6 +18,8 @@ class TodaySnapshot {
     required this.todayCompletedMinutes,
     required this.goalProgress,
     required this.goalRemainingMinutes,
+    required this.recommendedFocusMinutes,
+    required this.recommendationReason,
   });
 
   final StudyPlan? plan;
@@ -35,6 +37,8 @@ class TodaySnapshot {
   final int todayCompletedMinutes;
   final double goalProgress;
   final int goalRemainingMinutes;
+  final int recommendedFocusMinutes;
+  final String recommendationReason;
 
   bool get hasPlan => plan != null && plan!.items.isNotEmpty;
   bool get isComplete => hasPlan && remainingMinutes == 0;
@@ -117,6 +121,19 @@ class TodayEngine {
       currentItemCompletedMinutes = plan.items[index].minutes;
     }
 
+    final itemRemaining = next == null
+        ? 0
+        : (next.minutes - currentItemCompletedMinutes).clamp(0, next.minutes).toInt();
+    final availableForGoal = goalRemaining > 0 ? goalRemaining : remaining;
+    final recommended = remaining <= 0 || itemRemaining <= 0
+        ? 0
+        : [25, itemRemaining, remaining, availableForGoal].reduce((a, b) => a < b ? a : b);
+    final reason = recommended == 0
+        ? 'Today’s plan is complete.'
+        : goalRemaining > 0 && goalRemaining < remaining
+            ? 'Use this block to move toward your daily goal.'
+            : 'Continue the first unfinished study item.';
+
     return TodaySnapshot(
       plan: plan,
       completedMinutes: completed,
@@ -133,6 +150,8 @@ class TodayEngine {
       todayCompletedMinutes: todayCompleted,
       goalProgress: goalProgress,
       goalRemainingMinutes: goalRemaining,
+      recommendedFocusMinutes: recommended,
+      recommendationReason: reason,
     );
   }
 }
