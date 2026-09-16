@@ -8,7 +8,7 @@ class Gamification {
   List<Achievement> achievements() => [
         Achievement('First Focus', 'Complete your first study minute', store.completedMinutes >= 1),
         Achievement('1 Hour', 'Study for 60 total minutes', store.completedMinutes >= 60),
-        Achievement('5 Sessions', 'Complete five study sessions', store.sessions >= 5),
+        Achievement('5 Focus Blocks', 'Complete five focus blocks', store.sessions >= 5),
         Achievement('3 Day Streak', 'Study three days in a row', store.streak >= 3),
         Achievement('500 XP', 'Earn 500 XP', store.xp >= 500),
       ];
