@@ -37,9 +37,23 @@ void main() {
     await tester.tap(find.text('Split evenly'));
     await tester.pumpAndSettle();
 
+    // The planner uses a lazy ListView, so the bottom action may not exist in
+    // the widget tree until the planner's own scrollable is advanced.
+    final plannerList = find.byType(ListView).first;
+    final plannerScrollable = find
+        .descendant(
+          of: plannerList,
+          matching: find.byType(Scrollable),
+        )
+        .first;
     final startButton = find.text('Start focused study');
-    await tester.scrollUntilVisible(startButton, 400);
+    await tester.scrollUntilVisible(
+      startButton,
+      400,
+      scrollable: plannerScrollable,
+    );
     await tester.pumpAndSettle();
+
     expect(startButton, findsOneWidget);
     await tester.tap(startButton);
     await tester.pumpAndSettle();
