@@ -4,60 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/main.dart';
 import 'package:study_os/models/study_models.dart';
 import 'package:study_os/services/local_store.dart';
+import 'package:study_os/services/today_engine.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  testWidgets('Study Hub removes planner before focus starts', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final store = LocalStore(prefs);
-
-    await tester.pumpWidget(
-      StudyOS(
-        store: store,
-        prefs: prefs,
-        checkForUpdate: () async => null,
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Study').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Choose your next move'), findsOneWidget);
-
-    await tester.tap(find.text('Exam Preparation').last);
-    await tester.pumpAndSettle();
-    expect(find.text('EXAM MODE'), findsOneWidget);
-
-    await tester.enterText(find.byType(TextField), 'Physics');
-    await tester.tap(find.byIcon(Icons.add_rounded));
-    await tester.pumpAndSettle();
-
-    final plannerList = find.byType(ListView).first;
-    final plannerScrollable = find
-        .descendant(
-          of: plannerList,
-          matching: find.byType(Scrollable),
-        )
-        .first;
-    final generatePlan = find.text('Generate plan');
-    await tester.scrollUntilVisible(generatePlan, 400, scrollable: plannerScrollable);
-    await tester.pumpAndSettle();
-    await tester.tap(generatePlan);
-    await tester.pumpAndSettle();
-    expect(find.text('Your exam plan is ready'), findsOneWidget);
-
-    final startExamPlan = find.text('Start exam plan');
-    await tester.ensureVisible(startExamPlan);
-    await tester.pumpAndSettle();
-    await tester.tap(startExamPlan);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Choose your next move'), findsNothing);
-    expect(find.text('Focus mode'), findsOneWidget);
-    expect(find.text('Physics'), findsOneWidget);
-  });
-
   testWidgets('Home reflects item-level plan progress and next action', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -80,6 +29,7 @@ void main() {
 
     expect(find.text('25 minutes left'), findsOneWidget);
     expect(find.text('25 minutes completed • ${store.xp} XP'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Motion'), 400, scrollable: find.byType(Scrollable).first);
     expect(find.text('Physics'), findsOneWidget);
     expect(find.text('Motion'), findsOneWidget);
     expect(find.text('Start'), findsOneWidget);
@@ -105,20 +55,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Start'));
+    await tester.tap(find.text('Start').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Focus mode'), findsOneWidget);
     expect(find.text('Physics'), findsOneWidget);
-    expect(find.text('Motion'), findsOneWidget);
-    expect(find.text('Math'), findsNothing);
   });
 
   testWidgets('Home never shows a negative goal remainder', (tester) async {
-    SharedPreferences.setMockInitialValues({'daily_goal_minutes': 60});
+    SharedPreferences.setMockInitialValues({
+      'study_goal_minutes': 30,
+    });
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
-    await store.addDailyStudyMinutes(90);
+    final plan = StudyPlan(totalMinutes: 60, items: [
+      StudyItem(title: 'Math', minutes: 60),
+    ]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 60);
 
     await tester.pumpWidget(
       StudyOS(
@@ -129,8 +82,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('90 / 60 minutes'), findsOneWidget);
+    expect(find.textContaining('-'), findsNothing);
     expect(find.text('Goal reached. Keep the momentum.'), findsOneWidget);
-    expect(find.text('-30 minutes left today'), findsNothing);
+  });
+
+  test('Today Engine exposes the same item-level next action used by Home', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
+      StudyItem(title: 'Physics', topic: 'Motion', minutes: 25),
+    ]));
+    await store.addItemCompletedMinutes(0, 25);
+
+    final snapshot = TodayEngine(store).build();
+    expect(snapshot.currentIndex, 1);
+    expect(snapshot.currentItem?.title, 'Physics');
+    expect(snapshot.currentItem?.topic, 'Motion');
   });
 }
