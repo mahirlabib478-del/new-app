@@ -173,7 +173,7 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8), child: Column(children: [Icon(icon, size: 22), const SizedBox(height: 5), Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)), Text(label, style: Theme.of(context).textTheme.labelSmall)]));
+  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8), child: Column(children: [Icon(icon, size: 22), const SizedBox(height: 5), Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)), Text(label, style: Theme.of(context).textTheme.labelSmall)])));
 }
 
 class _SectionTitle extends StatelessWidget {
