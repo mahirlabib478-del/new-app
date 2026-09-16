@@ -53,6 +53,7 @@ class _StudyOSState extends State<StudyOS> {
     final snapshot = TodayEngine(widget.store).build();
     final activePlan = plan ?? snapshot.plan;
     if (activePlan == null || activePlan.items.isEmpty) return;
+    if (plan == null && snapshot.isComplete) return;
     await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(
       store: widget.store,
       plan: activePlan,
@@ -216,7 +217,19 @@ class StudyHub extends StatelessWidget {
     Text('Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
     const SizedBox(height: 18),
     _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
-    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: false, store: store, onStartPlan: (plan) async { await onStartPlan(plan); })))),
-    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: true, store: store, onStartPlan: (plan) async { await onStartPlan(plan); })))),
+    _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => _openExam(context, false)),
+    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => _openExam(context, true)),
   ]));
+
+  void _openExam(BuildContext context, bool nextDay) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(
+      nextDay: nextDay,
+      store: store,
+      onStartPlan: (plan) async {
+        if (!context.mounted) return;
+        Navigator.of(context).pop();
+        await onStartPlan(plan);
+      },
+    )));
+  }
 }
