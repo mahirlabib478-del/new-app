@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/local_store.dart';
+import '../services/reminder_settings.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
     required this.store,
+    required this.prefs,
     required this.themeKey,
     required this.onThemeChanged,
   });
 
   final LocalStore store;
+  final SharedPreferences prefs;
   final String themeKey;
   final Future<void> Function(String key) onThemeChanged;
 
@@ -26,6 +30,34 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  late ReminderSettings settings;
+
+  @override
+  void initState() {
+    super.initState();
+    settings = ReminderSettingsStore(widget.prefs).settings;
+  }
+
+  Future<void> _saveSettings(ReminderSettings next) async {
+    await ReminderSettingsStore(widget.prefs).save(next);
+    if (!mounted) return;
+    setState(() => settings = next);
+  }
+
+  Future<void> _pickTime({required bool study}) async {
+    final initial = TimeOfDay(
+      hour: study ? settings.studyHour : settings.planHour,
+      minute: study ? settings.studyMinute : settings.planMinute,
+    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
+    if (picked == null) return;
+    await _saveSettings(study
+        ? settings.copyWith(studyHour: picked.hour, studyMinute: picked.minute)
+        : settings.copyWith(planHour: picked.hour, planMinute: picked.minute));
+  }
+
+  String _formatTime(int hour, int minute) => TimeOfDay(hour: hour, minute: minute).format(context);
+
   Future<void> _editGoal(BuildContext context, int current) async {
     final value = await showDialog<int>(
       context: context,
@@ -104,6 +136,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
               subtitle: Text('$goal minutes of focused study'),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => _editGoal(context, goal),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(18, 18, 18, 4),
+                  child: Text('REMINDERS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1)),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.menu_book_rounded),
+                  title: const Text('Study reminder', style: TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text('Daily at ${_formatTime(settings.studyHour, settings.studyMinute)}'),
+                  value: settings.studyEnabled,
+                  onChanged: (value) => _saveSettings(settings.copyWith(studyEnabled: value)),
+                ),
+                ListTile(
+                  enabled: settings.studyEnabled,
+                  leading: const Icon(Icons.schedule_rounded),
+                  title: const Text('Study time'),
+                  trailing: TextButton(
+                    onPressed: settings.studyEnabled ? () => _pickTime(study: true) : null,
+                    child: Text(_formatTime(settings.studyHour, settings.studyMinute)),
+                  ),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.coffee_rounded),
+                  title: const Text('Break reminder', style: TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: const Text('After a completed focus block'),
+                  value: settings.breakEnabled,
+                  onChanged: (value) => _saveSettings(settings.copyWith(breakEnabled: value)),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.event_note_rounded),
+                  title: const Text('Plan reminder', style: TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text('Daily at ${_formatTime(settings.planHour, settings.planMinute)}'),
+                  value: settings.planEnabled,
+                  onChanged: (value) => _saveSettings(settings.copyWith(planEnabled: value)),
+                ),
+                ListTile(
+                  enabled: settings.planEnabled,
+                  leading: const Icon(Icons.schedule_rounded),
+                  title: const Text('Plan time'),
+                  trailing: TextButton(
+                    onPressed: settings.planEnabled ? () => _pickTime(study: false) : null,
+                    child: Text(_formatTime(settings.planHour, settings.planMinute)),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
