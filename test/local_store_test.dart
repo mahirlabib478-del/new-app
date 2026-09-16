@@ -234,4 +234,16 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     expect(store.streak, 1);
   });
+
+  test('clearing plan position removes stale persisted navigation state', () async {
+    final store = await makeStore();
+    await store.setPlanPosition(4, 2);
+    expect(store.currentPlanIndex, 4);
+    expect(store.currentBlockIndex, 2);
+    await store.clearPlanPosition();
+    expect(store.currentPlanIndex, 0);
+    expect(store.currentBlockIndex, 0);
+    expect(store.prefs.containsKey('current_plan_index'), isFalse);
+    expect(store.prefs.containsKey('current_block_index'), isFalse);
+  });
 }
