@@ -61,10 +61,11 @@ class LocalStore {
   String get activeStudyMode => prefs.getString(_activeModeKey) ?? 'Study';
 
   Future<void> savePlan(StudyPlan plan, {String? mode}) async {
-    // Archive the outgoing plan before changing the active mode. Passing the
-    // incoming mode here would incorrectly label the old session as the new
-    // plan's mode.
-    await _archiveCurrentPlan();
+    // Snapshot the outgoing mode before any asynchronous work. The mode stored
+    // with an archived session must describe the plan being archived, not the
+    // incoming plan that is about to become active.
+    final outgoingMode = activeStudyMode;
+    await _archiveCurrentPlan(mode: outgoingMode);
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
     await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
@@ -75,7 +76,7 @@ class LocalStore {
     if (mode != null) await setActiveStudyMode(mode);
   }
 
-  Future<void> _archiveCurrentPlan({String? mode}) async {
+  Future<void> _archiveCurrentPlan({required String mode}) async {
     final raw = prefs.getString(_planKey);
     if (raw == null) return;
     final savedDate = prefs.getString(_planDateKey);
@@ -93,7 +94,7 @@ class LocalStore {
     sessions.removeWhere((value) => value is Map && value['sourcePlan'] == raw);
     sessions.add({
       'id': DateTime.now().microsecondsSinceEpoch.toString(),
-      'mode': mode ?? activeStudyMode,
+      'mode': mode,
       'savedAt': DateTime.now().toIso8601String(),
       'plan': jsonDecode(raw),
       'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)),
