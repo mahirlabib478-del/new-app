@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/study_models.dart';
@@ -63,6 +64,9 @@ class _StudyOSState extends State<StudyOS> {
       settingsStore: ReminderSettingsStore(widget.prefs),
       scheduler: NotificationService(),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(reminderCoordinator.sync());
+    });
   }
 
   Future<void> setTheme(String key) async {
