@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:new_app/models/study_models.dart';
-import 'package:new_app/services/app_language.dart';
-import 'package:new_app/services/local_store.dart';
-import 'package:new_app/widgets/attractive_home.dart';
+import 'package:study_os/models/study_models.dart';
+import 'package:study_os/services/app_language.dart';
+import 'package:study_os/services/local_store.dart';
+import 'package:study_os/widgets/attractive_home.dart';
 
 void main() {
   testWidgets('attractive home renders journey and stats', (tester) async {
