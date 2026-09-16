@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,13 +55,13 @@ void main() {
   testWidgets('Update gate does not expose app content while update check is pending', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
-    final completer = Future<UpdateInfo?>.value(null);
+    final completer = Completer<UpdateInfo?>();
 
     await tester.pumpWidget(
       MaterialApp(
         home: UpdateGate(
           store: store,
-          checkForUpdate: () => completer,
+          checkForUpdate: () => completer.future,
           child: const Text('Home content'),
         ),
       ),
@@ -69,6 +71,7 @@ void main() {
     expect(find.text('Checking for updates…'), findsOneWidget);
     expect(find.text('Home content'), findsNothing);
 
+    completer.complete(null);
     await tester.pumpAndSettle();
     expect(find.text('Home content'), findsOneWidget);
   });
