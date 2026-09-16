@@ -49,6 +49,7 @@ class LocalStore {
   static const _focusTimerKey = 'focus_timer_state';
   static const _breakTimerKey = 'break_timer_state';
   static const _savedSessionsKey = 'saved_study_sessions';
+  static const _soundEffectsKey = 'sound_effects_enabled';
 
   Future<void> savePlan(StudyPlan plan) async {
     await _archiveCurrentPlan();
@@ -78,17 +79,7 @@ class LocalStore {
     } catch (_) {}
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     sessions.removeWhere((value) => value is Map && value['sourcePlan'] == raw);
-    sessions.add({
-      'id': id,
-      'mode': 'Study session',
-      'savedAt': DateTime.now().toIso8601String(),
-      'plan': jsonDecode(raw),
-      'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)),
-      'planCompletedMinutes': completed,
-      'currentIndex': currentPlanIndex,
-      'currentBlockIndex': currentBlockIndex,
-      'sourcePlan': raw,
-    });
+    sessions.add({'id': id, 'mode': 'Study session', 'savedAt': DateTime.now().toIso8601String(), 'plan': jsonDecode(raw), 'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': completed, 'currentIndex': currentPlanIndex, 'currentBlockIndex': currentBlockIndex, 'sourcePlan': raw});
     await prefs.setString(_savedSessionsKey, jsonEncode(sessions));
   }
 
@@ -101,11 +92,7 @@ class LocalStore {
     try {
       final json = Map<String, dynamic>.from(jsonDecode(raw) as Map);
       final totalMinutes = ((json['totalMinutes'] as num?)?.toInt() ?? 0).clamp(0, 1440).toInt();
-      final items = (json['items'] as List<dynamic>? ?? const [])
-          .whereType<Map>()
-          .map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item)))
-          .where((item) => item.minutes >= 0)
-          .toList();
+      final items = (json['items'] as List<dynamic>? ?? const []).whereType<Map>().map((item) => StudyItem.fromJson(Map<String, dynamic>.from(item))).where((item) => item.minutes >= 0).toList();
       if (items.isEmpty) return null;
       final allocated = items.fold<int>(0, (sum, item) => sum + item.minutes);
       if (allocated > totalMinutes) return null;
@@ -121,6 +108,8 @@ class LocalStore {
   Future<void> setThemePreset(String value) => prefs.setString(_themePresetKey, value);
   AppLanguage get appLanguage => AppLanguageStore(prefs).language;
   Future<void> setAppLanguage(AppLanguage value) => AppLanguageStore(prefs).setLanguage(value);
+  bool get soundEffectsEnabled => prefs.getBool(_soundEffectsKey) ?? true;
+  Future<void> setSoundEffectsEnabled(bool value) => prefs.setBool(_soundEffectsKey, value);
   int get completedMinutes => prefs.getInt(_minutesKey) ?? 0;
   int get planCompletedMinutes => prefs.getInt(_planMinutesKey) ?? 0;
   int get dailyGoalMinutes => (prefs.getInt(_dailyGoalKey) ?? 120).clamp(15, 720).toInt();
@@ -133,115 +122,26 @@ class LocalStore {
   int get currentBlockIndex => prefs.getInt(_blockKey) ?? 0;
   Future<void> setDailyGoalMinutes(int value) async => prefs.setInt(_dailyGoalKey, value.clamp(15, 720).toInt());
 
-  FocusTimerState? get focusTimerState {
-    final raw = prefs.getString(_focusTimerKey);
-    if (raw == null) return null;
-    try { return FocusTimerState.fromJson(Map<String, dynamic>.from(jsonDecode(raw) as Map)); } catch (_) { return null; }
-  }
+  FocusTimerState? get focusTimerState { final raw = prefs.getString(_focusTimerKey); if (raw == null) return null; try { return FocusTimerState.fromJson(Map<String, dynamic>.from(jsonDecode(raw) as Map)); } catch (_) { return null; } }
   Future<void> saveFocusTimerState(FocusTimerState state) async => prefs.setString(_focusTimerKey, jsonEncode(state.toJson()));
   Future<void> clearFocusTimerState() async => prefs.remove(_focusTimerKey);
-
-  BreakTimerState? get breakTimerState {
-    final raw = prefs.getString(_breakTimerKey);
-    if (raw == null) return null;
-    try { return BreakTimerState.fromJson(Map<String, dynamic>.from(jsonDecode(raw) as Map)); } catch (_) { return null; }
-  }
+  BreakTimerState? get breakTimerState { final raw = prefs.getString(_breakTimerKey); if (raw == null) return null; try { return BreakTimerState.fromJson(Map<String, dynamic>.from(jsonDecode(raw) as Map)); } catch (_) { return null; } }
   Future<void> saveBreakTimerState(BreakTimerState state) async => prefs.setString(_breakTimerKey, jsonEncode(state.toJson()));
   Future<void> clearBreakTimerState() async => prefs.remove(_breakTimerKey);
 
-  Map<String, int> get dailyStudyMinutes {
-    final raw = prefs.getString(_historyKey);
-    if (raw == null) return <String, int>{};
-    try {
-      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      final result = <String, int>{};
-      for (final entry in map.entries) { if (entry.value is num) result[entry.key] = entry.value.toInt().clamp(0, 1440).toInt(); }
-      return result;
-    } catch (_) { return <String, int>{}; }
-  }
+  Map<String, int> get dailyStudyMinutes { final raw = prefs.getString(_historyKey); if (raw == null) return <String, int>{}; try { final map = Map<String, dynamic>.from(jsonDecode(raw) as Map); final result = <String, int>{}; for (final entry in map.entries) { if (entry.value is num) result[entry.key] = entry.value.toInt().clamp(0, 1440).toInt(); } return result; } catch (_) { return <String, int>{}; } }
   int studyMinutesOn(DateTime date) => dailyStudyMinutes[_dateKey(date)] ?? 0;
-  Future<void> addDailyStudyMinutes(int value, {DateTime? date}) async {
-    final minutes = value.clamp(0, 1440).toInt();
-    if (minutes <= 0) return;
-    final key = _dateKey(date ?? DateTime.now());
-    final history = dailyStudyMinutes;
-    history[key] = ((history[key] ?? 0) + minutes).clamp(0, 1440).toInt();
-    await prefs.setString(_historyKey, jsonEncode(history));
-  }
+  Future<void> addDailyStudyMinutes(int value, {DateTime? date}) async { final minutes = value.clamp(0, 1440).toInt(); if (minutes <= 0) return; final key = _dateKey(date ?? DateTime.now()); final history = dailyStudyMinutes; history[key] = ((history[key] ?? 0) + minutes).clamp(0, 1440).toInt(); await prefs.setString(_historyKey, jsonEncode(history)); }
 
-  int itemCompletedMinutes(int index) {
-    if (index < 0) return 0;
-    final raw = prefs.getString(_itemMinutesKey);
-    if (raw == null) return 0;
-    try {
-      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      final value = map['$index'];
-      return value is num ? value.toInt().clamp(0, 1440).toInt() : 0;
-    } catch (_) { return 0; }
-  }
-
-  Map<int, int> get itemCompletedMinutesMap {
-    final raw = prefs.getString(_itemMinutesKey);
-    if (raw == null) return <int, int>{};
-    try {
-      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      final result = <int, int>{};
-      for (final entry in map.entries) {
-        final index = int.tryParse(entry.key);
-        final value = entry.value;
-        if (index != null && index >= 0 && value is num && value >= 0) result[index] = value.toInt().clamp(0, 1440).toInt();
-      }
-      return result;
-    } catch (_) { return <int, int>{}; }
-  }
-
+  int itemCompletedMinutes(int index) { if (index < 0) return 0; final raw = prefs.getString(_itemMinutesKey); if (raw == null) return 0; try { final map = Map<String, dynamic>.from(jsonDecode(raw) as Map); final value = map['$index']; return value is num ? value.toInt().clamp(0, 1440).toInt() : 0; } catch (_) { return 0; } }
+  Map<int, int> get itemCompletedMinutesMap { final raw = prefs.getString(_itemMinutesKey); if (raw == null) return <int, int>{}; try { final map = Map<String, dynamic>.from(jsonDecode(raw) as Map); final result = <int, int>{}; for (final entry in map.entries) { final index = int.tryParse(entry.key); final value = entry.value; if (index != null && index >= 0 && value is num && value >= 0) result[index] = value.toInt().clamp(0, 1440).toInt(); } return result; } catch (_) { return <int, int>{}; } }
   Future<void> setPlanPosition(int index, int blockIndex) async { await prefs.setInt(_indexKey, index.clamp(0, 100000).toInt()); await prefs.setInt(_blockKey, blockIndex.clamp(0, 100000).toInt()); }
   Future<void> clearPlanPosition() async { await prefs.remove(_indexKey); await prefs.remove(_blockKey); }
   Future<void> addCompletedMinutes(int value) => _recordCompletion(value, null);
   Future<void> addItemCompletedMinutes(int index, int value) => _recordCompletion(value, index);
-
-  Future<void> _recordCompletion(int value, int? itemIndex) async {
-    final requested = value.clamp(0, 1440).toInt();
-    if (requested <= 0) return;
-    final plan = loadPlan();
-    final planBudget = plan?.allocatedMinutes ?? requested;
-    final itemMap = plan == null ? const <int, int>{} : itemCompletedMinutesMap;
-    if (itemIndex == null && itemMap.isNotEmpty) return;
-    var completedBefore = planCompletedMinutes;
-    if (itemIndex != null && plan != null && itemMap.isNotEmpty) {
-      completedBefore = plan.items.asMap().entries.fold<int>(
-        0,
-        (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
-      );
-    }
-    final planRemaining = (planBudget - completedBefore).clamp(0, 1440).toInt();
-    if (planRemaining <= 0) return;
-    if (itemIndex != null && (plan == null || itemIndex < 0 || itemIndex >= plan.items.length)) return;
-    var minutes = requested > planRemaining ? planRemaining : requested;
-    if (itemIndex != null && plan != null) {
-      final itemRemaining = (plan.items[itemIndex].minutes - itemCompletedMinutes(itemIndex)).clamp(0, 1440).toInt();
-      if (itemRemaining <= 0) return;
-      if (minutes > itemRemaining) minutes = itemRemaining;
-    }
-    if (minutes <= 0) return;
-    await prefs.setInt(_minutesKey, completedMinutes + minutes);
-    await prefs.setInt(_planMinutesKey, completedBefore + minutes);
-    await prefs.setInt(_xpKey, xp + minutes * 2);
-    await prefs.setInt(_sessionsKey, sessions + 1);
-    await addDailyStudyMinutes(minutes);
-    if (itemIndex != null) {
-      final map = itemCompletedMinutesMap;
-      map[itemIndex] = (map[itemIndex] ?? 0) + minutes;
-      await prefs.setString(_itemMinutesKey, jsonEncode(map.map((key, value) => MapEntry(key.toString(), value))));
-    }
-    final today = _dateKey(DateTime.now());
-    final last = prefs.getString(_lastStudyKey);
-    if (last != today) {
-      final yesterday = _dateKey(DateTime.now().subtract(const Duration(days: 1)));
-      await prefs.setInt(_streakKey, last == yesterday ? streak + 1 : 1);
-      await prefs.setString(_lastStudyKey, today);
-    }
-  }
-
+  Future<void> _recordCompletion(int value, int? itemIndex) async { final requested = value.clamp(0, 1440).toInt(); if (requested <= 0) return; final plan = loadPlan(); final planBudget = plan?.allocatedMinutes ?? requested; final itemMap = plan == null ? const <int, int>{} : itemCompletedMinutesMap; if (itemIndex == null && itemMap.isNotEmpty) return; var completedBefore = planCompletedMinutes; if (itemIndex != null && plan != null && itemMap.isNotEmpty) { completedBefore = plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt()); } final planRemaining = (planBudget - completedBefore).clamp(0, 1440).toInt(); if (planRemaining <= 0) return; if (itemIndex != null && (plan == null || itemIndex < 0 || itemIndex >= plan.items.length)) return; var minutes = requested > planRemaining ? planRemaining : requested;
+    if (itemIndex != null && plan != null) { final itemBudget = plan.items[itemIndex].minutes; final itemBefore = (itemMap[itemIndex] ?? 0).clamp(0, itemBudget).toInt(); final itemRemaining = (itemBudget - itemBefore).clamp(0, itemBudget).toInt(); if (itemRemaining <= 0) return; if (minutes > itemRemaining) minutes = itemRemaining; final nextMap = <int, int>{...itemMap, itemIndex: itemBefore + minutes}; await prefs.setString(_itemMinutesKey, jsonEncode(nextMap.map((key, value) => MapEntry(key.toString(), value)))); }
+    await prefs.setInt(_planMinutesKey, (completedBefore + minutes).clamp(0, planBudget).toInt()); await prefs.setInt(_minutesKey, (completedMinutes + minutes).clamp(0, 1000000000).toInt()); await addDailyStudyMinutes(minutes); final alreadyStudiedToday = prefs.getString(_lastStudyKey) == _dateKey(DateTime.now()); await prefs.setInt(_xpKey, xp + minutes * 2); await prefs.setInt(_sessionsKey, sessions + 1); if (!alreadyStudiedToday) { await prefs.setInt(_streakKey, _nextStreak()); await prefs.setString(_lastStudyKey, _dateKey(DateTime.now())); } }
+  int _nextStreak() { final previous = prefs.getString(_lastStudyKey); if (previous == null) return 1; final yesterday = _dateKey(DateTime.now().subtract(const Duration(days: 1))); return previous == yesterday ? streak + 1 : 1; }
   String _dateKey(DateTime date) => '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
