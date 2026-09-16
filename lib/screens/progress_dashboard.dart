@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/gamification.dart';
 import '../services/local_store.dart';
+import '../services/progress_analytics.dart';
 
 class ProgressDashboard extends StatefulWidget {
   const ProgressDashboard({super.key, required this.store});
@@ -21,6 +22,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
   Widget build(BuildContext context) {
     final store = widget.store;
     final plan = store.loadPlan();
+    final analytics = ProgressAnalytics(store).build();
     final planned = plan?.allocatedMinutes ?? 0;
     final completedByItem = plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
     final itemCompletedTotal = plan == null ? 0 : plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt());
@@ -56,6 +58,35 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             Row(children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Last 7 days', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 4), Text('$weekTotal focused minutes this week')])), const Icon(Icons.bar_chart_rounded)]),
             const SizedBox(height: 18), SizedBox(height: 150, child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [for (final entry in week) Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _DayBar(date: entry.$1, minutes: entry.$2, goal: goal)))])),
           ]))),
+          const SizedBox(height: 12),
+          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Study health', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(child: _InsightStat(icon: Icons.event_available_rounded, value: '${(analytics.consistencyRate * 100).round()}%', label: 'Consistency')),
+              const SizedBox(width: 10),
+              Expanded(child: _InsightStat(icon: Icons.flag_rounded, value: '${analytics.goalHitDays}/${analytics.days}', label: 'Goals hit')),
+              const SizedBox(width: 10),
+              Expanded(child: _InsightStat(icon: Icons.local_fire_department_rounded, value: '${analytics.currentStreak}', label: 'Current streak')),
+            ]),
+            const SizedBox(height: 14),
+            Text('Best streak: ${analytics.bestStreak} days • Best day: ${analytics.bestDayMinutes} min'),
+            const SizedBox(height: 6),
+            Text('${(analytics.goalCompletionRate * 100).round()}% of your ${analytics.days}-day goal budget completed'),
+          ]))),
+          const SizedBox(height: 12),
+          if (plan != null)
+            Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(value: analytics.planCompletionRate, minHeight: 9),
+              const SizedBox(height: 8),
+              Text(analytics.planRemainingMinutes == 0
+                  ? 'Plan complete. Great work.'
+                  : analytics.estimatedPlanDaysRemaining == null
+                      ? '${analytics.planRemainingMinutes} min remaining. Study to build a pace estimate.'
+                      : '${analytics.planRemainingMinutes} min remaining • about ${analytics.estimatedPlanDaysRemaining} day${analytics.estimatedPlanDaysRemaining == 1 ? '' : 's'} at your recent pace'),
+            ]))),
           const SizedBox(height: 12),
           Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 12), LinearProgressIndicator(value: progress, minHeight: 9), const SizedBox(height: 10), Text('${(progress * 100).round()}% plan complete')]))),
           const SizedBox(height: 12),
@@ -110,6 +141,14 @@ class _DayBar extends StatelessWidget {
     final isToday = DateUtils.isSameDay(date, DateTime.now());
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: [Text('$minutes', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)), const SizedBox(height: 5), AnimatedContainer(duration: const Duration(milliseconds: 300), height: minutes == 0 ? 10 : height, decoration: BoxDecoration(color: isToday ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(10))), const SizedBox(height: 6), Text(['M', 'T', 'W', 'T', 'F', 'S', 'S'][date.weekday - 1], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800))]);
   }
+}
+
+class _InsightStat extends StatelessWidget {
+  const _InsightStat({required this.icon, required this.value, required this.label});
+  final IconData icon;
+  final String value;
+  final String label;
+  @override Widget build(BuildContext context) => Column(children: [Icon(icon, size: 22), const SizedBox(height: 5), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label, style: const TextStyle(fontSize: 11))]);
 }
 
 class _Achievement extends StatelessWidget {
