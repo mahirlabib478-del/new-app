@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +19,13 @@ void main() {
         totalMinutes: totalMinutes,
         items: [StudyItem(title: 'Math', minutes: itemMinutes)],
       );
+
+  Future<Map<String, dynamic>> loadHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('study_daily_history');
+    if (raw == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+  }
 
   testWidgets('completion screen treats allocated minutes as the plan budget', (tester) async {
     final store = await makeStore();
@@ -153,6 +162,8 @@ void main() {
     expect(store.itemCompletedMinutes(0), 25);
     expect(store.planCompletedMinutes, 25);
     expect(store.focusTimerState, isNull);
+    final history = await loadHistory();
+    expect(history.values.fold<int>(0, (sum, value) => sum + (value as num).toInt()), 25);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -176,6 +187,7 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 25);
+    final beforeHistory = await loadHistory();
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
     final continueFinder = find.text('Continue');
     await tester.ensureVisible(continueFinder);
@@ -185,6 +197,8 @@ void main() {
     expect(store.itemCompletedMinutes(0), 25);
     expect(store.planCompletedMinutes, 25);
     expect(store.sessions, 1);
+    final afterHistory = await loadHistory();
+    expect(afterHistory, beforeHistory);
   });
 
   testWidgets('Break Continue records a directly opened unfinished block', (tester) async {
