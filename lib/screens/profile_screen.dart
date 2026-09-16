@@ -249,17 +249,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (dialogContext) => SimpleDialog(
         title: Text(strings.languageLabel),
         children: [
-          RadioListTile<AppLanguage>(
-            value: AppLanguage.english,
+          RadioGroup<AppLanguage>(
             groupValue: widget.language,
-            title: Text(strings.english),
             onChanged: (value) => Navigator.pop(dialogContext, value),
-          ),
-          RadioListTile<AppLanguage>(
-            value: AppLanguage.bangla,
-            groupValue: widget.language,
-            title: Text(strings.bangla),
-            onChanged: (value) => Navigator.pop(dialogContext, value),
+            child: Column(
+              children: [
+                RadioListTile<AppLanguage>(
+                  value: AppLanguage.english,
+                  title: Text(strings.english),
+                ),
+                RadioListTile<AppLanguage>(
+                  value: AppLanguage.bangla,
+                  title: Text(strings.bangla),
+                ),
+              ],
+            ),
           ),
         ],
       ),
