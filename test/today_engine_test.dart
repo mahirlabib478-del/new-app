@@ -144,6 +144,38 @@ void main() {
     expect(snapshot.progress, 1.0);
     expect(snapshot.isComplete, isTrue);
   });
+
+  test('Today Engine resumes from aggregate-only legacy progress', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({'totalMinutes': 75, 'items': [
+        {'title': 'Math', 'minutes': 25},
+        {'title': 'Physics', 'minutes': 50},
+      ]}),
+      'study_plan_date': _todayKey(),
+      'plan_completed_minutes': 35,
+    });
+    final snapshot = TodayEngine(store).build();
+    expect(snapshot.nextItem?.title, 'Physics');
+    expect(snapshot.currentIndex, 1);
+    expect(snapshot.currentBlockIndex, 0);
+    expect(snapshot.currentItemCompletedMinutes, 10);
+    expect(snapshot.completedMinutes, 35);
+    expect(snapshot.remainingMinutes, 40);
+  });
+
+  test('Today Engine skips zero-minute items for aggregate-only progress', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({'totalMinutes': 25, 'items': [
+        {'title': 'Placeholder', 'minutes': 0},
+        {'title': 'Math', 'minutes': 25},
+      ]}),
+      'study_plan_date': _todayKey(),
+      'plan_completed_minutes': 0,
+    });
+    final snapshot = TodayEngine(store).build();
+    expect(snapshot.nextItem?.title, 'Math');
+    expect(snapshot.currentIndex, 1);
+  });
 }
 
 String _todayKey() {
