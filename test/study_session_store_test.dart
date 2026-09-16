@@ -51,17 +51,22 @@ void main() {
   test('LocalStore archive uses the canonical saved-session shape', () async {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
+    final replacement = StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', topic: 'Atoms', minutes: 25)]);
     await store.savePlan(first, mode: 'Regular Study');
     await store.addItemCompletedMinutes(0, 10);
     await store.setPlanPosition(0, 0);
+
+    // LocalStore archives the outgoing plan when savePlan replaces it.
+    await store.savePlan(replacement, mode: 'Exam Preparation');
     final raw = jsonDecode(store.prefs.getString('saved_study_sessions')!) as List<dynamic>;
     expect(raw, hasLength(1));
     expect((raw.single as Map).containsKey('sourcePlan'), isFalse);
     expect(StudySessionStore(store).sessions.single.itemProgress, {0: 10});
+    expect(StudySessionStore(store).sessions.single.mode, 'Regular Study');
 
     // A second archive of the same plan must replace the existing snapshot,
     // regardless of which archive path initiated the previous snapshot.
-    await StudySessionStore(store).archiveCurrentPlan(mode: 'Regular Study');
+    await StudySessionStore(store).archiveCurrentPlan(mode: 'Exam Preparation');
     expect(StudySessionStore(store).sessions, hasLength(1));
   });
 
