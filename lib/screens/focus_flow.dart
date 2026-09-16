@@ -114,7 +114,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       if (seconds == 0) {
         timer?.cancel();
         unawaited(widget.store.clearFocusTimerState());
-        _openBreak(currentBlockMinutes);
+        unawaited(_openBreak(currentBlockMinutes));
       }
     });
   }
@@ -136,7 +136,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         if (nextSeconds <= 0) {
           seconds = 0;
           timer?.cancel();
-          _openBreak(currentBlockMinutes);
+          unawaited(_openBreak(currentBlockMinutes));
           return;
         }
         setState(() => seconds = nextSeconds.clamp(0, currentBlockMinutes * 60).toInt());
@@ -161,12 +161,16 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
   }
 
-  void _openBreak(int completed) {
+  Future<void> _openBreak(int completed) async {
     if (transitioning || !mounted) return;
     transitioning = true;
     timer?.cancel();
     final safeCompleted = completed.clamp(0, currentBlockMinutes).toInt();
-    unawaited(widget.store.clearFocusTimerState());
+    if (safeCompleted > 0) {
+      await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted);
+    }
+    await widget.store.clearFocusTimerState();
+    if (!mounted) return;
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: safeCompleted)));
   }
 
@@ -202,7 +206,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
         const SizedBox(height: 24),
         Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 24),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: transitioning ? null : _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: transitioning || elapsedMinutes < 1 ? null : () => _openBreak(elapsedMinutes), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: transitioning ? null : _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: transitioning || elapsedMinutes < 1 ? null : () => unawaited(_openBreak(elapsedMinutes)), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]),
         const SizedBox(height: 22),
         Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your timer is saved locally. If the app closes, you can return and continue from this block.', style: Theme.of(context).textTheme.bodyMedium))),
       ]))))),
@@ -263,7 +267,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
       if (seconds == 0) {
         timer?.cancel();
         unawaited(widget.store.clearBreakTimerState());
-        _next();
+        unawaited(_next());
       }
     });
   }
@@ -286,7 +290,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
           seconds = 0;
           timer?.cancel();
           unawaited(widget.store.clearBreakTimerState());
-          _next();
+          unawaited(_next());
           return;
         }
         setState(() => seconds = nextSeconds.clamp(0, breakMinutes * 60).toInt());
@@ -313,8 +317,14 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
     setState(() => advancing = true);
     timer?.cancel();
     await widget.store.clearBreakTimerState();
-    final completed = widget.completed.clamp(0, FocusScreen.focusBlock).toInt();
-    if (completed > 0) await widget.store.addItemCompletedMinutes(widget.index, completed);
+
+    final targetCompleted = widget.completed.clamp(0, FocusScreen.focusBlock).toInt();
+    if (widget.index >= 0 && widget.index < widget.plan.items.length && targetCompleted > 0) {
+      final item = widget.plan.items[widget.index];
+      final existing = widget.store.itemCompletedMinutes(widget.index).clamp(0, item.minutes).toInt();
+      final additional = (targetCompleted - existing).clamp(0, targetCompleted).toInt();
+      if (additional > 0) await widget.store.addItemCompletedMinutes(widget.index, additional);
+    }
 
     if (widget.index < 0 || widget.index >= widget.plan.items.length) {
       await widget.store.clearPlanPosition();
