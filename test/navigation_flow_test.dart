@@ -26,7 +26,7 @@ void main() {
     expect(find.text('Physics'), findsOneWidget);
     expect(find.textContaining('50'), findsWidgets);
 
-    final missionButton = find.byKey(const ValueKey<String>('home-mission-action'));
+    final missionButton = find.widgetWithText(FilledButton, 'Start');
     expect(missionButton, findsOneWidget);
     await tester.tap(missionButton);
     await tester.pumpAndSettle();
