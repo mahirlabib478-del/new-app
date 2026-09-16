@@ -69,15 +69,22 @@ class ReminderCoordinator {
   }
 
   Future<void> notifyFocusBlockCompleted() async {
-    if (!settingsStore.settings.breakEnabled) return;
-    final request = policy.breakReminder(focusSessionCompleted: true);
-    if (request == null) return;
-    try {
-      await scheduler.initialize();
-      await scheduler.showNow(id: breakId, title: request.title, body: request.body);
-    } on Exception {
-      // A notification failure must not interrupt the study flow.
+    final settings = settingsStore.settings;
+    if (settings.breakEnabled) {
+      final request = policy.breakReminder(focusSessionCompleted: true);
+      if (request != null) {
+        try {
+          await scheduler.initialize();
+          await scheduler.showNow(id: breakId, title: request.title, body: request.body);
+        } on Exception {
+          // A notification failure must not interrupt the study flow.
+        }
+      }
     }
+
+    // Focus completion changes Today Engine state, so refresh daily reminders
+    // immediately instead of waiting for the next settings change.
+    await sync();
   }
 
   Future<void> _syncDaily({
