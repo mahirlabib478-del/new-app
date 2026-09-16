@@ -70,6 +70,24 @@ void main() {
     expect(store.xp, 100);
   });
 
+  test('stale aggregate progress is reconciled from item progress before another completion', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({'totalMinutes': 50, 'items': [
+        {'title': 'Math', 'minutes': 25},
+        {'title': 'Physics', 'minutes': 25},
+      ]}),
+      'study_plan_date': _todayKey(),
+      'plan_completed_minutes': 50,
+      'item_completed_minutes': jsonEncode({'0': 25}),
+    });
+    await store.addItemCompletedMinutes(1, 25);
+    expect(store.itemCompletedMinutesMap, {0: 25, 1: 25});
+    expect(store.planCompletedMinutes, 50);
+    expect(store.completedMinutes, 25);
+    expect(store.sessions, 1);
+    expect(store.xp, 50);
+  });
+
   test('focus timer state survives store recreation and savePlan clears it', () async {
     final store = await makeStore();
     final state = FocusTimerState(index: 1, blockIndex: 2, remainingSeconds: 317, running: true, deadlineMillis: 1234567890);
@@ -246,4 +264,9 @@ void main() {
     expect(store.prefs.containsKey('current_plan_index'), isFalse);
     expect(store.prefs.containsKey('current_block_index'), isFalse);
   });
+}
+
+String _todayKey() {
+  final now = DateTime.now();
+  return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 }
