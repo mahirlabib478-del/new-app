@@ -48,8 +48,10 @@ class LocalStore {
   static const _dailyGoalKey = 'daily_goal_minutes';
   static const _focusTimerKey = 'focus_timer_state';
   static const _breakTimerKey = 'break_timer_state';
+  static const _savedSessionsKey = 'saved_study_sessions';
 
   Future<void> savePlan(StudyPlan plan) async {
+    await _archiveCurrentPlan();
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
     await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
@@ -57,6 +59,37 @@ class LocalStore {
     await clearFocusTimerState();
     await clearBreakTimerState();
     await clearPlanPosition();
+  }
+
+  Future<void> _archiveCurrentPlan() async {
+    final raw = prefs.getString(_planKey);
+    if (raw == null) return;
+    final savedDate = prefs.getString(_planDateKey);
+    if (savedDate != null && savedDate != _dateKey(DateTime.now())) return;
+    final plan = loadPlan();
+    if (plan == null || plan.items.isEmpty) return;
+    final completed = planCompletedMinutes.clamp(0, plan.allocatedMinutes).toInt();
+    if (completed >= plan.allocatedMinutes) return;
+    final rawSessions = prefs.getString(_savedSessionsKey);
+    List<dynamic> sessions = const [];
+    try {
+      final decoded = rawSessions == null ? const [] : jsonDecode(rawSessions);
+      if (decoded is List) sessions = List<dynamic>.from(decoded);
+    } catch (_) {}
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    sessions.removeWhere((value) => value is Map && value['sourcePlan'] == raw);
+    sessions.add({
+      'id': id,
+      'mode': 'Study session',
+      'savedAt': DateTime.now().toIso8601String(),
+      'plan': jsonDecode(raw),
+      'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)),
+      'planCompletedMinutes': completed,
+      'currentIndex': currentPlanIndex,
+      'currentBlockIndex': currentBlockIndex,
+      'sourcePlan': raw,
+    });
+    await prefs.setString(_savedSessionsKey, jsonEncode(sessions));
   }
 
   StudyPlan? loadPlan() {
