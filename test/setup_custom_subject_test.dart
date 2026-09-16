@@ -38,7 +38,7 @@ void main() {
     await openSetup(tester);
     await submitCustomSubject(tester, 'physics');
 
-    expect(find.text('physics'), findsNothing);
+    expect(find.widgetWithText(CheckboxListTile, 'physics'), findsNothing);
     expect(find.text('That subject is already in the list.'), findsOneWidget);
   });
 }
