@@ -202,6 +202,46 @@ void main() {
     expect(snapshot.goalProgress, 1.0);
     expect(snapshot.dailyGoalReached, isTrue);
   });
+
+  test('Today Engine recommends one focus block when both plan and goal remain', () async {
+    final store = await makeStore({'daily_goal_minutes': 120});
+    final plan = StudyPlan(totalMinutes: 75, items: [
+      StudyItem(title: 'Math', minutes: 50),
+      StudyItem(title: 'Physics', minutes: 25),
+    ]);
+    await store.savePlan(plan);
+    await store.addDailyStudyMinutes(30);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.nextItem?.title, 'Math');
+    expect(snapshot.recommendedFocusMinutes, 25);
+    expect(snapshot.recommendationReason, 'Continue the first unfinished study item.');
+  });
+
+  test('Today Engine limits recommendation to remaining daily goal when it is smaller', () async {
+    final store = await makeStore({'daily_goal_minutes': 60});
+    final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Biology', minutes: 50)]);
+    await store.savePlan(plan);
+    await store.addDailyStudyMinutes(45);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.recommendedFocusMinutes, 15);
+    expect(snapshot.recommendationReason, 'Use this block to move toward your daily goal.');
+  });
+
+  test('Today Engine recommends zero minutes after the plan is complete', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'English', minutes: 25)]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.recommendedFocusMinutes, 0);
+    expect(snapshot.recommendationReason, 'Today’s plan is complete.');
+  });
 }
 
 String _todayKey() {
