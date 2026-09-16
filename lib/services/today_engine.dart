@@ -14,6 +14,10 @@ class TodaySnapshot {
     required this.currentIndex,
     required this.currentBlockIndex,
     required this.currentItemCompletedMinutes,
+    required this.dailyGoalMinutes,
+    required this.todayCompletedMinutes,
+    required this.goalProgress,
+    required this.goalRemainingMinutes,
   });
 
   final StudyPlan? plan;
@@ -27,10 +31,15 @@ class TodaySnapshot {
   final int currentIndex;
   final int currentBlockIndex;
   final int currentItemCompletedMinutes;
+  final int dailyGoalMinutes;
+  final int todayCompletedMinutes;
+  final double goalProgress;
+  final int goalRemainingMinutes;
 
   bool get hasPlan => plan != null && plan!.items.isNotEmpty;
   bool get isComplete => hasPlan && remainingMinutes == 0;
   bool get hasRemainingWork => hasPlan && remainingMinutes > 0;
+  bool get dailyGoalReached => goalRemainingMinutes == 0;
 }
 
 class TodayEngine {
@@ -48,10 +57,6 @@ class TodayEngine {
             (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
           );
 
-    // Item-level progress drives Resume/Completion whenever it exists. For
-    // legacy plans that only have aggregate progress, derive a safe cursor by
-    // walking the plan from the beginning. This keeps Resume useful after an
-    // older caller wrote only plan_completed_minutes.
     final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
     final hasItemProgress = completedByItem.isNotEmpty;
     final completed = planned <= 0
@@ -61,6 +66,11 @@ class TodayEngine {
             : aggregateCompleted;
     final remaining = planned <= 0 ? 0 : planned - completed;
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
+
+    final dailyGoal = store.dailyGoalMinutes;
+    final todayCompleted = store.studyMinutesOn(DateTime.now()).clamp(0, 1440).toInt();
+    final goalRemaining = (dailyGoal - todayCompleted).clamp(0, dailyGoal).toInt();
+    final goalProgress = (todayCompleted / dailyGoal).clamp(0.0, 1.0).toDouble();
 
     var index = 0;
     var blockIndex = 0;
@@ -101,8 +111,6 @@ class TodayEngine {
       }
     }
 
-    // If no item is left, keep the position harmless and expose no next item.
-    // This prevents a completed plan from accidentally restarting at item 0.
     if (next == null && plan != null && plan.items.isNotEmpty) {
       index = (plan.items.length - 1).clamp(0, 100000).toInt();
       blockIndex = ((plan.items[index].minutes + 24) ~/ 25).clamp(0, 100000).toInt();
@@ -121,6 +129,10 @@ class TodayEngine {
       currentIndex: index,
       currentBlockIndex: blockIndex,
       currentItemCompletedMinutes: currentItemCompletedMinutes,
+      dailyGoalMinutes: dailyGoal,
+      todayCompletedMinutes: todayCompleted,
+      goalProgress: goalProgress,
+      goalRemainingMinutes: goalRemaining,
     );
   }
 }
