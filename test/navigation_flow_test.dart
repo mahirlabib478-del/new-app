@@ -78,8 +78,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('25 min left'), findsOneWidget);
-    expect(find.text('25 min completed • ${store.xp} XP'), findsOneWidget);
+    expect(find.text('25 minutes left'), findsOneWidget);
+    expect(find.text('25 minutes completed • ${store.xp} XP'), findsOneWidget);
     expect(find.text('Physics'), findsOneWidget);
     expect(find.text('Motion'), findsOneWidget);
     expect(find.text('Start'), findsOneWidget);
@@ -129,8 +129,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('90 / 60 min'), findsOneWidget);
+    expect(find.text('90 / 60 minutes'), findsOneWidget);
     expect(find.text('Goal reached. Keep the momentum.'), findsOneWidget);
-    expect(find.text('-30 min left today'), findsNothing);
+    expect(find.text('-30 minutes left today'), findsNothing);
   });
 }
