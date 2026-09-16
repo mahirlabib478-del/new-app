@@ -10,12 +10,18 @@ class NotificationService implements ReminderScheduler {
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
+  bool _initialized = false;
 
   static const _channelId = 'study_os_reminders';
   static const _channelName = 'Study reminders';
   static const _channelDescription = 'Study, break and plan reminders.';
 
-  Future<void> initialize({String? timeZoneName}) async {
+  @override
+  Future<void> initialize() => _initialize();
+
+  Future<void> _initialize({String? timeZoneName}) async {
+    if (_initialized) return;
+
     tz.initializeTimeZones();
     final resolvedTimeZone = timeZoneName ?? await _deviceTimeZone();
     if (resolvedTimeZone != null && resolvedTimeZone.isNotEmpty) {
@@ -34,6 +40,7 @@ class NotificationService implements ReminderScheduler {
     );
     const settings = InitializationSettings(android: android, iOS: darwin, macOS: darwin);
     await _plugin.initialize(settings);
+    _initialized = true;
   }
 
   Future<String?> _deviceTimeZone() async {
@@ -46,6 +53,7 @@ class NotificationService implements ReminderScheduler {
 
   @override
   Future<bool?> requestPermissions() async {
+    await _initialize();
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) return android.requestNotificationsPermission();
 
@@ -66,6 +74,7 @@ class NotificationService implements ReminderScheduler {
     required int hour,
     required int minute,
   }) async {
+    await _initialize();
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextDailyOccurrence(now, hour, minute);
 
@@ -93,6 +102,7 @@ class NotificationService implements ReminderScheduler {
 
   @override
   Future<void> showNow({required int id, required String title, required String body}) async {
+    await _initialize();
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
