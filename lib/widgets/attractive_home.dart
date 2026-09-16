@@ -112,10 +112,8 @@ class _MissionCard extends StatelessWidget {
         ClipRRect(borderRadius: BorderRadius.circular(20), child: LinearProgressIndicator(value: progress, minHeight: 10, backgroundColor: scheme.onPrimaryContainer.withValues(alpha: 0.12))),
         const SizedBox(height: 9),
         Row(children: [Expanded(child: Text('${snapshot.remainingMinutes} ${strings.minutes} left', style: TextStyle(fontWeight: FontWeight.w800, color: scheme.onPrimaryContainer))), if (snapshot.hasRemainingWork) Text('${snapshot.estimatedFocusBlocksRemaining} ${strings.isBangla ? 'ব্লক বাকি' : 'blocks left'}', style: TextStyle(fontWeight: FontWeight.w700, color: scheme.onPrimaryContainer))]),
-        if (snapshot.completedMinutes > 0) ...[
-          const SizedBox(height: 5),
-          Text('${snapshot.completedMinutes} ${strings.minutes} completed • ${snapshot.xp} XP', style: TextStyle(fontWeight: FontWeight.w700, color: scheme.onPrimaryContainer.withValues(alpha: 0.8))),
-        ],
+        const SizedBox(height: 5),
+        Text('${snapshot.completedMinutes} ${strings.minutes} completed • ${snapshot.xp} XP', style: TextStyle(fontWeight: FontWeight.w700, color: scheme.onPrimaryContainer.withValues(alpha: 0.8))),
         const SizedBox(height: 18),
         FilledButton.icon(onPressed: onStart, icon: Icon(snapshot.isComplete ? Icons.check_rounded : Icons.play_arrow_rounded), label: Text(snapshot.isComplete ? (strings.isBangla ? 'নতুন প্ল্যান' : 'New plan') : (strings.isBangla ? 'শুরু করুন' : 'Start'))),
       ]),
