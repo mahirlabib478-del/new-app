@@ -17,7 +17,12 @@ class SavedStudySession {
   int get remainingMinutes => (plan.allocatedMinutes - completedMinutes).clamp(0, 1440).toInt();
   Map<String, dynamic> toJson() => {'id': id, 'mode': mode, 'savedAt': savedAt.toIso8601String(), 'plan': plan.toJson(), 'itemProgress': itemProgress.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': planCompletedMinutes, 'currentIndex': currentIndex, 'currentBlockIndex': currentBlockIndex};
   factory SavedStudySession.fromJson(Map<String, dynamic> json) {
-    final plan = StudyPlan.fromJson(Map<String, dynamic>.from(json['plan'] as Map));
+    final rawPlan = json['plan'];
+    if (rawPlan is! Map) throw const FormatException('Saved session has no valid plan');
+    final plan = StudyPlan.fromJson(Map<String, dynamic>.from(rawPlan));
+    if (plan.items.isEmpty || plan.totalMinutes <= 0 || plan.allocatedMinutes <= 0 || plan.allocatedMinutes > plan.totalMinutes) {
+      throw const FormatException('Saved session contains an invalid plan');
+    }
     final progress = <int, int>{};
     final rawProgress = json['itemProgress'];
     if (rawProgress is Map) {
@@ -26,7 +31,8 @@ class SavedStudySession {
         if (index != null && index >= 0 && index < plan.items.length && entry.value is num) progress[index] = (entry.value as num).toInt().clamp(0, plan.items[index].minutes).toInt();
       }
     }
-    return SavedStudySession(id: json['id'] as String? ?? DateTime.now().microsecondsSinceEpoch.toString(), mode: json['mode'] as String? ?? 'Study', savedAt: DateTime.tryParse(json['savedAt'] as String? ?? '') ?? DateTime.now(), plan: plan, itemProgress: progress, planCompletedMinutes: (json['planCompletedMinutes'] as num? ?? 0).clamp(0, plan.allocatedMinutes).toInt(), currentIndex: (json['currentIndex'] as num? ?? 0).clamp(0, 100000).toInt(), currentBlockIndex: (json['currentBlockIndex'] as num? ?? 0).clamp(0, 100000).toInt());
+    final savedAtRaw = json['savedAt'];
+    return SavedStudySession(id: json['id'] as String? ?? DateTime.now().microsecondsSinceEpoch.toString(), mode: json['mode'] as String? ?? 'Study', savedAt: DateTime.tryParse(savedAtRaw as String? ?? '') ?? DateTime.now(), plan: plan, itemProgress: progress, planCompletedMinutes: (json['planCompletedMinutes'] as num? ?? 0).clamp(0, plan.allocatedMinutes).toInt(), currentIndex: (json['currentIndex'] as num? ?? 0).clamp(0, 100000).toInt(), currentBlockIndex: (json['currentBlockIndex'] as num? ?? 0).clamp(0, 100000).toInt());
   }
 }
 
@@ -90,14 +96,11 @@ class StudySessionStore {
     await store.prefs.setString('study_plan_date', _dateKey(DateTime.now()));
     await store.prefs.setInt('plan_completed_minutes', target.planCompletedMinutes);
     if (target.itemProgress.isEmpty) await store.prefs.remove('item_completed_minutes'); else await store.prefs.setString('item_completed_minutes', jsonEncode(target.itemProgress.map((key, value) => MapEntry(key.toString(), value))));
-    await store.prefs.setInt('current_plan_index', target.currentIndex);
+    await store.prefs.setInt('current_plan_index', target.currentIndex.clamp(0, target.plan.items.length - 1).toInt());
     await store.prefs.setInt('current_block_index', target.currentBlockIndex);
     await store.setActiveStudyMode(target.mode);
     await store.clearFocusTimerState();
     await store.clearBreakTimerState();
-    // Keep the saved snapshot until the restored plan is completed or deleted.
-    // Focus/Break archiving updates this same record, so an abrupt app close
-    // immediately after Resume cannot make the saved session disappear.
     return true;
   }
 
