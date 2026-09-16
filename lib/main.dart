@@ -32,8 +32,9 @@ class _AppTheme {
 }
 
 class StudyOS extends StatefulWidget {
-  const StudyOS({super.key, required this.store});
+  const StudyOS({super.key, required this.store, this.checkForUpdate});
   final LocalStore store;
+  final Future<UpdateInfo?> Function()? checkForUpdate;
   @override State<StudyOS> createState() => _StudyOSState();
 }
 
@@ -92,6 +93,7 @@ class _StudyOSState extends State<StudyOS> {
       ),
       home: UpdateGate(
         store: widget.store,
+        checkForUpdate: widget.checkForUpdate,
         child: Scaffold(
           body: IndexedStack(index: tab, children: [
             Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam),
