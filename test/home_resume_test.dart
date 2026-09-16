@@ -43,7 +43,7 @@ void main() {
 
     await tester.pumpWidget(home(store));
 
-    expect(find.text('0 min left'), findsOneWidget);
+    expect(find.text('0 minutes left'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Start'), findsNothing);
   });
 
@@ -64,7 +64,7 @@ void main() {
 
     await tester.pumpWidget(home(store));
 
-    expect(find.text('25 min left'), findsOneWidget);
+    expect(find.text('25 minutes left'), findsOneWidget);
     expect(find.text('Physics'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Start'), findsOneWidget);
   });
