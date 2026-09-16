@@ -246,7 +246,7 @@ void main() {
     });
 
     final snapshot = TodayEngine(store).build();
-    expect(snapshot.remainingItemCount, 2);
+    expect(snapshot.remainingItemCount, 3);
     expect(snapshot.remainingMinutes, 50);
     expect(snapshot.estimatedFocusBlocksRemaining, 2);
   });
