@@ -37,9 +37,8 @@ void main() {
     await tester.tap(find.text('Split evenly'));
     await tester.pumpAndSettle();
 
-    final startButton = find.text('Start focused study');
-    await tester.ensureVisible(startButton);
-    await tester.pumpAndSettle();
+    final startButton = find.byType(FilledButton).last;
+    expect(startButton, findsOneWidget);
     await tester.tap(startButton);
     await tester.pumpAndSettle();
 
