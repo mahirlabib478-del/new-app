@@ -61,7 +61,10 @@ class LocalStore {
   String get activeStudyMode => prefs.getString(_activeModeKey) ?? 'Study';
 
   Future<void> savePlan(StudyPlan plan, {String? mode}) async {
-    await _archiveCurrentPlan(mode: mode);
+    // Archive the outgoing plan before changing the active mode. Passing the
+    // incoming mode here would incorrectly label the old session as the new
+    // plan's mode.
+    await _archiveCurrentPlan();
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
     await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
