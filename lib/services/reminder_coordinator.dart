@@ -23,14 +23,22 @@ class ReminderCoordinator {
 
   Future<void> requestPermissions() async {
     try {
+      await scheduler.initialize();
       await scheduler.requestPermissions();
     } on Exception {
       // Notification permission is best-effort; it must never block Study OS.
     }
   }
 
-  Future<void> sync() async {
-    final settings = settingsStore.settings;
+  Future<void> sync({ReminderSettings? settingsOverride}) async {
+    final settings = settingsOverride ?? settingsStore.settings;
+    try {
+      await scheduler.initialize();
+    } on Exception {
+      // Unsupported platforms must still be able to use the study app.
+      return;
+    }
+
     final snapshot = TodayEngine(store).build();
 
     final studyRequest = policy.studyReminder(
@@ -65,6 +73,7 @@ class ReminderCoordinator {
     final request = policy.breakReminder(focusSessionCompleted: true);
     if (request == null) return;
     try {
+      await scheduler.initialize();
       await scheduler.showNow(id: breakId, title: request.title, body: request.body);
     } on Exception {
       // A notification failure must not interrupt the study flow.
