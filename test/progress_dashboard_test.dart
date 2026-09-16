@@ -47,4 +47,38 @@ void main() {
     expect(find.text('10 / 50 min'), findsOneWidget);
     expect(find.text('20% plan complete'), findsOneWidget);
   });
+
+  testWidgets('Progress weekly total uses the last seven calendar days', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalStore(await SharedPreferences.getInstance());
+    final now = DateTime.now();
+
+    await store.addDailyStudyMinutes(30, date: now);
+    await store.addDailyStudyMinutes(25, date: now.subtract(const Duration(days: 3)));
+    await store.addDailyStudyMinutes(15, date: now.subtract(const Duration(days: 6)));
+    await store.addDailyStudyMinutes(100, date: now.subtract(const Duration(days: 7)));
+
+    await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('70 focused minutes this week'), findsOneWidget);
+  });
+
+  testWidgets('Progress daily goal refreshes after saving a new goal', (tester) async {
+    SharedPreferences.setMockInitialValues({'daily_goal_minutes': 120});
+    final store = LocalStore(await SharedPreferences.getInstance());
+
+    await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('0 / 120 min'), findsOneWidget);
+    await tester.tap(find.byTooltip('Change goal'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '90');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(store.dailyGoalMinutes, 90);
+    expect(find.text('0 / 90 min'), findsOneWidget);
+  });
 }
