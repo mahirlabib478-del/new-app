@@ -44,6 +44,20 @@ class TodaySnapshot {
   bool get isComplete => hasPlan && remainingMinutes == 0;
   bool get hasRemainingWork => hasPlan && remainingMinutes > 0;
   bool get dailyGoalReached => goalRemainingMinutes == 0;
+
+  int get remainingItemCount {
+    if (plan == null) return 0;
+    return plan!.items.asMap().entries.where((entry) {
+      final completed = (storeItemProgress[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt();
+      return entry.value.minutes > 0 && completed < entry.value.minutes;
+    }).length;
+  }
+
+  int get estimatedFocusBlocksRemaining => (remainingMinutes + 24) ~/ 25;
+
+  // Snapshot data is intentionally immutable; this map is populated by the
+  // engine only for the derived remaining-item count.
+  final Map<int, int> storeItemProgress = const {};
 }
 
 class TodayEngine {
@@ -95,9 +109,6 @@ class TodayEngine {
           }
         }
       } else {
-        // Aggregate-only progress cannot tell us which subject was studied,
-        // so interpret it in plan order. This is deterministic and matches
-        // the way a sequential focus session consumes the plan.
         var remainingCompleted = aggregateCompleted;
         for (var i = 0; i < plan.items.length; i++) {
           final item = plan.items[i];
@@ -129,9 +140,6 @@ class TodayEngine {
         ? 0
         : [25, itemRemaining, remaining, availableForGoal].reduce((a, b) => a < b ? a : b);
 
-    // Recommendation priority is deliberately deterministic: first finish a
-    // small remaining item, otherwise use the block to close the daily goal
-    // when the goal is the tighter constraint, and otherwise advance the plan.
     final reason = recommended == 0
         ? 'Today’s plan is complete.'
         : itemRemaining <= 25
