@@ -8,11 +8,7 @@ import 'package:study_os/services/today_engine.dart';
 
 void main() {
   Future<StudyOS> buildApp(LocalStore store, SharedPreferences prefs) async {
-    return StudyOS(
-      store: store,
-      prefs: prefs,
-      checkForUpdate: () async => null,
-    );
+    return StudyOS(store: store, prefs: prefs, checkForUpdate: () async => null);
   }
 
   testWidgets('Home shows current plan item and can open focus', (tester) async {
@@ -29,15 +25,16 @@ void main() {
 
     expect(find.text('Physics'), findsOneWidget);
     expect(find.textContaining('50'), findsWidgets);
-
-    await tester.scrollUntilVisible(
-      find.text('Motion'),
-      400,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.scrollUntilVisible(find.text('Motion'), 400, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
     expect(find.text('Motion'), findsOneWidget);
-    expect(find.text('Start'), findsOneWidget);
+
+    final missionButton = find.widgetWithText(FilledButton, 'Start');
+    expect(missionButton, findsOneWidget);
+    await tester.ensureVisible(missionButton);
+    await tester.tap(missionButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Focus'), findsOneWidget);
   });
 
   testWidgets('Home progress summary remains visible after partial completion', (tester) async {
@@ -52,23 +49,19 @@ void main() {
 
     await tester.pumpWidget(await buildApp(store, prefs));
     await tester.pumpAndSettle();
-
     expect(find.textContaining('25'), findsWidgets);
-    expect(find.text('Start'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Start'), findsOneWidget);
   });
 
   testWidgets('Home shows goal reached state without negative remaining text', (tester) async {
     SharedPreferences.setMockInitialValues({'daily_goal_minutes': 60});
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
-    await store.savePlan(StudyPlan(totalMinutes: 60, items: [
-      StudyItem(title: 'Physics', topic: 'Motion', minutes: 60),
-    ]));
+    await store.savePlan(StudyPlan(totalMinutes: 60, items: [StudyItem(title: 'Physics', topic: 'Motion', minutes: 60)]));
     await store.addItemCompletedMinutes(0, 60);
 
     await tester.pumpWidget(await buildApp(store, prefs));
     await tester.pumpAndSettle();
-
     expect(find.textContaining('-'), findsNothing);
     expect(find.text('Goal reached. Keep the momentum.'), findsOneWidget);
   });
@@ -82,7 +75,6 @@ void main() {
       StudyItem(title: 'Physics', topic: 'Motion', minutes: 25),
     ]));
     await store.addItemCompletedMinutes(0, 25);
-
     final snapshot = TodayEngine(store).build();
     expect(snapshot.currentIndex, 1);
     expect(snapshot.plan?.items[snapshot.currentIndex].title, 'Physics');
