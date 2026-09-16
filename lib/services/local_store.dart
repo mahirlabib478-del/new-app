@@ -61,9 +61,8 @@ class LocalStore {
   String get activeStudyMode => prefs.getString(_activeModeKey) ?? 'Study';
 
   Future<void> savePlan(StudyPlan plan, {String? mode}) async {
-    // Snapshot the outgoing mode before any asynchronous work. The mode stored
-    // with an archived session must describe the plan being archived, not the
-    // incoming plan that is about to become active.
+    // Capture the outgoing mode before asynchronous writes. The archived
+    // session must describe the plan being replaced, not the incoming plan.
     final outgoingMode = activeStudyMode;
     await _archiveCurrentPlan(mode: outgoingMode);
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
@@ -85,15 +84,30 @@ class LocalStore {
     if (plan == null || plan.items.isEmpty) return;
     final completed = planCompletedMinutes.clamp(0, plan.allocatedMinutes).toInt();
     if (completed >= plan.allocatedMinutes) return;
+
+    // LocalStore and StudySessionStore share one persistence key. Keep the
+    // record shape canonical here too, so a LocalStore savePlan call cannot
+    // create a legacy `sourcePlan` record beside a StudySessionStore record.
     final rawSessions = prefs.getString(_savedSessionsKey);
     List<dynamic> sessions = const [];
     try {
       final decoded = rawSessions == null ? const [] : jsonDecode(rawSessions);
       if (decoded is List) sessions = List<dynamic>.from(decoded);
     } catch (_) {}
-    sessions.removeWhere((value) => value is Map && value['sourcePlan'] == raw);
+
+    final fingerprint = jsonEncode(plan.toJson());
+    String? existingId;
+    sessions.removeWhere((value) {
+      if (value is! Map) return false;
+      final existingPlan = value['plan'];
+      if (existingPlan is! Map) return false;
+      if (jsonEncode(Map<String, dynamic>.from(existingPlan)) != fingerprint) return false;
+      existingId = value['id'] as String? ?? existingId;
+      return true;
+    });
+
     sessions.add({
-      'id': DateTime.now().microsecondsSinceEpoch.toString(),
+      'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
       'mode': mode,
       'savedAt': DateTime.now().toIso8601String(),
       'plan': jsonDecode(raw),
@@ -101,7 +115,6 @@ class LocalStore {
       'planCompletedMinutes': completed,
       'currentIndex': currentPlanIndex,
       'currentBlockIndex': currentBlockIndex,
-      'sourcePlan': raw,
     });
     await prefs.setString(_savedSessionsKey, jsonEncode(sessions));
   }
