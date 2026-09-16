@@ -53,7 +53,7 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     final pauseButton = find.widgetWithText(FilledButton, 'Pause');
     await tester.ensureVisible(pauseButton);
     await tester.tap(pauseButton);
@@ -174,6 +174,7 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
+    await tester.pumpAndSettle();
     final continueFinder = find.text('Continue');
     await tester.ensureVisible(continueFinder);
     await tester.tap(continueFinder);
@@ -192,6 +193,7 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     final beforeHistory = await loadHistory(store);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
+    await tester.pumpAndSettle();
     final continueFinder = find.text('Continue');
     await tester.ensureVisible(continueFinder);
     await tester.tap(continueFinder);
@@ -214,6 +216,7 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     await store.addItemCompletedMinutes(1, 25);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 1, blockIndex: 0, completed: 25)));
+    await tester.pumpAndSettle();
     final continueFinder = find.text('Continue');
     await tester.ensureVisible(continueFinder);
     await tester.tap(continueFinder);
@@ -229,7 +232,7 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     final pauseButton = find.widgetWithText(OutlinedButton, 'Pause break');
     await tester.ensureVisible(pauseButton);
     await tester.tap(pauseButton);
