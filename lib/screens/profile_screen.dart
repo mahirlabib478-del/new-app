@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/local_store.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
     required this.store,
@@ -22,9 +22,46 @@ class ProfileScreen extends StatelessWidget {
   };
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Future<void> _editGoal(BuildContext context, int current) async {
+    final controller = TextEditingController(text: current.toString());
+    final value = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Daily study goal'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              final parsed = int.tryParse(controller.text.trim());
+              if (parsed == null) return;
+              Navigator.pop(dialogContext, parsed);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null) return;
+    await widget.store.setDailyGoalMinutes(value);
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Daily goal updated.')));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final goal = store.dailyGoalMinutes;
+    final goal = widget.store.dailyGoalMinutes;
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: ListView(
@@ -64,15 +101,15 @@ class ProfileScreen extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(18, 18, 18, 8),
                   child: Text('APPEARANCE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1)),
                 ),
-                ..._presets.entries.map(
+                ...ProfileScreen._presets.entries.map(
                   (entry) => ListTile(
-                    onTap: () => onThemeChanged(entry.key),
+                    onTap: () => widget.onThemeChanged(entry.key),
                     leading: Icon(entry.value.icon),
                     title: Text(entry.value.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                     subtitle: Text(entry.value.description),
                     trailing: Icon(
-                      themeKey == entry.key ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
-                      color: themeKey == entry.key ? scheme.primary : scheme.outline,
+                      widget.themeKey == entry.key ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                      color: widget.themeKey == entry.key ? scheme.primary : scheme.outline,
                     ),
                   ),
                 ),
@@ -92,38 +129,6 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _editGoal(BuildContext context, int current) async {
-    final controller = TextEditingController(text: current.toString());
-    final value = await showDialog<int>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Daily study goal'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () {
-              final parsed = int.tryParse(controller.text.trim());
-              if (parsed == null) return;
-              Navigator.pop(dialogContext, parsed);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (value == null) return;
-    await store.setDailyGoalMinutes(value);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Daily goal updated.')));
-    }
   }
 }
 
