@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/main.dart';
+import 'package:study_os/models/study_models.dart';
 import 'package:study_os/services/local_store.dart';
 
 void main() {
@@ -47,5 +48,25 @@ void main() {
     expect(find.text('Choose your next move'), findsNothing);
     expect(find.text('Focus mode'), findsOneWidget);
     expect(find.text('Physics'), findsOneWidget);
+  });
+
+  testWidgets('Home reflects item-level plan progress and next action', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalStore(await SharedPreferences.getInstance());
+    final plan = StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
+      StudyItem(title: 'Physics', topic: 'Motion', minutes: 25),
+    ]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+
+    await tester.pumpWidget(StudyOS(store: store));
+    await tester.pumpAndSettle();
+
+    expect(find.text('25 min left'), findsOneWidget);
+    expect(find.text('25 min completed • ${store.xp} XP'), findsOneWidget);
+    expect(find.text('Physics'), findsOneWidget);
+    expect(find.text('Motion'), findsOneWidget);
+    expect(find.text('Start'), findsOneWidget);
   });
 }
