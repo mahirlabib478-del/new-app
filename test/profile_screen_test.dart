@@ -9,11 +9,13 @@ void main() {
 
   testWidgets('Profile refreshes daily goal after saving', (tester) async {
     SharedPreferences.setMockInitialValues({'daily_goal_minutes': 120});
-    final store = LocalStore(await SharedPreferences.getInstance());
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
 
     await tester.pumpWidget(MaterialApp(
       home: ProfileScreen(
         store: store,
+        prefs: prefs,
         themeKey: 'midnight',
         onThemeChanged: (_) async {},
       ),
@@ -34,12 +36,14 @@ void main() {
 
   testWidgets('Profile exposes all supported theme presets', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    final store = LocalStore(await SharedPreferences.getInstance());
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
     String? selectedTheme;
 
     await tester.pumpWidget(MaterialApp(
       home: ProfileScreen(
         store: store,
+        prefs: prefs,
         themeKey: 'midnight',
         onThemeChanged: (key) async => selectedTheme = key,
       ),
