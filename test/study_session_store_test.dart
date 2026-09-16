@@ -88,7 +88,7 @@ void main() {
     expect(store.loadPlan()?.items.single.title, 'Physics');
   });
 
-  test('restoring a saved session brings back its item progress, position and mode', () async {
+  test('restoring a saved session keeps the snapshot while loading its exact progress and position', () async {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
     await store.savePlan(first, mode: 'Regular Study');
@@ -102,7 +102,9 @@ void main() {
     expect(store.itemCompletedMinutes(0), 25);
     expect(store.currentPlanIndex, 1);
     expect(store.activeStudyMode, 'Regular Study');
-    expect(sessionStore.sessions, isEmpty);
+    expect(sessionStore.sessions, hasLength(1));
+    expect(sessionStore.sessions.single.id, saved.id);
+    expect(sessionStore.sessions.single.currentIndex, 1);
   });
 
   test('resetting a saved session clears only its progress and returns it to the first block', () async {
