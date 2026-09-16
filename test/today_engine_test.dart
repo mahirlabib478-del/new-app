@@ -219,6 +219,17 @@ void main() {
     expect(snapshot.recommendationReason, 'Continue the first unfinished study item.');
   });
 
+  test('Today Engine explains when a short item can be finished in one block', () async {
+    final store = await makeStore({'daily_goal_minutes': 120});
+    final plan = StudyPlan(totalMinutes: 40, items: [StudyItem(title: 'English', minutes: 15)]);
+    await store.savePlan(plan);
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.recommendedFocusMinutes, 15);
+    expect(snapshot.recommendationReason, 'Finish this remaining study item.');
+  });
+
   test('Today Engine limits recommendation to remaining daily goal when it is smaller', () async {
     final store = await makeStore({'daily_goal_minutes': 60});
     final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Biology', minutes: 50)]);
