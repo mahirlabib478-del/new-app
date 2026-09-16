@@ -52,11 +52,11 @@ Status meanings: **DONE** = implemented, reachable, main action works, and regre
 | English / বাংলা | DONE | Persisted language and user-facing Home/navigation/Profile support. |
 | Sound effects | DONE | Setting and interaction integration with tests. |
 | Study reminders | PARTIAL | Policy/coordinator/scheduler and unit tests exist; physical Android delivery still needs device verification. |
-| Update gate | PARTIAL | Mandatory/optional policy and offline/cache fallback are implemented; real signed APK upgrade flow still needs release-device verification. |
+| Update gate | PARTIAL | Mandatory/optional policy and offline/cache fallback are implemented; tests now cover minimum-version decisions, cached policy fallback, malformed cache and unsafe cached release URLs. Real signed APK upgrade flow still needs release-device verification. |
 | Android CI / APK | DONE | CI builds debug + release APK and uploads a combined artifact. Signed production release is handled separately by release workflow. |
 | Release / signed APK upgrade | NEEDS REVIEW | Same package ID/signing key + higher versionCode upgrade path must be verified on an actual device. |
 | Legacy ProgressScreen | NEEDS REVIEW | File remains in codebase, but shipped navigation uses ProgressDashboard. Do not expose duplicate UI unless it contains unique functionality. |
-| Saved-session archive ownership | NEEDS REVIEW | Two callers can archive to the same persistence key, but LocalStore was hardened to use the same canonical record shape/fingerprint. Continue monitoring before deeper refactor. |
+| Saved-session archive ownership | NEEDS REVIEW | Audit confirms two archive entry points remain: LocalStore.savePlan() archives outgoing plans, while Focus/Break lifecycle paths update snapshots through StudySessionStore. Persistence format, canonical fingerprint, mode preservation, position and progress are covered by regression tests. No production correctness change was justified yet; consolidate ownership only with a targeted refactor later. |
 
 ## 3. Current architecture
 
@@ -158,7 +158,8 @@ Break state is persisted across lifecycle events. The next action returns to Foc
 - Saved-session resume previously reset to the first item/block → fixed using stored position + canonical plan identity.
 - Duplicate plan identity comparison in UI → replaced with `StudySessionStore.samePlan()`.
 - LocalStore archive could write a legacy `sourcePlan` record alongside canonical session records → hardened to canonical shape and regression-tested.
-- Archive regression test setup/expectation errors → corrected; CI now passes the canonical archive regression.
+- Archive regression test setup/expectation errors → corrected; CI previously passed the canonical archive regression.
+- Update-gate test coverage was expanded for minimum supported version decisions, offline/cache fallback, malformed cached policy, and unsafe cached release URLs.
 
 ### Completion-idempotency audit result
 
@@ -166,7 +167,7 @@ The current Focus → Break → Completion flow was audited after the CI baselin
 
 ### Still open / needs verification
 
-- **Archive ownership is duplicated:** LocalStore can archive during `savePlan`, while Focus/Break lifecycle code also calls StudySessionStore.archiveCurrentPlan. The persistence format is now aligned, but a future refactor should make one service authoritative without breaking planner behavior.
+- **Archive ownership is duplicated:** LocalStore archives during `savePlan`, while Focus/Break lifecycle code also calls StudySessionStore.archiveCurrentPlan. The persistence format is aligned and regression coverage is in place, but one service should eventually become authoritative without breaking planner behavior.
 - **History UI is incomplete:** daily history exists and feeds analytics, but there is no dedicated user-facing history screen/timeline.
 - **Reminder delivery needs real Android-device verification.** Unit tests cannot prove OS delivery after reboot/background restrictions.
 - **Signed APK update needs real-device verification.** Confirm same package ID/signing key and higher versionCode upgrade from an installed previous release.
@@ -190,19 +191,19 @@ It runs on pushes and pull requests to `main` and performs:
 
 ### Current verified CI
 
-CI run **#367** (`35158080099`) for head `125138eeafb38f3c8125cfa210c3d6905627f8d9` is **fully green**. The `test` job completed successfully with both Analyze and Test passing. The `android-build` job also completed successfully, including notification manifest verification, dependency installation, debug APK build, release APK build, APK packaging and artifact upload.
+CI run **#367** (`35158080099`) for head `125138eeafb38f3c8125cfa210c3d6905627f8d9` was **fully green**. The `test` job completed successfully with both Analyze and Test passing. The `android-build` job also completed successfully, including notification manifest verification, dependency installation, debug APK build, release APK build, APK packaging and artifact upload.
 
-This run specifically validates the corrected saved-session archive regression expectation. The test suite and Android build therefore provide the current verified baseline for continuation.
+A new commit `89f297f896662c1545a4d70cbe127c2f29ceab36` adds the update-policy hardening tests. A workflow result for this new head was not yet exposed by GitHub at handoff time, so the new test commit must not be called CI-green until a run is observed.
 
 ## 8. Roadmap by priority
 
 ### P0 — correctness / release safety
 
-1. ~~Verify CI for the current head: Analyze + Test + Android build/artifact.~~ **DONE — CI #367 green.**
-2. ~~If CI fails, fix only the real failure and add a regression test when it is a product bug.~~ **DONE for the current CI cycle; no remaining failure.**
+1. ~~Verify CI for the current baseline: Analyze + Test + Android build/artifact.~~ **DONE — CI #367 green for the prior verified head.**
+2. ~~If CI fails, fix only the real failure and add a regression test when it is a product bug.~~ **DONE for the previous CI cycle; no remaining failure was observed there.**
 3. ~~Audit completion idempotency across Focus → Break → Completion to ensure one user action cannot award duplicate minutes/XP/history.~~ **DONE — no new production bug found; existing regression coverage is sufficient.**
-4. Audit LocalStore + StudySessionStore archive interactions with explicit tests for mode, progress, position, deduplication and completed-plan removal.
-5. Verify update gate behavior against malformed, offline, cached, optional and mandatory policies.
+4. ~~Audit LocalStore + StudySessionStore archive interactions with explicit tests for mode, progress, position, deduplication and completed-plan removal.~~ **DONE as an audit: current dual entry points are understood and covered; no production change was justified. Future ownership consolidation remains a refactor task.**
+5. ~~Harden update-gate tests for malformed policy, offline/cache fallback, optional update dismissal and mandatory update behavior.~~ **PARTIAL/DONE in code coverage: new service-level tests cover minimum-version decisions, valid cached fallback, malformed cache, and unsafe cached URLs; widget tests already cover optional dismissal and mandatory blocking. New CI still needs observation.**
 
 ### P1 — core intelligence
 
@@ -229,17 +230,16 @@ This run specifically validates the corrected saved-session archive regression e
 
 ## 9. Exact next development task
 
-**Next task: P0 — audit saved-session archive ownership, then harden update-gate tests.**
+**Next task: verify the new update-policy test commit in CI, then move to P1 history/timeline UX.**
 
 Concrete implementation sequence:
 
-1. Inspect `LocalStore.savePlan()` / `_archiveCurrentPlan()` and all `StudySessionStore.archiveCurrentPlan()` callers in Focus/Break.
-2. Add or refine regression coverage for mode preservation, progress/position preservation, canonical deduplication and completed-plan removal across the two archive entry points.
-3. Make the smallest production change necessary only if the ownership audit finds a real correctness issue.
-4. Inspect `update_service.dart` + `update_gate.dart` tests for malformed policy, offline/cache fallback, optional update dismissal and mandatory update behavior.
-5. Fix only real update-gate correctness issues; keep network failure non-blocking.
-6. Update this handoff and feature coverage documentation with the findings.
-7. Re-run and verify CI before taking another feature.
+1. Observe CI for `89f297f896662c1545a4d70cbe127c2f29ceab36`; do not claim green until Analyze + Test + Android build are actually reported successful.
+2. If CI fails, fix only the real failure and add a regression test only when the failure is a product correctness issue.
+3. If CI passes, start the dedicated History/Timeline screen using existing `LocalStore.dailyStudyMinutes` and `ProgressAnalytics` data.
+4. Keep history read-only initially; do not change completion accounting while building the UI.
+5. Add widget/unit coverage for empty history, multi-day history ordering, daily totals, and navigation from Progress.
+6. Update this handoff and `docs/STUDY_OS_FEATURE_COVERAGE.md` with the history implementation and verified CI result.
 
 ## 10. Definition of done for future work
 
