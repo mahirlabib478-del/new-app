@@ -7,6 +7,14 @@ import 'package:study_os/services/local_store.dart';
 import 'package:study_os/services/today_engine.dart';
 
 void main() {
+  Future<StudyOS> buildApp(LocalStore store, SharedPreferences prefs) async {
+    return StudyOS(
+      store: store,
+      prefs: prefs,
+      checkForUpdate: () async => null,
+    );
+  }
+
   testWidgets('Home shows current plan item and can open focus', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -16,12 +24,7 @@ void main() {
       StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
     ]));
 
-    await tester.pumpWidget(
-      StudyOsApp(
-        store: store,
-        checkForUpdate: () async => null,
-      ),
-    );
+    await tester.pumpWidget(await buildApp(store, prefs));
     await tester.pumpAndSettle();
 
     expect(find.text('Physics'), findsOneWidget);
@@ -47,12 +50,7 @@ void main() {
     ]));
     await store.addItemCompletedMinutes(0, 25);
 
-    await tester.pumpWidget(
-      StudyOsApp(
-        store: store,
-        checkForUpdate: () async => null,
-      ),
-    );
+    await tester.pumpWidget(await buildApp(store, prefs));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('25'), findsWidgets);
@@ -71,12 +69,7 @@ void main() {
     ]));
     await store.addItemCompletedMinutes(0, 60);
 
-    await tester.pumpWidget(
-      StudyOsApp(
-        store: store,
-        checkForUpdate: () async => null,
-      ),
-    );
+    await tester.pumpWidget(await buildApp(store, prefs));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('-'), findsNothing);
