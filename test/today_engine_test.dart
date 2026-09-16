@@ -238,7 +238,7 @@ void main() {
     final snapshot = TodayEngine(store).build();
 
     expect(snapshot.recommendedFocusMinutes, 15);
-    expect(snapshot.recommendationReason, 'Use this block to move toward your daily goal.');
+    expect(snapshot.recommendationReason, 'Use this block to move toward today’s goal.');
   });
 
   test('Today Engine recommends zero minutes after the plan is complete', () async {
@@ -284,6 +284,23 @@ void main() {
 
     expect(snapshot.remainingItemCount, 0);
     expect(snapshot.estimatedFocusBlocksRemaining, 0);
+  });
+
+  test('Today Engine summarizes legacy aggregate progress across remaining items', () async {
+    final store = await makeStore({
+      'study_plan': jsonEncode({'totalMinutes': 75, 'items': [
+        {'title': 'Math', 'minutes': 25},
+        {'title': 'Physics', 'minutes': 50},
+      ]}),
+      'study_plan_date': _todayKey(),
+      'plan_completed_minutes': 35,
+    });
+
+    final snapshot = TodayEngine(store).build();
+
+    expect(snapshot.remainingItemCount, 1);
+    expect(snapshot.remainingMinutes, 40);
+    expect(snapshot.estimatedFocusBlocksRemaining, 2);
   });
 }
 
