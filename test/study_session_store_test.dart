@@ -64,10 +64,12 @@ void main() {
     expect(StudySessionStore(store).sessions.single.itemProgress, {0: 10});
     expect(StudySessionStore(store).sessions.single.mode, 'Regular Study');
 
-    // A second archive of the same plan must replace the existing snapshot,
-    // regardless of which archive path initiated the previous snapshot.
+    // Archiving the new active plan creates a second session because it is a
+    // different plan. Repeating that archive must update the same snapshot,
+    // not create another duplicate for the replacement plan.
     await StudySessionStore(store).archiveCurrentPlan(mode: 'Exam Preparation');
-    expect(StudySessionStore(store).sessions, hasLength(1));
+    expect(StudySessionStore(store).sessions, hasLength(2));
+    expect(StudySessionStore(store).sessions.where((session) => session.mode == 'Exam Preparation'), hasLength(1));
   });
 
   test('canonical plan identity matches equivalent plans without string comparison in UI code', () async {
