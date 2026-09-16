@@ -84,13 +84,7 @@ class _StudyOSState extends State<StudyOS> {
     final sameAsStored = storedPlan?.toJson().toString() == activePlan.toJson().toString();
     final index = sameAsStored ? snapshot.currentIndex : 0;
     final blockIndex = sameAsStored ? snapshot.currentBlockIndex : 0;
-    await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(
-      store: widget.store,
-      plan: activePlan,
-      index: index,
-      blockIndex: blockIndex,
-      onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted,
-    )));
+    await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: activePlan, index: index, blockIndex: blockIndex, onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted)));
     if (mounted) setState(() {});
   }
 
@@ -163,7 +157,7 @@ class StudyHub extends StatelessWidget {
       Text(s.isBangla ? 'পরবর্তী কাজ বেছে নিন' : 'Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 18),
       if (savedCount > 0) ...[
-        Card(child: ListTile(contentPadding: const EdgeInsets.all(14), leading: const CircleAvatar(child: Icon(Icons.bookmark_rounded)), title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'), trailing: const Icon(Icons.chevron_right_rounded), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SavedSessionsScreen(store: store, onOpenFocus: onStartPlan))))),
+        Card(child: ListTile(contentPadding: const EdgeInsets.all(14), leading: const CircleAvatar(child: Icon(Icons.bookmark_rounded)), title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'), trailing: const Icon(Icons.chevron_right_rounded), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SavedSessionsScreen(store: store, onOpenFocus: () async { final restoredPlan = store.loadPlan(); if (restoredPlan == null) return; await onStartPlan(restoredPlan); }))))),
         const SizedBox(height: 14),
       ],
       _Mode(icon: Icons.menu_book_rounded, title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
