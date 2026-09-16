@@ -47,23 +47,25 @@ class StudySessionStore {
     } catch (_) { return const []; }
   }
 
-  String _planFingerprint(StudyPlan plan) => jsonEncode(plan.toJson());
+  String planFingerprint(StudyPlan plan) => jsonEncode(plan.toJson());
+
+  bool samePlan(StudyPlan first, StudyPlan second) => planFingerprint(first) == planFingerprint(second);
 
   Future<void> archiveCurrentPlan({String? mode}) async {
     final plan = store.loadPlan();
     if (plan == null || plan.items.isEmpty) return;
     final completed = store.planCompletedMinutes.clamp(0, plan.allocatedMinutes).toInt();
     if (completed >= plan.allocatedMinutes) { await removeActivePlanSession(plan); return; }
-    final fingerprint = _planFingerprint(plan);
-    final existing = sessions.where((item) => _planFingerprint(item.plan) == fingerprint).toList();
+    final fingerprint = planFingerprint(plan);
+    final existing = sessions.where((item) => planFingerprint(item.plan) == fingerprint).toList();
     final session = SavedStudySession(id: existing.isEmpty ? DateTime.now().microsecondsSinceEpoch.toString() : existing.first.id, mode: mode ?? store.activeStudyMode, savedAt: DateTime.now(), plan: plan, itemProgress: store.itemCompletedMinutesMap, planCompletedMinutes: completed, currentIndex: store.currentPlanIndex, currentBlockIndex: store.currentBlockIndex);
-    final next = [...sessions.where((item) => _planFingerprint(item.plan) != fingerprint), session];
+    final next = [...sessions.where((item) => planFingerprint(item.plan) != fingerprint), session];
     await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
   }
 
   Future<void> removeActivePlanSession(StudyPlan plan) async {
-    final fingerprint = _planFingerprint(plan);
-    final next = sessions.where((item) => _planFingerprint(item.plan) != fingerprint).toList();
+    final fingerprint = planFingerprint(plan);
+    final next = sessions.where((item) => planFingerprint(item.plan) != fingerprint).toList();
     await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
   }
 
