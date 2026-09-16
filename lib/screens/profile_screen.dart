@@ -27,30 +27,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _editGoal(BuildContext context, int current) async {
-    final controller = TextEditingController(text: current.toString());
     final value = await showDialog<int>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Daily study goal'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () {
-              final parsed = int.tryParse(controller.text.trim());
-              if (parsed == null) return;
-              Navigator.pop(dialogContext, parsed);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (dialogContext) => _DailyGoalDialog(initialMinutes: current),
     );
-    controller.dispose();
     if (value == null) return;
     await widget.store.setDailyGoalMinutes(value);
     if (!mounted) return;
@@ -130,6 +110,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
+
+class _DailyGoalDialog extends StatefulWidget {
+  const _DailyGoalDialog({required this.initialMinutes});
+  final int initialMinutes;
+
+  @override
+  State<_DailyGoalDialog> createState() => _DailyGoalDialogState();
+}
+
+class _DailyGoalDialogState extends State<_DailyGoalDialog> {
+  late final TextEditingController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController(text: widget.initialMinutes.toString());
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  void save() {
+    final parsed = int.tryParse(controller.text.trim());
+    if (parsed == null) return;
+    Navigator.pop(context, parsed);
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Daily study goal'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Minutes', suffixText: 'min'),
+          onSubmitted: (_) => save(),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(onPressed: save, child: const Text('Save')),
+        ],
+      );
 }
 
 class _ThemeOption {
