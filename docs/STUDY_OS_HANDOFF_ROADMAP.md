@@ -158,6 +158,11 @@ Break state is persisted across lifecycle events. The next action returns to Foc
 - Saved-session resume previously reset to the first item/block → fixed using stored position + canonical plan identity.
 - Duplicate plan identity comparison in UI → replaced with `StudySessionStore.samePlan()`.
 - LocalStore archive could write a legacy `sourcePlan` record alongside canonical session records → hardened to canonical shape and regression-tested.
+- Archive regression test setup/expectation errors → corrected; CI now passes the canonical archive regression.
+
+### Completion-idempotency audit result
+
+The current Focus → Break → Completion flow was audited after the CI baseline. No new production duplicate-award bug was found. The important duplicate-trigger paths are guarded by `transitioning` / `advancing`, timer cancellation, persisted timer clearing, and the Break-side delta calculation before adding completion. Existing regression coverage verifies that an expired Focus timer awards one block, that repeated lifecycle resume does not duplicate navigation, and that Break Continue does not double-count a block already persisted by Focus. Therefore no production completion fix was made in this audit.
 
 ### Still open / needs verification
 
@@ -183,23 +188,19 @@ It runs on pushes and pull requests to `main` and performs:
 7. release APK build
 8. combined APK artifact upload
 
-The latest known fully green baseline before the current handoff work was CI run **#351** (head `8b19a0695d89806962ce0b6080bf24b8bdf7448a`), with Analyze, Test, Android debug/release builds and artifact upload succeeding.
+### Current verified CI
 
-After that baseline, audit work added/fixed commits including Today Engine navigation coverage and the current archive-format hardening. **Do not call the current head green until a new CI run for the current commit is observed and its Analyze + Test + Android build steps are confirmed successful.**
+CI run **#367** (`35158080099`) for head `125138eeafb38f3c8125cfa210c3d6905627f8d9` is **fully green**. The `test` job completed successfully with both Analyze and Test passing. The `android-build` job also completed successfully, including notification manifest verification, dependency installation, debug APK build, release APK build, APK packaging and artifact upload.
 
-Important current commits:
-
-- `9d75c064e93820bddfc2f0ba8063ea3c82d8bf75` — repaired Study mode card syntax.
-- `eda83afaa2d17c6208ce62c32fcf8cfffe1d9763` — unified LocalStore saved-session archive format.
-- `a609f7519f11bf0e3183815443c8231a92c049eb` — added canonical archive regression test.
+This run specifically validates the corrected saved-session archive regression expectation. The test suite and Android build therefore provide the current verified baseline for continuation.
 
 ## 8. Roadmap by priority
 
 ### P0 — correctness / release safety
 
-1. Verify CI for the current head: Analyze + Test + Android build/artifact.
-2. If CI fails, fix only the real failure and add a regression test when it is a product bug.
-3. Audit completion idempotency across Focus → Break → Completion to ensure one user action cannot award duplicate minutes/XP/history.
+1. ~~Verify CI for the current head: Analyze + Test + Android build/artifact.~~ **DONE — CI #367 green.**
+2. ~~If CI fails, fix only the real failure and add a regression test when it is a product bug.~~ **DONE for the current CI cycle; no remaining failure.**
+3. ~~Audit completion idempotency across Focus → Break → Completion to ensure one user action cannot award duplicate minutes/XP/history.~~ **DONE — no new production bug found; existing regression coverage is sufficient.**
 4. Audit LocalStore + StudySessionStore archive interactions with explicit tests for mode, progress, position, deduplication and completed-plan removal.
 5. Verify update gate behavior against malformed, offline, cached, optional and mandatory policies.
 
@@ -228,17 +229,17 @@ Important current commits:
 
 ## 9. Exact next development task
 
-**Next task: P0 — run/verify CI for the current head, then perform a completion-idempotency audit.**
+**Next task: P0 — audit saved-session archive ownership, then harden update-gate tests.**
 
 Concrete implementation sequence:
 
-1. Inspect current CI run for `a609f7519f11bf0e3183815443c8231a92c049eb`.
-2. Do not claim green unless Analyze, Test and Android build/artifact all pass.
-3. Inspect `focus_flow.dart`, `LocalStore._recordCompletion`, and completion cleanup paths.
-4. Add a regression test that exercises the most realistic duplicate-trigger path (timer expiry / early finish / lifecycle transition) and proves minutes, XP, daily history and session count are not awarded twice.
-5. Make the smallest production fix necessary if the audit finds a real duplicate-write path.
-6. Update this handoff document with the finding and decision.
-7. Re-run/verify CI before taking another feature.
+1. Inspect `LocalStore.savePlan()` / `_archiveCurrentPlan()` and all `StudySessionStore.archiveCurrentPlan()` callers in Focus/Break.
+2. Add or refine regression coverage for mode preservation, progress/position preservation, canonical deduplication and completed-plan removal across the two archive entry points.
+3. Make the smallest production change necessary only if the ownership audit finds a real correctness issue.
+4. Inspect `update_service.dart` + `update_gate.dart` tests for malformed policy, offline/cache fallback, optional update dismissal and mandatory update behavior.
+5. Fix only real update-gate correctness issues; keep network failure non-blocking.
+6. Update this handoff and feature coverage documentation with the findings.
+7. Re-run and verify CI before taking another feature.
 
 ## 10. Definition of done for future work
 
