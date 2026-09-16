@@ -13,19 +13,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
       - name: Install dependencies
         run: flutter pub get
-
       - name: Analyze
         run: flutter analyze
-
       - name: Test
         run: flutter test
 
@@ -35,16 +31,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
       - name: Prepare Android platform
         run: bash tool/bootstrap_android.sh
-
       - name: Verify notification manifest configuration
         run: |
           grep -q 'android.permission.RECEIVE_BOOT_COMPLETED' android/app/src/main/AndroidManifest.xml
@@ -52,26 +45,20 @@ jobs:
           grep -q 'ScheduledNotificationBootReceiver' android/app/src/main/AndroidManifest.xml
           grep -q 'isCoreLibraryDesugaringEnabled = true' android/app/build.gradle.kts
           grep -q 'desugar_jdk_libs:2.1.4' android/app/build.gradle.kts
-
       - name: Install dependencies
         run: flutter pub get
-
       - name: Build Android debug APK
         run: flutter build apk --debug
-
       - name: Build Android release APK
         run: flutter build apk --release
-
-      - name: Upload debug APK
+      - name: Package Android APKs
+        run: |
+          mkdir -p build/apk-artifacts
+          cp build/app/outputs/flutter-apk/app-debug.apk build/apk-artifacts/study-os-debug.apk
+          cp build/app/outputs/flutter-apk/app-release.apk build/apk-artifacts/study-os-release.apk
+      - name: Upload Android APKs
         uses: actions/upload-artifact@v4
         with:
-          name: study-os-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          if-no-files-found: error
-
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: study-os-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: study-os-apks
+          path: build/apk-artifacts
           if-no-files-found: error
