@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/study_models.dart';
 import 'services/local_store.dart';
+import 'services/reminder_coordinator.dart';
+import 'services/reminder_settings.dart';
+import 'services/notification_service.dart';
 import 'services/today_engine.dart';
 import 'screens/exam_planner_screen.dart';
 import 'screens/focus_flow.dart';
@@ -41,8 +44,19 @@ class StudyOS extends StatefulWidget {
 
 class _StudyOSState extends State<StudyOS> {
   final navigatorKey = GlobalKey<NavigatorState>();
+  late final ReminderCoordinator reminderCoordinator;
   late String themeKey = themes.containsKey(widget.store.themePreset) ? widget.store.themePreset : 'midnight';
   int tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    reminderCoordinator = ReminderCoordinator(
+      store: widget.store,
+      settingsStore: ReminderSettingsStore(widget.prefs),
+      scheduler: NotificationService(),
+    );
+  }
 
   Future<void> setTheme(String key) async {
     final theme = themes[key];
@@ -62,6 +76,7 @@ class _StudyOSState extends State<StudyOS> {
       plan: activePlan,
       index: plan == null ? snapshot.currentIndex : 0,
       blockIndex: plan == null ? snapshot.currentBlockIndex : 0,
+      onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted,
     )));
     if (mounted) setState(() {});
   }
@@ -156,23 +171,13 @@ class Home extends StatelessWidget {
         ]))),
         const SizedBox(height: 12),
         Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            const Expanded(child: Text("Today's goal", style: TextStyle(fontWeight: FontWeight.w900))),
-            Text('${snapshot.todayCompletedMinutes} / ${snapshot.dailyGoalMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900)),
-          ]),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(value: snapshot.goalProgress, minHeight: 7),
-          const SizedBox(height: 8),
+          Row(children: [const Expanded(child: Text("Today's goal", style: TextStyle(fontWeight: FontWeight.w900))), Text('${snapshot.todayCompletedMinutes} / ${snapshot.dailyGoalMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
+          const SizedBox(height: 10), LinearProgressIndicator(value: snapshot.goalProgress, minHeight: 7), const SizedBox(height: 8),
           Text(snapshot.dailyGoalReached ? 'Goal reached. Keep the momentum.' : '${snapshot.goalRemainingMinutes} min left today'),
         ]))),
         if (snapshot.nextItem != null) ...[
           const SizedBox(height: 16),
-          Card(child: ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.play_arrow_rounded)),
-            title: Text(snapshot.nextItem!.title, style: const TextStyle(fontWeight: FontWeight.w900)),
-            subtitle: Text(snapshot.nextItem!.topic.isEmpty ? '${snapshot.nextItem!.minutes} min planned' : snapshot.nextItem!.topic),
-            trailing: FilledButton(onPressed: () => onOpenFocus(), child: const Text('Start')),
-          )),
+          Card(child: ListTile(leading: const CircleAvatar(child: Icon(Icons.play_arrow_rounded)), title: Text(snapshot.nextItem!.title, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(snapshot.nextItem!.topic.isEmpty ? '${snapshot.nextItem!.minutes} min planned' : snapshot.nextItem!.topic), trailing: FilledButton(onPressed: () => onOpenFocus(), child: const Text('Start')))),
         ],
         const SizedBox(height: 20),
         Text('Study modes', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
@@ -200,15 +205,7 @@ class _Mode extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(
-    onTap: onTap,
-    contentPadding: const EdgeInsets.all(12),
-    leading: CircleAvatar(radius: 27, child: Icon(icon)),
-    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-    subtitle: Text(subtitle),
-    trailing: const Icon(Icons.chevron_right_rounded),
-  ));
+  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
 }
 
 class StudyHub extends StatelessWidget {
@@ -226,14 +223,10 @@ class StudyHub extends StatelessWidget {
   ]));
 
   void _openExam(BuildContext context, bool nextDay) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(
-      nextDay: nextDay,
-      store: store,
-      onStartPlan: (plan) async {
-        if (!context.mounted) return;
-        Navigator.of(context).pop();
-        await onStartPlan(plan);
-      },
-    )));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async {
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      await onStartPlan(plan);
+    })));
   }
 }
