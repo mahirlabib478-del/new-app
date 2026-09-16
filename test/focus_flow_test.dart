@@ -54,7 +54,9 @@ void main() {
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.tap(find.widgetWithText(FilledButton, 'Pause'));
+    final pauseButton = find.widgetWithText(FilledButton, 'Pause');
+    await tester.ensureVisible(pauseButton);
+    await tester.tap(pauseButton);
     await tester.pump();
     expect(store.focusTimerState, isNotNull);
     expect(store.focusTimerState!.running, isFalse);
@@ -172,7 +174,9 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
-    await tester.tap(find.text('Continue'));
+    final continueFinder = find.text('Continue');
+    await tester.ensureVisible(continueFinder);
+    await tester.tap(continueFinder);
     await tester.pumpAndSettle();
     expect(store.itemCompletedMinutes(0), 25);
     expect(store.planCompletedMinutes, 25);
@@ -188,7 +192,9 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     final beforeHistory = await loadHistory(store);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
-    await tester.tap(find.text('Continue'));
+    final continueFinder = find.text('Continue');
+    await tester.ensureVisible(continueFinder);
+    await tester.tap(continueFinder);
     await tester.pumpAndSettle();
     expect(find.text('Focus mode'), findsOneWidget);
     expect(store.itemCompletedMinutes(0), 25);
@@ -208,7 +214,9 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     await store.addItemCompletedMinutes(1, 25);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 1, blockIndex: 0, completed: 25)));
-    await tester.tap(find.text('Continue'));
+    final continueFinder = find.text('Continue');
+    await tester.ensureVisible(continueFinder);
+    await tester.tap(continueFinder);
     await tester.pumpAndSettle();
     expect(find.text('Study complete'), findsOneWidget);
     expect(store.currentPlanIndex, 0);
@@ -222,7 +230,9 @@ void main() {
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Pause break'));
+    final pauseButton = find.widgetWithText(OutlinedButton, 'Pause break');
+    await tester.ensureVisible(pauseButton);
+    await tester.tap(pauseButton);
     await tester.pump();
     expect(store.breakTimerState, isNotNull);
     expect(store.breakTimerState!.running, isFalse);
@@ -276,14 +286,10 @@ void main() {
     final store = await makeStore();
     final plan = singleItemPlan();
     await store.savePlan(plan);
-    await store.pumpAndSaveExpiredFocusTimer();
+    await store.saveFocusTimerState(FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 0, running: true, deadlineMillis: DateTime.now().millisecondsSinceEpoch - 1000));
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
     await tester.pumpAndSettle();
     expect(find.text('Break time'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
-}
-
-extension on LocalStore {
-  Future<void> pumpAndSaveExpiredFocusTimer() => saveFocusTimerState(FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 0, running: true, deadlineMillis: DateTime.now().millisecondsSinceEpoch - 1000));
 }
