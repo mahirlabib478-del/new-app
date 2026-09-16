@@ -107,4 +107,22 @@ void main() {
     expect(find.text('Motion'), findsOneWidget);
     expect(find.text('Math'), findsNothing);
   });
+
+  testWidgets('Home never shows a negative goal remainder', (tester) async {
+    SharedPreferences.setMockInitialValues({'daily_goal_minutes': 60});
+    final store = LocalStore(await SharedPreferences.getInstance());
+    await store.addDailyStudyMinutes(90);
+
+    await tester.pumpWidget(
+      StudyOS(
+        store: store,
+        checkForUpdate: () async => null,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('90 / 60 min'), findsOneWidget);
+    expect(find.text('Goal reached. Keep the momentum.'), findsOneWidget);
+    expect(find.text('-30 min left today'), findsNothing);
+  });
 }
