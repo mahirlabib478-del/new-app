@@ -11,19 +11,32 @@ List<StudyItem> generateExamPlan({
 }) {
   if (subjects.isEmpty || studyHours <= 0) return const [];
 
+  // Keep the planner safe even when called outside the screen. The UI already
+  // prevents duplicates, but this function is public and should not produce
+  // surprising allocations for blank or duplicate subject names.
+  final uniqueSubjects = <String>[];
+  final seenSubjects = <String>{};
+  for (final rawSubject in subjects) {
+    final subject = rawSubject.trim();
+    final key = subject.toLowerCase();
+    if (subject.isEmpty || !seenSubjects.add(key)) continue;
+    uniqueSubjects.add(subject);
+  }
+  if (uniqueSubjects.isEmpty) return const [];
+
   final totalMinutes = studyHours * 60;
   final safeUrgency = urgency.clamp(1, 3).toInt();
-  final weights = subjects
+  final weights = uniqueSubjects
       .map((subject) => (priorities[subject] ?? 2).clamp(1, 3).toInt() + safeUrgency - 1)
       .toList();
   final totalWeight = weights.fold<int>(0, (sum, weight) => sum + weight);
   final blockCount = totalMinutes ~/ 25;
-  final counts = List<int>.filled(subjects.length, 0);
-  final fractions = List<double>.filled(subjects.length, 0);
+  final counts = List<int>.filled(uniqueSubjects.length, 0);
+  final fractions = List<double>.filled(uniqueSubjects.length, 0);
 
   if (blockCount > 0 && totalWeight > 0) {
     var assignedBlocks = 0;
-    for (var i = 0; i < subjects.length; i++) {
+    for (var i = 0; i < uniqueSubjects.length; i++) {
       final exact = blockCount * weights[i] / totalWeight;
       counts[i] = exact.floor();
       fractions[i] = exact - counts[i];
@@ -31,7 +44,7 @@ List<StudyItem> generateExamPlan({
     }
 
     final remainingBlocks = blockCount - assignedBlocks;
-    final order = List<int>.generate(subjects.length, (index) => index)
+    final order = List<int>.generate(uniqueSubjects.length, (index) => index)
       ..sort((a, b) {
         final fractionCompare = fractions[b].compareTo(fractions[a]);
         return fractionCompare != 0 ? fractionCompare : a.compareTo(b);
@@ -42,10 +55,10 @@ List<StudyItem> generateExamPlan({
   }
 
   final items = <StudyItem>[];
-  for (var i = 0; i < subjects.length; i++) {
+  for (var i = 0; i < uniqueSubjects.length; i++) {
     for (var b = 0; b < counts[i]; b++) {
       items.add(StudyItem(
-        title: subjects[i],
+        title: uniqueSubjects[i],
         minutes: 25,
         topic: nextDay ? 'High-impact revision' : 'Exam preparation',
       ));
@@ -58,13 +71,13 @@ List<StudyItem> generateExamPlan({
     // priority rule intact even when the total study time is not divisible by
     // a 25-minute focus block.
     var remainderTarget = 0;
-    for (var i = 1; i < subjects.length; i++) {
+    for (var i = 1; i < uniqueSubjects.length; i++) {
       if (weights[i] > weights[remainderTarget]) {
         remainderTarget = i;
       }
     }
     items.add(StudyItem(
-      title: subjects[remainderTarget],
+      title: uniqueSubjects[remainderTarget],
       minutes: remainder,
       topic: nextDay ? 'Final review' : 'Flexible review',
     ));
