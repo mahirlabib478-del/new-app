@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/models/study_models.dart';
 import 'package:study_os/screens/focus_flow.dart';
 import 'package:study_os/services/local_store.dart';
+import 'package:study_os/services/today_engine.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -180,6 +181,24 @@ void main() {
     expect(store.planCompletedMinutes, 25);
     expect(store.focusTimerState, isNull);
     expect(store.breakTimerState, isNotNull);
+  });
+
+  testWidgets('completed focus block is visible to Today Engine through daily history', (tester) async {
+    final store = await makeStore();
+    final plan = singleItemPlan();
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+
+    final snapshot = TodayEngine(store).build();
+    expect(snapshot.completedMinutes, 25);
+    expect(snapshot.todayCompletedMinutes, 25);
+    expect(snapshot.dailyGoalMinutes, 120);
+    expect(snapshot.goalRemainingMinutes, 95);
+    expect(snapshot.goalProgress, closeTo(25 / 120, 0.0001));
+
+    final history = await loadHistory();
+    expect(history.values.fold<int>(0, (sum, value) => sum + (value as num).toInt()), 25);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('Break Continue does not double-count a block already persisted by Focus', (tester) async {
