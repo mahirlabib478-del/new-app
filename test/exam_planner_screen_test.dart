@@ -61,6 +61,20 @@ void main() {
     expect(items, isNotEmpty);
   });
 
+  test('exam plan normalizes blank and duplicate subjects', () {
+    final items = generateExamPlan(
+      nextDay: false,
+      studyHours: 1,
+      urgency: 2,
+      subjects: [' Physics ', 'physics', ''],
+      priorities: {'Physics': 3},
+    );
+
+    expect(items, hasLength(3));
+    expect(items.every((item) => item.title == 'Physics'), isTrue);
+    expect(items.fold<int>(0, (sum, item) => sum + item.minutes), 60);
+  });
+
   test('exam plan returns empty for missing subjects or study time', () {
     expect(
       generateExamPlan(
