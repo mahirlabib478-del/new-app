@@ -26,6 +26,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('120 of focused study'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Daily goal'), 300);
     await tester.tap(find.text('Daily goal'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '90');
