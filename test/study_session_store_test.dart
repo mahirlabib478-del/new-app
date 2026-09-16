@@ -55,18 +55,12 @@ void main() {
     await store.savePlan(first, mode: 'Regular Study');
     await store.addItemCompletedMinutes(0, 10);
     await store.setPlanPosition(0, 0);
-
-    // LocalStore archives the outgoing plan when savePlan replaces it.
     await store.savePlan(replacement, mode: 'Exam Preparation');
     final raw = jsonDecode(store.prefs.getString('saved_study_sessions')!) as List<dynamic>;
     expect(raw, hasLength(1));
     expect((raw.single as Map).containsKey('sourcePlan'), isFalse);
     expect(StudySessionStore(store).sessions.single.itemProgress, {0: 10});
     expect(StudySessionStore(store).sessions.single.mode, 'Regular Study');
-
-    // Archiving the new active plan creates a second session because it is a
-    // different plan. Repeating that archive must update the same snapshot,
-    // not create another duplicate for the replacement plan.
     await StudySessionStore(store).archiveCurrentPlan(mode: 'Exam Preparation');
     expect(StudySessionStore(store).sessions, hasLength(2));
     expect(StudySessionStore(store).sessions.where((session) => session.mode == 'Exam Preparation'), hasLength(1));
@@ -109,6 +103,31 @@ void main() {
     expect(store.currentPlanIndex, 1);
     expect(store.activeStudyMode, 'Regular Study');
     expect(sessionStore.sessions, isEmpty);
+  });
+
+  test('resetting a saved session clears only its progress and returns it to the first block', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 75, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 50)]);
+    await store.savePlan(plan, mode: 'Regular Study');
+    await store.addItemCompletedMinutes(0, 25);
+    await store.setPlanPosition(1, 1);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', minutes: 25)]), mode: 'Exam Preparation');
+    final sessionStore = StudySessionStore(store);
+    final saved = sessionStore.sessions.single;
+    expect(saved.currentIndex, 1);
+    expect(saved.currentBlockIndex, 1);
+    expect(saved.completedMinutes, 25);
+
+    expect(await sessionStore.reset(saved.id), isTrue);
+    final reset = sessionStore.sessions.single;
+    expect(reset.id, saved.id);
+    expect(reset.mode, 'Regular Study');
+    expect(reset.currentIndex, 0);
+    expect(reset.currentBlockIndex, 0);
+    expect(reset.completedMinutes, 0);
+    expect(reset.itemProgress, isEmpty);
+    expect(reset.remainingMinutes, 75);
+    expect(store.loadPlan()?.items.single.title, 'Chemistry');
   });
 
   test('completed active plan is removed from saved sessions', () async {
