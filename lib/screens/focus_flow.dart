@@ -152,12 +152,13 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     if (running) _startTimer(); else timer?.cancel();
   }
 
-  void _showCompletion() {
+  Future<void> _showCompletion() async {
     if (!mounted || transitioning) return;
     transitioning = true;
     timer?.cancel();
-    unawaited(widget.store.clearFocusTimerState());
-    unawaited(widget.store.clearPlanPosition());
+    await widget.store.clearFocusTimerState();
+    await widget.store.clearPlanPosition();
+    if (!mounted) return;
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
   }
 
