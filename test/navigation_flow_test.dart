@@ -80,4 +80,31 @@ void main() {
     expect(find.text('Motion'), findsOneWidget);
     expect(find.text('Start'), findsOneWidget);
   });
+
+  testWidgets('Home Start opens the current unfinished item in Focus mode', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalStore(await SharedPreferences.getInstance());
+    final plan = StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
+      StudyItem(title: 'Physics', topic: 'Motion', minutes: 25),
+    ]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+
+    await tester.pumpWidget(
+      StudyOS(
+        store: store,
+        checkForUpdate: () async => null,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Focus mode'), findsOneWidget);
+    expect(find.text('Physics'), findsOneWidget);
+    expect(find.text('Motion'), findsOneWidget);
+    expect(find.text('Math'), findsNothing);
+  });
 }
