@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/local_store.dart';
+import '../services/progress_analytics.dart';
 
 class ProgressScreen extends StatelessWidget {
   const ProgressScreen({super.key, required this.store});
@@ -15,6 +16,7 @@ class ProgressScreen extends StatelessWidget {
     final mins = minutes % 60;
     final streak = store.streak;
     final sessions = store.sessions;
+    final analytics = ProgressAnalytics(store).build();
     final achievements = <_Achievement>[
       _Achievement('First Focus', 'Complete your first study block', minutes >= 1, Icons.flag_rounded),
       _Achievement('1 Hour', 'Study for 60 total minutes', minutes >= 60, Icons.timer_rounded),
@@ -57,6 +59,52 @@ class ProgressScreen extends StatelessWidget {
             Expanded(child: _StatCard(icon: Icons.check_circle_rounded, value: '$sessions', label: 'Sessions')),
           ]),
           const SizedBox(height: 24),
+          Text('Last 7 days', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 10),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: _Metric(value: '${analytics.totalMinutes}m', label: 'Total')),
+                  Expanded(child: _Metric(value: '${analytics.averageMinutes.round()}m', label: 'Average')),
+                  Expanded(child: _Metric(value: '${analytics.activeDays}/7', label: 'Active')),
+                ]),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 100,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: analytics.dailyMinutes.map((value) {
+                      final maxMinutes = analytics.bestDayMinutes == 0 ? 1 : analytics.bestDayMinutes;
+                      final height = 12 + (value / maxMinutes) * 72;
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: Tooltip(
+                            message: '$value min',
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                height: height,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: value == 0 ? 0.12 : 0.8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text('${analytics.goalHitDays} of 7 days reached your daily goal', style: Theme.of(context).textTheme.bodyMedium),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 24),
           Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
           ...achievements.map((a) => Card(
@@ -87,6 +135,21 @@ class _StatCard extends StatelessWidget {
   final String label;
   @override
   Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon), const SizedBox(height: 10), Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)), Text(label)])));
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({required this.value, required this.label});
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 3),
+          Text(label),
+        ],
+      );
 }
 
 class _Achievement {
