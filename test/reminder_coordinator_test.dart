@@ -124,13 +124,13 @@ void main() {
 
     await coordinator.sync();
     expect(scheduler.scheduled, contains(ReminderCoordinator.studyId));
-    expect(scheduler.scheduled, contains(ReminderCoordinator.planId));
+    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
 
     await store.addItemCompletedMinutes(0, 25);
     await coordinator.notifyFocusBlockCompleted();
 
     expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
-    expect(scheduler.scheduled, contains(ReminderCoordinator.planId));
+    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
 
   test('disabled break reminder prevents focus completion notification', () async {
