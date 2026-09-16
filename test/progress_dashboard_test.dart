@@ -8,12 +8,13 @@ import 'package:study_os/services/local_store.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> scrollToPlanSummary(WidgetTester tester) async {
-    final list = find.byType(ListView).first;
-    for (var i = 0; i < 3; i++) {
-      await tester.drag(list, const Offset(0, -600));
-      await tester.pumpAndSettle();
-    }
+  Future<void> scrollToFinder(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
   }
 
   testWidgets('Progress uses item-level plan progress when aggregate is stale', (tester) async {
@@ -27,8 +28,9 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
     await tester.pumpAndSettle();
-    await scrollToPlanSummary(tester);
-    expect(find.text('25 / 50 min'), findsOneWidget);
+    final summary = find.text('25 / 50 min');
+    await scrollToFinder(tester, summary);
+    expect(summary, findsOneWidget);
     expect(find.text('50% plan complete'), findsOneWidget);
   });
 
@@ -43,8 +45,9 @@ void main() {
     await store.addCompletedMinutes(10);
     await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
     await tester.pumpAndSettle();
-    await scrollToPlanSummary(tester);
-    expect(find.text('10 / 50 min'), findsOneWidget);
+    final summary = find.text('10 / 50 min');
+    await scrollToFinder(tester, summary);
+    expect(summary, findsOneWidget);
     expect(find.text('20% plan complete'), findsOneWidget);
   });
 
@@ -82,7 +85,7 @@ void main() {
     final store = LocalStore(await SharedPreferences.getInstance());
     await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('1 Hour'), 500, scrollable: find.byType(Scrollable));
+    await tester.scrollUntilVisible(find.text('1 Hour'), 500, scrollable: find.byType(Scrollable).first);
     expect(find.text('1 Hour'), findsOneWidget);
     expect(find.text('Deep Work'), findsNothing);
   });
