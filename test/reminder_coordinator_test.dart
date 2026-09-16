@@ -10,6 +10,10 @@ class FakeScheduler implements ReminderScheduler {
   final cancelled = <int>[];
   final shown = <int>[];
   var permissionRequests = 0;
+  var initializeCalls = 0;
+
+  @override
+  Future<void> initialize() async => initializeCalls++;
 
   @override
   Future<void> cancel(int id) async => cancelled.add(id);
@@ -52,6 +56,23 @@ void main() {
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
     expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
+    expect(scheduler.initializeCalls, 1);
+  });
+
+  test('latest settings override schedules a newly enabled reminder', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    final next = ReminderSettings.defaults.copyWith(studyEnabled: true);
+    await coordinator.sync(settingsOverride: next);
+
+    expect(scheduler.scheduled, contains(ReminderCoordinator.studyId));
   });
 
   test('disabled break reminder prevents focus completion notification', () async {
@@ -86,6 +107,7 @@ void main() {
     await coordinator.notifyFocusBlockCompleted();
 
     expect(scheduler.shown, [ReminderCoordinator.breakId]);
+    expect(scheduler.initializeCalls, 1);
   });
 
   test('permission requests are best effort and forwarded to the scheduler', () async {
@@ -101,5 +123,6 @@ void main() {
     await coordinator.requestPermissions();
 
     expect(scheduler.permissionRequests, 1);
+    expect(scheduler.initializeCalls, 1);
   });
 }
