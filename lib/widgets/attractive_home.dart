@@ -25,52 +25,98 @@ class AttractiveHome extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings(language);
     final snapshot = TodayEngine(store).build();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
         children: [
-          _Header(strings: strings),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_greeting(strings), style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      strings.isBangla ? 'আজকের যাত্রা শুরু করি' : 'Let’s make today count',
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+              ),
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: scheme.primaryContainer,
+                child: Icon(Icons.auto_awesome_rounded, color: scheme.onPrimaryContainer),
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
           _MissionCard(
             snapshot: snapshot,
             strings: strings,
-            onStart: snapshot.hasRemainingWork ? onOpenFocus : onRegularStudy,
+            onStart: snapshot.hasRemainingWork
+                ? () => onOpenFocus()
+                : onRegularStudy,
           ),
           const SizedBox(height: 14),
-          _StatsRow(snapshot: snapshot, strings: strings),
+          Row(
+            children: [
+              Expanded(child: _StatCard(icon: Icons.local_fire_department_rounded, value: '${snapshot.streak}', label: strings.isBangla ? 'দিন স্ট্রিক' : 'day streak')),
+              const SizedBox(width: 10),
+              Expanded(child: _StatCard(icon: Icons.bolt_rounded, value: '${snapshot.xp}', label: 'XP')),
+              const SizedBox(width: 10),
+              Expanded(child: _StatCard(icon: Icons.workspace_premium_rounded, value: '${snapshot.level}', label: strings.isBangla ? 'লেভেল' : 'level')),
+            ],
+          ),
           const SizedBox(height: 24),
           _SectionTitle(strings.isBangla ? 'তোমার স্টাডি জার্নি' : 'Your study journey'),
           const SizedBox(height: 12),
           if (snapshot.plan == null)
             _EmptyJourney(strings: strings, onTap: onRegularStudy)
           else
-            ..._journeyItems(snapshot, strings),
+            ...snapshot.plan!.items.asMap().entries.map((entry) {
+              final item = entry.value;
+              final completed = store.itemCompletedMinutesMap[entry.key] ?? 0;
+              final progress = item.minutes <= 0
+                  ? 1.0
+                  : (completed / item.minutes).clamp(0.0, 1.0).toDouble();
+              final active = snapshot.currentIndex == entry.key && snapshot.hasRemainingWork;
+              final complete = item.minutes > 0 && completed >= item.minutes;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _JourneyItem(
+                  item: item,
+                  progress: progress,
+                  active: active,
+                  complete: complete,
+                  minutesLabel: strings.minutes,
+                  onTap: active ? () => onOpenFocus() : null,
+                ),
+              );
+            }),
           const SizedBox(height: 22),
           _SectionTitle(strings.isBangla ? 'স্টাডি মোড' : 'Study modes'),
           const SizedBox(height: 12),
           _ModeCard(
             icon: Icons.menu_book_rounded,
             title: strings.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
-            subtitle: strings.isBangla
-                ? 'নিজের মতো করে আজকের প্ল্যান তৈরি করুন।'
-                : 'Build your own plan for today.',
+            subtitle: strings.isBangla ? 'নিজের মতো করে আজকের প্ল্যান তৈরি করুন।' : 'Build your own plan for today.',
             onTap: onRegularStudy,
           ),
           _ModeCard(
             icon: Icons.auto_awesome_rounded,
             title: strings.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation',
-            subtitle: strings.isBangla
-                ? 'অগ্রাধিকার অনুযায়ী রিভিশন করুন।'
-                : 'Revise by priority.',
+            subtitle: strings.isBangla ? 'অগ্রাধিকার অনুযায়ী রিভিশন করুন।' : 'Revise by priority.',
             onTap: () => onExam(false),
           ),
           _ModeCard(
             icon: Icons.bolt_rounded,
             title: strings.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam',
-            subtitle: strings.isBangla
-                ? 'জরুরি বিষয়গুলো আগে শেষ করুন।'
-                : 'Focus on the most important topics first.',
+            subtitle: strings.isBangla ? 'জরুরি বিষয়গুলো আগে শেষ করুন।' : 'Focus on the most important topics first.',
             onTap: () => onExam(true),
           ),
         ],
@@ -78,79 +124,21 @@ class AttractiveHome extends StatelessWidget {
     );
   }
 
-  List<Widget> _journeyItems(TodaySnapshot snapshot, AppStrings strings) {
-    final plan = snapshot.plan!;
-    return plan.items.asMap().entries.map((entry) {
-      final index = entry.key;
-      final item = entry.value;
-      final completed = store.itemCompletedMinutesMap[index] ?? 0;
-      final progress = item.minutes <= 0
-          ? 1.0
-          : (completed / item.minutes).clamp(0.0, 1.0).toDouble();
-      final isActive = snapshot.currentIndex == index && snapshot.hasRemainingWork;
-      final isComplete = item.minutes > 0 && completed >= item.minutes;
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: _JourneyItem(
-          item: item,
-          progress: progress,
-          active: isActive,
-          complete: isComplete,
-          minutesLabel: strings.minutes,
-          onTap: isActive ? onOpenFocus : null,
-        ),
-      );
-    }).toList();
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.strings});
-
-  final AppStrings strings;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+  String _greeting(AppStrings strings) {
     final hour = DateTime.now().hour;
-    final greeting = strings.isBangla
-        ? (hour < 12 ? 'সুপ্রভাত' : hour < 18 ? 'শুভ অপরাহ্ণ' : 'শুভ সন্ধ্যা')
-        : (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
-
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(greeting, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 3),
-              Text(
-                strings.isBangla ? 'আজকের যাত্রা শুরু করি' : 'Let’s make today count',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
-            ],
-          ),
-        ),
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: scheme.primaryContainer,
-          child: Icon(Icons.auto_awesome_rounded, color: scheme.onPrimaryContainer),
-        ),
-      ],
-    );
+    if (strings.isBangla) {
+      if (hour < 12) return 'সুপ্রভাত';
+      if (hour < 18) return 'শুভ অপরাহ্ণ';
+      return 'শুভ সন্ধ্যা';
+    }
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
   }
 }
 
 class _MissionCard extends StatelessWidget {
-  const _MissionCard({
-    required this.snapshot,
-    required this.strings,
-    required this.onStart,
-  });
+  const _MissionCard({required this.snapshot, required this.strings, required this.onStart});
 
   final TodaySnapshot snapshot;
   final AppStrings strings;
@@ -160,19 +148,14 @@ class _MissionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final progress = snapshot.progress.clamp(0.0, 1.0).toDouble();
-    final hasPlan = snapshot.plan != null;
     final title = snapshot.isComplete
         ? (strings.isBangla ? 'আজকের মিশন সম্পূর্ণ!' : 'Today’s mission complete!')
         : snapshot.nextItem?.title ??
             (strings.isBangla ? 'আজকের প্ল্যান তৈরি করুন' : 'Create today’s plan');
     final subtitle = snapshot.isComplete
-        ? (strings.isBangla
-            ? 'চমৎকার কাজ। কাল আবার শুরু করুন।'
-            : 'Great work. Keep the streak alive.')
+        ? (strings.isBangla ? 'চমৎকার কাজ। কাল আবার শুরু করুন।' : 'Great work. Keep the streak alive.')
         : snapshot.nextItem == null
-            ? (strings.isBangla
-                ? 'একটি স্টাডি মোড বেছে নিয়ে শুরু করুন।'
-                : 'Pick a study mode and start your journey.')
+            ? (strings.isBangla ? 'একটি স্টাডি মোড বেছে নিয়ে শুরু করুন।' : 'Pick a study mode and start your journey.')
             : snapshot.recommendationReason;
 
     return Container(
@@ -193,12 +176,7 @@ class _MissionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   strings.isBangla ? 'আজকের মিশন' : 'TODAY’S MISSION',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                    color: scheme.onPrimaryContainer,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.2, color: scheme.onPrimaryContainer),
                 ),
               ),
               Icon(Icons.flag_rounded, color: scheme.onPrimaryContainer),
@@ -207,18 +185,10 @@ class _MissionCard extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: scheme.onPrimaryContainer,
-                ),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, color: scheme.onPrimaryContainer),
           ),
           const SizedBox(height: 7),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: scheme.onPrimaryContainer.withValues(alpha: 0.78),
-            ),
-          ),
+          Text(subtitle, style: TextStyle(color: scheme.onPrimaryContainer.withValues(alpha: 0.78))),
           const SizedBox(height: 18),
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
@@ -234,19 +204,13 @@ class _MissionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${snapshot.completedMinutes} / ${snapshot.plan?.allocatedMinutes ?? 0} ${strings.minutes}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: scheme.onPrimaryContainer,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w800, color: scheme.onPrimaryContainer),
                 ),
               ),
               if (snapshot.hasRemainingWork)
                 Text(
                   '${snapshot.estimatedFocusBlocksRemaining} ${strings.isBangla ? 'ব্লক বাকি' : 'blocks left'}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: scheme.onPrimaryContainer,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: scheme.onPrimaryContainer),
                 ),
             ],
           ),
@@ -260,29 +224,8 @@ class _MissionCard extends StatelessWidget {
                   : (strings.isBangla ? 'চালিয়ে যান' : 'Continue'),
             ),
           ),
-          if (!hasPlan) const SizedBox.shrink(),
         ],
       ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.snapshot, required this.strings});
-
-  final TodaySnapshot snapshot;
-  final AppStrings strings;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _StatCard(icon: Icons.local_fire_department_rounded, value: '${snapshot.streak}', label: strings.isBangla ? 'দিন স্ট্রিক' : 'day streak')),
-        const SizedBox(width: 10),
-        Expanded(child: _StatCard(icon: Icons.bolt_rounded, value: '${snapshot.xp}', label: 'XP')),
-        const SizedBox(width: 10),
-        Expanded(child: _StatCard(icon: Icons.workspace_premium_rounded, value: '${snapshot.level}', label: strings.isBangla ? 'লেভেল' : 'level')),
-      ],
     );
   }
 }
@@ -319,22 +262,12 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-    );
+    return Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900));
   }
 }
 
 class _JourneyItem extends StatelessWidget {
-  const _JourneyItem({
-    required this.item,
-    required this.progress,
-    required this.active,
-    required this.complete,
-    required this.minutesLabel,
-    required this.onTap,
-  });
+  const _JourneyItem({required this.item, required this.progress, required this.active, required this.complete, required this.minutesLabel, required this.onTap});
 
   final StudyItem item;
   final double progress;
@@ -346,12 +279,7 @@ class _JourneyItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final icon = complete
-        ? Icons.check_rounded
-        : active
-            ? Icons.play_arrow_rounded
-            : Icons.menu_book_rounded;
-
+    final icon = complete ? Icons.check_rounded : active ? Icons.play_arrow_rounded : Icons.menu_book_rounded;
     return Card(
       child: ListTile(
         onTap: onTap,
@@ -370,9 +298,7 @@ class _JourneyItem extends StatelessWidget {
             LinearProgressIndicator(value: progress),
           ],
         ),
-        trailing: active
-            ? const Icon(Icons.chevron_right_rounded)
-            : Text('$minutesLabel ${item.minutes}'),
+        trailing: active ? const Icon(Icons.chevron_right_rounded) : Text('$minutesLabel ${item.minutes}'),
       ),
     );
   }
@@ -400,10 +326,7 @@ class _EmptyJourney extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      strings.isBangla ? 'আজকের প্ল্যান নেই' : 'No plan for today',
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
+                    Text(strings.isBangla ? 'আজকের প্ল্যান নেই' : 'No plan for today', style: const TextStyle(fontWeight: FontWeight.w800)),
                     Text(strings.isBangla ? 'ট্যাপ করে শুরু করুন' : 'Tap to build your study plan'),
                   ],
                 ),
@@ -417,12 +340,7 @@ class _EmptyJourney extends StatelessWidget {
 }
 
 class _ModeCard extends StatelessWidget {
-  const _ModeCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+  const _ModeCard({required this.icon, required this.title, required this.subtitle, required this.onTap});
 
   final IconData icon;
   final String title;
