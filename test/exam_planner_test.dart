@@ -39,6 +39,26 @@ void main() {
     );
   });
 
+  test('exam plan puts a non-25-minute remainder on the highest priority subject', () {
+    final items = generateExamPlan(
+      nextDay: false,
+      studyHours: 1,
+      urgency: 1,
+      subjects: const ['High', 'Low'],
+      priorities: const {'High': 3, 'Low': 1},
+    );
+
+    int minutesFor(String subject) => items
+        .where((item) => item.title == subject)
+        .fold<int>(0, (sum, item) => sum + item.minutes);
+
+    expect(minutesFor('High'), 60);
+    expect(minutesFor('Low'), 0);
+    expect(items.last.minutes, 10);
+    expect(items.last.title, 'High');
+    expect(items.fold<int>(0, (sum, item) => sum + item.minutes), 60);
+  });
+
   test('empty subjects produce no exam plan', () {
     expect(
       generateExamPlan(
