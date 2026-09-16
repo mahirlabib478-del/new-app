@@ -53,7 +53,7 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
     final pauseButton = find.text('Pause');
     await tester.ensureVisible(pauseButton);
     await tester.tap(pauseButton);
@@ -233,7 +233,7 @@ void main() {
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
     final pauseButton = find.text('Pause break');
     await tester.ensureVisible(pauseButton);
     await tester.tap(pauseButton);
