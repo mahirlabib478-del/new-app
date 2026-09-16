@@ -52,8 +52,11 @@ void main() {
         .where((item) => item.title == subject)
         .fold<int>(0, (sum, item) => sum + item.minutes);
 
-    expect(minutesFor('High'), 60);
-    expect(minutesFor('Low'), 0);
+    // 60 minutes gives two full 25-minute blocks plus a 10-minute remainder.
+    // With a 3:1 weight split, the two full blocks are allocated 1:1 and the
+    // remainder goes to the higher-priority subject: 35 minutes vs 25.
+    expect(minutesFor('High'), 35);
+    expect(minutesFor('Low'), 25);
     expect(items.last.minutes, 10);
     expect(items.last.title, 'High');
     expect(items.fold<int>(0, (sum, item) => sum + item.minutes), 60);
