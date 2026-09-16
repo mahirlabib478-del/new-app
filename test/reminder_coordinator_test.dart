@@ -1,0 +1,105 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:study_os/services/local_store.dart';
+import 'package:study_os/services/reminder_coordinator.dart';
+import 'package:study_os/services/reminder_scheduler.dart';
+import 'package:study_os/services/reminder_settings.dart';
+
+class FakeScheduler implements ReminderScheduler {
+  final scheduled = <int>[];
+  final cancelled = <int>[];
+  final shown = <int>[];
+  var permissionRequests = 0;
+
+  @override
+  Future<void> cancel(int id) async => cancelled.add(id);
+
+  @override
+  Future<bool?> requestPermissions() async {
+    permissionRequests++;
+    return true;
+  }
+
+  @override
+  Future<void> scheduleDailyReminder({
+    required int id,
+    required String title,
+    required String body,
+    required int hour,
+    required int minute,
+  }) async {
+    scheduled.add(id);
+  }
+
+  @override
+  Future<void> showNow({required int id, required String title, required String body}) async {
+    shown.add(id);
+  }
+}
+
+void main() {
+  test('default settings schedule only the plan reminder when no plan exists', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
+  });
+
+  test('disabled break reminder prevents focus completion notification', () async {
+    SharedPreferences.setMockInitialValues({
+      'reminder_break_enabled': false,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.notifyFocusBlockCompleted();
+
+    expect(scheduler.shown, isEmpty);
+  });
+
+  test('enabled break reminder shows a notification after focus completion', () async {
+    SharedPreferences.setMockInitialValues({
+      'reminder_break_enabled': true,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.notifyFocusBlockCompleted();
+
+    expect(scheduler.shown, [ReminderCoordinator.breakId]);
+  });
+
+  test('permission requests are best effort and forwarded to the scheduler', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.requestPermissions();
+
+    expect(scheduler.permissionRequests, 1);
+  });
+}
