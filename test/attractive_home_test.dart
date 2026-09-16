@@ -35,8 +35,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TODAY’S MISSION'), findsOneWidget);
-    expect(find.text('Your study journey'), findsOneWidget);
     expect(find.text('Algebra'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Your study journey'), 400);
+    await tester.pumpAndSettle();
+    expect(find.text('Your study journey'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Regular Study'), 400);
+    await tester.pumpAndSettle();
     expect(find.text('Regular Study'), findsOneWidget);
     expect(find.text('Exam Preparation'), findsOneWidget);
   });
