@@ -198,6 +198,46 @@ void main() {
     expect(store.sessions, 1);
   });
 
+  testWidgets('Break Continue moves a multi-block item to its next focus block without double-counting', (tester) async {
+    final store = await makeStore();
+    final plan = singleItemPlan(totalMinutes: 50, itemMinutes: 50);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+    await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
+    final continueFinder = find.text('Continue');
+    await tester.ensureVisible(continueFinder);
+    await tester.tap(continueFinder);
+    await tester.pumpAndSettle();
+    expect(find.text('Focus mode'), findsOneWidget);
+    expect(find.text('Block 2 of 2 • 25 min focus'), findsOneWidget);
+    expect(store.itemCompletedMinutes(0), 25);
+    expect(store.planCompletedMinutes, 25);
+    expect(store.currentPlanIndex, 0);
+    expect(store.currentBlockIndex, 1);
+  });
+
+  testWidgets('Break Continue after the final block reaches Completion and clears plan position', (tester) async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Math', minutes: 25),
+      StudyItem(title: 'Physics', minutes: 25),
+    ]);
+    await store.savePlan(plan);
+    await store.addItemCompletedMinutes(0, 25);
+    await store.addItemCompletedMinutes(1, 25);
+    await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 1, blockIndex: 0, completed: 25)));
+    final continueFinder = find.text('Continue');
+    await tester.ensureVisible(continueFinder);
+    await tester.tap(continueFinder);
+    await tester.pumpAndSettle();
+    expect(find.text('Study complete'), findsOneWidget);
+    expect(store.itemCompletedMinutes(0), 25);
+    expect(store.itemCompletedMinutes(1), 25);
+    expect(store.planCompletedMinutes, 50);
+    expect(store.currentPlanIndex, 0);
+    expect(store.currentBlockIndex, 0);
+  });
+
   testWidgets('Break pause persists a paused state and resume restores a deadline', (tester) async {
     final store = await makeStore();
     final plan = singleItemPlan();
