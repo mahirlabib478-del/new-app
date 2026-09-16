@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/local_store.dart';
+import '../services/notification_service.dart';
+import '../services/reminder_coordinator.dart';
 import '../services/reminder_settings.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -31,17 +33,51 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late ReminderSettings settings;
+  late final NotificationService notificationService;
+  late final ReminderCoordinator reminderCoordinator;
+  bool notificationsInitialized = false;
 
   @override
   void initState() {
     super.initState();
     settings = ReminderSettingsStore(widget.prefs).settings;
+    notificationService = NotificationService();
+    reminderCoordinator = ReminderCoordinator(
+      store: widget.store,
+      settingsStore: ReminderSettingsStore(widget.prefs),
+      scheduler: notificationService,
+    );
   }
 
   Future<void> _saveSettings(ReminderSettings next) async {
+    final requestsPermission =
+        (!settings.studyEnabled && next.studyEnabled) ||
+        (!settings.breakEnabled && next.breakEnabled) ||
+        (!settings.planEnabled && next.planEnabled);
+
     await ReminderSettingsStore(widget.prefs).save(next);
+    await _syncReminders(requestPermission: requestsPermission);
     if (!mounted) return;
     setState(() => settings = next);
+  }
+
+  Future<void> _syncReminders({required bool requestPermission}) async {
+    final anyEnabled = settings.studyEnabled || settings.breakEnabled || settings.planEnabled;
+    if (!anyEnabled && !requestPermission) {
+      await reminderCoordinator.sync();
+      return;
+    }
+
+    try {
+      if (!notificationsInitialized) {
+        await notificationService.initialize();
+        notificationsInitialized = true;
+      }
+      if (requestPermission) await reminderCoordinator.requestPermissions();
+      await reminderCoordinator.sync();
+    } on Exception {
+      // Reminder failures must never block settings changes or normal app use.
+    }
   }
 
   Future<void> _pickTime({required bool study}) async {
