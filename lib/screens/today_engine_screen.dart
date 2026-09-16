@@ -36,6 +36,32 @@ class TodayEngineScreen extends StatelessWidget {
             ]),
           ),
           const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.flag_rounded),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text("TODAY'S GOAL", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1))),
+                  Text('${snapshot.todayCompletedMinutes} / ${snapshot.dailyGoalMinutes}m', style: const TextStyle(fontWeight: FontWeight.w900)),
+                ]),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: LinearProgressIndicator(value: snapshot.goalProgress, minHeight: 8),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  snapshot.dailyGoalReached
+                      ? 'Daily goal reached. Keep the momentum going.'
+                      : '${snapshot.goalRemainingMinutes} min to reach today\'s goal',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(children: [
             Expanded(child: _MiniStat(icon: Icons.local_fire_department_rounded, value: '${snapshot.streak}', label: 'streak')),
             const SizedBox(width: 10),
