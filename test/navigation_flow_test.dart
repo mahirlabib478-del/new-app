@@ -35,12 +35,12 @@ void main() {
       400,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.pumpAndSettle();
     expect(find.text('Motion'), findsOneWidget);
     expect(find.text('Start'), findsOneWidget);
   });
 
-  testWidgets('Home progress summary remains visible after partial completion',
-      (tester) async {
+  testWidgets('Home progress summary remains visible after partial completion', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
@@ -57,11 +57,8 @@ void main() {
     expect(find.text('Start'), findsOneWidget);
   });
 
-  testWidgets('Home shows goal reached state without negative remaining text',
-      (tester) async {
-    SharedPreferences.setMockInitialValues({
-      'daily_goal_minutes': 60,
-    });
+  testWidgets('Home shows goal reached state without negative remaining text', (tester) async {
+    SharedPreferences.setMockInitialValues({'daily_goal_minutes': 60});
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
     await store.savePlan(StudyPlan(totalMinutes: 60, items: [
@@ -76,8 +73,7 @@ void main() {
     expect(find.text('Goal reached. Keep the momentum.'), findsOneWidget);
   });
 
-  test('Today Engine exposes the same item-level next action used by Home',
-      () async {
+  test('Today Engine exposes the same item-level next action used by Home', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
