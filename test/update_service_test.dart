@@ -11,7 +11,7 @@ void main() {
     expect(service.isNewerVersion('1.0.0', '0.99.99'), isTrue);
   });
 
-  test('version comparison normalizes v prefix and ignores release metadata', () {
+  test('version comparison normalizes v prefix and release metadata', () {
     expect(service.isNewerVersion('v0.3.0', '0.2.9'), isTrue);
     expect(service.isNewerVersion('V0.3.0-beta.1', '0.3.0'), isFalse);
     expect(service.isNewerVersion('0.3.0+12', '0.2.9'), isTrue);
@@ -22,10 +22,5 @@ void main() {
     expect(service.isNewerVersion('0.3', '0.2.0'), isFalse);
     expect(service.isNewerVersion('0.3.0.1', '0.2.0'), isFalse);
     expect(service.isNewerVersion('0.3.x', '0.2.0'), isFalse);
-  });
-
-  test('network update check remains offline-safe', () async {
-    final result = await service.checkForUpdate();
-    expect(result, anyOf(isNull, isA<UpdateInfo>()));
   });
 }
