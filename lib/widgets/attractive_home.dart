@@ -310,7 +310,6 @@ class _SmoothTapState extends State<_SmoothTap> {
           ),
         ),
       );
-}
 
 class _MissionCard extends StatelessWidget {
   const _MissionCard({
@@ -428,6 +427,7 @@ class _MissionCard extends StatelessWidget {
               onTap: onStart,
               borderRadius: BorderRadius.circular(14),
               child: FilledButton.icon(
+                key: const ValueKey<String>('home-mission-action'),
                 onPressed: onStart,
                 icon: Icon(
                   snapshot.isComplete
