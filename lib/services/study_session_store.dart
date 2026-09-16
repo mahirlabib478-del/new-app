@@ -74,6 +74,15 @@ class StudySessionStore {
     await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
   }
 
+  Future<bool> reset(String id) async {
+    final target = sessions.cast<SavedStudySession?>().firstWhere((item) => item?.id == id, orElse: () => null);
+    if (target == null) return false;
+    final resetSession = SavedStudySession(id: target.id, mode: target.mode, savedAt: DateTime.now(), plan: target.plan, itemProgress: const <int, int>{}, planCompletedMinutes: 0, currentIndex: 0, currentBlockIndex: 0);
+    final next = [...sessions.where((item) => item.id != id), resetSession];
+    await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
+    return true;
+  }
+
   Future<bool> restore(String id) async {
     final target = sessions.cast<SavedStudySession?>().firstWhere((item) => item?.id == id, orElse: () => null);
     if (target == null) return false;
