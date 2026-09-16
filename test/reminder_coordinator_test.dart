@@ -106,6 +106,7 @@ void main() {
   test('study reminder is cancelled when the daily goal is reached before the plan is complete', () async {
     SharedPreferences.setMockInitialValues({
       'reminder_study_enabled': true,
+      'reminder_plan_enabled': true,
     });
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
@@ -123,6 +124,7 @@ void main() {
 
     await coordinator.sync();
     expect(scheduler.scheduled, contains(ReminderCoordinator.studyId));
+    expect(scheduler.scheduled, contains(ReminderCoordinator.planId));
 
     await store.addItemCompletedMinutes(0, 25);
     await coordinator.notifyFocusBlockCompleted();
