@@ -25,8 +25,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final plannerList = find.byType(ListView).first;
+    final plannerScrollable = find.descendant(
+      of: plannerList,
+      matching: find.byType(Scrollable),
+    );
     final generatePlan = find.text('Generate plan');
-    await tester.scrollUntilVisible(generatePlan, 400, scrollable: plannerList);
+    await tester.scrollUntilVisible(generatePlan, 400, scrollable: plannerScrollable);
     await tester.pumpAndSettle();
     await tester.tap(generatePlan);
     await tester.pumpAndSettle();
