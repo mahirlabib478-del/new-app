@@ -56,6 +56,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Static analysis
+        run: flutter analyze
+
+      - name: Run test suite
+        run: flutter test
+
       - name: Configure release signing
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -110,6 +116,14 @@ jobs:
           flutter build apk --release \
             --build-name "${{ steps.version.outputs.version_name }}" \
             --build-number "${{ steps.version.outputs.version_code }}"
+
+      - name: Verify signed release APK
+        run: |
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME" -type f -name apksigner | head -n 1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose "$APK"
 
       - name: Build signed release App Bundle
         env:
