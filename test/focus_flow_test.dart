@@ -77,6 +77,61 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('backgrounding a running focus timer keeps a future deadline', (tester) async {
+    final store = await makeStore();
+    final plan = singleItemPlan();
+    await store.savePlan(plan);
+
+    await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
+    await tester.pump(const Duration(seconds: 2));
+
+    final before = store.focusTimerState;
+    expect(before, isNotNull);
+    expect(before!.running, isTrue);
+    expect(before.deadlineMillis, isNotNull);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    final pausedByLifecycle = store.focusTimerState;
+    expect(pausedByLifecycle, isNotNull);
+    expect(pausedByLifecycle!.running, isTrue);
+    expect(pausedByLifecycle.deadlineMillis, isNotNull);
+    expect(pausedByLifecycle.remainingSeconds, lessThan(before.remainingSeconds));
+    expect(pausedByLifecycle.remainingSeconds, greaterThan(0));
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('resuming after an expired background deadline enters Break once', (tester) async {
+    final store = await makeStore();
+    final plan = singleItemPlan();
+    await store.savePlan(plan);
+    await store.saveFocusTimerState(FocusTimerState(
+      index: 0,
+      blockIndex: 0,
+      remainingSeconds: 1,
+      running: true,
+      deadlineMillis: DateTime.now().millisecondsSinceEpoch + 200,
+    ));
+
+    await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
+    await tester.pump(const Duration(milliseconds: 50));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(milliseconds: 300));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Break time'), findsOneWidget);
+    expect(find.text('Focus mode'), findsNothing);
+    expect(store.itemCompletedMinutes(0), 25);
+    expect(store.planCompletedMinutes, 25);
+    expect(store.focusTimerState, isNull);
+    expect(store.breakTimerState, isNotNull);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('expired persisted focus timer records the block before entering Break', (tester) async {
     final store = await makeStore();
     final plan = singleItemPlan();
