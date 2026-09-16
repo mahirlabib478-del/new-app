@@ -10,36 +10,31 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Setup(store: store),
-      ),
-    );
+    await tester.pumpWidget(MaterialApp(home: Setup(store: store)));
+    await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).last, 'Accounting');
+    await tester.scrollUntilVisible(find.byTooltip('Add subject'), 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.byTooltip('Add subject'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('Accounting'), findsOneWidget);
     final checkbox = find.byType(CheckboxListTile).last;
     expect(tester.widget<CheckboxListTile>(checkbox).value, isTrue);
   });
 
-  testWidgets('rejects a custom subject that duplicates a default subject',
-      (tester) async {
+  testWidgets('rejects a custom subject that duplicates a default subject', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Setup(store: store),
-      ),
-    );
+    await tester.pumpWidget(MaterialApp(home: Setup(store: store)));
+    await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).last, 'physics');
+    await tester.scrollUntilVisible(find.byTooltip('Add subject'), 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.byTooltip('Add subject'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('physics'), findsNothing);
     expect(find.text('That subject is already in the list.'), findsOneWidget);
