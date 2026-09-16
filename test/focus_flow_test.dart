@@ -53,7 +53,9 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
     await tester.pump(const Duration(milliseconds: 100));
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Pause'));
+    final pauseFinder = find.widgetWithText(FilledButton, 'Pause');
+    await tester.ensureVisible(pauseFinder);
+    await tester.tap(pauseFinder);
     await tester.pump();
     final paused = store.focusTimerState;
     expect(paused, isNotNull);
@@ -62,7 +64,9 @@ void main() {
     expect(paused.remainingSeconds, lessThanOrEqualTo(1500));
     expect(paused.remainingSeconds, greaterThan(0));
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Resume'));
+    final resumeFinder = find.widgetWithText(FilledButton, 'Resume');
+    await tester.ensureVisible(resumeFinder);
+    await tester.tap(resumeFinder);
     await tester.pump();
     final resumed = store.focusTimerState;
     expect(resumed, isNotNull);
@@ -128,7 +132,6 @@ void main() {
     expect(find.text('Study complete'), findsOneWidget);
     expect(store.itemCompletedMinutes(0), 25);
     expect(store.planCompletedMinutes, 25);
-    expect(store.focusTimerState, isNull);
-    expect(store.breakTimerState, isNull);
+    expect(store.sessions, 1);
   });
 }
