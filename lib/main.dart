@@ -139,10 +139,6 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final snapshot = TodayEngine(store).build();
-    final goal = store.dailyGoalMinutes;
-    final today = store.studyMinutesOn(DateTime.now());
-    final goalProgress = (today / goal).clamp(0.0, 1.0).toDouble();
-    final goalRemaining = goal - today > 0 ? goal - today : 0;
     return Scaffold(
       body: SafeArea(child: ListView(padding: const EdgeInsets.all(20), children: [
         Text(_greeting(), style: Theme.of(context).textTheme.titleMedium),
@@ -161,12 +157,12 @@ class Home extends StatelessWidget {
         Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             const Expanded(child: Text("Today's goal", style: TextStyle(fontWeight: FontWeight.w900))),
-            Text('$today / $goal min', style: const TextStyle(fontWeight: FontWeight.w900)),
+            Text('${snapshot.todayCompletedMinutes} / ${snapshot.dailyGoalMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900)),
           ]),
           const SizedBox(height: 10),
-          LinearProgressIndicator(value: goalProgress, minHeight: 7),
+          LinearProgressIndicator(value: snapshot.goalProgress, minHeight: 7),
           const SizedBox(height: 8),
-          Text(goalProgress >= 1 ? 'Goal reached. Keep the momentum.' : '$goalRemaining min left today'),
+          Text(snapshot.dailyGoalReached ? 'Goal reached. Keep the momentum.' : '${snapshot.goalRemainingMinutes} min left today'),
         ]))),
         if (snapshot.nextItem != null) ...[
           const SizedBox(height: 16),
@@ -225,7 +221,7 @@ class StudyHub extends StatelessWidget {
     const SizedBox(height: 18),
     _Mode(icon: Icons.menu_book_rounded, title: 'Regular Study', subtitle: 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
     _Mode(icon: Icons.auto_awesome_rounded, title: 'Exam Preparation', subtitle: 'Priority-based exam planning.', onTap: () => _openExam(context, false)),
-    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision for tomorrow.', onTap: () => _openExam(context, true)),
+    _Mode(icon: Icons.bolt_rounded, title: 'Next Day Exam', subtitle: 'High-impact revision.', onTap: () => _openExam(context, true)),
   ]));
 
   void _openExam(BuildContext context, bool nextDay) {
