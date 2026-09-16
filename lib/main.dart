@@ -151,24 +151,68 @@ class StudyHub extends StatelessWidget {
   final Future<void> Function(StudyPlan plan) onStartPlan;
   final VoidCallback onRegularStudy;
   final AppLanguage language;
-  @override Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     final s = AppStrings(language);
     final savedCount = StudySessionStore(store).sessions.length;
-    return Scaffold(appBar: AppBar(title: Text(s.isBangla ? 'স্টাডি' : 'Study')), body: ListView(padding: const EdgeInsets.all(20), children: [
-      Text(s.isBangla ? 'পরবর্তী কাজ বেছে নিন' : 'Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-      const SizedBox(height: 18),
-      Card(margin: const EdgeInsets.only(bottom: 14), child: ListTile(contentPadding: const EdgeInsets.all(14), leading: const CircleAvatar(child: Icon(Icons.auto_awesome_rounded)), title: Text(s.isBangla ? 'Today Engine' : 'Today Engine', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(s.isBangla ? 'আজ কী পড়বেন, কতক্ষণ পড়বেন এবং পরের কাজ কী—এক নজরে দেখুন।' : 'See today’s remaining work, next action and recommended focus at a glance.'), trailing: const Icon(Icons.chevron_right_rounded), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TodayEngineScreen(store: store))))),
-      if (savedCount > 0) ...[
-        Card(child: ListTile(contentPadding: const EdgeInsets.all(14), leading: const CircleAvatar(child: Icon(Icons.bookmark_rounded)), title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'), trailing: const Icon(Icons.chevron_right_rounded), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SavedSessionsScreen(store: store, onOpenFocus: () async { final restoredPlan = store.loadPlan(); if (restoredPlan == null) return; await onStartPlan(restoredPlan); }))))),
-        const SizedBox(height: 14),
-      ],
-      _Mode(icon: Icons.menu_book_rounded, title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
-      _Mode(icon: Icons.auto_awesome_rounded, title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক পরীক্ষার পরিকল্পনা।' : 'Priority-based exam planning.', onTap: () => _openExam(context, false)),
-      _Mode(icon: Icons.bolt_rounded, title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision.', onTap: () => _openExam(context, true)),
-    ]));
+    return Scaffold(
+      appBar: AppBar(title: Text(s.isBangla ? 'স্টাডি' : 'Study')),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(s.isBangla ? 'পরবর্তী কাজ বেছে নিন' : 'Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 18),
+          Card(
+            margin: const EdgeInsets.only(bottom: 14),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(14),
+              leading: const CircleAvatar(child: Icon(Icons.auto_awesome_rounded)),
+              title: Text('Today Engine', style: const TextStyle(fontWeight: FontWeight.w900)),
+              subtitle: Text(s.isBangla ? 'আজ কী পড়বেন, কতক্ষণ পড়বেন এবং পরের কাজ কী—এক নজরে দেখুন।' : 'See today’s remaining work, next action and recommended focus at a glance.'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TodayEngineScreen(store: store))),
+            ),
+          ),
+          if (savedCount > 0) ...[
+            Card(
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(14),
+                leading: const CircleAvatar(child: Icon(Icons.bookmark_rounded)),
+                title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)),
+                subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SavedSessionsScreen(
+                      store: store,
+                      onOpenFocus: () async {
+                        final restoredPlan = store.loadPlan();
+                        if (restoredPlan == null) return;
+                        await onStartPlan(restoredPlan);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+          _Mode(icon: Icons.menu_book_rounded, title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.', onTap: onRegularStudy),
+          _Mode(icon: Icons.auto_awesome_rounded, title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক পরীক্ষার পরিকল্পনা।' : 'Priority-based exam planning.', onTap: () => _openExam(context, false)),
+          _Mode(icon: Icons.bolt_rounded, title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision.', onTap: () => _openExam(context, true)),
+        ],
+      ),
+    );
   }
+
   void _openExam(BuildContext context, bool nextDay) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async { if (!context.mounted) return; Navigator.of(context).pop(); await onStartPlan(plan); })));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async {
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      await onStartPlan(plan);
+    })));
   }
 }
 
