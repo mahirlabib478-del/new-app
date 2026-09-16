@@ -74,7 +74,7 @@ class UpdateService {
     if (normalized.startsWith('v') || normalized.startsWith('V')) {
       normalized = normalized.substring(1);
     }
-    final match = RegExp(r'^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?\$').firstMatch(normalized);
+    final match = RegExp(r'^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$').firstMatch(normalized);
     if (match == null) return null;
     return '${match.group(1)}.${match.group(2)}.${match.group(3)}';
   }
