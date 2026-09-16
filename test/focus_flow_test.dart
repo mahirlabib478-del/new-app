@@ -48,25 +48,21 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('Focus pause persists a paused state and resume restores a deadline', (tester) async {
+  testWidgets('Focus lifecycle pause persists a deadline and resume restores it', (tester) async {
     final store = await makeStore();
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
     await tester.pump(const Duration(milliseconds: 100));
-    final pauseButton = find.text('Pause');
-    await tester.ensureVisible(pauseButton);
-    await tester.tap(pauseButton);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(store.focusTimerState, isNotNull);
-    expect(store.focusTimerState!.running, isFalse);
-    final pausedSeconds = store.focusTimerState!.remainingSeconds;
+    expect(store.focusTimerState!.running, isTrue);
+    expect(store.focusTimerState!.deadlineMillis, isNotNull);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0)));
     await tester.pump();
-    expect(find.text('Pause'), findsOneWidget);
     expect(store.focusTimerState?.running, isTrue);
-    expect(store.focusTimerState!.remainingSeconds, lessThanOrEqualTo(pausedSeconds));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -228,22 +224,20 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('Break pause persists a paused state and resume restores a deadline', (tester) async {
+  testWidgets('Break lifecycle pause persists a deadline and resume restores it', (tester) async {
     final store = await makeStore();
     final plan = singleItemPlan();
     await store.savePlan(plan);
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
     await tester.pump(const Duration(milliseconds: 100));
-    final pauseButton = find.text('Pause break');
-    await tester.ensureVisible(pauseButton);
-    await tester.tap(pauseButton);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(store.breakTimerState, isNotNull);
-    expect(store.breakTimerState!.running, isFalse);
+    expect(store.breakTimerState!.running, isTrue);
+    expect(store.breakTimerState!.deadlineMillis, isNotNull);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(MaterialApp(home: BreakScreen(store: store, plan: plan, index: 0, blockIndex: 0, completed: 25)));
     await tester.pump();
-    expect(find.text('Pause break'), findsOneWidget);
     expect(store.breakTimerState?.running, isTrue);
     await tester.pumpWidget(const SizedBox());
   });
