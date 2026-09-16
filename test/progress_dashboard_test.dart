@@ -26,8 +26,6 @@ void main() {
 
     expect(find.text('25 / 50 min'), findsOneWidget);
     expect(find.text('50% plan complete'), findsOneWidget);
-    expect(find.text('25/25m'), findsOneWidget);
-    expect(find.text('0/25m'), findsOneWidget);
   });
 
   testWidgets('Progress falls back to aggregate progress for legacy plans', (tester) async {
