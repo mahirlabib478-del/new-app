@@ -25,13 +25,13 @@ void main() {
     await tester.pumpAndSettle();
 
     final generatePlan = find.text('Generate plan');
-    await tester.ensureVisible(generatePlan);
+    await tester.scrollUntilVisible(generatePlan, 500, scrollable: find.byType(Scrollable).last);
     await tester.tap(generatePlan);
     await tester.pumpAndSettle();
     expect(find.text('Your exam plan is ready'), findsOneWidget);
 
     final startExamPlan = find.text('Start exam plan');
-    await tester.ensureVisible(startExamPlan);
+    await tester.scrollUntilVisible(startExamPlan, 500, scrollable: find.byType(Scrollable).last);
     await tester.tap(startExamPlan);
     await tester.pumpAndSettle();
 
