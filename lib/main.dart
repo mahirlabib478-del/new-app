@@ -5,8 +5,9 @@ import 'services/local_store.dart';
 import 'services/today_engine.dart';
 import 'screens/exam_planner_screen.dart';
 import 'screens/focus_flow.dart';
-import 'screens/regular_study_planner.dart';
 import 'screens/progress_dashboard.dart';
+import 'screens/profile_screen.dart';
+import 'screens/setup_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
