@@ -29,9 +29,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Motion'), findsOneWidget);
 
-    final missionButtons = find.byType(FilledButton);
-    expect(missionButtons, findsWidgets);
-    final missionButton = missionButtons.first;
+    final missionButton = find.byKey(const ValueKey<String>('home-mission-action'));
+    expect(missionButton, findsOneWidget);
     await tester.ensureVisible(missionButton);
     await tester.tap(missionButton);
     await tester.pumpAndSettle();
