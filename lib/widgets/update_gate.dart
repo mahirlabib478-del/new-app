@@ -4,27 +4,63 @@ import '../services/local_store.dart';
 import '../services/update_service.dart';
 
 class UpdateGate extends StatefulWidget {
-  const UpdateGate({super.key, required this.store, required this.child});
+  const UpdateGate({
+    super.key,
+    required this.store,
+    required this.child,
+    this.checkForUpdate,
+  });
 
   final LocalStore store;
   final Widget child;
+  final Future<UpdateInfo?> Function()? checkForUpdate;
 
   @override
   State<UpdateGate> createState() => _UpdateGateState();
 }
 
 class _UpdateGateState extends State<UpdateGate> {
-  late final Future<UpdateInfo?> _check = const UpdateService().checkForUpdate();
+  late final Future<UpdateInfo?> _check =
+      (widget.checkForUpdate ?? const UpdateService().checkForUpdate)();
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<UpdateInfo?>(
       future: _check,
       builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _UpdateLoadingScreen();
+        }
+
         final info = snapshot.data;
         if (info == null) return widget.child;
         return _ForceUpdateScreen(info: info);
       },
+    );
+  }
+}
+
+class _UpdateLoadingScreen extends StatelessWidget {
+  const _UpdateLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 18),
+                Text('Checking for updates…'),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
