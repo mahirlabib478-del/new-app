@@ -223,7 +223,7 @@ class StudyHub extends StatelessWidget {
   }
 
   void _openExam(BuildContext context, bool nextDay) {
-    Navigator.push(MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: store, onStartPlan: (plan) async {
       if (!context.mounted) return;
       Navigator.of(context).pop();
       await onStartPlan(plan);
