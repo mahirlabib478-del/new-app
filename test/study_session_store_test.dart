@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/models/study_models.dart';
@@ -44,6 +46,23 @@ void main() {
     expect(saved.single.itemProgress, {0: 25});
     expect(saved.single.currentIndex, 1);
     expect(saved.single.mode, 'Regular Study');
+  });
+
+  test('LocalStore archive uses the canonical saved-session shape', () async {
+    final store = await makeStore();
+    final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
+    await store.savePlan(first, mode: 'Regular Study');
+    await store.addItemCompletedMinutes(0, 10);
+    await store.setPlanPosition(0, 0);
+    final raw = jsonDecode(store.prefs.getString('saved_study_sessions')!) as List<dynamic>;
+    expect(raw, hasLength(1));
+    expect((raw.single as Map).containsKey('sourcePlan'), isFalse);
+    expect(StudySessionStore(store).sessions.single.itemProgress, {0: 10});
+
+    // A second archive of the same plan must replace the existing snapshot,
+    // regardless of which archive path initiated the previous snapshot.
+    await StudySessionStore(store).archiveCurrentPlan(mode: 'Regular Study');
+    expect(StudySessionStore(store).sessions, hasLength(1));
   });
 
   test('canonical plan identity matches equivalent plans without string comparison in UI code', () async {
