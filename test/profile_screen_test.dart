@@ -25,7 +25,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('120 minutes of focused study'), findsOneWidget);
+    expect(find.text('120 of focused study'), findsOneWidget);
     await tester.tap(find.text('Daily goal'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '90');
@@ -33,8 +33,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(store.dailyGoalMinutes, 90);
-    expect(find.text('90 minutes of focused study'), findsOneWidget);
-    expect(find.text('120 minutes of focused study'), findsNothing);
+    expect(find.text('90 of focused study'), findsOneWidget);
+    expect(find.text('120 of focused study'), findsNothing);
   });
 
   testWidgets('Profile exposes all supported theme presets', (tester) async {
