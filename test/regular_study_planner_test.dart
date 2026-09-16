@@ -36,7 +36,11 @@ void main() {
 
     await tester.tap(find.text('Split evenly'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start focused study'));
+
+    final startButton = find.text('Start focused study');
+    await tester.ensureVisible(startButton);
+    await tester.pumpAndSettle();
+    await tester.tap(startButton);
     await tester.pumpAndSettle();
 
     expect(find.text('Unassigned time'), findsNothing);
