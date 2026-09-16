@@ -46,6 +46,16 @@ void main() {
     expect(saved.single.mode, 'Regular Study');
   });
 
+  test('canonical plan identity matches equivalent plans without string comparison in UI code', () async {
+    final store = await makeStore();
+    final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
+    final equivalent = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
+    final different = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 30), StudyItem(title: 'Physics', topic: 'Motion', minutes: 20)]);
+    final sessionStore = StudySessionStore(store);
+    expect(sessionStore.samePlan(first, equivalent), isTrue);
+    expect(sessionStore.samePlan(first, different), isFalse);
+  });
+
   test('deleting a saved session does not affect the active plan', () async {
     final store = await makeStore();
     await store.savePlan(StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', minutes: 50)]), mode: 'Regular Study');
