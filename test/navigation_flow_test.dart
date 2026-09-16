@@ -10,11 +10,13 @@ void main() {
 
   testWidgets('Study Hub removes planner before focus starts', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    final store = LocalStore(await SharedPreferences.getInstance());
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
 
     await tester.pumpWidget(
       StudyOS(
         store: store,
+        prefs: prefs,
         checkForUpdate: () async => null,
       ),
     );
@@ -58,7 +60,8 @@ void main() {
 
   testWidgets('Home reflects item-level plan progress and next action', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    final store = LocalStore(await SharedPreferences.getInstance());
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
     final plan = StudyPlan(totalMinutes: 50, items: [
       StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
       StudyItem(title: 'Physics', topic: 'Motion', minutes: 25),
@@ -69,6 +72,7 @@ void main() {
     await tester.pumpWidget(
       StudyOS(
         store: store,
+        prefs: prefs,
         checkForUpdate: () async => null,
       ),
     );
@@ -83,7 +87,8 @@ void main() {
 
   testWidgets('Home Start opens the current unfinished item in Focus mode', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    final store = LocalStore(await SharedPreferences.getInstance());
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
     final plan = StudyPlan(totalMinutes: 50, items: [
       StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
       StudyItem(title: 'Physics', topic: 'Motion', minutes: 25),
@@ -94,6 +99,7 @@ void main() {
     await tester.pumpWidget(
       StudyOS(
         store: store,
+        prefs: prefs,
         checkForUpdate: () async => null,
       ),
     );
@@ -110,12 +116,14 @@ void main() {
 
   testWidgets('Home never shows a negative goal remainder', (tester) async {
     SharedPreferences.setMockInitialValues({'daily_goal_minutes': 60});
-    final store = LocalStore(await SharedPreferences.getInstance());
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
     await store.addDailyStudyMinutes(90);
 
     await tester.pumpWidget(
       StudyOS(
         store: store,
+        prefs: prefs,
         checkForUpdate: () async => null,
       ),
     );
