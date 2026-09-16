@@ -4,6 +4,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../services/local_store.dart';
 import '../services/update_service.dart';
 
+export '../services/update_service.dart' show UpdateInfo;
+
 class UpdateGate extends StatefulWidget {
   const UpdateGate({
     super.key,
