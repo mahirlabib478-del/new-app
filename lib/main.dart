@@ -15,6 +15,7 @@ import 'screens/progress_dashboard.dart';
 import 'screens/profile_screen.dart';
 import 'screens/saved_sessions_screen.dart';
 import 'screens/setup_screen.dart';
+import 'screens/today_engine_screen.dart';
 import 'widgets/update_gate.dart';
 import 'widgets/attractive_home.dart';
 
@@ -156,6 +157,7 @@ class StudyHub extends StatelessWidget {
     return Scaffold(appBar: AppBar(title: Text(s.isBangla ? 'স্টাডি' : 'Study')), body: ListView(padding: const EdgeInsets.all(20), children: [
       Text(s.isBangla ? 'পরবর্তী কাজ বেছে নিন' : 'Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
       const SizedBox(height: 18),
+      Card(margin: const EdgeInsets.only(bottom: 14), child: ListTile(contentPadding: const EdgeInsets.all(14), leading: const CircleAvatar(child: Icon(Icons.auto_awesome_rounded)), title: Text(s.isBangla ? 'Today Engine' : 'Today Engine', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(s.isBangla ? 'আজ কী পড়বেন, কতক্ষণ পড়বেন এবং পরের কাজ কী—এক নজরে দেখুন।' : 'See today’s remaining work, next action and recommended focus at a glance.'), trailing: const Icon(Icons.chevron_right_rounded), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TodayEngineScreen(store: store))))),
       if (savedCount > 0) ...[
         Card(child: ListTile(contentPadding: const EdgeInsets.all(14), leading: const CircleAvatar(child: Icon(Icons.bookmark_rounded)), title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'), trailing: const Icon(Icons.chevron_right_rounded), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SavedSessionsScreen(store: store, onOpenFocus: () async { final restoredPlan = store.loadPlan(); if (restoredPlan == null) return; await onStartPlan(restoredPlan); }))))),
         const SizedBox(height: 14),
@@ -173,5 +175,5 @@ class StudyHub extends StatelessWidget {
 class _Mode extends StatelessWidget {
   const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap});
   final IconData icon; final String title; final String subtitle; final VoidCallback onTap;
-  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
+  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.all(12), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded));
 }
