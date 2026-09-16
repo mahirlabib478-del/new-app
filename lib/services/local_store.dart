@@ -169,19 +169,22 @@ class LocalStore {
     if (requested <= 0) return;
     final plan = loadPlan();
     final planBudget = plan?.allocatedMinutes ?? requested;
+    final itemMap = plan == null ? const <int, int>{} : itemCompletedMinutesMap;
+
+    // Once item-level progress exists, it is authoritative. An aggregate-only
+    // completion has no safe item to attribute to, so ignore it rather than
+    // creating progress that Today Engine and item-level views cannot see.
+    if (itemIndex == null && itemMap.isNotEmpty) return;
 
     // When item-level progress exists, it is the source of truth for item
     // completions. This prevents a stale legacy aggregate from blocking a
     // valid resume/completion action or causing the same minutes to count twice.
     var completedBefore = planCompletedMinutes;
-    if (itemIndex != null && plan != null) {
-      final itemMap = itemCompletedMinutesMap;
-      if (itemMap.isNotEmpty) {
-        completedBefore = plan.items.asMap().entries.fold<int>(
-          0,
-          (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
-        );
-      }
+    if (itemIndex != null && plan != null && itemMap.isNotEmpty) {
+      completedBefore = plan.items.asMap().entries.fold<int>(
+        0,
+        (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
+      );
     }
 
     final planRemaining = (planBudget - completedBefore).clamp(0, 1440).toInt();
