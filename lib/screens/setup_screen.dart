@@ -15,7 +15,7 @@ class Setup extends StatefulWidget {
 }
 
 class _SetupState extends State<Setup> {
-  static const _subjects = <String>[
+  static const _defaultSubjects = <String>[
     'Mathematics',
     'Physics',
     'Chemistry',
@@ -25,11 +25,20 @@ class _SetupState extends State<Setup> {
   ];
 
   final _hoursController = TextEditingController(text: '2');
+  final _customSubjectController = TextEditingController();
+  late final List<String> _subjects;
   final _selected = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _subjects = [..._defaultSubjects];
+  }
 
   @override
   void dispose() {
     _hoursController.dispose();
+    _customSubjectController.dispose();
     super.dispose();
   }
 
@@ -45,6 +54,38 @@ class _SetupState extends State<Setup> {
       } else {
         _selected.remove(subject);
       }
+    });
+  }
+
+  void _addCustomSubject() {
+    final name = _customSubjectController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a subject name first.')),
+      );
+      return;
+    }
+
+    final exists = _subjects.any((subject) => subject.toLowerCase() == name.toLowerCase());
+    if (exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('That subject is already in the list.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _subjects.add(name);
+      _selected.add(name);
+      _customSubjectController.clear();
+    });
+  }
+
+  void _removeCustomSubject(String subject) {
+    if (_defaultSubjects.contains(subject)) return;
+    setState(() {
+      _subjects.remove(subject);
+      _selected.remove(subject);
     });
   }
 
@@ -150,9 +191,44 @@ class _SetupState extends State<Setup> {
                       value: _selected.contains(subject),
                       onChanged: (value) => _toggleSubject(subject, value ?? false),
                       title: Text(subject, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      secondary: _defaultSubjects.contains(subject)
+                          ? null
+                          : IconButton(
+                              onPressed: () => _removeCustomSubject(subject),
+                              tooltip: 'Remove custom subject',
+                              icon: const Icon(Icons.close_rounded),
+                            ),
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'ADD YOUR OWN SUBJECT',
+                    style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _customSubjectController,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _addCustomSubject(),
+                    decoration: InputDecoration(
+                      labelText: 'Custom subject',
+                      hintText: 'e.g. Accounting, History, IELTS',
+                      prefixIcon: const Icon(Icons.add_circle_outline_rounded),
+                      suffixIcon: IconButton(
+                        onPressed: _addCustomSubject,
+                        tooltip: 'Add subject',
+                        icon: const Icon(Icons.add_rounded),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Custom subjects are added to this plan and start selected automatically.',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
