@@ -16,13 +16,12 @@ void main() {
     expect(store.soundEffectsEnabled, isTrue);
   });
 
-  test('sound effects are safe when disabled', () async {
+  test('disabled sound effects do not block the action', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
     await store.setSoundEffectsEnabled(false);
 
-    // The action must be a no-op when the user disables sound feedback.
-    await const SoundEffects;
+    await const SoundEffects(store).tap();
   });
 }
