@@ -42,36 +42,16 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Bootstrap Android platform
-        run: flutter create --platforms=android --org com.mahirlabib .
+      - name: Prepare Android platform
+        run: bash tool/bootstrap_android.sh
 
-      - name: Configure Android core library desugaring
+      - name: Verify notification manifest configuration
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("android/app/build.gradle.kts")
-          text = path.read_text()
-
-          if "isCoreLibraryDesugaringEnabled" not in text:
-              marker = "    defaultConfig {"
-              if marker not in text:
-                  raise SystemExit("Could not find android defaultConfig block")
-              text = text.replace(
-                  marker,
-                  "    compileOptions {\n"
-                  "        isCoreLibraryDesugaringEnabled = true\n"
-                  "    }\n\n"
-                  + marker,
-                  1,
-              )
-
-          dependency = '    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n'
-          if "desugar_jdk_libs" not in text:
-              text += "\n\ndependencies {\n" + dependency + "}\n"
-
-          path.write_text(text)
-          PY
+          grep -q 'android.permission.RECEIVE_BOOT_COMPLETED' android/app/src/main/AndroidManifest.xml
+          grep -q 'ScheduledNotificationReceiver' android/app/src/main/AndroidManifest.xml
+          grep -q 'ScheduledNotificationBootReceiver' android/app/src/main/AndroidManifest.xml
+          grep -q 'isCoreLibraryDesugaringEnabled = true' android/app/build.gradle.kts
+          grep -q 'desugar_jdk_libs:2.1.4' android/app/build.gradle.kts
 
       - name: Install dependencies
         run: flutter pub get
@@ -79,9 +59,19 @@ jobs:
       - name: Build Android debug APK
         run: flutter build apk --debug
 
+      - name: Build Android release APK
+        run: flutter build apk --release
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: study-os-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: study-os-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
