@@ -48,13 +48,15 @@ class TodayEngine {
             (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
           );
 
-    // Item-level progress drives Resume/Completion, so prefer it whenever it
-    // exists. This keeps Home, Focus and Completion consistent even if an old
-    // aggregate progress value is stale or was written by a legacy caller.
+    // Item-level progress drives Resume/Completion whenever it exists. For
+    // legacy plans that only have aggregate progress, derive a safe cursor by
+    // walking the plan from the beginning. This keeps Resume useful after an
+    // older caller wrote only plan_completed_minutes.
     final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
+    final hasItemProgress = completedByItem.isNotEmpty;
     final completed = planned <= 0
         ? 0
-        : completedByItem.isNotEmpty
+        : hasItemProgress
             ? itemCompletedTotal.clamp(0, planned).toInt()
             : aggregateCompleted;
     final remaining = planned <= 0 ? 0 : planned - completed;
@@ -66,13 +68,33 @@ class TodayEngine {
     StudyItem? next;
 
     if (plan != null && plan.items.isNotEmpty) {
-      for (var i = 0; i < plan.items.length; i++) {
-        final item = plan.items[i];
-        final itemCompleted = (completedByItem[i] ?? 0).clamp(0, item.minutes).toInt();
-        if (itemCompleted < item.minutes) {
+      if (hasItemProgress) {
+        for (var i = 0; i < plan.items.length; i++) {
+          final item = plan.items[i];
+          final itemCompleted = (completedByItem[i] ?? 0).clamp(0, item.minutes).toInt();
+          if (itemCompleted < item.minutes) {
+            index = i;
+            blockIndex = (itemCompleted ~/ 25).clamp(0, 100000).toInt();
+            currentItemCompletedMinutes = itemCompleted;
+            next = item;
+            break;
+          }
+        }
+      } else {
+        // Aggregate-only progress cannot tell us which subject was studied,
+        // so interpret it in plan order. This is deterministic and matches
+        // the way a sequential focus session consumes the plan.
+        var remainingCompleted = aggregateCompleted;
+        for (var i = 0; i < plan.items.length; i++) {
+          final item = plan.items[i];
+          if (item.minutes <= 0) continue;
+          if (remainingCompleted >= item.minutes) {
+            remainingCompleted -= item.minutes;
+            continue;
+          }
           index = i;
-          blockIndex = (itemCompleted ~/ 25).clamp(0, 100000).toInt();
-          currentItemCompletedMinutes = itemCompleted;
+          currentItemCompletedMinutes = remainingCompleted.clamp(0, item.minutes).toInt();
+          blockIndex = (currentItemCompletedMinutes ~/ 25).clamp(0, 100000).toInt();
           next = item;
           break;
         }
