@@ -82,4 +82,15 @@ void main() {
     expect(store.dailyGoalMinutes, 90);
     expect(find.text('0 / 90 min'), findsOneWidget);
   });
+
+  testWidgets('Progress uses the centralized gamification achievement rules', (tester) async {
+    SharedPreferences.setMockInitialValues({'completed_minutes': 60});
+    final store = LocalStore(await SharedPreferences.getInstance());
+
+    await tester.pumpWidget(MaterialApp(home: ProgressDashboard(store: store)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 Hour'), findsOneWidget);
+    expect(find.text('Deep Work'), findsNothing);
+  });
 }
