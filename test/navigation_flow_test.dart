@@ -6,7 +6,7 @@ import 'package:study_os/services/local_store.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Study Hub planner is removed before focus starts', (tester) async {
+  testWidgets('Study Hub removes planner before focus starts', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
 
@@ -17,6 +17,21 @@ void main() {
 
     await tester.tap(find.text('Exam Preparation').last);
     await tester.pumpAndSettle();
-    expect(find.text('Exam Preparation'), findsWidgets);
+    expect(find.text('EXAM MODE'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Physics');
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Generate plan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Your exam plan is ready'), findsOneWidget);
+
+    await tester.tap(find.text('Start exam plan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose your next move'), findsNothing);
+    expect(find.text('Focus mode'), findsOneWidget);
+    expect(find.text('Physics'), findsOneWidget);
   });
 }
