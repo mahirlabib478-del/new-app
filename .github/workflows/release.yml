@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*.*.*+*'
 
 permissions:
   contents: write
@@ -34,6 +34,30 @@ jobs:
           test -n "$KEY_ALIAS"
           test -n "$KEY_PASSWORD"
 
+      - name: Resolve release version
+        id: version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          PUBSPEC_VERSION: ${{ github.event.repository.default_branch }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${REF_NAME#v}"
+          else
+            echo "workflow_dispatch must be run from a release tag (vX.Y.Z+N)"
+            exit 1
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
+            echo "Release tag must use vMAJOR.MINOR.PATCH+VERSION_CODE, e.g. v0.3.0+3"
+            exit 1
+          fi
+
+          VERSION_NAME="${VERSION%%+*}"
+          VERSION_CODE="${VERSION##*+}"
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "Building Study OS $VERSION_NAME ($VERSION_CODE)"
+
       - name: Prepare Android platform
         run: bash tool/bootstrap_android.sh
 
@@ -47,30 +71,26 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
-          cat > android/key.properties <<EOF
-          storePassword=$KEYSTORE_PASSWORD
-          keyPassword=$KEY_PASSWORD
-          keyAlias=$KEY_ALIAS
-          storeFile=release-key.jks
-          EOF
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
+          chmod 600 android/app/release-key.jks
+
+          keytool -list \
+            -keystore android/app/release-key.jks \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" >/dev/null
 
           python3 - <<'PY'
           from pathlib import Path
 
           build = Path('android/app/build.gradle.kts')
           text = build.read_text()
-
           marker = '    buildTypes {'
           signing = '''    signingConfigs {
                   create("release") {
                       storeFile = file("release-key.jks")
-                      storePassword = providers.gradleProperty("android.injected.signing.store.password").orNull
-                          ?: System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                      keyAlias = providers.gradleProperty("android.injected.signing.key.alias").orNull
-                          ?: System.getenv("ANDROID_KEY_ALIAS")
-                      keyPassword = providers.gradleProperty("android.injected.signing.key.password").orNull
-                          ?: System.getenv("ANDROID_KEY_PASSWORD")
+                      storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                      keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
                   }
               }
 
@@ -80,11 +100,12 @@ jobs:
           if 'create("release")' not in text:
               text = text.replace(marker, signing + marker, 1)
 
-          text = text.replace(
-              'signingConfig = signingConfigs.getByName("debug")',
-              'signingConfig = signingConfigs.getByName("release")',
-              1,
-          )
+          if 'signingConfig = signingConfigs.getByName("release")' not in text:
+              text = text.replace(
+                  'signingConfig = signingConfigs.getByName("debug")',
+                  'signingConfig = signingConfigs.getByName("release")',
+                  1,
+              )
           build.write_text(text)
           PY
 
@@ -93,14 +114,20 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --build-name "${{ steps.version.outputs.version_name }}" \
+            --build-number "${{ steps.version.outputs.version_code }}"
 
       - name: Build signed release App Bundle
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: flutter build appbundle --release
+        run: |
+          flutter build appbundle --release \
+            --build-name "${{ steps.version.outputs.version_name }}" \
+            --build-number "${{ steps.version.outputs.version_code }}"
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
@@ -117,7 +144,6 @@ jobs:
           if-no-files-found: error
 
       - name: Create GitHub release for tag
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
