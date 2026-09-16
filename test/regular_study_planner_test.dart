@@ -15,11 +15,13 @@ void main() {
     StudyPlan? startedPlan;
 
     await tester.pumpWidget(
-      RegularStudyPlanner(
-        store: store,
-        total: 60,
-        subjects: const ['Math'],
-        onStartPlan: (plan) async => startedPlan = plan,
+      MaterialApp(
+        home: RegularStudyPlanner(
+          store: store,
+          total: 60,
+          subjects: const ['Math'],
+          onStartPlan: (plan) async => startedPlan = plan,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -50,11 +52,13 @@ void main() {
     final store = LocalStore(await SharedPreferences.getInstance());
 
     await tester.pumpWidget(
-      RegularStudyPlanner(
-        store: store,
-        total: 60,
-        subjects: const ['Math'],
-        onStartPlan: (_) async {},
+      MaterialApp(
+        home: RegularStudyPlanner(
+          store: store,
+          total: 60,
+          subjects: const ['Math'],
+          onStartPlan: (_) async {},
+        ),
       ),
     );
     await tester.pumpAndSettle();
