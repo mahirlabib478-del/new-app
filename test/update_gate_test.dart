@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/services/local_store.dart';
-import 'package:study_os/services/update_service.dart';
 import 'package:study_os/widgets/update_gate.dart';
 
 void main() {
