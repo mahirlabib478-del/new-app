@@ -81,7 +81,7 @@ class _StudyOSState extends State<StudyOS> {
     if (activePlan == null || activePlan.items.isEmpty) return;
     if (plan == null && snapshot.isComplete) return;
     final storedPlan = widget.store.loadPlan();
-    final sameAsStored = storedPlan?.toJson().toString() == activePlan.toJson().toString();
+    final sameAsStored = storedPlan != null && StudySessionStore(widget.store).samePlan(storedPlan, activePlan);
     final index = sameAsStored ? snapshot.currentIndex : 0;
     final blockIndex = sameAsStored ? snapshot.currentBlockIndex : 0;
     await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: activePlan, index: index, blockIndex: blockIndex, onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted)));
