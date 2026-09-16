@@ -9,25 +9,20 @@ import 'package:study_os/services/today_engine.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<LocalStore> makeStore() async {
-    SharedPreferences.setMockInitialValues({});
+  Future<LocalStore> makeStore([Map<String, Object>? values]) async {
+    SharedPreferences.setMockInitialValues(values ?? {});
     return LocalStore(await SharedPreferences.getInstance());
   }
 
   test('Today Engine resumes the first unfinished item', () async {
     final store = await makeStore();
-    final plan = StudyPlan(
-      totalMinutes: 75,
-      items: [
-        StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
-        StudyItem(title: 'Physics', topic: 'Motion', minutes: 50),
-      ],
-    );
-
+    final plan = StudyPlan(totalMinutes: 75, items: [
+      StudyItem(title: 'Math', topic: 'Algebra', minutes: 25),
+      StudyItem(title: 'Physics', topic: 'Motion', minutes: 50),
+    ]);
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 25);
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.nextItem?.title, 'Physics');
     expect(snapshot.currentIndex, 1);
     expect(snapshot.currentBlockIndex, 0);
@@ -37,15 +32,10 @@ void main() {
 
   test('Today Engine resumes a partially completed item at its next block', () async {
     final store = await makeStore();
-    final plan = StudyPlan(
-      totalMinutes: 80,
-      items: [StudyItem(title: 'Chemistry', topic: 'Organic', minutes: 80)],
-    );
-
+    final plan = StudyPlan(totalMinutes: 80, items: [StudyItem(title: 'Chemistry', topic: 'Organic', minutes: 80)]);
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 35);
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.nextItem?.title, 'Chemistry');
     expect(snapshot.currentIndex, 0);
     expect(snapshot.currentBlockIndex, 1);
@@ -56,19 +46,14 @@ void main() {
 
   test('Today Engine skips completed items and keeps their progress out of next action', () async {
     final store = await makeStore();
-    final plan = StudyPlan(
-      totalMinutes: 75,
-      items: [
-        StudyItem(title: 'Math', minutes: 25),
-        StudyItem(title: 'Physics', minutes: 50),
-      ],
-    );
-
+    final plan = StudyPlan(totalMinutes: 75, items: [
+      StudyItem(title: 'Math', minutes: 25),
+      StudyItem(title: 'Physics', minutes: 50),
+    ]);
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 25);
     await store.addItemCompletedMinutes(1, 10);
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.nextItem?.title, 'Physics');
     expect(snapshot.currentIndex, 1);
     expect(snapshot.currentBlockIndex, 0);
@@ -79,17 +64,12 @@ void main() {
 
   test('Today Engine skips zero-minute items without shifting the real index', () async {
     final store = await makeStore();
-    final plan = StudyPlan(
-      totalMinutes: 25,
-      items: [
-        StudyItem(title: 'Placeholder', minutes: 0),
-        StudyItem(title: 'Math', minutes: 25),
-      ],
-    );
-
+    final plan = StudyPlan(totalMinutes: 25, items: [
+      StudyItem(title: 'Placeholder', minutes: 0),
+      StudyItem(title: 'Math', minutes: 25),
+    ]);
     await store.savePlan(plan);
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.nextItem?.title, 'Math');
     expect(snapshot.currentIndex, 1);
     expect(snapshot.currentBlockIndex, 0);
@@ -99,15 +79,10 @@ void main() {
 
   test('Today Engine reports the correct block after an exact 25-minute boundary', () async {
     final store = await makeStore();
-    final plan = StudyPlan(
-      totalMinutes: 50,
-      items: [StudyItem(title: 'Physics', minutes: 50)],
-    );
-
+    final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Physics', minutes: 50)]);
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 25);
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.currentIndex, 0);
     expect(snapshot.currentBlockIndex, 1);
     expect(snapshot.currentItemCompletedMinutes, 25);
@@ -116,19 +91,14 @@ void main() {
 
   test('Today Engine exposes no next item after the whole plan is complete', () async {
     final store = await makeStore();
-    final plan = StudyPlan(
-      totalMinutes: 50,
-      items: [
-        StudyItem(title: 'Biology', topic: 'Cells', minutes: 25),
-        StudyItem(title: 'Chemistry', topic: 'Atoms', minutes: 25),
-      ],
-    );
-
+    final plan = StudyPlan(totalMinutes: 50, items: [
+      StudyItem(title: 'Biology', topic: 'Cells', minutes: 25),
+      StudyItem(title: 'Chemistry', topic: 'Atoms', minutes: 25),
+    ]);
     await store.savePlan(plan);
     await store.addItemCompletedMinutes(0, 25);
     await store.addItemCompletedMinutes(1, 25);
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.nextItem, isNull);
     expect(snapshot.isComplete, isTrue);
     expect(snapshot.hasRemainingWork, isFalse);
@@ -141,20 +111,15 @@ void main() {
 
   test('Today Engine prefers item progress when aggregate progress is stale', () async {
     final store = await makeStore({
-      'study_plan': jsonEncode({
-        'totalMinutes': 50,
-        'items': [
-          {'title': 'Biology', 'minutes': 25},
-          {'title': 'Chemistry', 'minutes': 25},
-        ],
-      }),
+      'study_plan': jsonEncode({'totalMinutes': 50, 'items': [
+        {'title': 'Biology', 'minutes': 25},
+        {'title': 'Chemistry', 'minutes': 25},
+      ]}),
       'study_plan_date': _todayKey(),
       'plan_completed_minutes': 50,
       'item_completed_minutes': jsonEncode({'0': 25}),
     });
-
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.nextItem?.title, 'Chemistry');
     expect(snapshot.currentIndex, 1);
     expect(snapshot.completedMinutes, 25);
@@ -165,19 +130,14 @@ void main() {
 
   test('Today Engine recognizes a completed item map even when aggregate is zero', () async {
     final store = await makeStore({
-      'study_plan': jsonEncode({
-        'totalMinutes': 25,
-        'items': [
-          {'title': 'Math', 'minutes': 25},
-        ],
-      }),
+      'study_plan': jsonEncode({'totalMinutes': 25, 'items': [
+        {'title': 'Math', 'minutes': 25},
+      ]}),
       'study_plan_date': _todayKey(),
       'plan_completed_minutes': 0,
       'item_completed_minutes': jsonEncode({'0': 25}),
     });
-
     final snapshot = TodayEngine(store).build();
-
     expect(snapshot.nextItem, isNull);
     expect(snapshot.completedMinutes, 25);
     expect(snapshot.remainingMinutes, 0);
