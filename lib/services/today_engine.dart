@@ -40,7 +40,23 @@ class TodayEngine {
   TodaySnapshot build() {
     final plan = store.loadPlan();
     final planned = plan?.allocatedMinutes ?? 0;
-    final completed = store.planCompletedMinutes.clamp(0, planned).toInt();
+    final completedByItem = plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
+    final itemCompletedTotal = plan == null
+        ? 0
+        : plan.items.asMap().entries.fold<int>(
+            0,
+            (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
+          );
+
+    // Item-level progress drives Resume/Completion, so prefer it whenever it
+    // exists. This keeps Home, Focus and Completion consistent even if an old
+    // aggregate progress value is stale or was written by a legacy caller.
+    final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
+    final completed = planned <= 0
+        ? 0
+        : completedByItem.isNotEmpty
+            ? itemCompletedTotal.clamp(0, planned).toInt()
+            : aggregateCompleted;
     final remaining = planned <= 0 ? 0 : planned - completed;
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
 
@@ -50,7 +66,6 @@ class TodayEngine {
     StudyItem? next;
 
     if (plan != null && plan.items.isNotEmpty) {
-      final completedByItem = store.itemCompletedMinutesMap;
       for (var i = 0; i < plan.items.length; i++) {
         final item = plan.items[i];
         final itemCompleted = (completedByItem[i] ?? 0).clamp(0, item.minutes).toInt();
