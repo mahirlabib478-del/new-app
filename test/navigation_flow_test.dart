@@ -24,11 +24,15 @@ void main() {
     await tester.tap(find.byIcon(Icons.add_rounded));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Generate plan'));
+    final generatePlan = find.text('Generate plan');
+    await tester.ensureVisible(generatePlan);
+    await tester.tap(generatePlan);
     await tester.pumpAndSettle();
     expect(find.text('Your exam plan is ready'), findsOneWidget);
 
-    await tester.tap(find.text('Start exam plan'));
+    final startExamPlan = find.text('Start exam plan');
+    await tester.ensureVisible(startExamPlan);
+    await tester.tap(startExamPlan);
     await tester.pumpAndSettle();
 
     expect(find.text('Choose your next move'), findsNothing);
