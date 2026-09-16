@@ -9,22 +9,16 @@ import 'package:study_os/widgets/update_gate.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Update gate blocks app when a newer release is available', (tester) async {
+  testWidgets('Update gate blocks app for a mandatory release', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
-    final check = Future<UpdateInfo?>.value(
-      const UpdateInfo(latestVersion: '0.3.0', releaseUrl: 'https://example.com/update'),
-    );
+    final check = Future<UpdateInfo?>.value(const UpdateInfo(
+      latestVersion: '0.3.0',
+      releaseUrl: 'https://github.com/mahirlabib478-del/new-app/releases/latest',
+      isMandatory: true,
+    ));
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: UpdateGate(
-          store: store,
-          checkForUpdate: () => check,
-          child: const Text('Home content'),
-        ),
-      ),
-    );
+    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => check, child: const Text('Home content'))));
     await tester.pumpAndSettle();
 
     expect(find.text('Update required'), findsOneWidget);
@@ -32,19 +26,26 @@ void main() {
     expect(find.text('Home content'), findsNothing);
   });
 
+  testWidgets('Update gate allows optional releases', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalStore(await SharedPreferences.getInstance());
+    final check = Future<UpdateInfo?>.value(const UpdateInfo(
+      latestVersion: '0.3.0',
+      releaseUrl: 'https://github.com/mahirlabib478-del/new-app/releases/latest',
+    ));
+
+    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => check, child: const Text('Home content'))));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home content'), findsOneWidget);
+    expect(find.text('Update required'), findsNothing);
+  });
+
   testWidgets('Update gate keeps app available when no update is reported', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: UpdateGate(
-          store: store,
-          checkForUpdate: () => Future<UpdateInfo?>.value(null),
-          child: const Text('Home content'),
-        ),
-      ),
-    );
+    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => Future<UpdateInfo?>.value(null), child: const Text('Home content'))));
     await tester.pumpAndSettle();
 
     expect(find.text('Home content'), findsOneWidget);
@@ -56,15 +57,7 @@ void main() {
     final store = LocalStore(await SharedPreferences.getInstance());
     final completer = Completer<UpdateInfo?>();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: UpdateGate(
-          store: store,
-          checkForUpdate: () => completer.future,
-          child: const Text('Home content'),
-        ),
-      ),
-    );
+    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => completer.future, child: const Text('Home content'))));
     await tester.pump();
 
     expect(find.text('Checking for updates…'), findsOneWidget);
