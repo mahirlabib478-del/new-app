@@ -8,6 +8,7 @@ import 'screens/focus_flow.dart';
 import 'screens/progress_dashboard.dart';
 import 'screens/profile_screen.dart';
 import 'screens/setup_screen.dart';
+import 'widgets/update_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,22 +90,25 @@ class _StudyOSState extends State<StudyOS> {
         cardTheme: CardThemeData(margin: EdgeInsets.zero, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
         inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
       ),
-      home: Scaffold(
-        body: IndexedStack(index: tab, children: [
-          Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam),
-          StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy),
-          ProgressDashboard(store: widget.store),
-          ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme),
-        ]),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: tab,
-          onDestinationSelected: (value) => setState(() => tab = value),
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-            NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book_rounded), label: 'Study'),
-            NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights_rounded), label: 'Progress'),
-            NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
-          ],
+      home: UpdateGate(
+        store: widget.store,
+        child: Scaffold(
+          body: IndexedStack(index: tab, children: [
+            Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam),
+            StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy),
+            ProgressDashboard(store: widget.store),
+            ProfileScreen(store: widget.store, themeKey: themeKey, onThemeChanged: setTheme),
+          ]),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: tab,
+            onDestinationSelected: (value) => setState(() => tab = value),
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
+              NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book_rounded), label: 'Study'),
+              NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights_rounded), label: 'Progress'),
+              NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
+            ],
+          ),
         ),
       ),
     );
