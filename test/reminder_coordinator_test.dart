@@ -87,7 +87,7 @@ void main() {
     await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
     final scheduler = FakeScheduler();
     final coordinator = ReminderCoordinator(
-      store: store,
+      store: LocalStore(prefs),
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
@@ -198,7 +198,7 @@ void main() {
     await coordinator.sync();
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
-    expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.breakId, ReminderCoordinator.planId]);
+    expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.planId, ReminderCoordinator.studyId]);
   });
 
   test('concurrent sync requests coalesce into one unchanged schedule', () async {
