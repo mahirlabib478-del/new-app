@@ -97,9 +97,7 @@ void main() {
   });
 
   test('focus completion resyncs daily reminders after the plan becomes complete', () async {
-    SharedPreferences.setMockInitialValues({
-      'reminder_study_enabled': true,
-    });
+    SharedPreferences.setMockInitialValues({'reminder_study_enabled': true});
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
     await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
@@ -152,9 +150,7 @@ void main() {
   });
 
   test('disabled break reminder prevents focus completion notification', () async {
-    SharedPreferences.setMockInitialValues({
-      'reminder_break_enabled': false,
-    });
+    SharedPreferences.setMockInitialValues({'reminder_break_enabled': false});
     final prefs = await SharedPreferences.getInstance();
     final scheduler = FakeScheduler();
     final coordinator = ReminderCoordinator(
@@ -169,9 +165,7 @@ void main() {
   });
 
   test('enabled break reminder shows a notification after focus completion', () async {
-    SharedPreferences.setMockInitialValues({
-      'reminder_break_enabled': true,
-    });
+    SharedPreferences.setMockInitialValues({'reminder_break_enabled': true});
     final prefs = await SharedPreferences.getInstance();
     final scheduler = FakeScheduler();
     final coordinator = ReminderCoordinator(
@@ -296,10 +290,7 @@ void main() {
       scheduler: scheduler,
     );
 
-    await Future.wait([
-      coordinator.sync(),
-      coordinator.sync(),
-    ]);
+    await Future.wait([coordinator.sync(), coordinator.sync()]);
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
   });
@@ -307,6 +298,8 @@ void main() {
   test('latest concurrent settings override wins the coalesced refresh', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
     final gate = Completer<void>();
     final started = Completer<void>();
     final scheduler = FakeScheduler();
@@ -317,32 +310,23 @@ void main() {
       }
     };
     final coordinator = ReminderCoordinator(
-      store: LocalStore(prefs),
+      store: store,
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
 
     final first = coordinator.sync(
-      settingsOverride: ReminderSettings.defaults.copyWith(
-        studyEnabled: false,
-        planEnabled: true,
-      ),
+      settingsOverride: ReminderSettings.defaults.copyWith(studyEnabled: false, planEnabled: true),
     );
     await started.future;
     final second = coordinator.sync(
-      settingsOverride: ReminderSettings.defaults.copyWith(
-        studyEnabled: true,
-        planEnabled: false,
-      ),
+      settingsOverride: ReminderSettings.defaults.copyWith(studyEnabled: true, planEnabled: false),
     );
     gate.complete();
 
     await Future.wait([first, second]);
 
-    expect(scheduler.scheduled, [
-      ReminderCoordinator.planId,
-      ReminderCoordinator.studyId,
-    ]);
+    expect(scheduler.scheduled, [ReminderCoordinator.planId, ReminderCoordinator.studyId]);
     expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
 }
