@@ -69,7 +69,7 @@ class StudySessionStore {
     final existing = sessions.where((item) => planFingerprint(item.plan) == fingerprint).toList();
     final focus = store.focusTimerState;
     final focusMatchesPosition = focus != null && focus.index == store.currentPlanIndex && focus.blockIndex == store.currentBlockIndex;
-    final session = SavedStudySession(id: existing.isEmpty ? DateTime.now().microsecondsSinceEpoch.toString() : existing.first.id, mode: mode ?? store.activeStudyMode, savedAt: DateTime.now(), plan: plan, itemProgress: store.itemCompletedMinutesMap, planCompletedMinutes: completed, currentIndex: store.currentPlanIndex, currentBlockIndex: store.currentBlockIndex, focusRemainingSeconds: focusMatchesPosition ? focus!.remainingSeconds : null, focusRunning: focusMatchesPosition ? focus!.running : null, focusDeadlineMillis: focusMatchesPosition ? focus!.deadlineMillis : null);
+    final session = SavedStudySession(id: existing.isEmpty ? DateTime.now().microsecondsSinceEpoch.toString() : existing.first.id, mode: mode ?? store.activeStudyMode, savedAt: DateTime.now(), plan: plan, itemProgress: store.itemCompletedMinutesMap, planCompletedMinutes: completed, currentIndex: store.currentPlanIndex, currentBlockIndex: store.currentBlockIndex, focusRemainingSeconds: focusMatchesPosition ? focus.remainingSeconds : null, focusRunning: focusMatchesPosition ? focus.running : null, focusDeadlineMillis: focusMatchesPosition ? focus.deadlineMillis : null);
     final next = [...sessions.where((item) => planFingerprint(item.plan) != fingerprint), session];
     await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
   }
@@ -82,7 +82,7 @@ class StudySessionStore {
 
   Future<void> delete(String id) async {
     final next = sessions.where((item) => item.id != id).toList();
-    await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
+    await store.prefs.setString(_key, jsonEncode(next));
   }
 
   Future<bool> reset(String id) async {
@@ -107,7 +107,9 @@ class StudySessionStore {
     await store.prefs.setInt('current_block_index', restoredBlock);
     await store.setActiveStudyMode(target.mode);
     if (target.focusRemainingSeconds != null && target.focusRunning != null && restoredIndex == target.currentIndex && restoredBlock == target.currentBlockIndex) {
-      await store.saveFocusTimerState(FocusTimerState(index: restoredIndex, blockIndex: restoredBlock, remainingSeconds: target.focusRemainingSeconds!.clamp(0, 86400).toInt(), running: target.focusRunning!, deadlineMillis: target.focusDeadlineMillis));
+      final remaining = target.focusRemainingSeconds!.clamp(0, 86400).toInt();
+      final running = target.focusRunning!;
+      await store.saveFocusTimerState(FocusTimerState(index: restoredIndex, blockIndex: restoredBlock, remainingSeconds: remaining, running: running, deadlineMillis: target.focusDeadlineMillis));
     } else {
       await store.clearFocusTimerState();
     }
