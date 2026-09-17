@@ -5,7 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'reminder_scheduler.dart';
 
-class NotificationService implements ReminderScheduler {
+class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZoneAware {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
@@ -55,10 +55,14 @@ class NotificationService implements ReminderScheduler {
     _initialized = true;
   }
 
+  @override
   Future<void> refreshTimeZone() async {
     await _initialize();
     await _refreshTimeZone();
   }
+
+  @override
+  String? get timeZoneFingerprint => tz.local.name;
 
   Future<void> _refreshTimeZone({String? timeZoneName}) async {
     final resolvedTimeZone = timeZoneName ?? await _deviceTimeZone();
