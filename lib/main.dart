@@ -18,11 +18,15 @@ import 'screens/setup_screen.dart';
 import 'screens/today_engine_screen.dart';
 import 'widgets/update_gate.dart';
 import 'widgets/attractive_home.dart';
+import 'widgets/study_os_bootstrap.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  runApp(StudyOS(store: LocalStore(prefs), prefs: prefs));
+  runApp(
+    StudyOSBootstrap(
+      builder: (prefs) => StudyOS(store: LocalStore(prefs), prefs: prefs),
+    ),
+  );
 }
 
 const themes = <String, _AppTheme>{
