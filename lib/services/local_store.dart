@@ -52,6 +52,30 @@ class LocalStore {
   static const _soundEffectsKey = 'sound_effects_enabled';
   static const _activeModeKey = 'active_study_mode';
 
+  String? _cachedPlanRaw;
+  String? _cachedPlanDate;
+  StudyPlan? _cachedPlan;
+  String? _cachedHistoryRaw;
+  Map<String, int>? _cachedHistory;
+  String? _cachedItemMinutesRaw;
+  Map<int, int>? _cachedItemMinutes;
+
+  void _invalidatePlanCache() {
+    _cachedPlanRaw = null;
+    _cachedPlanDate = null;
+    _cachedPlan = null;
+  }
+
+  void _invalidateHistoryCache() {
+    _cachedHistoryRaw = null;
+    _cachedHistory = null;
+  }
+
+  void _invalidateItemMinutesCache() {
+    _cachedItemMinutesRaw = null;
+    _cachedItemMinutes = null;
+  }
+
   Future<void> setActiveStudyMode(String mode) async {
     final value = mode.trim();
     if (value.isEmpty) return;
@@ -67,6 +91,8 @@ class LocalStore {
     await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
     await prefs.remove(_itemMinutesKey);
+    _invalidatePlanCache();
+    _invalidateItemMinutesCache();
     await clearFocusTimerState();
     await clearBreakTimerState();
     await clearPlanPosition();
@@ -101,30 +127,9 @@ class LocalStore {
     final focus = focusTimerState;
     final focusMatchesPosition = focus != null && focus.index == currentPlanIndex && focus.blockIndex == currentBlockIndex;
     if (focusMatchesPosition) {
-      sessions.add({
-        'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
-        'mode': mode,
-        'savedAt': DateTime.now().toIso8601String(),
-        'plan': jsonDecode(raw),
-        'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)),
-        'planCompletedMinutes': completed,
-        'currentIndex': currentPlanIndex,
-        'currentBlockIndex': currentBlockIndex,
-        'focusRemainingSeconds': focus.remainingSeconds,
-        'focusRunning': focus.running,
-        if (focus.deadlineMillis != null) 'focusDeadlineMillis': focus.deadlineMillis,
-      });
+      sessions.add({'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(), 'mode': mode, 'savedAt': DateTime.now().toIso8601String(), 'plan': jsonDecode(raw), 'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': completed, 'currentIndex': currentPlanIndex, 'currentBlockIndex': currentBlockIndex, 'focusRemainingSeconds': focus.remainingSeconds, 'focusRunning': focus.running, if (focus.deadlineMillis != null) 'focusDeadlineMillis': focus.deadlineMillis});
     } else {
-      sessions.add({
-        'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
-        'mode': mode,
-        'savedAt': DateTime.now().toIso8601String(),
-        'plan': jsonDecode(raw),
-        'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)),
-        'planCompletedMinutes': completed,
-        'currentIndex': currentPlanIndex,
-        'currentBlockIndex': currentBlockIndex,
-      });
+      sessions.add({'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(), 'mode': mode, 'savedAt': DateTime.now().toIso8601String(), 'plan': jsonDecode(raw), 'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': completed, 'currentIndex': currentPlanIndex, 'currentBlockIndex': currentBlockIndex});
     }
     await prefs.setString(_savedSessionsKey, jsonEncode(sessions));
   }
@@ -135,6 +140,7 @@ class LocalStore {
     final savedDate = prefs.getString(_planDateKey);
     final today = _dateKey(DateTime.now());
     if (savedDate != null && savedDate != today) return null;
+    if (_cachedPlanRaw == raw && _cachedPlanDate == savedDate) return _cachedPlan;
     try {
       final json = Map<String, dynamic>.from(jsonDecode(raw) as Map);
       final totalMinutes = ((json['totalMinutes'] as num?)?.toInt() ?? 0).clamp(0, 1440).toInt();
@@ -146,7 +152,10 @@ class LocalStore {
       if (items.isEmpty) return null;
       final allocated = items.fold<int>(0, (sum, item) => sum + item.minutes);
       if (allocated > totalMinutes) return null;
-      return StudyPlan(totalMinutes: totalMinutes, items: items);
+      _cachedPlanRaw = raw;
+      _cachedPlanDate = savedDate;
+      _cachedPlan = StudyPlan(totalMinutes: totalMinutes, items: items);
+      return _cachedPlan;
     } catch (_) {
       return null;
     }
@@ -199,13 +208,16 @@ class LocalStore {
   Map<String, int> get dailyStudyMinutes {
     final raw = prefs.getString(_historyKey);
     if (raw == null) return <String, int>{};
+    if (_cachedHistoryRaw == raw && _cachedHistory != null) return Map<String, int>.from(_cachedHistory!);
     try {
       final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
       final result = <String, int>{};
       for (final entry in map.entries) {
         if (entry.value is num) result[entry.key] = entry.value.toInt().clamp(0, 1440).toInt();
       }
-      return result;
+      _cachedHistoryRaw = raw;
+      _cachedHistory = result;
+      return Map<String, int>.from(result);
     } catch (_) {
       return <String, int>{};
     }
@@ -220,12 +232,15 @@ class LocalStore {
     final history = dailyStudyMinutes;
     history[key] = ((history[key] ?? 0) + minutes).clamp(0, 1440).toInt();
     await prefs.setString(_historyKey, jsonEncode(history));
+    _invalidateHistoryCache();
   }
 
   int itemCompletedMinutes(int index) {
     if (index < 0) return 0;
     final raw = prefs.getString(_itemMinutesKey);
     if (raw == null) return 0;
+    final cached = _cachedItemMinutesRaw == raw ? _cachedItemMinutes : null;
+    if (cached != null) return cached[index] ?? 0;
     try {
       final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
       final value = map['$index'];
@@ -238,6 +253,7 @@ class LocalStore {
   Map<int, int> get itemCompletedMinutesMap {
     final raw = prefs.getString(_itemMinutesKey);
     if (raw == null) return <int, int>{};
+    if (_cachedItemMinutesRaw == raw && _cachedItemMinutes != null) return Map<int, int>.from(_cachedItemMinutes!);
     try {
       final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
       final result = <int, int>{};
@@ -246,7 +262,9 @@ class LocalStore {
         final value = entry.value;
         if (index != null && index >= 0 && value is num && value >= 0) result[index] = value.toInt().clamp(0, 1440).toInt();
       }
-      return result;
+      _cachedItemMinutesRaw = raw;
+      _cachedItemMinutes = result;
+      return Map<int, int>.from(result);
     } catch (_) {
       return <int, int>{};
     }
@@ -286,6 +304,7 @@ class LocalStore {
       if (minutes > itemRemaining) minutes = itemRemaining;
       final nextMap = <int, int>{...itemMap, itemIndex: itemBefore + minutes};
       await prefs.setString(_itemMinutesKey, jsonEncode(nextMap.map((key, value) => MapEntry(key.toString(), value))));
+      _invalidateItemMinutesCache();
     }
     await prefs.setInt(_planMinutesKey, (completedBefore + minutes).clamp(0, planBudget).toInt());
     await prefs.setInt(_minutesKey, (completedMinutes + minutes).clamp(0, 1000000000).toInt());
