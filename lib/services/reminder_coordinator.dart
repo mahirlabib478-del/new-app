@@ -90,14 +90,14 @@ class ReminderCoordinator {
     );
 
     final breakRequest = policy.breakReminder(
-      hasCompletedFocus: snapshot.hasCompletedFocusToday,
+      focusSessionCompleted: snapshot.todayCompletedMinutes > 0,
     );
     await _syncDaily(
       enabled: settings.breakEnabled,
       request: breakRequest,
       id: breakId,
-      hour: settings.breakHour,
-      minute: settings.breakMinute,
+      hour: 0,
+      minute: 0,
     );
   }
 
@@ -119,7 +119,7 @@ class ReminderCoordinator {
 
     try {
       await _safeCancel(id);
-      await scheduler.scheduleDaily(
+      await scheduler.scheduleDailyReminder(
         id: id,
         title: request.title,
         body: request.body,
@@ -135,10 +135,7 @@ class ReminderCoordinator {
   Future<void> notifyFocusBlockCompleted() async {
     final settings = settingsStore.settings;
     if (settings.breakEnabled) {
-      final snapshot = TodayEngine(store).build();
-      final request = policy.breakReminder(
-        hasCompletedFocus: snapshot.hasCompletedFocusToday,
-      );
+      final request = policy.breakReminder(focusSessionCompleted: true);
       if (request != null) {
         try {
           await scheduler.initialize();
