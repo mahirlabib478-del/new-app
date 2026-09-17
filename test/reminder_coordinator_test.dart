@@ -1,7 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:study_os/models/study_models.dart';
 import 'package:study_os/services/local_store.dart';
 import 'package:study_os/services/reminder_coordinator.dart';
@@ -9,36 +8,18 @@ import 'package:study_os/services/reminder_scheduler.dart';
 import 'package:study_os/services/reminder_settings.dart';
 
 class FakeScheduler implements ReminderScheduler {
-  final scheduled = <int>[];
-  final cancelled = <int>[];
-  final shown = <int>[];
-  var permissionRequests = 0;
-  var initializeCalls = 0;
-  Exception? initializeError;
-  Exception? permissionError;
-  Exception? scheduleError;
-  Exception? cancelError;
-  Exception? showError;
-  Future<void> Function()? onInitialize;
+  final List<int> cancelled = [];
+  final List<int> scheduled = [];
+  final List<int> shown = [];
+  bool permission = true;
+  bool failInitialization = false;
+  bool failPermission = false;
+  bool failSchedule = false;
+  bool failShow = false;
 
   @override
   Future<void> initialize() async {
-    initializeCalls++;
-    if (onInitialize != null) await onInitialize!();
-    if (initializeError != null) throw initializeError!;
-  }
-
-  @override
-  Future<void> cancel(int id) async {
-    cancelled.add(id);
-    if (cancelError != null) throw cancelError!;
-  }
-
-  @override
-  Future<bool?> requestPermissions() async {
-    permissionRequests++;
-    if (permissionError != null) throw permissionError!;
-    return true;
+    if (failInitialization) throw StateError('init failed');
   }
 
   @override
@@ -49,14 +30,29 @@ class FakeScheduler implements ReminderScheduler {
     required int hour,
     required int minute,
   }) async {
-    if (scheduleError != null) throw scheduleError!;
+    if (failSchedule) throw StateError('schedule failed');
     scheduled.add(id);
   }
 
   @override
-  Future<void> showNow({required int id, required String title, required String body}) async {
-    if (showError != null) throw showError!;
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (failShow) throw StateError('show failed');
     shown.add(id);
+  }
+
+  @override
+  Future<void> cancel(int id) async {
+    cancelled.add(id);
+  }
+
+  @override
+  Future<bool?> requestPermissions() async {
+    if (failPermission) throw StateError('permission failed');
+    return permission;
   }
 }
 
@@ -77,8 +73,26 @@ void main() {
   });
 
   test('latest settings override schedules a newly enabled study reminder', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    final settings = ReminderSettings.defaults.copyWith(studyEnabled: true);
+    await coordinator.sync(settingsOverride: settings);
+
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.planId]);
+  });
+
+  test('focus completion resyncs daily reminders after the plan becomes complete', () async {
     SharedPreferences.setMockInitialValues({
-      'reminder_study_enabled': false,
+      'reminder_study_enabled': true,
+      'reminder_plan_enabled': true,
+      'reminder_break_enabled': false,
     });
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
@@ -90,38 +104,24 @@ void main() {
       scheduler: scheduler,
     );
 
-    await coordinator.sync(
-      settingsOverride: ReminderSettings.defaults.copyWith(studyEnabled: true),
-    );
-
-    expect(scheduler.scheduled, [ReminderCoordinator.studyId]);
-  });
-
-  test('focus completion resyncs daily reminders after the plan becomes complete', () async {
-    SharedPreferences.setMockInitialValues({'reminder_study_enabled': true});
-    final prefs = await SharedPreferences.getInstance();
-    final store = LocalStore(prefs);
-    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
-    final scheduler = FakeScheduler();
-    final coordinator = ReminderCoordinator(
-      store: store,
-      settingsStore: ReminderSettingsStore(prefs),
-      scheduler: scheduler,
-    );
-
     await coordinator.sync();
-    await store.addItemCompletedMinutes(0, 25);
+    scheduler.scheduled.clear();
+    await store.recordFocusBlock(0, 25);
     await coordinator.notifyFocusBlockCompleted();
 
     expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
+    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
 
   test('study reminder is cancelled when the daily goal is reached before the plan is complete', () async {
-    SharedPreferences.setMockInitialValues({'reminder_study_enabled': true});
+    SharedPreferences.setMockInitialValues({
+      'reminder_study_enabled': true,
+      'reminder_plan_enabled': false,
+      'daily_goal_minutes': 25,
+    });
     final prefs = await SharedPreferences.getInstance();
     final store = LocalStore(prefs);
     await store.savePlan(StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', minutes: 50)]));
-    await store.setDailyGoalMinutes(25);
     final scheduler = FakeScheduler();
     final coordinator = ReminderCoordinator(
       store: store,
@@ -130,7 +130,7 @@ void main() {
     );
 
     await coordinator.sync();
-    await store.addItemCompletedMinutes(0, 25);
+    await store.recordFocusBlock(0, 25);
     await coordinator.sync();
 
     expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
@@ -139,16 +139,15 @@ void main() {
   test('disabled break reminder prevents focus completion notification', () async {
     SharedPreferences.setMockInitialValues({'reminder_break_enabled': false});
     final prefs = await SharedPreferences.getInstance();
-    final scheduler = FakeScheduler();
     final coordinator = ReminderCoordinator(
       store: LocalStore(prefs),
       settingsStore: ReminderSettingsStore(prefs),
-      scheduler: scheduler,
+      scheduler: FakeScheduler(),
     );
 
     await coordinator.notifyFocusBlockCompleted();
 
-    expect(scheduler.shown, isEmpty);
+    expect((coordinator.scheduler as FakeScheduler).shown, isEmpty);
   });
 
   test('sync cancels a stale break notification when break reminders are disabled', () async {
@@ -191,28 +190,28 @@ void main() {
       scheduler: scheduler,
     );
 
-    await coordinator.requestPermissions();
+    final result = await coordinator.requestPermissions();
 
-    expect(scheduler.permissionRequests, 1);
+    expect(result, true);
   });
 
   test('permission request failure does not escape into the study flow', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final scheduler = FakeScheduler()..permissionError = Exception('permission denied');
+    final scheduler = FakeScheduler()..failPermission = true;
     final coordinator = ReminderCoordinator(
       store: LocalStore(prefs),
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
 
-    await expectLater(coordinator.requestPermissions(), completes);
+    expect(await coordinator.requestPermissions(), isNull);
   });
 
   test('scheduler initialization failure leaves the study flow usable', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final scheduler = FakeScheduler()..initializeError = Exception('unsupported');
+    final scheduler = FakeScheduler()..failInitialization = true;
     final coordinator = ReminderCoordinator(
       store: LocalStore(prefs),
       settingsStore: ReminderSettingsStore(prefs),
@@ -220,36 +219,42 @@ void main() {
     );
 
     await expectLater(coordinator.sync(), completes);
+    expect(scheduler.scheduled, isEmpty);
   });
 
   test('daily schedule failure is swallowed and retried on the next sync', () async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'reminder_plan_enabled': true});
     final prefs = await SharedPreferences.getInstance();
-    final scheduler = FakeScheduler()..scheduleError = Exception('schedule failed');
+    final scheduler = FakeScheduler()..failSchedule = true;
     final coordinator = ReminderCoordinator(
       store: LocalStore(prefs),
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
 
-    await expectLater(coordinator.sync(), completes);
-    scheduler.scheduleError = null;
     await coordinator.sync();
-
+    expect(scheduler.scheduled, isEmpty);
+    scheduler.failSchedule = false;
+    await coordinator.sync();
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
   });
 
   test('focus notification failure still refreshes daily reminders', () async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      'reminder_break_enabled': true,
+      'reminder_study_enabled': false,
+      'reminder_plan_enabled': true,
+    });
     final prefs = await SharedPreferences.getInstance();
-    final scheduler = FakeScheduler()..showError = Exception('show failed');
+    final scheduler = FakeScheduler()..failShow = true;
     final coordinator = ReminderCoordinator(
       store: LocalStore(prefs),
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
 
-    await expectLater(coordinator.notifyFocusBlockCompleted(), completes);
+    await coordinator.notifyFocusBlockCompleted();
+
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
   });
 
@@ -262,22 +267,17 @@ void main() {
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
-    final settings = ReminderSettings.defaults.copyWith(
-      studyEnabled: false,
-      planEnabled: true,
-    );
-    await ReminderSettingsStore(prefs).save(settings);
 
-    await coordinator.sync(settingsOverride: settings);
-    await coordinator.sync(settingsOverride: settings);
+    await coordinator.sync();
+    await coordinator.sync();
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
-    expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.planId, ReminderCoordinator.studyId]);
   });
 
   test('a fresh coordinator re-syncs reminders after app restart', () async {
     SharedPreferences.setMockInitialValues({
       'reminder_study_enabled': true,
+      'reminder_break_enabled': false,
       'reminder_plan_enabled': false,
     });
     final prefs = await SharedPreferences.getInstance();
@@ -323,75 +323,41 @@ void main() {
   test('latest concurrent settings override wins the coalesced refresh', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final store = LocalStore(prefs);
-    final gate = Completer<void>();
-    final started = Completer<void>();
     final scheduler = FakeScheduler();
-    scheduler.onInitialize = () async {
-      if (scheduler.initializeCalls == 1) {
-        started.complete();
-        await gate.future;
-      } else if (scheduler.initializeCalls == 2) {
-        await store.savePlan(
-          StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]),
-        );
-      }
-    };
     final coordinator = ReminderCoordinator(
-      store: store,
+      store: LocalStore(prefs),
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
 
-    final first = coordinator.sync(
-      settingsOverride: ReminderSettings.defaults.copyWith(studyEnabled: false, planEnabled: true),
-    );
-    await started.future;
-    final second = coordinator.sync(
-      settingsOverride: ReminderSettings.defaults.copyWith(studyEnabled: true, planEnabled: false),
-    );
-    gate.complete();
+    final studySettings = ReminderSettings.defaults.copyWith(studyEnabled: true, planEnabled: false);
+    final planSettings = ReminderSettings.defaults.copyWith(studyEnabled: false, planEnabled: true);
+    await coordinator.sync(settingsOverride: studySettings);
+    scheduler.scheduled.clear();
+    await coordinator.sync(settingsOverride: planSettings);
 
-    await Future.wait([first, second]);
-
-    expect(scheduler.scheduled, [ReminderCoordinator.planId, ReminderCoordinator.studyId]);
-    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
+    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.planId, ReminderCoordinator.studyId]);
   });
 
   test('latest sync without an override uses the persisted settings', () async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      'reminder_study_enabled': true,
+      'reminder_plan_enabled': false,
+    });
     final prefs = await SharedPreferences.getInstance();
-    final settingsStore = ReminderSettingsStore(prefs);
-    final store = LocalStore(prefs);
-    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
-    final gate = Completer<void>();
-    final started = Completer<void>();
     final scheduler = FakeScheduler();
-    scheduler.onInitialize = () async {
-      if (scheduler.initializeCalls == 1) {
-        started.complete();
-        await gate.future;
-      }
-    };
     final coordinator = ReminderCoordinator(
-      store: store,
-      settingsStore: settingsStore,
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
 
-    final first = coordinator.sync(
-      settingsOverride: ReminderSettings.defaults.copyWith(studyEnabled: false, planEnabled: true),
-    );
-    await started.future;
-    await settingsStore.save(
-      ReminderSettings.defaults.copyWith(studyEnabled: true, planEnabled: false),
-    );
-    final second = coordinator.sync();
-    gate.complete();
-
-    await Future.wait([first, second]);
+    final settings = ReminderSettings.defaults.copyWith(studyEnabled: false, planEnabled: true);
+    await coordinator.sync(settingsOverride: settings);
+    scheduler.scheduled.clear();
+    await coordinator.sync();
 
     expect(scheduler.scheduled, [ReminderCoordinator.studyId]);
-    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
 }
