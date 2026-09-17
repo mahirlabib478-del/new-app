@@ -110,7 +110,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 24),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: transitioning ? null : _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: transitioning || elapsedMinutes < 1 ? null : () => unawaited(_openBreak(elapsedMinutes)), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]), const SizedBox(height: 22),
       Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your session is saved locally. If you switch modes or the app closes, your latest topic progress and position are kept in Saved sessions.', style: Theme.of(context).textTheme.bodyMedium))),
-    ]))))));
+    ])))))));
   }
 }
 
