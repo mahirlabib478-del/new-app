@@ -61,8 +61,6 @@ class LocalStore {
   String get activeStudyMode => prefs.getString(_activeModeKey) ?? 'Study';
 
   Future<void> savePlan(StudyPlan plan, {String? mode}) async {
-    // Capture the outgoing mode before asynchronous writes. The archived
-    // session must describe the plan being replaced, not the incoming plan.
     final outgoingMode = activeStudyMode;
     await _archiveCurrentPlan(mode: outgoingMode);
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
@@ -84,17 +82,12 @@ class LocalStore {
     if (plan == null || plan.items.isEmpty) return;
     final completed = planCompletedMinutes.clamp(0, plan.allocatedMinutes).toInt();
     if (completed >= plan.allocatedMinutes) return;
-
-    // LocalStore and StudySessionStore share one persistence key. Keep the
-    // record shape canonical here too, so a LocalStore savePlan call cannot
-    // create a legacy `sourcePlan` record beside a StudySessionStore record.
     final rawSessions = prefs.getString(_savedSessionsKey);
     List<dynamic> sessions = const [];
     try {
       final decoded = rawSessions == null ? const [] : jsonDecode(rawSessions);
       if (decoded is List) sessions = List<dynamic>.from(decoded);
     } catch (_) {}
-
     final fingerprint = jsonEncode(plan.toJson());
     String? existingId;
     sessions.removeWhere((value) {
@@ -105,7 +98,8 @@ class LocalStore {
       existingId = value['id'] as String? ?? existingId;
       return true;
     });
-
+    final focus = focusTimerState;
+    final focusMatchesPosition = focus != null && focus.index == currentPlanIndex && focus.blockIndex == currentBlockIndex;
     sessions.add({
       'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
       'mode': mode,
@@ -115,6 +109,9 @@ class LocalStore {
       'planCompletedMinutes': completed,
       'currentIndex': currentPlanIndex,
       'currentBlockIndex': currentBlockIndex,
+      if (focusMatchesPosition) 'focusRemainingSeconds': focus!.remainingSeconds,
+      if (focusMatchesPosition) 'focusRunning': focus!.running,
+      if (focusMatchesPosition && focus.deadlineMillis != null) 'focusDeadlineMillis': focus.deadlineMillis,
     });
     await prefs.setString(_savedSessionsKey, jsonEncode(sessions));
   }
@@ -234,9 +231,7 @@ class LocalStore {
       for (final entry in map.entries) {
         final index = int.tryParse(entry.key);
         final value = entry.value;
-        if (index != null && index >= 0 && value is num && value >= 0) {
-          result[index] = value.toInt().clamp(0, 1440).toInt();
-        }
+        if (index != null && index >= 0 && value is num && value >= 0) result[index] = value.toInt().clamp(0, 1440).toInt();
       }
       return result;
     } catch (_) {
@@ -264,19 +259,11 @@ class LocalStore {
     final planBudget = plan?.allocatedMinutes ?? requested;
     final itemMap = plan == null ? const <int, int>{} : itemCompletedMinutesMap;
     if (itemIndex == null && itemMap.isNotEmpty) return;
-
     var completedBefore = planCompletedMinutes;
-    if (itemIndex != null && plan != null && itemMap.isNotEmpty) {
-      completedBefore = plan.items.asMap().entries.fold<int>(
-        0,
-        (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
-      );
-    }
-
+    if (itemIndex != null && plan != null && itemMap.isNotEmpty) completedBefore = plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + (itemMap[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt());
     final planRemaining = (planBudget - completedBefore).clamp(0, 1440).toInt();
     if (planRemaining <= 0) return;
     if (itemIndex != null && (plan == null || itemIndex < 0 || itemIndex >= plan.items.length)) return;
-
     var minutes = requested > planRemaining ? planRemaining : requested;
     if (itemIndex != null && plan != null) {
       final itemBudget = plan.items[itemIndex].minutes;
@@ -287,17 +274,13 @@ class LocalStore {
       final nextMap = <int, int>{...itemMap, itemIndex: itemBefore + minutes};
       await prefs.setString(_itemMinutesKey, jsonEncode(nextMap.map((key, value) => MapEntry(key.toString(), value))));
     }
-
     await prefs.setInt(_planMinutesKey, (completedBefore + minutes).clamp(0, planBudget).toInt());
     await prefs.setInt(_minutesKey, (completedMinutes + minutes).clamp(0, 1000000000).toInt());
     await addDailyStudyMinutes(minutes);
     final alreadyStudiedToday = prefs.getString(_lastStudyKey) == _dateKey(DateTime.now());
     await prefs.setInt(_xpKey, xp + minutes * 2);
     await prefs.setInt(_sessionsKey, sessions + 1);
-    if (!alreadyStudiedToday) {
-      await prefs.setInt(_streakKey, _nextStreak());
-      await prefs.setString(_lastStudyKey, _dateKey(DateTime.now()));
-    }
+    if (!alreadyStudiedToday) { await prefs.setInt(_streakKey, _nextStreak()); await prefs.setString(_lastStudyKey, _dateKey(DateTime.now())); }
   }
 
   int _nextStreak() {
