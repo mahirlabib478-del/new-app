@@ -167,6 +167,39 @@ void main() {
     expect(sessionStore.sessions.single.currentIndex, 1);
   });
 
+  test('restoring a session without timer state clears stale active focus timer', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50)]);
+    await store.savePlan(plan, mode: 'Regular Study');
+    await store.setPlanPosition(0, 0);
+    final sessionStore = StudySessionStore(store);
+    await sessionStore.archiveCurrentPlan();
+    final saved = sessionStore.sessions.single;
+
+    await store.saveFocusTimerState(const FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 120, running: false));
+    expect(await sessionStore.restore(saved.id), isTrue);
+    expect(store.focusTimerState, isNull);
+  });
+
+  test('restoring a session with a timer for another position does not attach it to that session', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 75, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
+    await store.savePlan(plan, mode: 'Regular Study');
+    await store.setPlanPosition(1, 0);
+    await store.saveFocusTimerState(const FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 120, running: false));
+
+    final sessionStore = StudySessionStore(store);
+    await sessionStore.archiveCurrentPlan();
+    final saved = sessionStore.sessions.single;
+    expect(saved.focusRemainingSeconds, isNull);
+    expect(saved.focusRunning, isNull);
+
+    await store.saveFocusTimerState(const FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 120, running: false));
+    expect(await sessionStore.restore(saved.id), isTrue);
+    expect(store.focusTimerState, isNull);
+    expect(store.currentPlanIndex, 1);
+  });
+
   test('resetting a saved session clears only its progress and returns it to the first block', () async {
     final store = await makeStore();
     final plan = StudyPlan(totalMinutes: 75, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 50)]);
