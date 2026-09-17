@@ -48,7 +48,7 @@ class StudyOS extends StatefulWidget {
   @override State<StudyOS> createState() => _StudyOSState();
 }
 
-class _StudyOSState extends State<StudyOS> {
+class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   final navigatorKey = GlobalKey<NavigatorState>();
   late final ReminderCoordinator reminderCoordinator;
   late String themeKey = themes.containsKey(widget.store.themePreset) ? widget.store.themePreset : 'midnight';
@@ -59,8 +59,22 @@ class _StudyOSState extends State<StudyOS> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
     WidgetsBinding.instance.addPostFrameCallback((_) { unawaited(reminderCoordinator.sync()); });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(reminderCoordinator.sync());
+    }
   }
 
   Future<void> setTheme(String key) async {
