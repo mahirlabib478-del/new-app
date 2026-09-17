@@ -11,13 +11,8 @@ class StudyHistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final today = DateTime.now();
     final todayStart = DateTime(today.year, today.month, today.day);
-    final days = List.generate(
-      30,
-      (index) => todayStart.subtract(Duration(days: index)),
-    );
-    final entries = days
-        .map((date) => (date: date, minutes: store.studyMinutesOn(date)))
-        .toList();
+    final days = List.generate(30, (index) => todayStart.subtract(Duration(days: index)));
+    final entries = days.map((date) => (date: date, minutes: store.studyMinutesOn(date))).toList();
     final goal = store.dailyGoalMinutes;
     final total = entries.fold<int>(0, (sum, entry) => sum + entry.minutes);
     final activeDays = entries.where((entry) => entry.minutes > 0).length;
@@ -34,25 +29,11 @@ class StudyHistoryScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          Text(
-            'Your study timeline',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w900),
-          ),
+          Text('Your study timeline', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 6),
-          Text(
-            'See your focus rhythm, daily progress, and recent milestones in one place.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text('See your focus rhythm, daily progress, and recent milestones in one place.', style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 18),
-          _OverviewCard(
-            total: total,
-            activeDays: activeDays,
-            streak: streak,
-            best: best,
-          ),
+          _OverviewCard(total: total, activeDays: activeDays, streak: streak, best: best),
           const SizedBox(height: 14),
           Card(
             child: Padding(
@@ -62,29 +43,12 @@ class StudyHistoryScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Last 7 days',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w900),
-                        ),
-                      ),
-                      Text(
-                        '$recentTotal min',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
+                      Expanded(child: Text('Last 7 days', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))),
+                      Text('$recentTotal min', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    goal > 0 ? 'Daily goal: $goal min' : 'Set a daily goal to track targets',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text(goal > 0 ? 'Daily goal: $goal min' : 'Set a daily goal to track targets', style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 18),
                   SizedBox(
                     height: 132,
@@ -92,12 +56,7 @@ class StudyHistoryScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         for (final entry in recent)
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 3),
-                              child: _HistoryBar(entry: entry, goal: goal),
-                            ),
-                          ),
+                          Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: _HistoryBar(entry: entry, goal: goal))),
                       ],
                     ),
                   ),
@@ -125,22 +84,12 @@ class StudyHistoryScreen extends StatelessWidget {
           const SizedBox(height: 22),
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  'Daily timeline',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
-                ),
-              ),
-              if (goal > 0)
-                Text('$goal min goal', style: Theme.of(context).textTheme.bodySmall),
+              Expanded(child: Text('Daily timeline', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))),
+              if (goal > 0) Text('$goal min goal', style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
           const SizedBox(height: 10),
-          if (!hasStudy)
-            _EmptyHistoryCard(),
+          if (!hasStudy) const _EmptyHistoryCard(),
           if (hasStudy)
             Card(
               clipBehavior: Clip.antiAlias,
@@ -149,20 +98,13 @@ class StudyHistoryScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     for (var index = 0; index < entries.length; index++)
-                      _TimelineRow(
-                        entry: entries[index],
-                        goal: goal,
-                        isLast: index == entries.length - 1,
-                      ),
+                      _TimelineRow(entry: entries[index], goal: goal, isLast: index == entries.length - 1),
                   ],
                 ),
               ),
             ),
           const SizedBox(height: 14),
-          Text(
-            'History is based on completed study minutes stored on this device.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text('History is based on completed study minutes stored on this device.', style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
@@ -179,12 +121,7 @@ class StudyHistoryScreen extends StatelessWidget {
 }
 
 class _OverviewCard extends StatelessWidget {
-  const _OverviewCard({
-    required this.total,
-    required this.activeDays,
-    required this.streak,
-    required this.best,
-  });
+  const _OverviewCard({required this.total, required this.activeDays, required this.streak, required this.best});
 
   final int total;
   final int activeDays;
@@ -202,28 +139,16 @@ class _OverviewCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: scheme.primaryContainer,
-                  child: Icon(Icons.insights_rounded, color: scheme.onPrimaryContainer),
-                ),
+                CircleAvatar(radius: 24, backgroundColor: scheme.primaryContainer, child: Icon(Icons.insights_rounded, color: scheme.onPrimaryContainer)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Your rhythm',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
+                      Text('Your rhythm', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 2),
                       Text(
-                        streak == 0
-                            ? 'Start a focus block today to begin a streak.'
-                            : '$streak day${streak == 1 ? '' : 's'} of study in a row.',
+                        streak == 0 ? 'Start a focus block today to begin a streak.' : '$streak day${streak == 1 ? '' : 's'} of study in a row.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -236,7 +161,7 @@ class _OverviewCard extends StatelessWidget {
               children: [
                 Expanded(child: _OverviewMetric(value: '${total}m', label: '30 days')),
                 Expanded(child: _OverviewMetric(value: '$activeDays', label: 'Active days')),
-                Expanded(child: _OverviewMetric(value: '$bestm', label: 'Best day')),
+                Expanded(child: _OverviewMetric(value: '${best}m', label: 'Best day')),
               ],
             ),
           ],
@@ -283,16 +208,10 @@ class _HistoryBar extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           height: height,
-          decoration: BoxDecoration(
-            color: isToday ? scheme.primary : scheme.primaryContainer,
-            borderRadius: BorderRadius.circular(8),
-          ),
+          decoration: BoxDecoration(color: isToday ? scheme.primary : scheme.primaryContainer, borderRadius: BorderRadius.circular(8)),
         ),
         const SizedBox(height: 6),
-        Text(
-          ['M', 'T', 'W', 'T', 'F', 'S', 'S'][entry.date.weekday - 1],
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
-        ),
+        Text(['M', 'T', 'W', 'T', 'F', 'S', 'S'][entry.date.weekday - 1], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
       ],
     );
   }
@@ -324,18 +243,13 @@ class _TimelineRow extends StatelessWidget {
                   width: 28,
                   height: 28,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: reached || isToday ? scheme.primaryContainer : scheme.surfaceContainerHighest,
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: BoxDecoration(color: reached || isToday ? scheme.primaryContainer : scheme.surfaceContainerHighest, shape: BoxShape.circle),
                   child: reached
                       ? Icon(Icons.check_rounded, size: 17, color: scheme.onPrimaryContainer)
                       : Text('${entry.date.day}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
                 ),
                 if (!isLast)
-                  Expanded(
-                    child: Container(width: 2, margin: const EdgeInsets.symmetric(vertical: 4), color: scheme.outlineVariant),
-                  ),
+                  Expanded(child: Container(width: 2, margin: const EdgeInsets.symmetric(vertical: 4), color: scheme.outlineVariant)),
               ],
             ),
           ),
@@ -348,23 +262,12 @@ class _TimelineRow extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          _formatDate(entry.date),
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      Text(
-                        '${entry.minutes} min',
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                      Expanded(child: Text(_formatDate(entry.date), style: const TextStyle(fontWeight: FontWeight.w800))),
+                      Text('${entry.minutes} min', style: const TextStyle(fontWeight: FontWeight.w900)),
                     ],
                   ),
                   const SizedBox(height: 7),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(value: ratio, minHeight: 6),
-                  ),
+                  ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: ratio, minHeight: 6)),
                   const SizedBox(height: 5),
                   Text(
                     entry.minutes == 0
@@ -415,6 +318,8 @@ class _Summary extends StatelessWidget {
 }
 
 class _EmptyHistoryCard extends StatelessWidget {
+  const _EmptyHistoryCard();
+
   @override
   Widget build(BuildContext context) => Card(
         child: Padding(
@@ -425,11 +330,7 @@ class _EmptyHistoryCard extends StatelessWidget {
               const SizedBox(height: 12),
               const Text('No study time logged yet', style: TextStyle(fontWeight: FontWeight.w900)),
               const SizedBox(height: 6),
-              Text(
-                'Complete a focus block and your daily timeline will appear here.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              Text('Complete a focus block and your daily timeline will appear here.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
         ),
