@@ -61,7 +61,15 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
-    WidgetsBinding.instance.addPostFrameCallback((_) { unawaited(reminderCoordinator.sync()); });
+    WidgetsBinding.instance.addPostFrameCallback((_) { unawaited(_syncRemindersSafely()); });
+  }
+
+  Future<void> _syncRemindersSafely() async {
+    try {
+      await reminderCoordinator.sync();
+    } catch (_) {
+      // Reminders are non-critical and must never terminate the app at startup.
+    }
   }
 
   @override
@@ -73,7 +81,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(reminderCoordinator.sync());
+      unawaited(_syncRemindersSafely());
     }
   }
 
