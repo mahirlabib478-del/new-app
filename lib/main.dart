@@ -178,13 +178,6 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
         splashFactory: InkRipple.splashFactory,
         splashColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.20 : 0.14),
         highlightColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.08 : 0.06),
-        listTileTheme: ListTileThemeData(
-          overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
-            if (states.contains(WidgetState.pressed)) return scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.20 : 0.12);
-            if (states.contains(WidgetState.hovered) || states.contains(WidgetState.focused)) return scheme.primary.withValues(alpha: 0.08);
-            return null;
-          }),
-        ),
       ),
       home: UpdateGate(
         store: widget.store,
