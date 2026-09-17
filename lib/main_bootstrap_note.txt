@@ -1,1 +1,0 @@
-Startup bootstrap is implemented in lib/widgets/study_os_bootstrap.dart; main.dart will be wired after CI-safe update.
