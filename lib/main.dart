@@ -75,7 +75,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   }
 
   Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
-  Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy, language: language);
+  Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language);
   Widget _buildProgressTab() => ProgressDashboard(store: widget.store);
   Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage);
 
@@ -162,12 +162,30 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final theme = themes[themeKey]!;
+    final scheme = ColorScheme.fromSeed(seedColor: theme.seed, brightness: theme.brightness);
     _ensureTab(tab);
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Study OS',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: theme.seed, brightness: theme.brightness, scaffoldBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF0B0D13) : null, cardTheme: CardThemeData(margin: EdgeInsets.zero, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))), inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder())),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: scheme,
+        brightness: theme.brightness,
+        scaffoldBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF0B0D13) : null,
+        cardTheme: CardThemeData(margin: EdgeInsets.zero, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+        inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+        splashFactory: InkRipple.splashFactory,
+        splashColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.20 : 0.14),
+        highlightColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.08 : 0.06),
+        listTileTheme: ListTileThemeData(
+          overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
+            if (states.contains(WidgetState.pressed)) return scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.20 : 0.12);
+            if (states.contains(WidgetState.hovered) || states.contains(WidgetState.focused)) return scheme.primary.withValues(alpha: 0.08);
+            return null;
+          }),
+        ),
+      ),
       home: UpdateGate(
         store: widget.store,
         checkForUpdate: widget.checkForUpdate,
@@ -209,9 +227,10 @@ class Home extends StatelessWidget {
 }
 
 class StudyHub extends StatelessWidget {
-  const StudyHub({super.key, required this.store, required this.onStartPlan, required this.onRegularStudy, required this.language});
+  const StudyHub({super.key, required this.store, required this.onStartPlan, required this.onOpenFocus, required this.onRegularStudy, required this.language});
   final LocalStore store;
   final Future<void> Function(StudyPlan plan) onStartPlan;
+  final Future<void> Function({StudyPlan? plan}) onOpenFocus;
   final VoidCallback onRegularStudy;
   final AppLanguage language;
 
@@ -234,7 +253,7 @@ class StudyHub extends StatelessWidget {
               title: const Text('Today Engine', style: TextStyle(fontWeight: FontWeight.w900)),
               subtitle: Text(s.isBangla ? 'আজ কী পড়বেন, কতক্ষণ পড়বেন এবং পরের কাজ কী—এক নজরে দেখুন।' : 'See today’s remaining work, next action and recommended focus at a glance.'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TodayEngineScreen(store: store))),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TodayEngineScreen(store: store, onOpenFocus: onOpenFocus))),
             ),
           ),
           if (savedCount > 0) ...[
