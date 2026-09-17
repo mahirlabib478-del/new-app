@@ -81,6 +81,8 @@ class ReminderCoordinator {
       return;
     }
 
+    final timeZoneFingerprint = scheduler.timeZoneFingerprint ?? 'unknown';
+
     if (!settings.breakEnabled) {
       // Break reminders are event-driven rather than daily-scheduled. Cancel the
       // fixed notification ID when disabled so a previously shown break reminder
@@ -101,6 +103,7 @@ class ReminderCoordinator {
       id: studyId,
       hour: settings.studyHour,
       minute: settings.studyMinute,
+      timeZoneFingerprint: timeZoneFingerprint,
     );
 
     final planRequest = policy.planReminder(
@@ -113,6 +116,7 @@ class ReminderCoordinator {
       id: planId,
       hour: settings.planHour,
       minute: settings.planMinute,
+      timeZoneFingerprint: timeZoneFingerprint,
     );
   }
 
@@ -122,6 +126,7 @@ class ReminderCoordinator {
     required int id,
     required int hour,
     required int minute,
+    required String timeZoneFingerprint,
   }) async {
     if (!enabled || request == null) {
       _scheduledFingerprints.remove(id);
@@ -129,7 +134,7 @@ class ReminderCoordinator {
       return;
     }
 
-    final fingerprint = '$id|${request.kind}|${request.title}|${request.body}|$hour|$minute';
+    final fingerprint = '$id|${request.kind}|${request.title}|${request.body}|$hour|$minute|$timeZoneFingerprint';
     if (_scheduledFingerprints[id] == fingerprint) return;
 
     try {
