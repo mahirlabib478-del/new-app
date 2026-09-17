@@ -23,19 +23,24 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
   Widget build(BuildContext context) {
     final store = widget.store;
     final plan = store.loadPlan();
-    final analytics = ProgressAnalytics(store).build();
-    final planned = plan?.allocatedMinutes ?? 0;
+    // Decode each persisted JSON blob once per build and reuse the parsed maps.
+    final dailyHistory = store.dailyStudyMinutes;
     final completedByItem = plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
+    final analytics = ProgressAnalytics(store).build(dailyHistory: dailyHistory, plan: plan, itemProgress: completedByItem);
+    final planned = plan?.allocatedMinutes ?? 0;
     final itemCompletedTotal = plan == null ? 0 : plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt());
     final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
     final completed = planned <= 0 ? 0 : completedByItem.isNotEmpty ? itemCompletedTotal.clamp(0, planned).toInt() : aggregateCompleted;
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
     final goal = store.dailyGoalMinutes;
-    final today = store.studyMinutesOn(DateTime.now());
+    final now = DateTime.now();
+    final todayKey = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final today = dailyHistory[todayKey] ?? 0;
     final goalProgress = (today / goal).clamp(0.0, 1.0).toDouble();
     final week = List.generate(7, (offset) {
-      final date = DateTime.now().subtract(Duration(days: 6 - offset));
-      return (date, store.studyMinutesOn(date));
+      final date = now.subtract(Duration(days: 6 - offset));
+      final key = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      return (date, dailyHistory[key] ?? 0);
     });
     final weekTotal = week.fold<int>(0, (sum, entry) => sum + entry.$2);
     final levelProgress = store.levelProgress / 250;
@@ -114,7 +119,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
           const SizedBox(height: 20), Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10),
           ...achievements.map((achievement) => _Achievement(icon: _achievementIcon(achievement.title), title: achievement.title, subtitle: achievement.description, unlocked: achievement.unlocked)),
           const SizedBox(height: 18),
-          if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
+          if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: completedByItem[entry.key] ?? 0)),
         ],
       ),
     );
@@ -191,5 +196,5 @@ class _Stat extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)])));
+  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
 }
