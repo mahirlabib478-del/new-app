@@ -135,9 +135,15 @@ class NotificationService implements ReminderScheduler {
   }
 
   @override
-  Future<void> cancel(int id) => _plugin.cancel(id);
+  Future<void> cancel(int id) async {
+    await _initialize();
+    await _plugin.cancel(id);
+  }
 
-  Future<void> cancelAll() => _plugin.cancelAll();
+  Future<void> cancelAll() async {
+    await _initialize();
+    await _plugin.cancelAll();
+  }
 
   static tz.TZDateTime nextDailyOccurrence(
     tz.TZDateTime now,
