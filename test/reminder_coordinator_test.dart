@@ -318,6 +318,7 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final settingsStore = ReminderSettingsStore(prefs);
     final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
     final gate = Completer<void>();
     final started = Completer<void>();
     final scheduler = FakeScheduler();
@@ -345,7 +346,7 @@ void main() {
 
     await Future.wait([first, second]);
 
-    expect(scheduler.scheduled, [ReminderCoordinator.studyId]);
+    expect(scheduler.scheduled, [ReminderCoordinator.planId, ReminderCoordinator.studyId]);
     expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
 }
