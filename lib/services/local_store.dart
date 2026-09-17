@@ -110,7 +110,7 @@ class LocalStore {
         'planCompletedMinutes': completed,
         'currentIndex': currentPlanIndex,
         'currentBlockIndex': currentBlockIndex,
-        'focusRemainingSeconds': focus.remainingSeconds,
+        'focusRemainingSeconds': focus!.remainingSeconds,
         'focusRunning': focus.running,
         if (focus.deadlineMillis != null) 'focusDeadlineMillis': focus.deadlineMillis,
       });
