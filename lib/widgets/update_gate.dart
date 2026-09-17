@@ -19,9 +19,15 @@ class _UpdateGateState extends State<UpdateGate> {
   bool optionalDismissed = false;
 
   Future<UpdateInfo?> _runCheck() async {
-    if (widget.checkForUpdate != null) return widget.checkForUpdate!();
-    final packageInfo = await PackageInfo.fromPlatform();
-    return UpdateService(currentVersion: packageInfo.version, prefs: widget.store.prefs).checkForUpdate();
+    try {
+      if (widget.checkForUpdate != null) return await widget.checkForUpdate!();
+      final packageInfo = await PackageInfo.fromPlatform();
+      return await UpdateService(currentVersion: packageInfo.version, prefs: widget.store.prefs).checkForUpdate();
+    } catch (_) {
+      // Update checks are non-critical; a platform or network failure must not
+      // prevent the main study UI from starting.
+      return null;
+    }
   }
 
   @override
@@ -73,9 +79,13 @@ class _OptionalUpdateBanner extends StatelessWidget {
   final VoidCallback onDismiss;
 
   Future<void> _update(BuildContext context) async {
-    final opened = await const UpdateService().openRelease(info);
-    if (!context.mounted || opened) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
+    try {
+      final opened = await const UpdateService().openRelease(info);
+      if (!context.mounted || opened) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
+    } catch (_) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
+    }
   }
 
   @override
@@ -112,9 +122,13 @@ class _ForceUpdateScreen extends StatelessWidget {
   final UpdateInfo info;
 
   Future<void> _update(BuildContext context) async {
-    final opened = await const UpdateService().openRelease(info);
-    if (!context.mounted || opened) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
+    try {
+      final opened = await const UpdateService().openRelease(info);
+      if (!context.mounted || opened) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
+    } catch (_) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
+    }
   }
 
   @override
