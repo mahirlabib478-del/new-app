@@ -23,6 +23,7 @@ class AttractiveHome extends StatelessWidget {
     final strings = AppStrings(language);
     final snapshot = TodayEngine(store).build();
     final scheme = Theme.of(context).colorScheme;
+    final tapColor = scheme.primary.withValues(alpha: 0.18);
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
@@ -46,7 +47,7 @@ class AttractiveHome extends StatelessWidget {
           _SectionTitle(strings.isBangla ? 'তোমার স্টাডি জার্নি' : 'Your study journey'),
           const SizedBox(height: 12),
           if (snapshot.plan == null)
-            _EmptyJourney(strings: strings, onTap: () => _tap(onRegularStudy))
+            _EmptyJourney(strings: strings, onTap: () => _tap(onRegularStudy), tapColor: tapColor)
           else
             ...snapshot.plan!.items.asMap().entries.map((entry) {
               final item = entry.value;
@@ -56,15 +57,15 @@ class AttractiveHome extends StatelessWidget {
               final complete = item.minutes > 0 && completed >= item.minutes;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: _JourneyItem(item: item, progress: progress, active: active, complete: complete, minutesLabel: strings.minutes, onTap: active ? () => _tap(() => onOpenFocus()) : null),
+                child: _JourneyItem(item: item, progress: progress, active: active, complete: complete, minutesLabel: strings.minutes, onTap: active ? () => _tap(() => onOpenFocus()) : null, tapColor: tapColor),
               );
             }),
           const SizedBox(height: 22),
           _SectionTitle(strings.isBangla ? 'স্টাডি মোড' : 'Study modes'),
           const SizedBox(height: 12),
-          _ModeCard(icon: Icons.menu_book_rounded, title: strings.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: strings.isBangla ? 'নিজের মতো করে আজকের প্ল্যান তৈরি করুন।' : 'Build your own plan for today.', onTap: () => _tap(onRegularStudy)),
-          _ModeCard(icon: Icons.auto_awesome_rounded, title: strings.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: strings.isBangla ? 'অগ্রাধিকার অনুযায়ী রিভিশন করুন।' : 'Revise by priority.', onTap: () => _tap(() => onExam(false))),
-          _ModeCard(icon: Icons.bolt_rounded, title: strings.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: strings.isBangla ? 'জরুরি বিষয়গুলো আগে শেষ করুন।' : 'Focus on the most important topics first.', onTap: () => _tap(() => onExam(true))),
+          _ModeCard(icon: Icons.menu_book_rounded, title: strings.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: strings.isBangla ? 'নিজের মতো করে আজকের প্ল্যান তৈরি করুন।' : 'Build your own plan for today.', onTap: () => _tap(onRegularStudy), tapColor: tapColor),
+          _ModeCard(icon: Icons.auto_awesome_rounded, title: strings.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: strings.isBangla ? 'অগ্রাধিকার অনুযায়ী রিভিশন করুন।' : 'Revise by priority.', onTap: () => _tap(() => onExam(false)), tapColor: tapColor),
+          _ModeCard(icon: Icons.bolt_rounded, title: strings.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: strings.isBangla ? 'জরুরি বিষয়গুলো আগে শেষ করুন।' : 'Focus on the most important topics first.', onTap: () => _tap(() => onExam(true)), tapColor: tapColor),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -183,13 +184,14 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _JourneyItem extends StatelessWidget {
-  const _JourneyItem({required this.item, required this.progress, required this.active, required this.complete, required this.minutesLabel, required this.onTap});
+  const _JourneyItem({required this.item, required this.progress, required this.active, required this.complete, required this.minutesLabel, required this.onTap, required this.tapColor});
   final StudyItem item;
   final double progress;
   final bool active;
   final bool complete;
   final String minutesLabel;
   final VoidCallback? onTap;
+  final Color tapColor;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +200,8 @@ class _JourneyItem extends StatelessWidget {
     return Card(
       child: ListTile(
         onTap: onTap,
+        splashColor: tapColor,
+        enableFeedback: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(backgroundColor: complete ? scheme.primary : scheme.surfaceContainerHighest, foregroundColor: complete ? scheme.onPrimary : scheme.onSurfaceVariant, child: Icon(icon)),
         title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -209,17 +213,19 @@ class _JourneyItem extends StatelessWidget {
 }
 
 class _EmptyJourney extends StatelessWidget {
-  const _EmptyJourney({required this.strings, required this.onTap});
+  const _EmptyJourney({required this.strings, required this.onTap, required this.tapColor});
   final AppStrings strings;
   final VoidCallback onTap;
-  @override Widget build(BuildContext context) => Card(child: ListTile(onTap: onTap, leading: const CircleAvatar(child: Icon(Icons.add_rounded)), title: Text(strings.isBangla ? 'আজকের প্ল্যান নেই' : 'No plan for today', style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(strings.isBangla ? 'ট্যাপ করে শুরু করুন' : 'Tap to build your study plan'), trailing: const Icon(Icons.chevron_right_rounded)));
+  final Color tapColor;
+  @override Widget build(BuildContext context) => Card(child: ListTile(onTap: onTap, splashColor: tapColor, enableFeedback: true, leading: const CircleAvatar(child: Icon(Icons.add_rounded)), title: Text(strings.isBangla ? 'আজকের প্ল্যান নেই' : 'No plan for today', style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(strings.isBangla ? 'ট্যাপ করে শুরু করুন' : 'Tap to build your study plan'), trailing: const Icon(Icons.chevron_right_rounded)));
 }
 
 class _ModeCard extends StatelessWidget {
-  const _ModeCard({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  const _ModeCard({required this.icon, required this.title, required this.subtitle, required this.onTap, required this.tapColor});
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
+  final Color tapColor;
+  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: onTap, splashColor: tapColor, enableFeedback: true, contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7), leading: CircleAvatar(radius: 27, child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(subtitle), trailing: const Icon(Icons.chevron_right_rounded)));
 }
