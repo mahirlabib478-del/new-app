@@ -17,25 +17,10 @@ abstract interface class ReminderScheduler {
 }
 
 /// Optional capability for schedulers that cache timezone state.
+///
+/// Existing ReminderScheduler implementations remain valid when they do not
+/// need timezone refresh or timezone-aware rescheduling.
 abstract interface class ReminderSchedulerTimeZoneAware {
   Future<void> refreshTimeZone();
   String? get timeZoneFingerprint;
-}
-
-/// Refreshes timezone state when the scheduler supports the optional capability.
-extension ReminderSchedulerTimeZoneRefresh on ReminderScheduler {
-  Future<void> refreshTimeZone() async {
-    final scheduler = this;
-    if (scheduler is ReminderSchedulerTimeZoneAware) {
-      await scheduler.refreshTimeZone();
-    }
-  }
-
-  String? get timeZoneFingerprint {
-    final scheduler = this;
-    if (scheduler is ReminderSchedulerTimeZoneAware) {
-      return scheduler.timeZoneFingerprint;
-    }
-    return null;
-  }
 }
