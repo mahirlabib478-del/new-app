@@ -18,17 +18,29 @@ void main() {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
     final second = StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', topic: 'Atoms', minutes: 25)]);
+    final sessionStore = StudySessionStore(store);
     await store.savePlan(first, mode: 'Regular Study');
     await store.addItemCompletedMinutes(0, 25);
     await store.setPlanPosition(1, 0);
-    await store.savePlan(second, mode: 'Exam Preparation');
-    final saved = StudySessionStore(store).sessions;
+    await sessionStore.savePlan(second, mode: 'Exam Preparation');
+    final saved = sessionStore.sessions;
     expect(saved, hasLength(1));
     expect(saved.single.plan.items.first.title, 'Math');
     expect(saved.single.itemProgress, {0: 25});
     expect(saved.single.currentIndex, 1);
     expect(saved.single.mode, 'Regular Study');
     expect(store.activeStudyMode, 'Exam Preparation');
+    expect(store.loadPlan()?.items.single.title, 'Chemistry');
+  });
+
+  test('LocalStore plan replacement does not archive sessions by itself', () async {
+    final store = await makeStore();
+    final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
+    final second = StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', topic: 'Atoms', minutes: 25)]);
+    await store.savePlan(first, mode: 'Regular Study');
+    await store.addItemCompletedMinutes(0, 25);
+    await store.savePlan(second, mode: 'Exam Preparation');
+    expect(StudySessionStore(store).sessions, isEmpty);
     expect(store.loadPlan()?.items.single.title, 'Chemistry');
   });
 
@@ -93,37 +105,40 @@ void main() {
     expect(store.focusTimerState?.deadlineMillis, deadline);
   });
 
-  test('LocalStore archive preserves a paused 5-minute remainder', () async {
+  test('StudySessionStore archive preserves a paused 5-minute remainder', () async {
     final store = await makeStore();
-    final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50)]);
-    await store.savePlan(plan, mode: 'Regular Study');
+    final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50)]);
+    final replacement = StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Physics', minutes: 25)]);
+    final sessionStore = StudySessionStore(store);
+    await store.savePlan(first, mode: 'Regular Study');
     await store.setPlanPosition(0, 0);
     await store.saveFocusTimerState(const FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 300, running: false));
 
-    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Physics', minutes: 25)]), mode: 'Exam Preparation');
-    final saved = StudySessionStore(store).sessions.single;
+    await sessionStore.savePlan(replacement, mode: 'Exam Preparation');
+    final saved = sessionStore.sessions.single;
     expect(saved.focusRemainingSeconds, 300);
     expect(saved.focusRunning, isFalse);
     expect(saved.currentIndex, 0);
     expect(saved.currentBlockIndex, 0);
   });
 
-  test('LocalStore archive uses the canonical saved-session shape', () async {
+  test('StudySessionStore archive uses the canonical saved-session shape', () async {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
     final replacement = StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', topic: 'Atoms', minutes: 25)]);
+    final sessionStore = StudySessionStore(store);
     await store.savePlan(first, mode: 'Regular Study');
     await store.addItemCompletedMinutes(0, 10);
     await store.setPlanPosition(0, 0);
-    await store.savePlan(replacement, mode: 'Exam Preparation');
+    await sessionStore.savePlan(replacement, mode: 'Exam Preparation');
     final raw = jsonDecode(store.prefs.getString('saved_study_sessions')!) as List<dynamic>;
     expect(raw, hasLength(1));
     expect((raw.single as Map).containsKey('sourcePlan'), isFalse);
-    expect(StudySessionStore(store).sessions.single.itemProgress, {0: 10});
-    expect(StudySessionStore(store).sessions.single.mode, 'Regular Study');
-    await StudySessionStore(store).archiveCurrentPlan(mode: 'Exam Preparation');
-    expect(StudySessionStore(store).sessions, hasLength(2));
-    expect(StudySessionStore(store).sessions.where((session) => session.mode == 'Exam Preparation'), hasLength(1));
+    expect(sessionStore.sessions.single.itemProgress, {0: 10});
+    expect(sessionStore.sessions.single.mode, 'Regular Study');
+    await sessionStore.archiveCurrentPlan(mode: 'Exam Preparation');
+    expect(sessionStore.sessions, hasLength(2));
+    expect(sessionStore.sessions.where((session) => session.mode == 'Exam Preparation'), hasLength(1));
   });
 
   test('canonical plan identity matches equivalent plans without string comparison in UI code', () async {
@@ -140,22 +155,23 @@ void main() {
     final store = await makeStore();
     await store.savePlan(StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', minutes: 50)]), mode: 'Regular Study');
     await store.addItemCompletedMinutes(0, 25);
-    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Physics', minutes: 25)]), mode: 'Exam Preparation');
-    final sessions = StudySessionStore(store).sessions;
+    final sessionStore = StudySessionStore(store);
+    await sessionStore.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Physics', minutes: 25)]), mode: 'Exam Preparation');
+    final sessions = sessionStore.sessions;
     expect(sessions, hasLength(1));
-    await StudySessionStore(store).delete(sessions.single.id);
-    expect(StudySessionStore(store).sessions, isEmpty);
+    await sessionStore.delete(sessions.single.id);
+    expect(sessionStore.sessions, isEmpty);
     expect(store.loadPlan()?.items.single.title, 'Physics');
   });
 
   test('restoring a saved session keeps the snapshot while loading its exact progress and position', () async {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
+    final sessionStore = StudySessionStore(store);
     await store.savePlan(first, mode: 'Regular Study');
     await store.addItemCompletedMinutes(0, 25);
     await store.setPlanPosition(1, 0);
-    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', minutes: 25)]), mode: 'Exam Preparation');
-    final sessionStore = StudySessionStore(store);
+    await sessionStore.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', minutes: 25)]), mode: 'Exam Preparation');
     final saved = sessionStore.sessions.single;
     expect(await sessionStore.restore(saved.id), isTrue);
     expect(store.loadPlan()?.items[1].title, 'Physics');
@@ -203,11 +219,11 @@ void main() {
   test('resetting a saved session clears only its progress and returns it to the first block', () async {
     final store = await makeStore();
     final plan = StudyPlan(totalMinutes: 75, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 50)]);
+    final sessionStore = StudySessionStore(store);
     await store.savePlan(plan, mode: 'Regular Study');
     await store.addItemCompletedMinutes(0, 25);
     await store.setPlanPosition(1, 1);
-    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', minutes: 25)]), mode: 'Exam Preparation');
-    final sessionStore = StudySessionStore(store);
+    await sessionStore.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Chemistry', minutes: 25)]), mode: 'Exam Preparation');
     final saved = sessionStore.sessions.single;
     expect(saved.currentIndex, 1);
     expect(saved.currentBlockIndex, 1);
