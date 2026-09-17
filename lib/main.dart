@@ -54,6 +54,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   late String themeKey = themes.containsKey(widget.store.themePreset) ? widget.store.themePreset : 'midnight';
   late AppLanguage language = widget.store.appLanguage;
   int tab = 0;
+  late final List<Widget?> _tabs = List<Widget?>.filled(4, null);
   AppStrings get strings => AppStrings(language);
 
   @override
@@ -61,6 +62,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
+    _tabs[0] = _buildHomeTab();
     WidgetsBinding.instance.addPostFrameCallback((_) { unawaited(_syncRemindersSafely()); });
   }
 
@@ -70,6 +72,33 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     } catch (_) {
       // Reminders are non-critical and must never terminate the app at startup.
     }
+  }
+
+  Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
+  Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy, language: language);
+  Widget _buildProgressTab() => ProgressDashboard(store: widget.store);
+  Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage);
+
+  void _ensureTab(int index) {
+    if (_tabs[index] != null) return;
+    _tabs[index] = switch (index) {
+      0 => _buildHomeTab(),
+      1 => _buildStudyTab(),
+      2 => _buildProgressTab(),
+      3 => _buildProfileTab(),
+      _ => const SizedBox.shrink(),
+    };
+  }
+
+  void _selectTab(int value) {
+    _ensureTab(value);
+    if (tab != value) setState(() => tab = value);
+  }
+
+  void _refreshDependentTabs() {
+    _tabs[0] = _buildHomeTab();
+    _tabs[1] = _buildStudyTab();
+    _tabs[3] = _buildProfileTab();
   }
 
   @override
@@ -88,14 +117,21 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   Future<void> setTheme(String key) async {
     final theme = themes[key];
     if (theme == null) return;
-    setState(() => themeKey = key);
+    setState(() {
+      themeKey = key;
+      _tabs[3] = _buildProfileTab();
+    });
     await widget.store.setThemePreset(key);
     await widget.store.setDarkMode(theme.brightness == Brightness.dark);
   }
 
   Future<void> setLanguage(AppLanguage value) async {
     await widget.store.setAppLanguage(value);
-    if (mounted) setState(() => language = value);
+    if (!mounted) return;
+    setState(() {
+      language = value;
+      _refreshDependentTabs();
+    });
   }
 
   Future<void> openFocus({StudyPlan? plan}) async {
@@ -108,7 +144,11 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     final index = sameAsStored ? snapshot.currentIndex : 0;
     final blockIndex = sameAsStored ? snapshot.currentBlockIndex : 0;
     await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: activePlan, index: index, blockIndex: blockIndex, onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted)));
-    if (mounted) setState(() {});
+    if (mounted) {
+      _tabs[0] = _buildHomeTab();
+      _tabs[1] = _buildStudyTab();
+      setState(() {});
+    }
   }
 
   void openRegularStudy() {
@@ -122,6 +162,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final theme = themes[themeKey]!;
+    _ensureTab(tab);
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
@@ -132,12 +173,12 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
         checkForUpdate: widget.checkForUpdate,
         child: Scaffold(
           body: IndexedStack(index: tab, children: [
-            Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language),
-            StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onRegularStudy: openRegularStudy, language: language),
-            ProgressDashboard(store: widget.store),
-            ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage),
+            _tabs[0] ?? const SizedBox.shrink(),
+            _tabs[1] ?? const SizedBox.shrink(),
+            _tabs[2] ?? const SizedBox.shrink(),
+            _tabs[3] ?? const SizedBox.shrink(),
           ]),
-          bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: (value) => setState(() => tab = value), destinations: [
+          bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: _selectTab, destinations: [
             NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded), label: strings.isBangla ? 'হোম' : 'Home'),
             NavigationDestination(icon: const Icon(Icons.menu_book_outlined), selectedIcon: const Icon(Icons.menu_book_rounded), label: strings.isBangla ? 'স্টাডি' : 'Study'),
             NavigationDestination(icon: const Icon(Icons.insights_outlined), selectedIcon: const Icon(Icons.insights_rounded), label: strings.isBangla ? 'অগ্রগতি' : 'Progress'),
