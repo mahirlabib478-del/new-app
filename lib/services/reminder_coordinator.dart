@@ -73,18 +73,19 @@ class ReminderCoordinator {
 
   Future<void> _syncOnce({ReminderSettings? settingsOverride}) async {
     final settings = settingsOverride ?? settingsStore.settings;
+    final timeZoneAwareScheduler = scheduler;
     try {
-      await scheduler.initialize();
-      if (scheduler is ReminderSchedulerTimeZoneAware) {
-        await scheduler.refreshTimeZone();
+      await timeZoneAwareScheduler.initialize();
+      if (timeZoneAwareScheduler is ReminderSchedulerTimeZoneAware) {
+        await timeZoneAwareScheduler.refreshTimeZone();
       }
     } on Exception {
       // Unsupported platforms must still be able to use the study app.
       return;
     }
 
-    final timeZoneFingerprint = scheduler is ReminderSchedulerTimeZoneAware
-        ? scheduler.timeZoneFingerprint ?? 'unknown'
+    final timeZoneFingerprint = timeZoneAwareScheduler is ReminderSchedulerTimeZoneAware
+        ? timeZoneAwareScheduler.timeZoneFingerprint ?? 'unknown'
         : 'unknown';
 
     if (!settings.breakEnabled) {
