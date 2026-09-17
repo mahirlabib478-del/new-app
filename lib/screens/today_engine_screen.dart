@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../models/study_models.dart';
 import '../services/local_store.dart';
 import '../services/today_engine.dart';
 
 class TodayEngineScreen extends StatelessWidget {
-  const TodayEngineScreen({super.key, required this.store});
+  const TodayEngineScreen({super.key, required this.store, this.onOpenFocus});
   final LocalStore store;
+  final Future<void> Function({StudyPlan? plan})? onOpenFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -22,17 +24,20 @@ class TodayEngineScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.secondary]),
+              gradient: LinearGradient(colors: [colorScheme.primaryContainer, colorScheme.secondaryContainer], begin: Alignment.topLeft, end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(28),
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('LEVEL ${snapshot.level}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+              Text('LEVEL ${snapshot.level}', style: TextStyle(color: colorScheme.onPrimaryContainer.withValues(alpha: 0.78), fontWeight: FontWeight.w800, letterSpacing: 1.2)),
               const SizedBox(height: 8),
-              Text('${snapshot.remainingMinutes} min left', style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
+              Text('${snapshot.remainingMinutes} min left', style: TextStyle(color: colorScheme.onPrimaryContainer, fontSize: 34, fontWeight: FontWeight.w900)),
               const SizedBox(height: 14),
-              ClipRRect(borderRadius: BorderRadius.circular(20), child: LinearProgressIndicator(value: snapshot.progress, minHeight: 9, backgroundColor: Colors.white24)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: LinearProgressIndicator(value: snapshot.progress, minHeight: 9, backgroundColor: colorScheme.onPrimaryContainer.withValues(alpha: 0.14), color: colorScheme.onPrimaryContainer),
+              ),
               const SizedBox(height: 8),
-              Text('${snapshot.completedMinutes} min completed', style: const TextStyle(color: Colors.white70)),
+              Text('${snapshot.completedMinutes} min completed', style: TextStyle(color: colorScheme.onPrimaryContainer.withValues(alpha: 0.78))),
             ]),
           ),
           const SizedBox(height: 16),
@@ -53,17 +58,9 @@ class TodayEngineScreen extends StatelessWidget {
                   Text('${snapshot.todayCompletedMinutes} / ${snapshot.dailyGoalMinutes}m', style: const TextStyle(fontWeight: FontWeight.w900)),
                 ]),
                 const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: LinearProgressIndicator(value: snapshot.goalProgress, minHeight: 8),
-                ),
+                ClipRRect(borderRadius: BorderRadius.circular(20), child: LinearProgressIndicator(value: snapshot.goalProgress, minHeight: 8)),
                 const SizedBox(height: 8),
-                Text(
-                  snapshot.dailyGoalReached
-                      ? 'Daily goal reached. Keep the momentum going.'
-                      : '${snapshot.goalRemainingMinutes} min to reach today\'s goal',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                Text(snapshot.dailyGoalReached ? 'Daily goal reached. Keep the momentum going.' : '${snapshot.goalRemainingMinutes} min to reach today\'s goal', style: Theme.of(context).textTheme.bodyMedium),
               ]),
             ),
           ),
@@ -88,28 +85,20 @@ class TodayEngineScreen extends StatelessWidget {
                         title: Text(snapshot.nextItem!.title, style: const TextStyle(fontWeight: FontWeight.w900)),
                         subtitle: Text(snapshot.nextItem!.topic.isEmpty ? 'Focus session' : snapshot.nextItem!.topic),
                         trailing: Text('${snapshot.nextItem!.minutes}m', style: const TextStyle(fontWeight: FontWeight.w900)),
+                        onTap: onOpenFocus == null ? null : () => onOpenFocus!(),
                       ),
                       const SizedBox(height: 8),
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        decoration: BoxDecoration(color: colorScheme.primaryContainer, borderRadius: BorderRadius.circular(16)),
                         child: Row(children: [
                           Icon(Icons.auto_awesome_rounded, color: colorScheme.onPrimaryContainer),
                           const SizedBox(width: 10),
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(
-                              'RECOMMENDED FOCUS',
-                              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, color: colorScheme.onPrimaryContainer),
-                            ),
+                            Text('RECOMMENDED FOCUS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, color: colorScheme.onPrimaryContainer)),
                             const SizedBox(height: 4),
-                            Text(
-                              '${snapshot.recommendedFocusMinutes} min · ${snapshot.recommendationReason}',
-                              style: TextStyle(color: colorScheme.onPrimaryContainer),
-                            ),
+                            Text('${snapshot.recommendedFocusMinutes} min · ${snapshot.recommendationReason}', style: TextStyle(color: colorScheme.onPrimaryContainer)),
                           ])),
                         ]),
                       ),
@@ -120,14 +109,12 @@ class TodayEngineScreen extends StatelessWidget {
           if (plan != null) ...[
             Text('TODAY\'S PLAN', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.1)),
             const SizedBox(height: 8),
-            ...plan.items.take(8).map((item) => Card(
-              child: ListTile(
-                leading: const Icon(Icons.radio_button_unchecked_rounded),
-                title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text(item.topic),
-                trailing: Text('${item.minutes}m'),
-              ),
-            )),
+            ...plan.items.take(8).map((item) => Card(child: ListTile(
+              leading: const Icon(Icons.radio_button_unchecked_rounded),
+              title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(item.topic),
+              trailing: Text('${item.minutes}m'),
+            ))),
           ],
         ],
       ),
