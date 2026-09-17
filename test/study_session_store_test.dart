@@ -69,6 +69,21 @@ void main() {
     expect(store.focusTimerState?.running, isFalse);
   });
 
+  test('LocalStore archive preserves a paused 5-minute remainder', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50)]);
+    await store.savePlan(plan, mode: 'Regular Study');
+    await store.setPlanPosition(0, 0);
+    await store.saveFocusTimerState(const FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 300, running: false));
+
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Physics', minutes: 25)]), mode: 'Exam Preparation');
+    final saved = StudySessionStore(store).sessions.single;
+    expect(saved.focusRemainingSeconds, 300);
+    expect(saved.focusRunning, isFalse);
+    expect(saved.currentIndex, 0);
+    expect(saved.currentBlockIndex, 0);
+  });
+
   test('LocalStore archive uses the canonical saved-session shape', () async {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
