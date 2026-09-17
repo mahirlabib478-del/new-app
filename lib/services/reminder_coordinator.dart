@@ -74,7 +74,9 @@ class ReminderCoordinator {
   Future<void> _syncOnce({ReminderSettings? settingsOverride}) async {
     final settings = settingsOverride ?? settingsStore.settings;
     final ReminderSchedulerTimeZoneAware? timeZoneAwareScheduler =
-        scheduler is ReminderSchedulerTimeZoneAware ? scheduler : null;
+        scheduler is ReminderSchedulerTimeZoneAware
+            ? scheduler as ReminderSchedulerTimeZoneAware
+            : null;
     try {
       await scheduler.initialize();
       if (timeZoneAwareScheduler != null) {
