@@ -5,7 +5,7 @@ import 'reminder_settings.dart';
 import 'today_engine.dart';
 
 class ReminderCoordinator {
-  const ReminderCoordinator({
+  ReminderCoordinator({
     required this.store,
     required this.settingsStore,
     required this.scheduler,
