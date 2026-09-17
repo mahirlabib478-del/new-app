@@ -56,15 +56,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveSettings(ReminderSettings next) async {
+    final previous = settings;
     final requestsPermission =
-        (!settings.studyEnabled && next.studyEnabled) ||
-        (!settings.breakEnabled && next.breakEnabled) ||
-        (!settings.planEnabled && next.planEnabled);
+        (!previous.studyEnabled && next.studyEnabled) ||
+        (!previous.breakEnabled && next.breakEnabled) ||
+        (!previous.planEnabled && next.planEnabled);
 
-    await ReminderSettingsStore(widget.prefs).save(next);
-    await _syncReminders(settingsToSync: next, requestPermission: requestsPermission);
-    if (!mounted) return;
-    setState(() => settings = next);
+    // Reflect the user's choice immediately. Persistence and notification sync
+    // happen afterwards so a slow platform/network operation cannot make a tap
+    // look ignored.
+    if (mounted) setState(() => settings = next);
+
+    try {
+      await ReminderSettingsStore(widget.prefs).save(next);
+      await _syncReminders(settingsToSync: next, requestPermission: requestsPermission);
+    } on Exception {
+      // Reminder failures must never block settings changes or normal app use.
+    }
   }
 
   Future<void> _syncReminders({required ReminderSettings settingsToSync, required bool requestPermission}) async {
