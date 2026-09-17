@@ -60,6 +60,11 @@ class StudySessionStore {
   String planFingerprint(StudyPlan plan) => jsonEncode(plan.toJson());
   bool samePlan(StudyPlan first, StudyPlan second) => planFingerprint(first) == planFingerprint(second);
 
+  Future<void> savePlan(StudyPlan plan, {String? mode}) async {
+    await archiveCurrentPlan();
+    await store.savePlan(plan, mode: mode);
+  }
+
   Future<void> archiveCurrentPlan({String? mode}) async {
     final plan = store.loadPlan();
     if (plan == null || plan.items.isEmpty) return;
