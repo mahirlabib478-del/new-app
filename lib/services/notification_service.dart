@@ -162,7 +162,16 @@ class NotificationService implements ReminderScheduler {
     );
 
     if (!scheduled.isAfter(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
+      // Reconstruct the next local calendar date instead of adding 24 hours.
+      // This keeps the configured wall-clock time stable across DST changes.
+      scheduled = tz.TZDateTime(
+        now.location,
+        now.year,
+        now.month,
+        now.day + 1,
+        safeHour,
+        safeMinute,
+      );
     }
     return scheduled;
   }
