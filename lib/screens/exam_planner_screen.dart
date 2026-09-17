@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/local_store.dart';
+import '../services/study_session_store.dart';
 
 List<StudyItem> generateExamPlan({
   required bool nextDay,
@@ -143,7 +144,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
                 const SizedBox(height: 14),
                 FilledButton.icon(
                   onPressed: () async {
-                    await widget.store.savePlan(plan, mode: widget.nextDay ? 'Next Day Exam' : 'Exam Preparation');
+                    await StudySessionStore(widget.store).savePlan(plan, mode: widget.nextDay ? 'Next Day Exam' : 'Exam Preparation');
                     if (!sheetContext.mounted) return;
                     Navigator.pop(sheetContext);
                     if (widget.onStartPlan != null) await widget.onStartPlan!(plan);
@@ -153,7 +154,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    await widget.store.savePlan(plan, mode: widget.nextDay ? 'Next Day Exam' : 'Exam Preparation');
+                    await StudySessionStore(widget.store).savePlan(plan, mode: widget.nextDay ? 'Next Day Exam' : 'Exam Preparation');
                     if (!sheetContext.mounted) return;
                     Navigator.pop(sheetContext);
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plan saved. You can resume it from Home.')));
