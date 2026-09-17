@@ -21,6 +21,9 @@ class ReminderCoordinator {
   final ReminderScheduler scheduler;
   final ReminderPolicy policy;
 
+  bool _syncing = false;
+  bool _syncRequested = false;
+
   Future<void> requestPermissions() async {
     try {
       await scheduler.initialize();
@@ -31,6 +34,21 @@ class ReminderCoordinator {
   }
 
   Future<void> sync({ReminderSettings? settingsOverride}) async {
+    _syncRequested = true;
+    if (_syncing) return;
+
+    _syncing = true;
+    try {
+      do {
+        _syncRequested = false;
+        await _syncOnce(settingsOverride: settingsOverride);
+      } while (_syncRequested);
+    } finally {
+      _syncing = false;
+    }
+  }
+
+  Future<void> _syncOnce({ReminderSettings? settingsOverride}) async {
     final settings = settingsOverride ?? settingsStore.settings;
     try {
       await scheduler.initialize();
@@ -100,6 +118,9 @@ class ReminderCoordinator {
     }
 
     try {
+      // Make every refresh explicitly idempotent even if a scheduler backend
+      // changes its replacement semantics for an existing notification ID.
+      await scheduler.cancel(id);
       await scheduler.scheduleDailyReminder(
         id: id,
         title: request.title,
