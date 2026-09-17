@@ -2,11 +2,32 @@ import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/local_store.dart';
 import '../services/today_engine.dart';
+import 'focus_flow.dart';
 
 class TodayEngineScreen extends StatelessWidget {
   const TodayEngineScreen({super.key, required this.store, this.onOpenFocus});
   final LocalStore store;
   final Future<void> Function({StudyPlan? plan})? onOpenFocus;
+
+  Future<void> _openNext(BuildContext context, TodaySnapshot snapshot) async {
+    if (onOpenFocus != null) {
+      await onOpenFocus!();
+      return;
+    }
+    final plan = snapshot.plan;
+    if (plan == null || plan.items.isEmpty || snapshot.isComplete) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FocusScreen(
+          store: store,
+          plan: plan,
+          index: snapshot.currentIndex,
+          blockIndex: snapshot.currentBlockIndex,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +106,7 @@ class TodayEngineScreen extends StatelessWidget {
                         title: Text(snapshot.nextItem!.title, style: const TextStyle(fontWeight: FontWeight.w900)),
                         subtitle: Text(snapshot.nextItem!.topic.isEmpty ? 'Focus session' : snapshot.nextItem!.topic),
                         trailing: Text('${snapshot.nextItem!.minutes}m', style: const TextStyle(fontWeight: FontWeight.w900)),
-                        onTap: onOpenFocus == null ? null : () => onOpenFocus!(),
+                        onTap: () => _openNext(context, snapshot),
                       ),
                       const SizedBox(height: 8),
                       Container(
