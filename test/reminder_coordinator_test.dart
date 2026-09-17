@@ -198,7 +198,11 @@ void main() {
     await coordinator.sync();
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
-    expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.studyId]);
+    expect(scheduler.cancelled, [
+      ReminderCoordinator.studyId,
+      ReminderCoordinator.planId,
+      ReminderCoordinator.studyId,
+    ]);
   });
 
   test('concurrent sync requests coalesce into one unchanged schedule', () async {
