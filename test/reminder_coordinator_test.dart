@@ -476,6 +476,6 @@ void main() {
     await coordinator.sync();
 
     expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.studyId]);
-    expect(scheduler.cancelled.where((id) => id == ReminderCoordinator.studyId).length, 2);
+    expect(scheduler.cancelled.where((id) => id == ReminderCoordinator.studyId).length, 3);
   });
 }
