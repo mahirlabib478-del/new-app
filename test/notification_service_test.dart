@@ -22,6 +22,28 @@ void main() {
     expect(next, tz.TZDateTime.utc(2026, 9, 17, 19, 0));
   });
 
+  test('same-time daily occurrence rolls to tomorrow instead of firing immediately', () {
+    final now = tz.TZDateTime.utc(2026, 9, 16, 19, 0);
+
+    final next = NotificationService.nextDailyOccurrence(now, 19, 0);
+
+    expect(next, tz.TZDateTime.utc(2026, 9, 17, 19, 0));
+  });
+
+  test('daily occurrence preserves the supplied timezone location', () {
+    final location = tz.getLocation('Asia/Dhaka');
+    final now = tz.TZDateTime(location, 2026, 9, 16, 18, 30);
+
+    final next = NotificationService.nextDailyOccurrence(now, 19, 0);
+
+    expect(next.location, same(location));
+    expect(next.year, 2026);
+    expect(next.month, 9);
+    expect(next.day, 16);
+    expect(next.hour, 19);
+    expect(next.minute, 0);
+  });
+
   test('reminder time is safely clamped to a valid clock value', () {
     final now = tz.TZDateTime.utc(2026, 9, 16, 8, 0);
 
