@@ -100,6 +100,9 @@ class LocalStore {
     });
     final focus = focusTimerState;
     final focusMatchesPosition = focus != null && focus.index == currentPlanIndex && focus.blockIndex == currentBlockIndex;
+    final focusRemainingSeconds = focusMatchesPosition ? focus?.remainingSeconds : null;
+    final focusRunning = focusMatchesPosition ? focus?.running : null;
+    final focusDeadlineMillis = focusMatchesPosition ? focus?.deadlineMillis : null;
     sessions.add({
       'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
       'mode': mode,
@@ -109,9 +112,9 @@ class LocalStore {
       'planCompletedMinutes': completed,
       'currentIndex': currentPlanIndex,
       'currentBlockIndex': currentBlockIndex,
-      if (focusMatchesPosition) 'focusRemainingSeconds': focus!.remainingSeconds,
-      if (focusMatchesPosition) 'focusRunning': focus!.running,
-      if (focusMatchesPosition && focus.deadlineMillis != null) 'focusDeadlineMillis': focus.deadlineMillis,
+      if (focusRemainingSeconds != null) 'focusRemainingSeconds': focusRemainingSeconds,
+      if (focusRunning != null) 'focusRunning': focusRunning,
+      if (focusDeadlineMillis != null) 'focusDeadlineMillis': focusDeadlineMillis,
     });
     await prefs.setString(_savedSessionsKey, jsonEncode(sessions));
   }
