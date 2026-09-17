@@ -55,7 +55,6 @@ class NotificationService implements ReminderScheduler {
     _initialized = true;
   }
 
-  @override
   Future<void> refreshTimeZone() async {
     await _initialize();
     await _refreshTimeZone();
