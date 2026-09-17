@@ -275,6 +275,36 @@ void main() {
     expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.planId, ReminderCoordinator.studyId]);
   });
 
+  test('a fresh coordinator re-syncs reminders after app restart', () async {
+    SharedPreferences.setMockInitialValues({
+      'reminder_study_enabled': true,
+      'reminder_plan_enabled': false,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
+
+    final firstScheduler = FakeScheduler();
+    final firstCoordinator = ReminderCoordinator(
+      store: store,
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: firstScheduler,
+    );
+    await firstCoordinator.sync();
+
+    final restartedScheduler = FakeScheduler();
+    final restartedCoordinator = ReminderCoordinator(
+      store: store,
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: restartedScheduler,
+    );
+    await restartedCoordinator.sync();
+
+    expect(firstScheduler.scheduled, [ReminderCoordinator.studyId]);
+    expect(restartedScheduler.cancelled, [ReminderCoordinator.breakId, ReminderCoordinator.studyId, ReminderCoordinator.planId]);
+    expect(restartedScheduler.scheduled, [ReminderCoordinator.studyId]);
+  });
+
   test('concurrent sync requests coalesce into one unchanged schedule', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
