@@ -82,7 +82,7 @@ class StudySessionStore {
 
   Future<void> delete(String id) async {
     final next = sessions.where((item) => item.id != id).toList();
-    await store.prefs.setString(_key, jsonEncode(next));
+    await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
   }
 
   Future<bool> reset(String id) async {
