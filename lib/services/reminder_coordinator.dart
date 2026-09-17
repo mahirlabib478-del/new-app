@@ -75,6 +75,7 @@ class ReminderCoordinator {
     final settings = settingsOverride ?? settingsStore.settings;
     try {
       await scheduler.initialize();
+      await scheduler.refreshTimeZone();
     } on Exception {
       // Unsupported platforms must still be able to use the study app.
       return;
