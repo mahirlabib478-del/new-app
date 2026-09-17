@@ -251,12 +251,13 @@ void main() {
       studyEnabled: false,
       planEnabled: true,
     );
+    await ReminderSettingsStore(prefs).save(settings);
 
     await coordinator.sync(settingsOverride: settings);
     await coordinator.sync(settingsOverride: settings);
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
-    expect(scheduler.cancelled, [ReminderCoordinator.planId]);
+    expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.planId, ReminderCoordinator.studyId]);
   });
 
   test('concurrent sync requests coalesce into one unchanged schedule', () async {
