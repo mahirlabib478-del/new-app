@@ -38,14 +38,7 @@ class NotificationService implements ReminderScheduler {
     if (_initialized) return;
 
     tz.initializeTimeZones();
-    final resolvedTimeZone = timeZoneName ?? await _deviceTimeZone();
-    if (resolvedTimeZone != null && resolvedTimeZone.isNotEmpty) {
-      try {
-        tz.setLocalLocation(tz.getLocation(resolvedTimeZone));
-      } on Exception {
-        // Keep the timezone package default when the device timezone is unknown.
-      }
-    }
+    await _refreshTimeZone(timeZoneName: timeZoneName);
 
     const android = AndroidInitializationSettings('ic_launcher');
     const darwin = DarwinInitializationSettings(
@@ -60,6 +53,23 @@ class NotificationService implements ReminderScheduler {
     );
     await _plugin.initialize(settings);
     _initialized = true;
+  }
+
+  @override
+  Future<void> refreshTimeZone() async {
+    await _initialize();
+    await _refreshTimeZone();
+  }
+
+  Future<void> _refreshTimeZone({String? timeZoneName}) async {
+    final resolvedTimeZone = timeZoneName ?? await _deviceTimeZone();
+    if (resolvedTimeZone != null && resolvedTimeZone.isNotEmpty) {
+      try {
+        tz.setLocalLocation(tz.getLocation(resolvedTimeZone));
+      } on Exception {
+        // Keep the timezone package default when the device timezone is unknown.
+      }
+    }
   }
 
   Future<String?> _deviceTimeZone() async {
