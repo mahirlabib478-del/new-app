@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/models/study_models.dart';
@@ -12,16 +14,30 @@ class FakeScheduler implements ReminderScheduler {
   final shown = <int>[];
   var permissionRequests = 0;
   var initializeCalls = 0;
+  Exception? initializeError;
+  Exception? permissionError;
+  Exception? scheduleError;
+  Exception? cancelError;
+  Exception? showError;
+  Future<void> Function()? onInitialize;
 
   @override
-  Future<void> initialize() async => initializeCalls++;
+  Future<void> initialize() async {
+    initializeCalls++;
+    if (onInitialize != null) await onInitialize!();
+    if (initializeError != null) throw initializeError!;
+  }
 
   @override
-  Future<void> cancel(int id) async => cancelled.add(id);
+  Future<void> cancel(int id) async {
+    cancelled.add(id);
+    if (cancelError != null) throw cancelError!;
+  }
 
   @override
   Future<bool?> requestPermissions() async {
     permissionRequests++;
+    if (permissionError != null) throw permissionError!;
     return true;
   }
 
@@ -33,11 +49,13 @@ class FakeScheduler implements ReminderScheduler {
     required int hour,
     required int minute,
   }) async {
+    if (scheduleError != null) throw scheduleError!;
     scheduled.add(id);
   }
 
   @override
   Future<void> showNow({required int id, required String title, required String body}) async {
+    if (showError != null) throw showError!;
     shown.add(id);
   }
 }
@@ -184,6 +202,69 @@ void main() {
     expect(scheduler.initializeCalls, 1);
   });
 
+  test('permission request failure does not escape into the study flow', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler()..permissionError = Exception('denied');
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.requestPermissions();
+
+    expect(scheduler.permissionRequests, 1);
+  });
+
+  test('scheduler initialization failure leaves the study flow usable', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler()..initializeError = Exception('unsupported');
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, isEmpty);
+  });
+
+  test('daily schedule failure is swallowed and retried on the next sync', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler()..scheduleError = Exception('os failure');
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+    scheduler.scheduleError = null;
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+  });
+
+  test('focus notification failure still refreshes daily reminders', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler()..showError = Exception('show failed');
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.notifyFocusBlockCompleted();
+
+    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.shown, isEmpty);
+  });
+
   test('repeated sync does not reschedule an unchanged reminder', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -221,5 +302,43 @@ void main() {
     ]);
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+  });
+
+  test('latest concurrent settings override wins the coalesced refresh', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final gate = Completer<void>();
+    final scheduler = FakeScheduler();
+    scheduler.onInitialize = () async {
+      if (scheduler.initializeCalls == 1) await gate.future;
+    };
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    final first = coordinator.sync(
+      settingsOverride: ReminderSettings.defaults.copyWith(
+        studyEnabled: false,
+        planEnabled: true,
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    final second = coordinator.sync(
+      settingsOverride: ReminderSettings.defaults.copyWith(
+        studyEnabled: true,
+        planEnabled: false,
+      ),
+    );
+    gate.complete();
+
+    await Future.wait([first, second]);
+
+    expect(scheduler.scheduled, [
+      ReminderCoordinator.planId,
+      ReminderCoordinator.studyId,
+    ]);
+    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
 }
