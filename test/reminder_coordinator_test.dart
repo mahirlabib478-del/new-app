@@ -312,4 +312,40 @@ void main() {
     expect(scheduler.scheduled, [ReminderCoordinator.planId, ReminderCoordinator.studyId]);
     expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
+
+  test('latest sync without an override uses the persisted settings', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final settingsStore = ReminderSettingsStore(prefs);
+    final store = LocalStore(prefs);
+    final gate = Completer<void>();
+    final started = Completer<void>();
+    final scheduler = FakeScheduler();
+    scheduler.onInitialize = () async {
+      if (scheduler.initializeCalls == 1) {
+        started.complete();
+        await gate.future;
+      }
+    };
+    final coordinator = ReminderCoordinator(
+      store: store,
+      settingsStore: settingsStore,
+      scheduler: scheduler,
+    );
+
+    final first = coordinator.sync(
+      settingsOverride: ReminderSettings.defaults.copyWith(studyEnabled: false, planEnabled: true),
+    );
+    await started.future;
+    await settingsStore.save(
+      ReminderSettings.defaults.copyWith(studyEnabled: true, planEnabled: false),
+    );
+    final second = coordinator.sync();
+    gate.complete();
+
+    await Future.wait([first, second]);
+
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId]);
+    expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
+  });
 }
