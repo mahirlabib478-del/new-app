@@ -6,7 +6,6 @@ import '../services/local_store.dart';
 import '../services/notification_service.dart';
 import '../services/reminder_coordinator.dart';
 import '../services/reminder_settings.dart';
-import '../services/sound_effects.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -109,15 +108,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.dailyGoalUpdated)));
   }
 
-  Future<void> _setSoundEffects(bool value) async {
-    await widget.store.setSoundEffectsEnabled(value);
-    if (!mounted) return;
-    setState(() {});
-    if (value) {
-      await SoundEffects(widget.store).tap();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -193,13 +183,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: Text('$goal ${strings.focusedStudy}'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _editGoal(context, goal),
-                ),
-                SwitchListTile(
-                  secondary: const Icon(Icons.volume_up_rounded),
-                  title: Text(strings.soundEffects, style: const TextStyle(fontWeight: FontWeight.w800)),
-                  subtitle: Text(strings.soundEffectsSubtitle),
-                  value: widget.store.soundEffectsEnabled,
-                  onChanged: _setSoundEffects,
                 ),
               ],
             ),
