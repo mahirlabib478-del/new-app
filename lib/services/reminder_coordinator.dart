@@ -88,17 +88,6 @@ class ReminderCoordinator {
       hour: settings.planHour,
       minute: settings.planMinute,
     );
-
-    final breakRequest = policy.breakReminder(
-      focusSessionCompleted: snapshot.todayCompletedMinutes > 0,
-    );
-    await _syncDaily(
-      enabled: settings.breakEnabled,
-      request: breakRequest,
-      id: breakId,
-      hour: 0,
-      minute: 0,
-    );
   }
 
   Future<void> _syncDaily({
