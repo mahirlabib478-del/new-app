@@ -24,8 +24,6 @@ class _UpdateGateState extends State<UpdateGate> {
       final packageInfo = await PackageInfo.fromPlatform();
       return await UpdateService(currentVersion: packageInfo.version, prefs: widget.store.prefs).checkForUpdate();
     } catch (_) {
-      // Update checks are non-critical; a platform or network failure must not
-      // prevent the main study UI from starting.
       return null;
     }
   }
@@ -35,42 +33,22 @@ class _UpdateGateState extends State<UpdateGate> {
     return FutureBuilder<UpdateInfo?>(
       future: _check,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) return const _UpdateLoadingScreen();
         final info = snapshot.data;
-        if (info == null) return widget.child;
-        if (info.isMandatory) return _ForceUpdateScreen(info: info);
-        if (optionalDismissed) return widget.child;
-        return Column(
+        // Never block the first frame on PackageInfo/network/update policy.
+        // Render the study UI immediately and layer update information later.
+        return Stack(
+          fit: StackFit.expand,
           children: [
-            _OptionalUpdateBanner(
-              info: info,
-              onDismiss: () => setState(() => optionalDismissed = true),
-            ),
-            Expanded(child: widget.child),
+            widget.child,
+            if (snapshot.connectionState == ConnectionState.done && info != null && !info.isMandatory && !optionalDismissed)
+              Positioned(top: 0, left: 0, right: 0, child: _OptionalUpdateBanner(info: info, onDismiss: () => setState(() => optionalDismissed = true))),
+            if (snapshot.connectionState == ConnectionState.done && info?.isMandatory == true)
+              Positioned.fill(child: _ForceUpdateScreen(info: info!)),
           ],
         );
       },
     );
   }
-}
-
-class _UpdateLoadingScreen extends StatelessWidget {
-  const _UpdateLoadingScreen();
-  @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.all(28),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 18),
-                Text('Checking for updates…'),
-              ]),
-            ),
-          ),
-        ),
-      );
 }
 
 class _OptionalUpdateBanner extends StatelessWidget {
@@ -93,6 +71,7 @@ class _OptionalUpdateBanner extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.secondaryContainer,
+      elevation: 2,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -101,12 +80,7 @@ class _OptionalUpdateBanner extends StatelessWidget {
             children: [
               Icon(Icons.system_update_rounded, color: scheme.onSecondaryContainer),
               const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Study OS ${info.latestVersion} is available.',
-                  style: TextStyle(fontWeight: FontWeight.w800, color: scheme.onSecondaryContainer),
-                ),
-              ),
+              Expanded(child: Text('Study OS ${info.latestVersion} is available.', style: TextStyle(fontWeight: FontWeight.w800, color: scheme.onSecondaryContainer))),
               TextButton(onPressed: () => _update(context), child: const Text('Update')),
               IconButton(onPressed: onDismiss, tooltip: 'Dismiss', icon: const Icon(Icons.close_rounded)),
             ],
@@ -134,8 +108,9 @@ class _ForceUpdateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: SafeArea(
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SafeArea(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(28),
