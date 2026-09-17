@@ -1,11 +1,6 @@
 abstract interface class ReminderScheduler {
   Future<void> initialize() async {}
 
-  /// Refreshes the scheduler's local timezone from the device.
-  ///
-  /// Implementations that do not cache timezone state may leave this as a no-op.
-  Future<void> refreshTimeZone() async {}
-
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
@@ -19,4 +14,18 @@ abstract interface class ReminderScheduler {
   Future<void> cancel(int id);
 
   Future<bool?> requestPermissions();
+}
+
+/// Optional timezone refresh capability for schedulers that cache timezone state.
+///
+/// The capability is resolved dynamically so existing ReminderScheduler test
+/// doubles and third-party implementations remain source-compatible.
+extension ReminderSchedulerTimeZoneRefresh on ReminderScheduler {
+  Future<void> refreshTimeZone() async {
+    try {
+      await (this as dynamic).refreshTimeZone();
+    } on NoSuchMethodError {
+      // Schedulers without timezone state do not need to do anything.
+    }
+  }
 }
