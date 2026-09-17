@@ -57,6 +57,7 @@ class LocalStore {
     if (value.isEmpty) return;
     await prefs.setString(_activeModeKey, value);
   }
+
   String get activeStudyMode => prefs.getString(_activeModeKey) ?? 'Study';
 
   Future<void> savePlan(StudyPlan plan, {String? mode}) async {
@@ -83,7 +84,10 @@ class LocalStore {
     if (completed >= plan.allocatedMinutes) return;
     final rawSessions = prefs.getString(_savedSessionsKey);
     List<dynamic> sessions = const [];
-    try { final decoded = rawSessions == null ? const [] : jsonDecode(rawSessions); if (decoded is List) sessions = List<dynamic>.from(decoded); } catch (_) {}
+    try {
+      final decoded = rawSessions == null ? const [] : jsonDecode(rawSessions);
+      if (decoded is List) sessions = List<dynamic>.from(decoded);
+    } catch (_) {}
     final fingerprint = jsonEncode(plan.toJson());
     String? existingId;
     sessions.removeWhere((value) {
@@ -159,8 +163,14 @@ class LocalStore {
   Map<String, int> get dailyStudyMinutes {
     final raw = prefs.getString(_historyKey);
     if (raw == null) return <String, int>{};
-    try { final map = Map<String, dynamic>.from(jsonDecode(raw) as Map); final result = <String, int>{}; for (final entry in map.entries) { if (entry.value is num) result[entry.key] = entry.value.toInt().clamp(0, 1440).toInt(); } return result; } catch (_) { return <String, int>{}; }
+    try {
+      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final result = <String, int>{};
+      for (final entry in map.entries) { if (entry.value is num) result[entry.key] = entry.value.toInt().clamp(0, 1440).toInt(); }
+      return result;
+    } catch (_) { return <String, int>{}; }
   }
+
   int studyMinutesOn(DateTime date) => dailyStudyMinutes[_dateKey(date)] ?? 0;
   Future<void> addDailyStudyMinutes(int value, {DateTime? date}) async {
     final minutes = value.clamp(0, 1440).toInt();
@@ -170,21 +180,41 @@ class LocalStore {
     history[key] = ((history[key] ?? 0) + minutes).clamp(0, 1440).toInt();
     await prefs.setString(_historyKey, jsonEncode(history));
   }
+
   int itemCompletedMinutes(int index) {
     if (index < 0) return 0;
     final raw = prefs.getString(_itemMinutesKey);
     if (raw == null) return 0;
-    try { final map = Map<String, dynamic>.from(jsonDecode(raw) as Map); final value = map['$index']; return value is num ? value.toInt().clamp(0, 1440).toInt() : 0; } catch (_) { return 0; }
+    try {
+      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final value = map['$index'];
+      return value is num ? value.toInt().clamp(0, 1440).toInt() : 0;
+    } catch (_) { return 0; }
   }
+
   Map<int, int> get itemCompletedMinutesMap {
     final raw = prefs.getString(_itemMinutesKey);
     if (raw == null) return <int, int>{};
-    try { final map = Map<String, dynamic>.from(jsonDecode(raw) as Map); final result = <int, int>{}; for (final entry in map.entries) { final index = int.tryParse(entry.key); final value = entry.value; if (index != null && index >= 0 && value is num && value >= 0) result[index] = value.toInt().clamp(0, 1440).toInt(); } return result; } catch (_) { return <int, int>{}; }
+    try {
+      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final result = <int, int>{};
+      for (final entry in map.entries) {
+        final index = int.tryParse(entry.key);
+        final value = entry.value;
+        if (index != null && index >= 0 && value is num && value >= 0) result[index] = value.toInt().clamp(0, 1440).toInt();
+      }
+      return result;
+    } catch (_) { return <int, int>{}; }
   }
-  Future<void> setPlanPosition(int index, int blockIndex) async { await prefs.setInt(_indexKey, index.clamp(0, 100000).toInt()); await prefs.setInt(_blockKey, blockIndex.clamp(0, 100000).toInt()); }
+
+  Future<void> setPlanPosition(int index, int blockIndex) async {
+    await prefs.setInt(_indexKey, index.clamp(0, 100000).toInt());
+    await prefs.setInt(_blockKey, blockIndex.clamp(0, 100000).toInt());
+  }
   Future<void> clearPlanPosition() async { await prefs.remove(_indexKey); await prefs.remove(_blockKey); }
   Future<void> addCompletedMinutes(int value) => _recordCompletion(value, null);
   Future<void> addItemCompletedMinutes(int index, int value) => _recordCompletion(value, index);
+
   Future<void> _recordCompletion(int value, int? itemIndex) async {
     final requested = value.clamp(0, 1440).toInt();
     if (requested <= 0) return;
@@ -215,6 +245,13 @@ class LocalStore {
     await prefs.setInt(_sessionsKey, sessions + 1);
     if (!alreadyStudiedToday) { await prefs.setInt(_streakKey, _nextStreak()); await prefs.setString(_lastStudyKey, _dateKey(DateTime.now())); }
   }
-  int _nextStreak() { final previous = prefs.getString(_lastStudyKey); if (previous == null) return 1; final yesterday = _dateKey(DateTime.now().subtract(const Duration(days: 1))); return previous == yesterday ? streak + 1 : 1; }
+
+  int _nextStreak() {
+    final previous = prefs.getString(_lastStudyKey);
+    if (previous == null) return 1;
+    final yesterday = _dateKey(DateTime.now().subtract(const Duration(days: 1)));
+    return previous == yesterday ? streak + 1 : 1;
+  }
+
   String _dateKey(DateTime date) => '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
