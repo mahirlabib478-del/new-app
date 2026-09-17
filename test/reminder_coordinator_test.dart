@@ -378,4 +378,104 @@ void main() {
     expect(scheduler.scheduled, [ReminderCoordinator.studyId]);
     expect(scheduler.cancelled, contains(ReminderCoordinator.planId));
   });
+
+  test('changed daily reminder time cancels and reschedules the reminder', () async {
+    SharedPreferences.setMockInitialValues({
+      'reminder_study_enabled': true,
+      'reminder_break_enabled': false,
+      'reminder_plan_enabled': false,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
+    final settingsStore = ReminderSettingsStore(prefs);
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: store,
+      settingsStore: settingsStore,
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+    await settingsStore.save(ReminderSettings.defaults.copyWith(
+      studyEnabled: true,
+      breakEnabled: false,
+      planEnabled: false,
+      studyHour: 20,
+      studyMinute: 15,
+    ));
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.studyId]);
+    expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
+  });
+
+  test('disabling and re-enabling a daily reminder restores its schedule', () async {
+    SharedPreferences.setMockInitialValues({
+      'reminder_study_enabled': true,
+      'reminder_break_enabled': false,
+      'reminder_plan_enabled': false,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
+    final settingsStore = ReminderSettingsStore(prefs);
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: store,
+      settingsStore: settingsStore,
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+    await settingsStore.save(ReminderSettings.defaults.copyWith(
+      studyEnabled: false,
+      breakEnabled: false,
+      planEnabled: false,
+    ));
+    await coordinator.sync();
+    await settingsStore.save(ReminderSettings.defaults.copyWith(
+      studyEnabled: true,
+      breakEnabled: false,
+      planEnabled: false,
+    ));
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.studyId]);
+    expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
+  });
+
+  test('reschedule failure is retried without marking the new schedule complete', () async {
+    SharedPreferences.setMockInitialValues({
+      'reminder_study_enabled': true,
+      'reminder_break_enabled': false,
+      'reminder_plan_enabled': false,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
+    await store.savePlan(StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]));
+    final settingsStore = ReminderSettingsStore(prefs);
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: store,
+      settingsStore: settingsStore,
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+    await settingsStore.save(ReminderSettings.defaults.copyWith(
+      studyEnabled: true,
+      breakEnabled: false,
+      planEnabled: false,
+      studyHour: 20,
+      studyMinute: 15,
+    ));
+    scheduler.scheduleError = Exception('reschedule failed');
+    await coordinator.sync();
+    scheduler.scheduleError = null;
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.studyId]);
+    expect(scheduler.cancelled.where((id) => id == ReminderCoordinator.studyId).length, 2);
+  });
 }
