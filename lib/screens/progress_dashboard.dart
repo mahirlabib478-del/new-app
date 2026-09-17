@@ -22,20 +22,23 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
   @override
   Widget build(BuildContext context) {
     final store = widget.store;
+    final now = DateTime.now();
     final plan = store.loadPlan();
-    final analytics = ProgressAnalytics(store).build();
-    final planned = plan?.allocatedMinutes ?? 0;
+    final dailyHistory = store.dailyStudyMinutes;
     final completedByItem = plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
+    final analytics = ProgressAnalytics(store).build(today: now, dailyHistory: dailyHistory, plan: plan, itemProgress: completedByItem);
+    final planned = plan?.allocatedMinutes ?? 0;
     final itemCompletedTotal = plan == null ? 0 : plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt());
     final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
     final completed = planned <= 0 ? 0 : completedByItem.isNotEmpty ? itemCompletedTotal.clamp(0, planned).toInt() : aggregateCompleted;
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
     final goal = store.dailyGoalMinutes;
-    final today = store.studyMinutesOn(DateTime.now());
+    final today = dailyHistory['${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}'] ?? 0;
     final goalProgress = (today / goal).clamp(0.0, 1.0).toDouble();
     final week = List.generate(7, (offset) {
-      final date = DateTime.now().subtract(Duration(days: 6 - offset));
-      return (date, store.studyMinutesOn(date));
+      final date = now.subtract(Duration(days: 6 - offset));
+      final key = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      return (date, dailyHistory[key] ?? 0);
     });
     final weekTotal = week.fold<int>(0, (sum, entry) => sum + entry.$2);
     final levelProgress = store.levelProgress / 250;
@@ -61,60 +64,26 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             const SizedBox(height: 18), SizedBox(height: 150, child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [for (final entry in week) Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _DayBar(date: entry.$1, minutes: entry.$2, goal: goal)))])),
           ]))),
           const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: const CircleAvatar(child: Icon(Icons.history_rounded)),
-              title: const Text('Study history', style: TextStyle(fontWeight: FontWeight.w900)),
-              subtitle: const Text('Review your daily study minutes for the last 30 days.'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              splashColor: tapColor,
-              enableFeedback: true,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StudyHistoryScreen(store: store))),
-            ),
-          ),
+          Card(child: ListTile(contentPadding: const EdgeInsets.all(16), leading: const CircleAvatar(child: Icon(Icons.history_rounded)), title: const Text('Study history', style: TextStyle(fontWeight: FontWeight.w900)), subtitle: const Text('Review your daily study minutes for the last 30 days.'), trailing: const Icon(Icons.chevron_right_rounded), splashColor: tapColor, enableFeedback: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StudyHistoryScreen(store: store)))),
           const SizedBox(height: 12),
           Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Study health', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 14),
-            Row(children: [
-              Expanded(child: _InsightStat(icon: Icons.event_available_rounded, value: '${(analytics.consistencyRate * 100).round()}%', label: 'Consistency')),
-              const SizedBox(width: 10),
-              Expanded(child: _InsightStat(icon: Icons.flag_rounded, value: '${analytics.goalHitDays}/${analytics.days}', label: 'Goals hit')),
-              const SizedBox(width: 10),
-              Expanded(child: _InsightStat(icon: Icons.local_fire_department_rounded, value: '${analytics.currentStreak}', label: 'Current streak')),
-            ]),
-            const SizedBox(height: 14),
-            Text('Best streak: ${analytics.bestStreak} days • Best day: ${analytics.bestDayMinutes} min'),
-            const SizedBox(height: 6),
-            Text('${(analytics.goalCompletionRate * 100).round()}% of your ${analytics.days}-day goal budget completed'),
+            Row(children: [Expanded(child: _InsightStat(icon: Icons.event_available_rounded, value: '${(analytics.consistencyRate * 100).round()}%', label: 'Consistency')), const SizedBox(width: 10), Expanded(child: _InsightStat(icon: Icons.flag_rounded, value: '${analytics.goalHitDays}/${analytics.days}', label: 'Goals hit')), const SizedBox(width: 10), Expanded(child: _InsightStat(icon: Icons.local_fire_department_rounded, value: '${analytics.currentStreak}', label: 'Current streak'))]),
+            const SizedBox(height: 14), Text('Best streak: ${analytics.bestStreak} days • Best day: ${analytics.bestDayMinutes} min'), const SizedBox(height: 6), Text('${(analytics.goalCompletionRate * 100).round()}% of your ${analytics.days}-day goal budget completed'),
           ]))),
           const SizedBox(height: 12),
-          if (plan != null)
-            Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
-              const SizedBox(height: 10),
-              LinearProgressIndicator(value: analytics.planCompletionRate, minHeight: 9),
-              const SizedBox(height: 8),
-              Text(analytics.planRemainingMinutes == 0
-                  ? 'Plan complete. Great work.'
-                  : analytics.estimatedPlanDaysRemaining == null
-                      ? '${analytics.planRemainingMinutes} min remaining. Study to build a pace estimate.'
-                      : '${analytics.planRemainingMinutes} min remaining • about ${analytics.estimatedPlanDaysRemaining} day${analytics.estimatedPlanDaysRemaining == 1 ? '' : 's'} at your recent pace'),
-            ]))),
+          if (plan != null) Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]), const SizedBox(height: 10), LinearProgressIndicator(value: analytics.planCompletionRate, minHeight: 9), const SizedBox(height: 8), Text(analytics.planRemainingMinutes == 0 ? 'Plan complete. Great work.' : analytics.estimatedPlanDaysRemaining == null ? '${analytics.planRemainingMinutes} min remaining. Study to build a pace estimate.' : '${analytics.planRemainingMinutes} min remaining • about ${analytics.estimatedPlanDaysRemaining} day${analytics.estimatedPlanDaysRemaining == 1 ? '' : 's'} at your recent pace')]))),
           const SizedBox(height: 12),
           Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 12), LinearProgressIndicator(value: progress, minHeight: 9), const SizedBox(height: 10), Text('${(progress * 100).round()}% plan complete')]))),
           const SizedBox(height: 12),
-          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(children: [
-            Row(children: [CircleAvatar(radius: 24, child: Text('${store.level}', style: const TextStyle(fontWeight: FontWeight.w900))), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Level ${store.level}', style: const TextStyle(fontWeight: FontWeight.w900)), Text(nextLevelXp <= 0 ? 'Level complete' : '$nextLevelXp XP to next level')])), Text('${store.levelProgress}/250 XP', style: const TextStyle(fontWeight: FontWeight.w800))]),
-            const SizedBox(height: 12), LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7),
-          ]))),
+          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(children: [Row(children: [CircleAvatar(radius: 24, child: Text('${store.level}', style: const TextStyle(fontWeight: FontWeight.w900))), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Level ${store.level}', style: const TextStyle(fontWeight: FontWeight.w900)), Text(nextLevelXp <= 0 ? 'Level complete' : '$nextLevelXp XP to next level')])), Text('${store.levelProgress}/250 XP', style: const TextStyle(fontWeight: FontWeight.w800))]), const SizedBox(height: 12), LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7)]))),
           const SizedBox(height: 12),
           Row(children: [Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Streak')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.bolt_rounded, value: '${store.xp}', label: 'XP')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes'))]),
           const SizedBox(height: 20), Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10),
           ...achievements.map((achievement) => _Achievement(icon: _achievementIcon(achievement.title), title: achievement.title, subtitle: achievement.description, unlocked: achievement.unlocked)),
           const SizedBox(height: 18),
-          if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
+          if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: completedByItem[entry.key] ?? 0)),
         ],
       ),
     );
@@ -150,46 +119,29 @@ class _DayBar extends StatelessWidget {
   final DateTime date;
   final int minutes;
   final int goal;
-  @override Widget build(BuildContext context) {
-    final ratio = goal <= 0 ? 0.0 : (minutes / goal).clamp(0.0, 1.0).toDouble();
-    final height = 16 + ratio * 92;
-    final isToday = DateUtils.isSameDay(date, DateTime.now());
-    return Column(mainAxisAlignment: MainAxisAlignment.end, children: [Text('$minutes', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)), const SizedBox(height: 5), AnimatedContainer(duration: const Duration(milliseconds: 300), height: minutes == 0 ? 10 : height, decoration: BoxDecoration(color: isToday ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(10))), const SizedBox(height: 6), Text(['M', 'T', 'W', 'T', 'F', 'S', 'S'][date.weekday - 1], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800))]);
-  }
+  @override Widget build(BuildContext context) { final ratio = goal <= 0 ? 0.0 : (minutes / goal).clamp(0.0, 1.0).toDouble(); final height = 16 + ratio * 92; final isToday = DateUtils.isSameDay(date, DateTime.now()); return Column(mainAxisAlignment: MainAxisAlignment.end, children: [Text('$minutes', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)), const SizedBox(height: 5), AnimatedContainer(duration: const Duration(milliseconds: 300), height: minutes == 0 ? 10 : height, decoration: BoxDecoration(color: isToday ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(10))), const SizedBox(height: 6), Text(['M', 'T', 'W', 'T', 'F', 'S', 'S'][date.weekday - 1], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800))]); }
 }
 
 class _InsightStat extends StatelessWidget {
   const _InsightStat({required this.icon, required this.value, required this.label});
-  final IconData icon;
-  final String value;
-  final String label;
+  final IconData icon; final String value; final String label;
   @override Widget build(BuildContext context) => Column(children: [Icon(icon, size: 22), const SizedBox(height: 5), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label, style: const TextStyle(fontSize: 11))]);
 }
 
 class _Achievement extends StatelessWidget {
   const _Achievement({required this.icon, required this.title, required this.subtitle, required this.unlocked});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool unlocked;
+  final IconData icon; final String title; final String subtitle; final bool unlocked;
   @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(leading: CircleAvatar(child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(subtitle), trailing: Icon(unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded)));
 }
 
 class _ProgressItem extends StatelessWidget {
   const _ProgressItem({required this.item, required this.completed});
-  final StudyItem item;
-  final int completed;
-  @override Widget build(BuildContext context) {
-    final done = completed.clamp(0, item.minutes).toInt();
-    final progress = item.minutes <= 0 ? 0.0 : (done / item.minutes).clamp(0.0, 1.0).toDouble();
-    return Card(margin: const EdgeInsets.only(bottom: 10), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w900))), Text('$done/${item.minutes}m')]), if (item.topic.isNotEmpty) Text(item.topic), const SizedBox(height: 10), LinearProgressIndicator(value: progress)])));
-  }
+  final StudyItem item; final int completed;
+  @override Widget build(BuildContext context) { final done = completed.clamp(0, item.minutes).toInt(); final progress = item.minutes <= 0 ? 0.0 : (done / item.minutes).clamp(0.0, 1.0).toDouble(); return Card(margin: const EdgeInsets.only(bottom: 10), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w900))), Text('$done/${item.minutes}m')]), if (item.topic.isNotEmpty) Text(item.topic), const SizedBox(height: 10), LinearProgressIndicator(value: progress)]))); }
 }
 
 class _Stat extends StatelessWidget {
   const _Stat({required this.icon, required this.value, required this.label});
-  final IconData icon;
-  final String value;
-  final String label;
+  final IconData icon; final String value; final String label;
   @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)])));
 }
