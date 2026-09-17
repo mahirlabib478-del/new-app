@@ -80,6 +80,13 @@ class ReminderCoordinator {
       return;
     }
 
+    if (!settings.breakEnabled) {
+      // Break reminders are event-driven rather than daily-scheduled. Cancel the
+      // fixed notification ID when disabled so a previously shown break reminder
+      // cannot remain visible after the setting changes or an app restart.
+      await _safeCancel(breakId);
+    }
+
     final snapshot = TodayEngine(store).build();
 
     final studyRequest = policy.studyReminder(
