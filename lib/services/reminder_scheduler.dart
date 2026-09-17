@@ -16,16 +16,26 @@ abstract interface class ReminderScheduler {
   Future<bool?> requestPermissions();
 }
 
-/// Optional timezone refresh capability for schedulers that cache timezone state.
-///
-/// The capability is resolved dynamically so existing ReminderScheduler test
-/// doubles and third-party implementations remain source-compatible.
+/// Optional capability for schedulers that cache timezone state.
+abstract interface class ReminderSchedulerTimeZoneAware {
+  Future<void> refreshTimeZone();
+  String? get timeZoneFingerprint;
+}
+
+/// Refreshes timezone state when the scheduler supports the optional capability.
 extension ReminderSchedulerTimeZoneRefresh on ReminderScheduler {
   Future<void> refreshTimeZone() async {
-    try {
-      await (this as dynamic).refreshTimeZone();
-    } on NoSuchMethodError {
-      // Schedulers without timezone state do not need to do anything.
+    final scheduler = this;
+    if (scheduler is ReminderSchedulerTimeZoneAware) {
+      await scheduler.refreshTimeZone();
     }
+  }
+
+  String? get timeZoneFingerprint {
+    final scheduler = this;
+    if (scheduler is ReminderSchedulerTimeZoneAware) {
+      return scheduler.timeZoneFingerprint;
+    }
+    return null;
   }
 }
