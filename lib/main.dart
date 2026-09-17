@@ -147,6 +147,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     if (mounted) {
       _tabs[0] = _buildHomeTab();
       _tabs[1] = _buildStudyTab();
+      _tabs[2] = _buildProgressTab();
       setState(() {});
     }
   }
@@ -327,7 +328,7 @@ class _Mode extends StatelessWidget {
         onTap: onTap,
         contentPadding: const EdgeInsets.all(12),
         leading: CircleAvatar(radius: 27, child: Icon(icon)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right_rounded),
       ),
