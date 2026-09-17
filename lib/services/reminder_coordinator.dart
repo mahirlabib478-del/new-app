@@ -22,7 +22,8 @@ class ReminderCoordinator {
   final ReminderPolicy policy;
 
   bool _syncing = false;
-  bool _syncRequested = false;
+  int _syncGeneration = 0;
+  int _completedGeneration = 0;
   ReminderSettings? _pendingSettingsOverride;
   final Map<int, String> _scheduledFingerprints = <int, String>{};
 
@@ -36,21 +37,23 @@ class ReminderCoordinator {
   }
 
   Future<void> sync({ReminderSettings? settingsOverride}) async {
-    _syncRequested = true;
+    _syncGeneration++;
     _pendingSettingsOverride = settingsOverride;
     if (_syncing) return;
 
     _syncing = true;
     try {
-      do {
-        _syncRequested = false;
+      while (_completedGeneration < _syncGeneration) {
+        final generation = _syncGeneration;
         final override = _pendingSettingsOverride;
         _pendingSettingsOverride = null;
         await _syncOnce(settingsOverride: override);
-      } while (_syncRequested);
+        _completedGeneration = generation;
+      }
     } finally {
       _syncing = false;
       _pendingSettingsOverride = null;
+      _completedGeneration = _syncGeneration;
     }
   }
 
