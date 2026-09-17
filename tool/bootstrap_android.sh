@@ -36,10 +36,18 @@ build.write_text(text)
 manifest = Path('android/app/src/main/AndroidManifest.xml')
 text = manifest.read_text()
 
-permission = '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
+permissions = (
+    '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
+    '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
+)
 if 'android.permission.RECEIVE_BOOT_COMPLETED' not in text:
     insert_at = text.find('>', text.find('<manifest')) + 1
-    text = text[:insert_at] + '\n' + permission + text[insert_at:]
+    text = text[:insert_at] + '\n' + permissions + text[insert_at:]
+elif 'android.permission.POST_NOTIFICATIONS' not in text:
+    anchor = '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
+    if anchor not in text:
+        raise SystemExit('Could not find notification permission anchor')
+    text = text.replace(anchor, permissions, 1)
 
 receiver = '''
         <receiver
@@ -66,7 +74,7 @@ manifest.write_text(text)
 
 activity = Path('android/app/src/main/kotlin/com/mahirlabib/study_os/MainActivity.kt')
 activity.parent.mkdir(parents=True, exist_ok=True)
-activity.write_text('''package com.mahirlabib.study_os
+activity.write_text('''package com.mahirlab.study_os
 
 import android.media.AudioManager
 import android.media.ToneGenerator
