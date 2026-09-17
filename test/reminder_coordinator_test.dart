@@ -151,6 +151,21 @@ void main() {
     expect(scheduler.shown, isEmpty);
   });
 
+  test('sync cancels a stale break notification when break reminders are disabled', () async {
+    SharedPreferences.setMockInitialValues({'reminder_break_enabled': false});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+
+    expect(scheduler.cancelled, contains(ReminderCoordinator.breakId));
+  });
+
   test('enabled break reminder shows a notification after focus completion', () async {
     SharedPreferences.setMockInitialValues({'reminder_break_enabled': true});
     final prefs = await SharedPreferences.getInstance();
