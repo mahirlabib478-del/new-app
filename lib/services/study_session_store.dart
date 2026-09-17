@@ -4,7 +4,7 @@ import 'local_store.dart';
 import '../models/study_models.dart';
 
 class SavedStudySession {
-  const SavedStudySession({required this.id, required this.mode, required this.savedAt, required this.plan, required this.itemProgress, required this.planCompletedMinutes, required this.currentIndex, required this.currentBlockIndex});
+  const SavedStudySession({required this.id, required this.mode, required this.savedAt, required this.plan, required this.itemProgress, required this.planCompletedMinutes, required this.currentIndex, required this.currentBlockIndex, this.focusRemainingSeconds, this.focusRunning, this.focusDeadlineMillis});
   final String id;
   final String mode;
   final DateTime savedAt;
@@ -13,16 +13,17 @@ class SavedStudySession {
   final int planCompletedMinutes;
   final int currentIndex;
   final int currentBlockIndex;
+  final int? focusRemainingSeconds;
+  final bool? focusRunning;
+  final int? focusDeadlineMillis;
   int get completedMinutes => itemProgress.entries.fold(0, (sum, entry) { if (entry.key < 0 || entry.key >= plan.items.length) return sum; return sum + entry.value.clamp(0, plan.items[entry.key].minutes).toInt(); });
   int get remainingMinutes => (plan.allocatedMinutes - completedMinutes).clamp(0, 1440).toInt();
-  Map<String, dynamic> toJson() => {'id': id, 'mode': mode, 'savedAt': savedAt.toIso8601String(), 'plan': plan.toJson(), 'itemProgress': itemProgress.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': planCompletedMinutes, 'currentIndex': currentIndex, 'currentBlockIndex': currentBlockIndex};
+  Map<String, dynamic> toJson() => {'id': id, 'mode': mode, 'savedAt': savedAt.toIso8601String(), 'plan': plan.toJson(), 'itemProgress': itemProgress.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': planCompletedMinutes, 'currentIndex': currentIndex, 'currentBlockIndex': currentBlockIndex, if (focusRemainingSeconds != null) 'focusRemainingSeconds': focusRemainingSeconds, if (focusRunning != null) 'focusRunning': focusRunning, if (focusDeadlineMillis != null) 'focusDeadlineMillis': focusDeadlineMillis};
   factory SavedStudySession.fromJson(Map<String, dynamic> json) {
     final rawPlan = json['plan'];
     if (rawPlan is! Map) throw const FormatException('Saved session has no valid plan');
     final plan = StudyPlan.fromJson(Map<String, dynamic>.from(rawPlan));
-    if (plan.items.isEmpty || plan.totalMinutes <= 0 || plan.allocatedMinutes <= 0 || plan.allocatedMinutes > plan.totalMinutes) {
-      throw const FormatException('Saved session contains an invalid plan');
-    }
+    if (plan.items.isEmpty || plan.totalMinutes <= 0 || plan.allocatedMinutes <= 0 || plan.allocatedMinutes > plan.totalMinutes) throw const FormatException('Saved session contains an invalid plan');
     final progress = <int, int>{};
     final rawProgress = json['itemProgress'];
     if (rawProgress is Map) {
@@ -32,7 +33,10 @@ class SavedStudySession {
       }
     }
     final savedAtRaw = json['savedAt'];
-    return SavedStudySession(id: json['id'] as String? ?? DateTime.now().microsecondsSinceEpoch.toString(), mode: json['mode'] as String? ?? 'Study', savedAt: DateTime.tryParse(savedAtRaw as String? ?? '') ?? DateTime.now(), plan: plan, itemProgress: progress, planCompletedMinutes: (json['planCompletedMinutes'] as num? ?? 0).clamp(0, plan.allocatedMinutes).toInt(), currentIndex: (json['currentIndex'] as num? ?? 0).clamp(0, 100000).toInt(), currentBlockIndex: (json['currentBlockIndex'] as num? ?? 0).clamp(0, 100000).toInt());
+    final rawFocusRemaining = json['focusRemainingSeconds'];
+    final rawFocusRunning = json['focusRunning'];
+    final rawFocusDeadline = json['focusDeadlineMillis'];
+    return SavedStudySession(id: json['id'] as String? ?? DateTime.now().microsecondsSinceEpoch.toString(), mode: json['mode'] as String? ?? 'Study', savedAt: DateTime.tryParse(savedAtRaw as String? ?? '') ?? DateTime.now(), plan: plan, itemProgress: progress, planCompletedMinutes: (json['planCompletedMinutes'] as num? ?? 0).clamp(0, plan.allocatedMinutes).toInt(), currentIndex: (json['currentIndex'] as num? ?? 0).clamp(0, 100000).toInt(), currentBlockIndex: (json['currentBlockIndex'] as num? ?? 0).clamp(0, 100000).toInt(), focusRemainingSeconds: rawFocusRemaining is num ? rawFocusRemaining.toInt().clamp(0, 86400).toInt() : null, focusRunning: rawFocusRunning is bool ? rawFocusRunning : null, focusDeadlineMillis: rawFocusDeadline is num ? rawFocusDeadline.toInt() : null);
   }
 }
 
@@ -54,7 +58,6 @@ class StudySessionStore {
   }
 
   String planFingerprint(StudyPlan plan) => jsonEncode(plan.toJson());
-
   bool samePlan(StudyPlan first, StudyPlan second) => planFingerprint(first) == planFingerprint(second);
 
   Future<void> archiveCurrentPlan({String? mode}) async {
@@ -64,7 +67,9 @@ class StudySessionStore {
     if (completed >= plan.allocatedMinutes) { await removeActivePlanSession(plan); return; }
     final fingerprint = planFingerprint(plan);
     final existing = sessions.where((item) => planFingerprint(item.plan) == fingerprint).toList();
-    final session = SavedStudySession(id: existing.isEmpty ? DateTime.now().microsecondsSinceEpoch.toString() : existing.first.id, mode: mode ?? store.activeStudyMode, savedAt: DateTime.now(), plan: plan, itemProgress: store.itemCompletedMinutesMap, planCompletedMinutes: completed, currentIndex: store.currentPlanIndex, currentBlockIndex: store.currentBlockIndex);
+    final focus = store.focusTimerState;
+    final focusMatchesPosition = focus != null && focus.index == store.currentPlanIndex && focus.blockIndex == store.currentBlockIndex;
+    final session = SavedStudySession(id: existing.isEmpty ? DateTime.now().microsecondsSinceEpoch.toString() : existing.first.id, mode: mode ?? store.activeStudyMode, savedAt: DateTime.now(), plan: plan, itemProgress: store.itemCompletedMinutesMap, planCompletedMinutes: completed, currentIndex: store.currentPlanIndex, currentBlockIndex: store.currentBlockIndex, focusRemainingSeconds: focusMatchesPosition ? focus!.remainingSeconds : null, focusRunning: focusMatchesPosition ? focus!.running : null, focusDeadlineMillis: focusMatchesPosition ? focus!.deadlineMillis : null);
     final next = [...sessions.where((item) => planFingerprint(item.plan) != fingerprint), session];
     await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
   }
@@ -77,7 +82,7 @@ class StudySessionStore {
 
   Future<void> delete(String id) async {
     final next = sessions.where((item) => item.id != id).toList();
-    await store.prefs.setString(_key, jsonEncode(next.map((item) => item.toJson()).toList()));
+    await store.prefs.setString(_key, jsonEncode(next));
   }
 
   Future<bool> reset(String id) async {
@@ -96,10 +101,16 @@ class StudySessionStore {
     await store.prefs.setString('study_plan_date', _dateKey(DateTime.now()));
     await store.prefs.setInt('plan_completed_minutes', target.planCompletedMinutes);
     if (target.itemProgress.isEmpty) await store.prefs.remove('item_completed_minutes'); else await store.prefs.setString('item_completed_minutes', jsonEncode(target.itemProgress.map((key, value) => MapEntry(key.toString(), value))));
-    await store.prefs.setInt('current_plan_index', target.currentIndex.clamp(0, target.plan.items.length - 1).toInt());
-    await store.prefs.setInt('current_block_index', target.currentBlockIndex);
+    final restoredIndex = target.currentIndex.clamp(0, target.plan.items.length - 1).toInt();
+    final restoredBlock = target.currentBlockIndex.clamp(0, 100000).toInt();
+    await store.prefs.setInt('current_plan_index', restoredIndex);
+    await store.prefs.setInt('current_block_index', restoredBlock);
     await store.setActiveStudyMode(target.mode);
-    await store.clearFocusTimerState();
+    if (target.focusRemainingSeconds != null && target.focusRunning != null && restoredIndex == target.currentIndex && restoredBlock == target.currentBlockIndex) {
+      await store.saveFocusTimerState(FocusTimerState(index: restoredIndex, blockIndex: restoredBlock, remainingSeconds: target.focusRemainingSeconds!.clamp(0, 86400).toInt(), running: target.focusRunning!, deadlineMillis: target.focusDeadlineMillis));
+    } else {
+      await store.clearFocusTimerState();
+    }
     await store.clearBreakTimerState();
     return true;
   }
