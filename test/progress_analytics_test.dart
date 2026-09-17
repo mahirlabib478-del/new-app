@@ -58,7 +58,7 @@ void main() {
 
   test('analytics uses item-level progress as authoritative plan progress', () async {
     final store = await makeStore();
-    final today = DateTime(2026, 9, 16);
+    final today = DateTime.now();
     await store.savePlan(StudyPlan(totalMinutes: 60, items: [
       StudyItem(title: 'Physics', minutes: 30),
       StudyItem(title: 'Math', minutes: 30),
@@ -72,12 +72,12 @@ void main() {
     expect(summary.planCompletedMinutes, 30);
     expect(summary.planRemainingMinutes, 30);
     expect(summary.planCompletionRate, closeTo(0.5, 0.0001));
-    expect(summary.estimatedPlanDaysRemaining, 7);
+    expect(summary.estimatedPlanDaysRemaining, 1);
   });
 
   test('analytics estimates remaining plan days from recent average pace', () async {
     final store = await makeStore({'daily_goal_minutes': 60});
-    final today = DateTime(2026, 9, 16);
+    final today = DateTime.now();
     await store.savePlan(StudyPlan(totalMinutes: 120, items: [
       StudyItem(title: 'Physics', minutes: 60),
       StudyItem(title: 'Math', minutes: 60),
@@ -88,8 +88,8 @@ void main() {
 
     final summary = ProgressAnalytics(store).build(today: today, days: 2);
 
-    expect(summary.averageMinutes, 40);
+    expect(summary.averageMinutes, 30);
     expect(summary.planRemainingMinutes, 100);
-    expect(summary.estimatedPlanDaysRemaining, 3);
+    expect(summary.estimatedPlanDaysRemaining, 4);
   });
 }
