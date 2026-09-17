@@ -57,51 +57,11 @@ class TodayEngine {
     final plan = store.loadPlan();
     final planned = plan?.allocatedMinutes ?? 0;
     final completedByItem = plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
-    final itemCompletedTotal = plan == null
-        ? 0
-        : plan.items.asMap().entries.fold<int>(
-            0,
-            (sum, entry) => sum + (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt(),
-          );
-
-    final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
     final hasItemProgress = completedByItem.isNotEmpty;
-    final completed = planned <= 0
-        ? 0
-        : hasItemProgress
-            ? itemCompletedTotal.clamp(0, planned).toInt()
-            : aggregateCompleted;
-    final remaining = planned <= 0 ? 0 : planned - completed;
-    final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
+    final aggregateCompleted = store.planCompletedMinutes.clamp(0, planned).toInt();
 
+    var itemCompletedTotal = 0;
     var remainingItemCount = 0;
-    if (plan != null) {
-      if (hasItemProgress) {
-        remainingItemCount = plan.items.asMap().entries.where((entry) {
-          final itemCompleted = (completedByItem[entry.key] ?? 0).clamp(0, entry.value.minutes).toInt();
-          return entry.value.minutes > 0 && itemCompleted < entry.value.minutes;
-        }).length;
-      } else {
-        // Legacy aggregate progress is ordered by plan items, matching the
-        // legacy next-item resume logic below.
-        var remainingCompleted = aggregateCompleted;
-        for (final item in plan.items) {
-          if (item.minutes <= 0) continue;
-          if (remainingCompleted >= item.minutes) {
-            remainingCompleted -= item.minutes;
-          } else {
-            remainingItemCount++;
-            remainingCompleted = 0;
-          }
-        }
-      }
-    }
-
-    final dailyGoal = store.dailyGoalMinutes;
-    final todayCompleted = store.studyMinutesOn(DateTime.now()).clamp(0, 1440).toInt();
-    final goalRemaining = (dailyGoal - todayCompleted).clamp(0, dailyGoal).toInt();
-    final goalProgress = (todayCompleted / dailyGoal).clamp(0.0, 1.0).toDouble();
-
     var index = 0;
     var blockIndex = 0;
     var currentItemCompletedMinutes = 0;
@@ -109,18 +69,25 @@ class TodayEngine {
 
     if (plan != null && plan.items.isNotEmpty) {
       if (hasItemProgress) {
+        // One pass now computes total completion, remaining-item count and the
+        // first unfinished item. This avoids walking the plan three times.
         for (var i = 0; i < plan.items.length; i++) {
           final item = plan.items[i];
           final itemCompleted = (completedByItem[i] ?? 0).clamp(0, item.minutes).toInt();
-          if (itemCompleted < item.minutes) {
-            index = i;
-            blockIndex = (itemCompleted ~/ 25).clamp(0, 100000).toInt();
-            currentItemCompletedMinutes = itemCompleted;
-            next = item;
-            break;
+          itemCompletedTotal += itemCompleted;
+          if (item.minutes > 0 && itemCompleted < item.minutes) {
+            remainingItemCount++;
+            if (next == null) {
+              index = i;
+              blockIndex = (itemCompleted ~/ 25).clamp(0, 100000).toInt();
+              currentItemCompletedMinutes = itemCompleted;
+              next = item;
+            }
           }
         }
       } else {
+        // Legacy aggregate progress is ordered by plan items. The same pass
+        // finds the resume item and remaining item count.
         var remainingCompleted = aggregateCompleted;
         for (var i = 0; i < plan.items.length; i++) {
           final item = plan.items[i];
@@ -129,14 +96,25 @@ class TodayEngine {
             remainingCompleted -= item.minutes;
             continue;
           }
-          index = i;
-          currentItemCompletedMinutes = remainingCompleted.clamp(0, item.minutes).toInt();
-          blockIndex = (currentItemCompletedMinutes ~/ 25).clamp(0, 100000).toInt();
-          next = item;
-          break;
+          remainingItemCount++;
+          if (next == null) {
+            index = i;
+            currentItemCompletedMinutes = remainingCompleted.clamp(0, item.minutes).toInt();
+            blockIndex = (currentItemCompletedMinutes ~/ 25).clamp(0, 100000).toInt();
+            next = item;
+          }
+          remainingCompleted = 0;
         }
       }
     }
+
+    final completed = planned <= 0
+        ? 0
+        : hasItemProgress
+            ? itemCompletedTotal.clamp(0, planned).toInt()
+            : aggregateCompleted;
+    final remaining = planned <= 0 ? 0 : planned - completed;
+    final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
 
     if (next == null && plan != null && plan.items.isNotEmpty) {
       index = (plan.items.length - 1).clamp(0, 100000).toInt();
@@ -144,9 +122,11 @@ class TodayEngine {
       currentItemCompletedMinutes = plan.items[index].minutes;
     }
 
-    final itemRemaining = next == null
-        ? 0
-        : (next.minutes - currentItemCompletedMinutes).clamp(0, next.minutes).toInt();
+    final dailyGoal = store.dailyGoalMinutes;
+    final todayCompleted = store.studyMinutesOn(DateTime.now()).clamp(0, 1440).toInt();
+    final goalRemaining = (dailyGoal - todayCompleted).clamp(0, dailyGoal).toInt();
+    final goalProgress = (todayCompleted / dailyGoal).clamp(0.0, 1.0).toDouble();
+    final itemRemaining = next == null ? 0 : (next.minutes - currentItemCompletedMinutes).clamp(0, next.minutes).toInt();
     final availableForGoal = goalRemaining > 0 ? goalRemaining : remaining;
     final recommended = remaining <= 0 || itemRemaining <= 0
         ? 0
