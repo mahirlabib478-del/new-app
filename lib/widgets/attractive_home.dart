@@ -24,6 +24,7 @@ class AttractiveHome extends StatelessWidget {
     final snapshot = TodayEngine(store).build();
     final scheme = Theme.of(context).colorScheme;
     final tapColor = scheme.primary.withValues(alpha: 0.18);
+    final completedByItem = snapshot.plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
@@ -51,7 +52,7 @@ class AttractiveHome extends StatelessWidget {
           else
             ...snapshot.plan!.items.asMap().entries.map((entry) {
               final item = entry.value;
-              final completed = store.itemCompletedMinutesMap[entry.key] ?? 0;
+              final completed = completedByItem[entry.key] ?? 0;
               final progress = item.minutes <= 0 ? 1.0 : (completed / item.minutes).clamp(0.0, 1.0).toDouble();
               final active = snapshot.currentIndex == entry.key && snapshot.hasRemainingWork;
               final complete = item.minutes > 0 && completed >= item.minutes;
