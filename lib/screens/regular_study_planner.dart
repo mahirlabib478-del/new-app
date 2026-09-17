@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/local_store.dart';
+import '../services/study_session_store.dart';
 import 'focus_flow.dart';
 
 class RegularStudyPlanner extends StatefulWidget {
@@ -102,7 +103,7 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
       if (proceed != true) return;
     }
     final plan = StudyPlan(totalMinutes: widget.total, items: items);
-    await widget.store.savePlan(plan, mode: 'Regular Study');
+    await StudySessionStore(widget.store).savePlan(plan, mode: 'Regular Study');
     if (!mounted) return;
     if (widget.onStartPlan != null) { await widget.onStartPlan!(plan); return; }
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: plan, index: 0, blockIndex: 0)));
