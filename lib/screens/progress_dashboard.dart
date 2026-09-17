@@ -33,7 +33,8 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
     final completed = planned <= 0 ? 0 : completedByItem.isNotEmpty ? itemCompletedTotal.clamp(0, planned).toInt() : aggregateCompleted;
     final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble();
     final goal = store.dailyGoalMinutes;
-    final today = dailyHistory['${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}'] ?? 0;
+    final todayKey = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final today = dailyHistory[todayKey] ?? 0;
     final goalProgress = (today / goal).clamp(0.0, 1.0).toDouble();
     final week = List.generate(7, (offset) {
       final date = now.subtract(Duration(days: 6 - offset));
@@ -73,7 +74,15 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             const SizedBox(height: 14), Text('Best streak: ${analytics.bestStreak} days • Best day: ${analytics.bestDayMinutes} min'), const SizedBox(height: 6), Text('${(analytics.goalCompletionRate * 100).round()}% of your ${analytics.days}-day goal budget completed'),
           ]))),
           const SizedBox(height: 12),
-          if (plan != null) Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]), const SizedBox(height: 10), LinearProgressIndicator(value: analytics.planCompletionRate, minHeight: 9), const SizedBox(height: 8), Text(analytics.planRemainingMinutes == 0 ? 'Plan complete. Great work.' : analytics.estimatedPlanDaysRemaining == null ? '${analytics.planRemainingMinutes} min remaining. Study to build a pace estimate.' : '${analytics.planRemainingMinutes} min remaining • about ${analytics.estimatedPlanDaysRemaining} day${analytics.estimatedPlanDaysRemaining == 1 ? '' : 's'} at your recent pace')]))),
+          if (plan != null) ...[
+            Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(value: analytics.planCompletionRate, minHeight: 9),
+              const SizedBox(height: 8),
+              Text(analytics.planRemainingMinutes == 0 ? 'Plan complete. Great work.' : analytics.estimatedPlanDaysRemaining == null ? '${analytics.planRemainingMinutes} min remaining. Study to build a pace estimate.' : '${analytics.planRemainingMinutes} min remaining • about ${analytics.estimatedPlanDaysRemaining} day${analytics.estimatedPlanDaysRemaining == 1 ? '' : 's'} at your recent pace'),
+            ]))),
+          ],
           const SizedBox(height: 12),
           Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 12), LinearProgressIndicator(value: progress, minHeight: 9), const SizedBox(height: 10), Text('${(progress * 100).round()}% plan complete')]))),
           const SizedBox(height: 12),

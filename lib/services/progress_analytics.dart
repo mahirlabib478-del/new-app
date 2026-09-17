@@ -1,3 +1,4 @@
+import '../models/study_models.dart';
 import 'local_store.dart';
 
 class ProgressAnalytics {
