@@ -308,9 +308,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final gate = Completer<void>();
+    final started = Completer<void>();
     final scheduler = FakeScheduler();
     scheduler.onInitialize = () async {
-      if (scheduler.initializeCalls == 1) await gate.future;
+      if (scheduler.initializeCalls == 1) {
+        started.complete();
+        await gate.future;
+      }
     };
     final coordinator = ReminderCoordinator(
       store: LocalStore(prefs),
@@ -324,7 +328,7 @@ void main() {
         planEnabled: true,
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await started.future;
     final second = coordinator.sync(
       settingsOverride: ReminderSettings.defaults.copyWith(
         studyEnabled: true,
