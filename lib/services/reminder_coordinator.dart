@@ -23,6 +23,7 @@ class ReminderCoordinator {
 
   bool _syncing = false;
   bool _syncRequested = false;
+  final Map<int, String> _scheduledFingerprints = <int, String>{};
 
   Future<void> requestPermissions() async {
     try {
@@ -113,12 +114,16 @@ class ReminderCoordinator {
     required int minute,
   }) async {
     if (!enabled || request == null) {
+      _scheduledFingerprints.remove(id);
       await _safeCancel(id);
       return;
     }
 
+    final fingerprint = '$id|${request.kind.name}|${request.title}|${request.body}|$hour|$minute';
+    if (_scheduledFingerprints[id] == fingerprint) return;
+
     try {
-      // Make every refresh explicitly idempotent even if a scheduler backend
+      // Make refreshes explicitly idempotent even if a scheduler backend
       // changes its replacement semantics for an existing notification ID.
       await scheduler.cancel(id);
       await scheduler.scheduleDailyReminder(
@@ -128,6 +133,7 @@ class ReminderCoordinator {
         hour: hour,
         minute: minute,
       );
+      _scheduledFingerprints[id] = fingerprint;
     } on Exception {
       // Unsupported platforms and OS-level failures must not block the app.
     }
