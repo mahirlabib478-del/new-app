@@ -92,6 +92,7 @@ class ReminderCoordinator {
     final studyRequest = policy.studyReminder(
       hasRemainingWork: snapshot.hasPlan && !snapshot.isComplete,
       goalRemainingMinutes: snapshot.goalRemainingMinutes,
+      remainingWorkMinutes: snapshot.remainingMinutes,
     );
     await _syncDaily(
       enabled: settings.studyEnabled,
