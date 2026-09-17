@@ -23,6 +23,7 @@ class ReminderCoordinator {
 
   bool _syncing = false;
   bool _syncRequested = false;
+  bool _pendingSettingsOverrideSet = false;
   ReminderSettings? _pendingSettingsOverride;
   final Map<int, String> _scheduledFingerprints = <int, String>{};
 
@@ -38,24 +39,34 @@ class ReminderCoordinator {
   Future<void> sync({ReminderSettings? settingsOverride}) async {
     _syncRequested = true;
     _pendingSettingsOverride = settingsOverride;
+    _pendingSettingsOverrideSet = true;
     if (_syncing) return;
 
     _syncing = true;
     try {
       do {
         _syncRequested = false;
+        final hasOverride = _pendingSettingsOverrideSet;
         final override = _pendingSettingsOverride;
         _pendingSettingsOverride = null;
-        await _syncOnce(settingsOverride: override);
+        _pendingSettingsOverrideSet = false;
+        await _syncOnce(
+          settingsOverride: hasOverride ? override : null,
+          useSettingsStore: !hasOverride,
+        );
       } while (_syncRequested);
     } finally {
       _syncing = false;
       _pendingSettingsOverride = null;
+      _pendingSettingsOverrideSet = false;
     }
   }
 
-  Future<void> _syncOnce({ReminderSettings? settingsOverride}) async {
-    final settings = settingsOverride ?? settingsStore.settings;
+  Future<void> _syncOnce({
+    ReminderSettings? settingsOverride,
+    bool useSettingsStore = true,
+  }) async {
+    final settings = useSettingsStore ? settingsStore.settings : settingsOverride!;
     try {
       await scheduler.initialize();
     } on Exception {
