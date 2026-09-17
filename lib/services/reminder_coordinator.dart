@@ -25,6 +25,7 @@ class ReminderCoordinator {
   int _syncGeneration = 0;
   int _completedGeneration = 0;
   ReminderSettings? _pendingSettingsOverride;
+  bool _pendingPersistedSettings = false;
   final Map<int, String> _scheduledFingerprints = <int, String>{};
 
   Future<void> requestPermissions() async {
@@ -38,7 +39,15 @@ class ReminderCoordinator {
 
   Future<void> sync({ReminderSettings? settingsOverride}) async {
     _syncGeneration++;
-    _pendingSettingsOverride = settingsOverride;
+    if (settingsOverride != null) {
+      _pendingSettingsOverride = settingsOverride;
+      _pendingPersistedSettings = false;
+    } else {
+      // An override-less refresh explicitly supersedes an older queued override
+      // and reads the latest persisted settings when its turn runs.
+      _pendingSettingsOverride = null;
+      _pendingPersistedSettings = true;
+    }
     if (_syncing) return;
 
     _syncing = true;
@@ -46,13 +55,18 @@ class ReminderCoordinator {
       while (_completedGeneration < _syncGeneration) {
         final generation = _syncGeneration;
         final override = _pendingSettingsOverride;
+        final usePersistedSettings = _pendingPersistedSettings || override == null;
         _pendingSettingsOverride = null;
-        await _syncOnce(settingsOverride: override);
+        _pendingPersistedSettings = false;
+        await _syncOnce(
+          settingsOverride: usePersistedSettings ? null : override,
+        );
         _completedGeneration = generation;
       }
     } finally {
       _syncing = false;
       _pendingSettingsOverride = null;
+      _pendingPersistedSettings = false;
       _completedGeneration = _syncGeneration;
     }
   }
