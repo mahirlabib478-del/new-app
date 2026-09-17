@@ -11,6 +11,7 @@ class NotificationService implements ReminderScheduler {
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
+  Future<void>? _initialization;
 
   static const _channelId = 'study_os_reminders';
   static const _channelName = 'Study reminders';
@@ -19,7 +20,21 @@ class NotificationService implements ReminderScheduler {
   @override
   Future<void> initialize() => _initialize();
 
-  Future<void> _initialize({String? timeZoneName}) async {
+  Future<void> _initialize({String? timeZoneName}) {
+    if (_initialized) return Future<void>.value();
+    final inFlight = _initialization;
+    if (inFlight != null) return inFlight;
+
+    final initialization = _performInitialization(timeZoneName: timeZoneName);
+    _initialization = initialization;
+    return initialization.whenComplete(() {
+      if (identical(_initialization, initialization)) {
+        _initialization = null;
+      }
+    });
+  }
+
+  Future<void> _performInitialization({String? timeZoneName}) async {
     if (_initialized) return;
 
     tz.initializeTimeZones();
@@ -38,7 +53,11 @@ class NotificationService implements ReminderScheduler {
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    const settings = InitializationSettings(android: android, iOS: darwin, macOS: darwin);
+    const settings = InitializationSettings(
+      android: android,
+      iOS: darwin,
+      macOS: darwin,
+    );
     await _plugin.initialize(settings);
     _initialized = true;
   }
