@@ -23,7 +23,6 @@ class ReminderCoordinator {
 
   bool _syncing = false;
   bool _syncRequested = false;
-  bool _pendingSettingsOverrideSet = false;
   ReminderSettings? _pendingSettingsOverride;
   final Map<int, String> _scheduledFingerprints = <int, String>{};
 
@@ -39,34 +38,24 @@ class ReminderCoordinator {
   Future<void> sync({ReminderSettings? settingsOverride}) async {
     _syncRequested = true;
     _pendingSettingsOverride = settingsOverride;
-    _pendingSettingsOverrideSet = true;
     if (_syncing) return;
 
     _syncing = true;
     try {
       do {
         _syncRequested = false;
-        final hasOverride = _pendingSettingsOverrideSet;
         final override = _pendingSettingsOverride;
         _pendingSettingsOverride = null;
-        _pendingSettingsOverrideSet = false;
-        await _syncOnce(
-          settingsOverride: hasOverride ? override : null,
-          useSettingsStore: !hasOverride,
-        );
+        await _syncOnce(settingsOverride: override);
       } while (_syncRequested);
     } finally {
       _syncing = false;
       _pendingSettingsOverride = null;
-      _pendingSettingsOverrideSet = false;
     }
   }
 
-  Future<void> _syncOnce({
-    ReminderSettings? settingsOverride,
-    bool useSettingsStore = true,
-  }) async {
-    final settings = useSettingsStore ? settingsStore.settings : settingsOverride!;
+  Future<void> _syncOnce({ReminderSettings? settingsOverride}) async {
+    final settings = settingsOverride ?? settingsStore.settings;
     try {
       await scheduler.initialize();
     } on Exception {
@@ -100,26 +89,16 @@ class ReminderCoordinator {
       minute: settings.planMinute,
     );
 
-    if (!settings.breakEnabled) await _safeCancel(breakId);
-  }
-
-  Future<void> notifyFocusBlockCompleted() async {
-    final settings = settingsStore.settings;
-    if (settings.breakEnabled) {
-      final request = policy.breakReminder(focusSessionCompleted: true);
-      if (request != null) {
-        try {
-          await scheduler.initialize();
-          await scheduler.showNow(id: breakId, title: request.title, body: request.body);
-        } on Exception {
-          // A notification failure must not interrupt the study flow.
-        }
-      }
-    }
-
-    // Focus completion changes Today Engine state, so refresh daily reminders
-    // immediately instead of waiting for the next settings change.
-    await sync();
+    final breakRequest = policy.breakReminder(
+      hasCompletedFocus: snapshot.hasCompletedFocusToday,
+    );
+    await _syncDaily(
+      enabled: settings.breakEnabled,
+      request: breakRequest,
+      id: breakId,
+      hour: settings.breakHour,
+      minute: settings.breakMinute,
+    );
   }
 
   Future<void> _syncDaily({
@@ -135,14 +114,12 @@ class ReminderCoordinator {
       return;
     }
 
-    final fingerprint = '$id|${request.kind.name}|${request.title}|${request.body}|$hour|$minute';
+    final fingerprint = '$id|${request.kind}|${request.title}|${request.body}|$hour|$minute';
     if (_scheduledFingerprints[id] == fingerprint) return;
 
     try {
-      // Make refreshes explicitly idempotent even if a scheduler backend
-      // changes its replacement semantics for an existing notification ID.
-      await scheduler.cancel(id);
-      await scheduler.scheduleDailyReminder(
+      await _safeCancel(id);
+      await scheduler.scheduleDaily(
         id: id,
         title: request.title,
         body: request.body,
@@ -151,15 +128,38 @@ class ReminderCoordinator {
       );
       _scheduledFingerprints[id] = fingerprint;
     } on Exception {
-      // Unsupported platforms and OS-level failures must not block the app.
+      // A transient scheduling failure should not break the study flow.
     }
+  }
+
+  Future<void> notifyFocusBlockCompleted() async {
+    final settings = settingsStore.settings;
+    if (settings.breakEnabled) {
+      final snapshot = TodayEngine(store).build();
+      final request = policy.breakReminder(
+        hasCompletedFocus: snapshot.hasCompletedFocusToday,
+      );
+      if (request != null) {
+        try {
+          await scheduler.initialize();
+          await scheduler.showNow(
+            id: breakId,
+            title: request.title,
+            body: request.body,
+          );
+        } on Exception {
+          // Focus completion remains successful if notifications fail.
+        }
+      }
+    }
+    await sync();
   }
 
   Future<void> _safeCancel(int id) async {
     try {
       await scheduler.cancel(id);
     } on Exception {
-      // Best-effort cancellation keeps settings and study flow usable offline.
+      // Cancellation is best-effort.
     }
   }
 }
