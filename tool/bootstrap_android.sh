@@ -74,7 +74,7 @@ manifest.write_text(text)
 
 activity = Path('android/app/src/main/kotlin/com/mahirlabib/study_os/MainActivity.kt')
 activity.parent.mkdir(parents=True, exist_ok=True)
-activity.write_text('''package com.mahirlab.study_os
+activity.write_text('''package com.mahirlabib.study_os
 
 import android.media.AudioManager
 import android.media.ToneGenerator
