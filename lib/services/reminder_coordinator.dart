@@ -75,13 +75,17 @@ class ReminderCoordinator {
     final settings = settingsOverride ?? settingsStore.settings;
     try {
       await scheduler.initialize();
-      await scheduler.refreshTimeZone();
+      if (scheduler is ReminderSchedulerTimeZoneAware) {
+        await scheduler.refreshTimeZone();
+      }
     } on Exception {
       // Unsupported platforms must still be able to use the study app.
       return;
     }
 
-    final timeZoneFingerprint = scheduler.timeZoneFingerprint ?? 'unknown';
+    final timeZoneFingerprint = scheduler is ReminderSchedulerTimeZoneAware
+        ? scheduler.timeZoneFingerprint ?? 'unknown'
+        : 'unknown';
 
     if (!settings.breakEnabled) {
       // Break reminders are event-driven rather than daily-scheduled. Cancel the
