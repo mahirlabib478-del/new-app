@@ -6,6 +6,8 @@ import '../services/update_service.dart';
 
 export '../services/update_service.dart' show UpdateInfo;
 
+/// Non-blocking update notifier. Core study functionality never depends on
+/// the update service, network availability, or release metadata.
 class UpdateGate extends StatefulWidget {
   const UpdateGate({super.key, required this.store, required this.child, this.checkForUpdate});
   final LocalStore store;
@@ -16,7 +18,7 @@ class UpdateGate extends StatefulWidget {
 
 class _UpdateGateState extends State<UpdateGate> {
   late final Future<UpdateInfo?> _check = _runCheck();
-  bool optionalDismissed = false;
+  bool dismissed = false;
 
   Future<UpdateInfo?> _runCheck() async {
     try {
@@ -24,35 +26,39 @@ class _UpdateGateState extends State<UpdateGate> {
       final packageInfo = await PackageInfo.fromPlatform();
       return await UpdateService(currentVersion: packageInfo.version, prefs: widget.store.prefs).checkForUpdate();
     } catch (_) {
+      // Update checks are optional. Never let them block or terminate the app.
       return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<UpdateInfo?>(
-      future: _check,
-      builder: (context, snapshot) {
-        final info = snapshot.data;
-        // Never block the first frame on PackageInfo/network/update policy.
-        // Render the study UI immediately and layer update information later.
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            widget.child,
-            if (snapshot.connectionState == ConnectionState.done && info != null && !info.isMandatory && !optionalDismissed)
-              Positioned(top: 0, left: 0, right: 0, child: _OptionalUpdateBanner(info: info, onDismiss: () => setState(() => optionalDismissed = true))),
-            if (snapshot.connectionState == ConnectionState.done && info?.isMandatory == true)
-              Positioned.fill(child: _ForceUpdateScreen(info: info!)),
-          ],
-        );
-      },
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.child,
+        FutureBuilder<UpdateInfo?>(
+          future: _check,
+          builder: (context, snapshot) {
+            final info = snapshot.data;
+            if (snapshot.connectionState != ConnectionState.done || info == null || dismissed) return const SizedBox.shrink();
+            // Mandatory/optional policies are intentionally presented the same
+            // way for now: as a dismissible, non-blocking update notice.
+            return Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _UpdateBanner(info: info, onDismiss: () => setState(() => dismissed = true)),
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
-class _OptionalUpdateBanner extends StatelessWidget {
-  const _OptionalUpdateBanner({required this.info, required this.onDismiss});
+class _UpdateBanner extends StatelessWidget {
+  const _UpdateBanner({required this.info, required this.onDismiss});
   final UpdateInfo info;
   final VoidCallback onDismiss;
 
@@ -84,57 +90,6 @@ class _OptionalUpdateBanner extends StatelessWidget {
               TextButton(onPressed: () => _update(context), child: const Text('Update')),
               IconButton(onPressed: onDismiss, tooltip: 'Dismiss', icon: const Icon(Icons.close_rounded)),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ForceUpdateScreen extends StatelessWidget {
-  const _ForceUpdateScreen({required this.info});
-  final UpdateInfo info;
-
-  Future<void> _update(BuildContext context) async {
-    try {
-      final opened = await const UpdateService().openRelease(info);
-      if (!context.mounted || opened) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
-    } catch (_) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update page could not be opened. Please try again.')));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(26),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    CircleAvatar(radius: 34, backgroundColor: scheme.primaryContainer, child: Icon(Icons.system_update_rounded, size: 34, color: scheme.onPrimaryContainer)),
-                    const SizedBox(height: 18),
-                    const Text('Update required', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 8),
-                    Text('This version of Study OS is no longer supported. Please update to continue using the app.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 12),
-                    Text('Version ${info.latestVersion} is ready.', style: const TextStyle(fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 22),
-                    FilledButton.icon(onPressed: () => _update(context), icon: const Icon(Icons.download_rounded), label: const SizedBox(width: double.infinity, child: Center(child: Text('Update now')))),
-                    const SizedBox(height: 8),
-                    const Text('Your study data stays on this device during a normal app update.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
-                  ]),
-                ),
-              ),
-            ),
           ),
         ),
       ),
