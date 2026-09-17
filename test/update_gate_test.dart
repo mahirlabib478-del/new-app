@@ -71,6 +71,23 @@ void main() {
     expect(find.text('Update required'), findsNothing);
   });
 
+  testWidgets('Update gate fails open when update check throws', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalStore(await SharedPreferences.getInstance());
+
+    await tester.pumpWidget(MaterialApp(
+      home: UpdateGate(
+        store: store,
+        checkForUpdate: () async => throw StateError('simulated startup failure'),
+        child: const Text('Home content'),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home content'), findsOneWidget);
+    expect(find.text('Checking for updates…'), findsNothing);
+  });
+
   testWidgets('Update gate does not expose app content while update check is pending', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
