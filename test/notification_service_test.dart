@@ -51,4 +51,18 @@ void main() {
 
     expect(next, tz.TZDateTime.utc(2026, 9, 16, 23, 0));
   });
+
+  test('next daily occurrence keeps wall-clock time across DST changes', () {
+    final location = tz.getLocation('America/New_York');
+    final now = tz.TZDateTime(location, 2026, 3, 8, 23, 0);
+
+    final next = NotificationService.nextDailyOccurrence(now, 9, 30);
+
+    expect(next.location, same(location));
+    expect(next.year, 2026);
+    expect(next.month, 3);
+    expect(next.day, 9);
+    expect(next.hour, 9);
+    expect(next.minute, 30);
+  });
 }
