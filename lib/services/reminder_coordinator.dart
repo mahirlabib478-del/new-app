@@ -73,10 +73,11 @@ class ReminderCoordinator {
 
   Future<void> _syncOnce({ReminderSettings? settingsOverride}) async {
     final settings = settingsOverride ?? settingsStore.settings;
-    final timeZoneAwareScheduler = scheduler;
+    final ReminderSchedulerTimeZoneAware? timeZoneAwareScheduler =
+        scheduler is ReminderSchedulerTimeZoneAware ? scheduler : null;
     try {
-      await timeZoneAwareScheduler.initialize();
-      if (timeZoneAwareScheduler is ReminderSchedulerTimeZoneAware) {
+      await scheduler.initialize();
+      if (timeZoneAwareScheduler != null) {
         await timeZoneAwareScheduler.refreshTimeZone();
       }
     } on Exception {
@@ -84,9 +85,8 @@ class ReminderCoordinator {
       return;
     }
 
-    final timeZoneFingerprint = timeZoneAwareScheduler is ReminderSchedulerTimeZoneAware
-        ? timeZoneAwareScheduler.timeZoneFingerprint ?? 'unknown'
-        : 'unknown';
+    final timeZoneFingerprint =
+        timeZoneAwareScheduler?.timeZoneFingerprint ?? 'unknown';
 
     if (!settings.breakEnabled) {
       // Break reminders are event-driven rather than daily-scheduled. Cancel the
