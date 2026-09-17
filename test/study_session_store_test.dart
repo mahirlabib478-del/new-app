@@ -69,6 +69,30 @@ void main() {
     expect(store.focusTimerState?.running, isFalse);
   });
 
+  test('running focus timer preserves its deadline for restoration', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50)]);
+    await store.savePlan(plan, mode: 'Regular Study');
+    await store.setPlanPosition(0, 0);
+    final deadline = DateTime.now().add(const Duration(seconds: 900)).millisecondsSinceEpoch;
+    await store.saveFocusTimerState(FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 900, running: true, deadlineMillis: deadline));
+
+    final sessionStore = StudySessionStore(store);
+    await sessionStore.archiveCurrentPlan();
+    final saved = sessionStore.sessions.single;
+    expect(saved.focusRemainingSeconds, 900);
+    expect(saved.focusRunning, isTrue);
+    expect(saved.focusDeadlineMillis, deadline);
+
+    await store.clearFocusTimerState();
+    expect(await sessionStore.restore(saved.id), isTrue);
+    expect(store.focusTimerState?.index, 0);
+    expect(store.focusTimerState?.blockIndex, 0);
+    expect(store.focusTimerState?.remainingSeconds, 900);
+    expect(store.focusTimerState?.running, isTrue);
+    expect(store.focusTimerState?.deadlineMillis, deadline);
+  });
+
   test('LocalStore archive preserves a paused 5-minute remainder', () async {
     final store = await makeStore();
     final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50)]);
