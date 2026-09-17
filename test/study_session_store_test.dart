@@ -48,6 +48,27 @@ void main() {
     expect(saved.single.mode, 'Regular Study');
   });
 
+  test('paused focus timer is included in saved session and restored exactly', () async {
+    final store = await makeStore();
+    final plan = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 50)]);
+    await store.savePlan(plan, mode: 'Regular Study');
+    await store.setPlanPosition(0, 0);
+    await store.saveFocusTimerState(const FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 300, running: false));
+
+    final sessionStore = StudySessionStore(store);
+    await sessionStore.archiveCurrentPlan();
+    final saved = sessionStore.sessions.single;
+    expect(saved.focusRemainingSeconds, 300);
+    expect(saved.focusRunning, isFalse);
+
+    await store.clearFocusTimerState();
+    expect(await sessionStore.restore(saved.id), isTrue);
+    expect(store.focusTimerState?.index, 0);
+    expect(store.focusTimerState?.blockIndex, 0);
+    expect(store.focusTimerState?.remainingSeconds, 300);
+    expect(store.focusTimerState?.running, isFalse);
+  });
+
   test('LocalStore archive uses the canonical saved-session shape', () async {
     final store = await makeStore();
     final first = StudyPlan(totalMinutes: 50, items: [StudyItem(title: 'Math', topic: 'Algebra', minutes: 25), StudyItem(title: 'Physics', topic: 'Motion', minutes: 25)]);
