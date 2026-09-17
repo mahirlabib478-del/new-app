@@ -9,7 +9,7 @@ import 'package:study_os/widgets/update_gate.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('mandatory release overlays app after async check', (tester) async {
+  testWidgets('mandatory release is still non-blocking and appears as a banner', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
     final completer = Completer<UpdateInfo?>();
@@ -27,9 +27,9 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Update required'), findsOneWidget);
-    expect(find.text('Version 0.3.0 is ready.'), findsOneWidget);
     expect(find.text('Home content'), findsOneWidget);
+    expect(find.text('Update required'), findsNothing);
+    expect(find.text('Study OS 0.3.0 is available.'), findsOneWidget);
   });
 
   testWidgets('optional release appears after check without blocking first frame', (tester) async {
@@ -52,7 +52,7 @@ void main() {
     expect(find.text('Study OS 0.3.0 is available.'), findsOneWidget);
   });
 
-  testWidgets('optional update banner can be dismissed', (tester) async {
+  testWidgets('update banner can be dismissed', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
     final check = Future<UpdateInfo?>.value(const UpdateInfo(
