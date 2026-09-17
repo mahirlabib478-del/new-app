@@ -9,37 +9,47 @@ import 'package:study_os/widgets/update_gate.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Update gate blocks app for a mandatory release', (tester) async {
+  testWidgets('mandatory release overlays app after async check', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
-    final check = Future<UpdateInfo?>.value(const UpdateInfo(
+    final completer = Completer<UpdateInfo?>();
+
+    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => completer.future, child: const Text('Home content'))));
+    await tester.pump();
+
+    expect(find.text('Home content'), findsOneWidget);
+    expect(find.text('Update required'), findsNothing);
+
+    completer.complete(const UpdateInfo(
       latestVersion: '0.3.0',
       releaseUrl: 'https://github.com/mahirlabib478-del/new-app/releases/latest',
       isMandatory: true,
     ));
-
-    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => check, child: const Text('Home content'))));
     await tester.pumpAndSettle();
 
     expect(find.text('Update required'), findsOneWidget);
     expect(find.text('Version 0.3.0 is ready.'), findsOneWidget);
-    expect(find.text('Home content'), findsNothing);
+    expect(find.text('Home content'), findsOneWidget);
   });
 
-  testWidgets('Update gate surfaces optional releases without blocking the app', (tester) async {
+  testWidgets('optional release appears after check without blocking first frame', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
-    final check = Future<UpdateInfo?>.value(const UpdateInfo(
+    final completer = Completer<UpdateInfo?>();
+
+    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => completer.future, child: const Text('Home content'))));
+    await tester.pump();
+    expect(find.text('Home content'), findsOneWidget);
+    expect(find.text('Study OS 0.3.0 is available.'), findsNothing);
+
+    completer.complete(const UpdateInfo(
       latestVersion: '0.3.0',
       releaseUrl: 'https://github.com/mahirlabib478-del/new-app/releases/latest',
     ));
-
-    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => check, child: const Text('Home content'))));
     await tester.pumpAndSettle();
 
     expect(find.text('Home content'), findsOneWidget);
     expect(find.text('Study OS 0.3.0 is available.'), findsOneWidget);
-    expect(find.text('Update'), findsOneWidget);
   });
 
   testWidgets('optional update banner can be dismissed', (tester) async {
@@ -60,18 +70,18 @@ void main() {
     expect(find.text('Study OS 0.3.0 is available.'), findsNothing);
   });
 
-  testWidgets('Update gate keeps app available when no update is reported', (tester) async {
+  testWidgets('no update keeps app available', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
 
     await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => Future<UpdateInfo?>.value(null), child: const Text('Home content'))));
-    await tester.pumpAndSettle();
-
+    await tester.pump();
     expect(find.text('Home content'), findsOneWidget);
-    expect(find.text('Update required'), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.text('Home content'), findsOneWidget);
   });
 
-  testWidgets('Update gate fails open when update check throws', (tester) async {
+  testWidgets('update check failure never blocks app startup', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalStore(await SharedPreferences.getInstance());
 
@@ -82,24 +92,9 @@ void main() {
         child: const Text('Home content'),
       ),
     ));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Home content'), findsOneWidget);
-    expect(find.text('Checking for updates…'), findsNothing);
-  });
-
-  testWidgets('Update gate does not expose app content while update check is pending', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final store = LocalStore(await SharedPreferences.getInstance());
-    final completer = Completer<UpdateInfo?>();
-
-    await tester.pumpWidget(MaterialApp(home: UpdateGate(store: store, checkForUpdate: () => completer.future, child: const Text('Home content'))));
     await tester.pump();
 
-    expect(find.text('Checking for updates…'), findsOneWidget);
-    expect(find.text('Home content'), findsNothing);
-
-    completer.complete(null);
+    expect(find.text('Home content'), findsOneWidget);
     await tester.pumpAndSettle();
     expect(find.text('Home content'), findsOneWidget);
   });
