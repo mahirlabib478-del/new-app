@@ -38,7 +38,6 @@ class _TimezoneTrackingScheduler implements ReminderScheduler {
     initializeCalls++;
   }
 
-  @override
   Future<void> refreshTimeZone() async {
     refreshTimeZoneCalls++;
     refreshOccurredAfterInitialize = initializeCalls > 0;
