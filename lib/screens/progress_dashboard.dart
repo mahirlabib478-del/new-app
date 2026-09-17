@@ -41,6 +41,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
     final levelProgress = store.levelProgress / 250;
     final nextLevelXp = (store.level * 250) - store.xp;
     final achievements = Gamification(store).achievements();
+    final tapColor = Theme.of(context).colorScheme.primary.withValues(alpha: 0.18);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
@@ -67,6 +68,8 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
               title: const Text('Study history', style: TextStyle(fontWeight: FontWeight.w900)),
               subtitle: const Text('Review your daily study minutes for the last 30 days.'),
               trailing: const Icon(Icons.chevron_right_rounded),
+              splashColor: tapColor,
+              enableFeedback: true,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StudyHistoryScreen(store: store))),
             ),
           ),
