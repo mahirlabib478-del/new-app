@@ -23,6 +23,7 @@ class ReminderCoordinator {
 
   bool _syncing = false;
   bool _syncRequested = false;
+  ReminderSettings? _pendingSettingsOverride;
   final Map<int, String> _scheduledFingerprints = <int, String>{};
 
   Future<void> requestPermissions() async {
@@ -36,16 +37,20 @@ class ReminderCoordinator {
 
   Future<void> sync({ReminderSettings? settingsOverride}) async {
     _syncRequested = true;
+    _pendingSettingsOverride = settingsOverride;
     if (_syncing) return;
 
     _syncing = true;
     try {
       do {
         _syncRequested = false;
-        await _syncOnce(settingsOverride: settingsOverride);
+        final override = _pendingSettingsOverride;
+        _pendingSettingsOverride = null;
+        await _syncOnce(settingsOverride: override);
       } while (_syncRequested);
     } finally {
       _syncing = false;
+      _pendingSettingsOverride = null;
     }
   }
 
