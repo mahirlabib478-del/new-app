@@ -183,4 +183,39 @@ void main() {
     expect(scheduler.permissionRequests, 1);
     expect(scheduler.initializeCalls, 1);
   });
+
+  test('repeated sync does not reschedule an unchanged reminder', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await coordinator.sync();
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.cancelled, [ReminderCoordinator.studyId, ReminderCoordinator.breakId, ReminderCoordinator.planId]);
+  });
+
+  test('concurrent sync requests coalesce into one unchanged schedule', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler();
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    await Future.wait([
+      coordinator.sync(),
+      coordinator.sync(),
+    ]);
+
+    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+  });
 }
