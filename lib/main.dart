@@ -174,10 +174,16 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
         brightness: theme.brightness,
         scaffoldBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF0B0D13) : null,
         cardTheme: CardThemeData(margin: EdgeInsets.zero, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),
+        listTileTheme: ListTileThemeData(
+          enableFeedback: true,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        ),
         inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
         splashFactory: InkRipple.splashFactory,
-        splashColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.20 : 0.14),
-        highlightColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.08 : 0.06),
+        splashColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.30 : 0.18),
+        highlightColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.12 : 0.08),
+        hoverColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.10 : 0.06),
+        focusColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.12 : 0.08),
       ),
       home: UpdateGate(
         store: widget.store,
