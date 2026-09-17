@@ -247,9 +247,13 @@ void main() {
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
+    final settings = ReminderSettings.defaults.copyWith(
+      studyEnabled: false,
+      planEnabled: true,
+    );
 
-    await coordinator.sync();
-    await coordinator.sync();
+    await coordinator.sync(settingsOverride: settings);
+    await coordinator.sync(settingsOverride: settings);
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
     expect(scheduler.cancelled, [ReminderCoordinator.planId]);
@@ -273,6 +277,7 @@ void main() {
   test('latest concurrent settings override wins the coalesced refresh', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
+    final store = LocalStore(prefs);
     final gate = Completer<void>();
     final started = Completer<void>();
     final scheduler = FakeScheduler();
@@ -280,10 +285,14 @@ void main() {
       if (scheduler.initializeCalls == 1) {
         started.complete();
         await gate.future;
+      } else if (scheduler.initializeCalls == 2) {
+        await store.savePlan(
+          StudyPlan(totalMinutes: 25, items: [StudyItem(title: 'Math', minutes: 25)]),
+        );
       }
     };
     final coordinator = ReminderCoordinator(
-      store: LocalStore(prefs),
+      store: store,
       settingsStore: ReminderSettingsStore(prefs),
       scheduler: scheduler,
     );
