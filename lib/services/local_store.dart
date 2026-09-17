@@ -48,7 +48,6 @@ class LocalStore {
   static const _dailyGoalKey = 'daily_goal_minutes';
   static const _focusTimerKey = 'focus_timer_state';
   static const _breakTimerKey = 'break_timer_state';
-  static const _savedSessionsKey = 'saved_study_sessions';
   static const _soundEffectsKey = 'sound_effects_enabled';
   static const _activeModeKey = 'active_study_mode';
 
@@ -85,8 +84,6 @@ class LocalStore {
   String get activeStudyMode => prefs.getString(_activeModeKey) ?? 'Study';
 
   Future<void> savePlan(StudyPlan plan, {String? mode}) async {
-    final outgoingMode = activeStudyMode;
-    await _archiveCurrentPlan(mode: outgoingMode);
     await prefs.setString(_planKey, jsonEncode(plan.toJson()));
     await prefs.setString(_planDateKey, _dateKey(DateTime.now()));
     await prefs.setInt(_planMinutesKey, 0);
@@ -97,41 +94,6 @@ class LocalStore {
     await clearBreakTimerState();
     await clearPlanPosition();
     if (mode != null) await setActiveStudyMode(mode);
-  }
-
-  Future<void> _archiveCurrentPlan({required String mode}) async {
-    final raw = prefs.getString(_planKey);
-    if (raw == null) return;
-    final savedDate = prefs.getString(_planDateKey);
-    if (savedDate != null && savedDate != _dateKey(DateTime.now())) return;
-    final plan = loadPlan();
-    if (plan == null || plan.items.isEmpty) return;
-    final completed = planCompletedMinutes.clamp(0, plan.allocatedMinutes).toInt();
-    if (completed >= plan.allocatedMinutes) return;
-    final rawSessions = prefs.getString(_savedSessionsKey);
-    List<dynamic> sessions = const [];
-    try {
-      final decoded = rawSessions == null ? const [] : jsonDecode(rawSessions);
-      if (decoded is List) sessions = List<dynamic>.from(decoded);
-    } catch (_) {}
-    final fingerprint = jsonEncode(plan.toJson());
-    String? existingId;
-    sessions.removeWhere((value) {
-      if (value is! Map) return false;
-      final existingPlan = value['plan'];
-      if (existingPlan is! Map) return false;
-      if (jsonEncode(Map<String, dynamic>.from(existingPlan)) != fingerprint) return false;
-      existingId = value['id'] as String? ?? existingId;
-      return true;
-    });
-    final focus = focusTimerState;
-    final focusMatchesPosition = focus != null && focus.index == currentPlanIndex && focus.blockIndex == currentBlockIndex;
-    if (focusMatchesPosition) {
-      sessions.add({'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(), 'mode': mode, 'savedAt': DateTime.now().toIso8601String(), 'plan': jsonDecode(raw), 'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': completed, 'currentIndex': currentPlanIndex, 'currentBlockIndex': currentBlockIndex, 'focusRemainingSeconds': focus.remainingSeconds, 'focusRunning': focus.running, if (focus.deadlineMillis != null) 'focusDeadlineMillis': focus.deadlineMillis});
-    } else {
-      sessions.add({'id': existingId ?? DateTime.now().microsecondsSinceEpoch.toString(), 'mode': mode, 'savedAt': DateTime.now().toIso8601String(), 'plan': jsonDecode(raw), 'itemProgress': itemCompletedMinutesMap.map((key, value) => MapEntry(key.toString(), value)), 'planCompletedMinutes': completed, 'currentIndex': currentPlanIndex, 'currentBlockIndex': currentBlockIndex});
-    }
-    await prefs.setString(_savedSessionsKey, jsonEncode(sessions));
   }
 
   StudyPlan? loadPlan() {
