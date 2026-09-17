@@ -112,6 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final goal = widget.store.dailyGoalMinutes;
+    final tapColor = scheme.primary.withValues(alpha: 0.18);
     return Scaffold(
       appBar: AppBar(title: Text(strings.profile)),
       body: ListView(
@@ -154,6 +155,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ...ProfileScreen._presets.entries.map(
                   (entry) => ListTile(
                     onTap: () => widget.onThemeChanged(entry.key),
+                    splashColor: tapColor,
+                    enableFeedback: true,
                     leading: Icon(entry.value.icon),
                     title: Text(entry.value.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                     subtitle: Text(entry.value.description),
@@ -175,6 +178,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: Text(strings.languageLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
                   subtitle: Text(strings.languageName),
                   trailing: const Icon(Icons.chevron_right_rounded),
+                  splashColor: tapColor,
+                  enableFeedback: true,
                   onTap: () => _pickLanguage(context),
                 ),
                 ListTile(
@@ -182,6 +187,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: Text(strings.dailyGoal, style: const TextStyle(fontWeight: FontWeight.w800)),
                   subtitle: Text('$goal ${strings.focusedStudy}'),
                   trailing: const Icon(Icons.chevron_right_rounded),
+                  splashColor: tapColor,
+                  enableFeedback: true,
                   onTap: () => _editGoal(context, goal),
                 ),
               ],
