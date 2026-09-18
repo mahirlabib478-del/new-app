@@ -75,16 +75,9 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
     _tabs[0] = _buildHomeTab();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (kReleaseMode) {
-        unawaited(
-          Future<void>.delayed(
-            const Duration(milliseconds: 800),
-            _prepareRemindersSafely,
-          ),
-        );
-      } else {
-        unawaited(_prepareRemindersSafely());
-      }
+      // Request notification access immediately after the first frame so the
+      // Android permission dialog is not hidden behind an arbitrary delay.
+      unawaited(_prepareRemindersSafely());
     });
   }
 
