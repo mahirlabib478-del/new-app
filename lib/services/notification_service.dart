@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -17,6 +18,7 @@ class NotificationService
   static const _channelId = 'study_os_reminders';
   static const _channelName = 'Study reminders';
   static const _channelDescription = 'Study, break and plan reminders.';
+  static const _nativeNotificationChannel = MethodChannel('study_os/notifications');
 
   @override
   Future<void> initialize() => _initialize();
@@ -89,7 +91,16 @@ class NotificationService
     await _initialize();
     final android =
         _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (android != null) return android.requestNotificationsPermission();
+    if (android != null) {
+      // Request through the app Activity as a fallback as well. This keeps the
+      // runtime permission flow independent from plugin-side permission timing.
+      try {
+        await _nativeNotificationChannel.invokeMethod<void>('requestPermission');
+      } on PlatformException {
+        // Fall back to the plugin API below.
+      }
+      return android.requestNotificationsPermission();
+    }
 
     final ios =
         _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
