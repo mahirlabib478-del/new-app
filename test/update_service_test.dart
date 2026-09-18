@@ -22,6 +22,12 @@ void main() {
     expect(service.isNewerVersion('0.3.0+12', '0.2.9'), isTrue);
   });
 
+  test('build metadata is compared so every older build gets an update notice', () {
+    expect(service.isNewerVersion('0.3.0+9', '0.3.0+8'), isTrue);
+    expect(service.isNewerVersion('0.3.0+8', '0.3.0+9'), isFalse);
+    expect(service.isNewerVersion('0.3.1', '0.3.0+99'), isTrue);
+  });
+
   test('malformed versions are never treated as newer', () {
     expect(service.isNewerVersion('latest', '0.2.0'), isFalse);
     expect(service.isNewerVersion('0.3', '0.2.0'), isFalse);
