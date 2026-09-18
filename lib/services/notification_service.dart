@@ -52,7 +52,7 @@ class NotificationService
       iOS: darwin,
       macOS: darwin,
     );
-    await _plugin.initialize(settings);
+    await _plugin.initialize(settings: settings);
 
     // Create the Android channel explicitly so its importance is deterministic
     // on a fresh install. The channel's importance cannot be upgraded after
@@ -170,13 +170,11 @@ class NotificationService
     );
 
     await _plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      scheduled,
-      details,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: scheduled,
+      notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
@@ -204,13 +202,13 @@ class NotificationService
       iOS: DarwinNotificationDetails(),
       macOS: DarwinNotificationDetails(),
     );
-    await _plugin.show(id, title, body, details);
+    await _plugin.show(id: id, title: title, body: body, notificationDetails: details);
   }
 
   @override
   Future<void> cancel(int id) async {
     await _initialize();
-    await _plugin.cancel(id);
+    await _plugin.cancel(id: id);
   }
 
   Future<void> cancelAll() async {
