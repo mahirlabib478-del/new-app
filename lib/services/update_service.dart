@@ -72,9 +72,9 @@ class UpdateService {
     final minimum = _normalizeVersion(policy.minimumSupportedVersion);
     if (latest == null || minimum == null || !_isSafeReleaseUrl(policy.releaseUrl)) return null;
     if (policy.apkUrl != null && !_isSafeDownloadUrl(policy.apkUrl!)) return null;
+    // Any installed version older than the published latest version gets an update notice.
+    if (!_isNewer(policy.latestVersion, currentVersion)) return null;
     final mandatory = isMandatoryVersion(policy.minimumSupportedVersion, currentVersion);
-    final optional = _isNewer(policy.latestVersion, currentVersion);
-    if (!mandatory && !optional) return null;
     return UpdateInfo(
       latestVersion: _formatVersion(latest),
       releaseUrl: policy.releaseUrl,
