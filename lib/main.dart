@@ -369,23 +369,8 @@ class StudyHub extends StatelessWidget {
                       if (savedCount > 0) ...[
                         const SizedBox(height: 12),
                         Card(
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            leading: CircleAvatar(
-                              backgroundColor: theme.colorScheme.secondaryContainer,
-                              foregroundColor: theme.colorScheme.onSecondaryContainer,
-                              child: const Icon(Icons.bookmark_rounded),
-                            ),
-                            title: Text(
-                              s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions',
-                              style: const TextStyle(fontWeight: FontWeight.w900),
-                            ),
-                            subtitle: Text(
-                              s.isBangla
-                                  ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে'
-                                  : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting',
-                            ),
-                            trailing: const Icon(Icons.chevron_right_rounded),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(22),
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -399,9 +384,50 @@ class StudyHub extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.secondaryContainer,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Icon(
+                                      Icons.bookmark_rounded,
+                                      color: theme.colorScheme.onSecondaryContainer,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions',
+                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          s.isBangla
+                                              ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে'
+                                              : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward_rounded, color: theme.colorScheme.primary),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ],
                       const SizedBox(height: 18),
                       Text(
                         s.isBangla ? 'স্টাডি মোড' : 'Study modes',
