@@ -127,7 +127,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(_syncRemindersSafely());
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 500), _syncRemindersSafely));
     }
   }
 
