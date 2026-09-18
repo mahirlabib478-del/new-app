@@ -16,10 +16,13 @@ abstract interface class ReminderScheduler {
   Future<bool?> requestPermissions();
 }
 
+/// Optional capability for schedulers that can report whether notifications
+/// are currently allowed by the platform.
+abstract interface class ReminderSchedulerNotificationAware {
+  Future<bool?> areNotificationsEnabled();
+}
+
 /// Optional capability for schedulers that cache timezone state.
-///
-/// Existing ReminderScheduler implementations remain valid when they do not
-/// need timezone refresh or timezone-aware rescheduling.
 abstract interface class ReminderSchedulerTimeZoneAware {
   Future<void> refreshTimeZone();
   String? get timeZoneFingerprint;
