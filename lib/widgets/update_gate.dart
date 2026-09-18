@@ -23,6 +23,8 @@ class _UpdateGateState extends State<UpdateGate> {
   Future<UpdateInfo?> _runCheck() async {
     try {
       if (widget.checkForUpdate != null) return await widget.checkForUpdate!();
+      // Keep network/package metadata work away from the first interactive frame.
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
       final packageInfo = await PackageInfo.fromPlatform();
       return await UpdateService(currentVersion: packageInfo.version, prefs: widget.store.prefs).checkForUpdate();
     } catch (_) {
