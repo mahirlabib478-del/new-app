@@ -1,42 +1,29 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:study_os/main.dart';
+import 'package:study_os/services/local_store.dart';
 
 void main() {
-  testWidgets('shared design system keeps accessible control sizing', (tester) async {
-    final scheme = ColorScheme.fromSeed(seedColor: const Color(0xFF6C63FF));
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('app shell loads core navigation without overflow', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: scheme,
-          cardTheme: CardThemeData(
-            margin: EdgeInsets.zero,
-            elevation: 0,
-            color: scheme.surfaceContainerLow,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-          ),
-          filledButtonTheme: FilledButtonThemeData(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(0, 50),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            ),
-          ),
-        ),
-        home: Scaffold(
-          body: Card(
-            child: FilledButton(onPressed: () {}, child: const Text('Start')),
-          ),
-        ),
+      StudyOS(
+        store: LocalStore(prefs),
+        prefs: prefs,
+        checkForUpdate: () async => null,
       ),
     );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
-    final card = tester.widget<Card>(find.byType(Card));
-    expect(card.color, scheme.surfaceContainerLow);
-
-    final button = tester.widget<FilledButton>(find.byType(FilledButton));
-    expect(button.child, isA<Text>());
-
-    final size = tester.getSize(find.byType(FilledButton));
-    expect(size.height, greaterThanOrEqualTo(48));
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Study'), findsOneWidget);
+    expect(find.text('Progress'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
   });
 }
