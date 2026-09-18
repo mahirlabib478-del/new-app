@@ -204,8 +204,11 @@ jobs:
           policy["releaseUrl"] = f"https://github.com/{repo}/releases/tag/{tag}"
           policy["apkUrl"] = f"https://github.com/{repo}/releases/download/{tag}/app-release.apk"
 
-          path.write_text(json.dumps(policy, indent=2) + "\\n")
+          path.write_text(json.dumps(policy, indent=2) + "\n")
           PY
+
+          git fetch origin main
+          git checkout main
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
