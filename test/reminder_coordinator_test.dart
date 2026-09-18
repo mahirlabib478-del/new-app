@@ -8,11 +8,12 @@ import 'package:study_os/services/reminder_coordinator.dart';
 import 'package:study_os/services/reminder_scheduler.dart';
 import 'package:study_os/services/reminder_settings.dart';
 
-class FakeScheduler implements ReminderScheduler {
+class FakeScheduler implements ReminderScheduler, ReminderSchedulerNotificationAware {
   final scheduled = <int>[];
   final cancelled = <int>[];
   final shown = <int>[];
   var permissionRequests = 0;
+  bool notificationsEnabled = true;
   var initializeCalls = 0;
   Exception? initializeError;
   Exception? permissionError;
@@ -38,8 +39,11 @@ class FakeScheduler implements ReminderScheduler {
   Future<bool?> requestPermissions() async {
     permissionRequests++;
     if (permissionError != null) throw permissionError!;
-    return true;
+    return notificationsEnabled;
   }
+
+  @override
+  Future<bool?> areNotificationsEnabled() async => notificationsEnabled;
 
   @override
   Future<void> scheduleDailyReminder({
@@ -187,9 +191,25 @@ void main() {
       scheduler: scheduler,
     );
 
-    await coordinator.requestPermissions();
+    expect(await coordinator.requestPermissions(), isTrue);
 
     expect(scheduler.permissionRequests, 1);
+  });
+
+  test('denied notification permission is reported and prevents scheduling', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final scheduler = FakeScheduler()..notificationsEnabled = false;
+    final coordinator = ReminderCoordinator(
+      store: LocalStore(prefs),
+      settingsStore: ReminderSettingsStore(prefs),
+      scheduler: scheduler,
+    );
+
+    expect(await coordinator.requestPermissions(), isFalse);
+    await coordinator.sync();
+
+    expect(scheduler.scheduled, isEmpty);
   });
 
   test('permission request failure does not escape into the study flow', () async {
