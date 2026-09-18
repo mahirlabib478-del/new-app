@@ -168,4 +168,6 @@ class MainActivity : FlutterActivity() {
 }
 ''')
 
+PY
+
 echo "Android platform prepared with Study OS launcher icon, notification scheduling, and native study sound support."
