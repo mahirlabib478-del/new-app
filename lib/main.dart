@@ -567,7 +567,7 @@ class _Mode extends StatelessWidget {
         highlightColor: scheme.primary.withValues(alpha: 0.08),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+          padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
           child: Row(
             children: [
               Container(
