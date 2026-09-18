@@ -388,7 +388,7 @@ class StudyHub extends StatelessWidget {
                               ),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                              padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
                               child: Row(
                                 children: [
                                   Container(
