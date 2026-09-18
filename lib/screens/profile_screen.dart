@@ -130,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(strings.profile)),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
         children: [
           Card(
             color: scheme.primaryContainer,
