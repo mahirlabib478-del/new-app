@@ -534,7 +534,7 @@ class _StudyHero extends StatelessWidget {
                   onPressed: onTap,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(0, 50),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                   ),
                   child: Text(actionLabel),
                 ),
