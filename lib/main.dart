@@ -334,7 +334,7 @@ class StudyHub extends StatelessWidget {
         builder: (context, constraints) {
           final maxWidth = constraints.maxWidth > 700 ? 680.0 : double.infinity;
           return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
             children: [
               Center(
                 child: ConstrainedBox(
@@ -351,7 +351,7 @@ class StudyHub extends StatelessWidget {
                         s.isBangla ? 'একটি কাজ বেছে নিয়ে সরাসরি শুরু করুন।' : 'Pick a path and get straight into studying.',
                         style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 14),
                       _StudyHero(
                         icon: Icons.auto_awesome_rounded,
                         title: s.isBangla ? 'আজকের পরিকল্পনা' : 'Today Engine',
@@ -402,12 +402,12 @@ class StudyHub extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 18),
                       Text(
                         s.isBangla ? 'স্টাডি মোড' : 'Study modes',
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       _Mode(
                         icon: Icons.menu_book_rounded,
                         title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
