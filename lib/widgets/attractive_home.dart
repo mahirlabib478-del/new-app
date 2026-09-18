@@ -41,7 +41,7 @@ class AttractiveHome extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 16),
-          _MissionCard(snapshot: snapshot, strings: strings, onStart: snapshot.hasRemainingWork ? () => _tap(() => onOpenFocus()) : () => _tap(onRegularStudy)),
+          _MissionCard(snapshot: snapshot, strings: strings, onStart: snapshot.hasRemainingWork ? onOpenFocus : onRegularStudy),
           const SizedBox(height: 12),
           _GoalCard(snapshot: snapshot, strings: strings),
           const SizedBox(height: 12),
