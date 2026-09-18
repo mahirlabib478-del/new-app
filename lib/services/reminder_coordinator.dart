@@ -28,12 +28,20 @@ class ReminderCoordinator {
   bool _pendingPersistedSettings = false;
   final Map<int, String> _scheduledFingerprints = <int, String>{};
 
-  Future<void> requestPermissions() async {
+  Future<bool> requestPermissions() async {
     try {
       await scheduler.initialize();
-      await scheduler.requestPermissions();
+      final result = await scheduler.requestPermissions();
+      if (result == false) return false;
+
+      final notificationAware = scheduler is ReminderSchedulerNotificationAware
+          ? scheduler as ReminderSchedulerNotificationAware
+          : null;
+      if (notificationAware == null) return result ?? true;
+
+      return await notificationAware.areNotificationsEnabled() ?? result ?? true;
     } on Exception {
-      // Notification permission is best-effort; it must never block Study OS.
+      return false;
     }
   }
 
@@ -43,8 +51,6 @@ class ReminderCoordinator {
       _pendingSettingsOverride = settingsOverride;
       _pendingPersistedSettings = false;
     } else {
-      // An override-less refresh explicitly supersedes an older queued override
-      // and reads the latest persisted settings when its turn runs.
       _pendingSettingsOverride = null;
       _pendingPersistedSettings = true;
     }
@@ -83,17 +89,29 @@ class ReminderCoordinator {
         await timeZoneAwareScheduler.refreshTimeZone();
       }
     } on Exception {
-      // Unsupported platforms must still be able to use the study app.
       return;
     }
 
     final timeZoneFingerprint =
         timeZoneAwareScheduler?.timeZoneFingerprint ?? 'unknown';
 
+    final notificationAware = scheduler is ReminderSchedulerNotificationAware
+        ? scheduler as ReminderSchedulerNotificationAware
+        : null;
+    final notificationsEnabled =
+        notificationAware == null ||
+            (await notificationAware.areNotificationsEnabled() ?? true);
+
+    if (!notificationsEnabled) {
+      _scheduledFingerprints.remove(studyId);
+      _scheduledFingerprints.remove(planId);
+      await _safeCancel(studyId);
+      await _safeCancel(planId);
+      await _safeCancel(breakId);
+      return;
+    }
+
     if (!settings.breakEnabled) {
-      // Break reminders are event-driven rather than daily-scheduled. Cancel the
-      // fixed notification ID when disabled so a previously shown break reminder
-      // cannot remain visible after the setting changes or an app restart.
       await _safeCancel(breakId);
     }
 
@@ -141,7 +159,8 @@ class ReminderCoordinator {
       return;
     }
 
-    final fingerprint = '$id|${request.kind}|${request.title}|${request.body}|$hour|$minute|$timeZoneFingerprint';
+    final fingerprint =
+        '$id|${request.kind}|${request.title}|${request.body}|$hour|$minute|$timeZoneFingerprint';
     if (_scheduledFingerprints[id] == fingerprint) return;
 
     try {
@@ -166,11 +185,19 @@ class ReminderCoordinator {
       if (request != null) {
         try {
           await scheduler.initialize();
-          await scheduler.showNow(
-            id: breakId,
-            title: request.title,
-            body: request.body,
-          );
+          final notificationAware = scheduler is ReminderSchedulerNotificationAware
+              ? scheduler as ReminderSchedulerNotificationAware
+              : null;
+          final notificationsEnabled =
+              notificationAware == null ||
+                  (await notificationAware.areNotificationsEnabled() ?? true);
+          if (notificationsEnabled) {
+            await scheduler.showNow(
+              id: breakId,
+              title: request.title,
+              body: request.body,
+            );
+          }
         } on Exception {
           // Focus completion remains successful if notifications fail.
         }
