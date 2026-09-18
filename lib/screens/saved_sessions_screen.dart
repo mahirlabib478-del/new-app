@@ -86,7 +86,7 @@ class _SavedSessionsScreenState extends State<SavedSessionsScreen> {
               ),
             )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
               children: [
                 Text('Continue where you left off', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
