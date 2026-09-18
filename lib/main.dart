@@ -458,6 +458,7 @@ class _StudyHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
+      color: scheme.primaryContainer,
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
@@ -467,8 +468,8 @@ class _StudyHero extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: scheme.primaryContainer,
-                foregroundColor: scheme.onPrimaryContainer,
+                backgroundColor: scheme.surface,
+                foregroundColor: scheme.primary,
                 child: Icon(icon),
               ),
               const SizedBox(width: 14),
@@ -476,9 +477,14 @@ class _StudyHero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+                    Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: scheme.onPrimaryContainer)),
                     const SizedBox(height: 4),
-                    Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: scheme.onPrimaryContainer.withValues(alpha: 0.78)),
+                    ),
                   ],
                 ),
               ),
