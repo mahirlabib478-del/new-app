@@ -518,15 +518,46 @@ class _Mode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
         onTap: onTap,
-        contentPadding: const EdgeInsets.all(12),
-        leading: CircleAvatar(radius: 27, child: Icon(icon)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right_rounded),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: scheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: scheme.onSecondaryContainer),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.arrow_forward_rounded, color: scheme.primary),
+            ],
+          ),
+        ),
       ),
     );
   }
