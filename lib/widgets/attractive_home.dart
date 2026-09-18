@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/app_language.dart';
@@ -41,7 +42,7 @@ class AttractiveHome extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 16),
-          _MissionCard(snapshot: snapshot, strings: strings, onStart: snapshot.hasRemainingWork ? onOpenFocus : onRegularStudy),
+          _MissionCard(snapshot: snapshot, strings: strings, onStart: snapshot.hasRemainingWork ? () => unawaited(onOpenFocus()) : onRegularStudy),
           const SizedBox(height: 12),
           _GoalCard(snapshot: snapshot, strings: strings),
           const SizedBox(height: 12),
