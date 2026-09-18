@@ -58,11 +58,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Midnight'), findsOneWidget);
+    expect(find.text('Ocean Dark'), findsOneWidget);
     expect(find.text('Ocean'), findsOneWidget);
     expect(find.text('Forest'), findsOneWidget);
     expect(find.text('Sunrise'), findsOneWidget);
+    expect(find.text('Mint'), findsOneWidget);
+    expect(find.text('Rose'), findsOneWidget);
+    expect(find.text('Peach'), findsOneWidget);
+    expect(find.text('Lavender'), findsOneWidget);
+    expect(find.text('Sky'), findsOneWidget);
 
     await tester.tap(find.text('Ocean'));
+    await tester.pumpAndSettle();
+    expect(selectedTheme, 'ocean_light');
+
+    await tester.tap(find.text('Ocean Dark'));
     await tester.pumpAndSettle();
     expect(selectedTheme, 'ocean');
   });
