@@ -168,6 +168,7 @@ class MainActivity : FlutterActivity() {
     private val soundChannel = "study_os/sound"
     private val notificationChannel = "study_os/notifications"
     private val notificationPermissionRequestCode = 4101
+    private var pendingNotificationPermissionResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -179,16 +180,37 @@ class MainActivity : FlutterActivity() {
                     return@setMethodCallHandler
                 }
 
-                if (android.os.Build.VERSION.SDK_INT >= 33 &&
-                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                if (android.os.Build.VERSION.SDK_INT < 33 ||
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
                 ) {
+                    result.success(true)
+                } else {
+                    pendingNotificationPermissionResult?.error(
+                        "PERMISSION_IN_PROGRESS",
+                        "A notification permission request is already in progress.",
+                        null,
+                    )
+                    pendingNotificationPermissionResult = result
                     requestPermissions(
                         arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                         notificationPermissionRequestCode,
                     )
                 }
-                result.success(true)
             }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != notificationPermissionRequestCode) return
+
+        val granted = grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        pendingNotificationPermissionResult?.success(granted)
+        pendingNotificationPermissionResult = null
+    }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, soundChannel)
             .setMethodCallHandler { call, result ->
