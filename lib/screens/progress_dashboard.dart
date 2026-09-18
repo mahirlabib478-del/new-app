@@ -186,7 +186,38 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             const SizedBox(height: 12), LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7),
           ]))),
           const SizedBox(height: 12),
-          Row(children: [Expanded(child: _Stat(icon: Icons.local_fire_department_rounded, value: '${store.streak}', label: 'Streak')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.bolt_rounded, value: '${store.xp}', label: 'XP')), const SizedBox(width: 10), Expanded(child: _Stat(icon: Icons.timer_rounded, value: '${store.completedMinutes}', label: 'Minutes'))]),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _Stat(
+                      icon: Icons.local_fire_department_rounded,
+                      value: 'undefined',
+                      label: 'Streak',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Stat(
+                      icon: Icons.bolt_rounded,
+                      value: 'undefined',
+                      label: 'XP',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Stat(
+                      icon: Icons.timer_rounded,
+                      value: 'undefined',
+                      label: 'Minutes',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 20), Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10),
           ...achievements.map((achievement) => _Achievement(icon: _achievementIcon(achievement.title), title: achievement.title, subtitle: achievement.description, unlocked: achievement.unlocked)),
           const SizedBox(height: 18),
