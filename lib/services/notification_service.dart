@@ -95,8 +95,8 @@ class NotificationService
       // Request through the app Activity as a fallback as well. This keeps the
       // runtime permission flow independent from plugin-side permission timing.
       try {
-        await _nativeNotificationChannel.invokeMethod<void>('requestPermission');
-        return true;
+        final granted = await _nativeNotificationChannel.invokeMethod<bool>('requestPermission');
+        return granted;
       } on MissingPluginException {
         return android.requestNotificationsPermission();
       } on PlatformException {
