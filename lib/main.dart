@@ -499,7 +499,7 @@ class _StudyHero extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              FilledButton.tonal(
+              FilledButton(
                 onPressed: onTap,
                 child: Text(actionLabel),
               ),
