@@ -197,6 +197,7 @@ class MainActivity : FlutterActivity() {
                     )
                 }
             }
+        }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
