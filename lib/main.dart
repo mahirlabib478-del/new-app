@@ -73,28 +73,9 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
     _tabs[0] = _buildHomeTab();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Request notification access immediately after the first frame so the
-      // Android permission dialog is not hidden behind an arbitrary delay.
-      unawaited(_prepareRemindersSafely());
-    });
-  }
-
-  Future<void> _prepareRemindersSafely() async {
-    try {
-      final settings = ReminderSettingsStore(widget.prefs).settings;
-
-      // Ask Android for notification access as soon as the app is ready.
-      // Do not gate this on a reminder toggle: the permission prompt is a
-      // platform requirement for all reminder types and must not be skipped
-      // because settings were loaded in a different state.
-      await reminderCoordinator.requestPermissions();
-
-      // Only schedule reminders after permission state has been checked.
-      await reminderCoordinator.sync(settingsOverride: settings);
-    } catch (_) {
-      // Reminders are non-critical and must never terminate the app at startup.
-    }
+    // Notification permission is requested only from the reminder toggle
+    // flow. Android treats that as a real user action and this avoids asking
+    // during app startup before the permission UI is ready.
   }
 
   Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
