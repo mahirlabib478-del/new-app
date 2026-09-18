@@ -153,6 +153,9 @@ activity = Path('android/app/src/main/kotlin/com/mahirlabib/study_os/MainActivit
 activity.parent.mkdir(parents=True, exist_ok=True)
 activity.write_text('''package com.mahirlabib.study_os
 
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Handler
@@ -163,9 +166,29 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val soundChannel = "study_os/sound"
+    private val notificationChannel = "study_os/notifications"
+    private val notificationPermissionRequestCode = 4101
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, notificationChannel)
+            .setMethodCallHandler { call, result ->
+                if (call.method != "requestPermission") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+
+                if (android.os.Build.VERSION.SDK_INT >= 33 &&
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    requestPermissions(
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                        notificationPermissionRequestCode,
+                    )
+                }
+                result.success(true)
+            }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, soundChannel)
             .setMethodCallHandler { call, result ->
