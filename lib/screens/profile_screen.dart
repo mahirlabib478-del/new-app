@@ -133,23 +133,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
           Card(
+            color: scheme.primaryContainer,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: scheme.primaryContainer,
-                    child: Icon(Icons.person_rounded, color: scheme.onPrimaryContainer, size: 30),
+                    backgroundColor: scheme.surface,
+                    child: Icon(Icons.person_rounded, color: scheme.primary, size: 30),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Study OS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                        Text(
+                          'Study OS',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: scheme.onPrimaryContainer,
+                              ),
+                        ),
                         const SizedBox(height: 4),
-                        Text(strings.buildConsistency),
+                        Text(
+                          strings.buildConsistency,
+                          style: TextStyle(color: scheme.onPrimaryContainer),
+                        ),
                       ],
                     ),
                   ),
