@@ -137,7 +137,10 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
               const SizedBox(height: 10),
-              LinearProgressIndicator(value: analytics.planCompletionRate, minHeight: 9),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(value: analytics.planCompletionRate, minHeight: 9),
+              ),
               const SizedBox(height: 8),
               Text(analytics.planRemainingMinutes == 0
                   ? 'Plan complete. Great work.'
