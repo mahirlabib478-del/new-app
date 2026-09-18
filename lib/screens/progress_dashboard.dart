@@ -387,5 +387,5 @@ class _Stat extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(8), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
+  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
 }
