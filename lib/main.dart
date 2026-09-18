@@ -527,9 +527,12 @@ class _StudyHero extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              FilledButton(
-                onPressed: onTap,
-                child: Text(actionLabel),
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 50),
+                child: FilledButton(
+                  onPressed: onTap,
+                  child: Text(actionLabel),
+                ),
               ),
             ],
           ),
