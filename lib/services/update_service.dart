@@ -31,7 +31,9 @@ class UpdatePolicy {
     final minimum = json['minimumSupportedVersion'];
     final release = json['releaseUrl'];
     final apk = json['apkUrl'];
-    if (latest is! String || minimum is! String || release is! String) throw const FormatException('Invalid update policy');
+    if (latest is! String || minimum is! String || release is! String) {
+      throw const FormatException('Invalid update policy');
+    }
     return UpdatePolicy(
       latestVersion: latest,
       minimumSupportedVersion: minimum,
@@ -70,15 +72,22 @@ class UpdateService {
     final minimum = _normalizeVersion(policy.minimumSupportedVersion);
     if (latest == null || minimum == null || !_isSafeReleaseUrl(policy.releaseUrl)) return null;
     if (policy.apkUrl != null && !_isSafeDownloadUrl(policy.apkUrl!)) return null;
-    final mandatory = isMandatoryVersion(minimum, currentVersion);
-    final optional = _isNewer(latest, currentVersion);
+    final mandatory = isMandatoryVersion(policy.minimumSupportedVersion, currentVersion);
+    final optional = _isNewer(policy.latestVersion, currentVersion);
     if (!mandatory && !optional) return null;
-    return UpdateInfo(latestVersion: _formatVersion(latest), releaseUrl: policy.releaseUrl, apkUrl: policy.apkUrl, isMandatory: mandatory);
+    return UpdateInfo(
+      latestVersion: _formatVersion(latest),
+      releaseUrl: policy.releaseUrl,
+      apkUrl: policy.apkUrl,
+      isMandatory: mandatory,
+    );
   }
 
   Future<UpdatePolicy?> fetchPolicy() async {
     try {
-      final client = HttpClient()..connectionTimeout = _checkTimeout..idleTimeout = _checkTimeout;
+      final client = HttpClient()
+        ..connectionTimeout = _checkTimeout
+        ..idleTimeout = _checkTimeout;
       try {
         final request = await client.getUrl(Uri.parse(policyUrl)).timeout(_checkTimeout);
         request.headers.set(HttpHeaders.userAgentHeader, 'StudyOS/$currentVersion');
@@ -123,8 +132,10 @@ class UpdateService {
 
   _Version? _normalizeVersion(String value) {
     var normalized = value.trim();
-    if (normalized.startsWith('v') || normalized.startsWith('V')) normalized = normalized.substring(1);
-    final match = RegExp(r'^(\\d+)\\.(\\d+)\\.(\\d+)(?:\\+(\\d+))?(?:-[^+]+)?$').firstMatch(normalized);
+    if (normalized.startsWith('v') || normalized.startsWith('V')) {
+      normalized = normalized.substring(1);
+    }
+    final match = RegExp(r'^(\d+)\.(\d+)\.(\d+)(?:\+(\d+))?(?:-[^+]+)?$').firstMatch(normalized);
     if (match == null) return null;
     return _Version(
       int.parse(match.group(1)!),
@@ -136,13 +147,15 @@ class UpdateService {
 
   int _compareVersions(_Version left, _Version right) {
     for (var i = 0; i < left.parts.length; i++) {
-      if (left.parts[i] != right.parts[i]) return left.parts[i].compareTo(right.parts[i]);
+      if (left.parts[i] != right.parts[i]) {
+        return left.parts[i].compareTo(right.parts[i]);
+      }
     }
     return 0;
   }
 
   String _formatVersion(_Version version) {
-    return '\${version.major}.\${version.minor}.\${version.patch}\${version.build > 0 ? '+\${version.build}' : ''}';
+    return '${version.major}.${version.minor}.${version.patch}${version.build > 0 ? '+${version.build}' : ''}';
   }
 
   UpdatePolicy? _loadCachedPolicy() {
