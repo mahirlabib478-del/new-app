@@ -360,7 +360,7 @@ class _ProgressItem extends StatelessWidget {
                 Expanded(
                   child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w900)),
                 ),
-                Text('$' + '{done}/${item.minutes}m', style: TextStyle(fontWeight: FontWeight.w800, color: scheme.primary)),
+                Text('$done/${item.minutes}m', style: TextStyle(fontWeight: FontWeight.w800, color: scheme.primary)),
               ],
             ),
             if (item.topic.isNotEmpty) ...[
