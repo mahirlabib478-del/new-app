@@ -179,10 +179,6 @@ class NotificationService
     required String body,
   }) async {
     await _initialize();
-    final enabled = await areNotificationsEnabled();
-    if (enabled == false) {
-      throw StateError('Notifications are disabled');
-    }
 
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
