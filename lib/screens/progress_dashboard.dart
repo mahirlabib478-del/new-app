@@ -218,7 +218,33 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
               ),
             ),
           ),
-          const SizedBox(height: 20), Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10),
+          const SizedBox(height: 20),
+          Card(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    child: Icon(Icons.emoji_events_rounded, color: Theme.of(context).colorScheme.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Achievements', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                        const SizedBox(height: 2),
+                        Text('Milestones from your study journey.', style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           ...achievements.map((achievement) => _Achievement(icon: _achievementIcon(achievement.title), title: achievement.title, subtitle: achievement.description, unlocked: achievement.unlocked)),
           const SizedBox(height: 18),
           if (plan != null) ...plan.items.asMap().entries.map((entry) => _ProgressItem(item: entry.value, completed: store.itemCompletedMinutes(entry.key))),
