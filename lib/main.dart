@@ -200,6 +200,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
         cardTheme: CardThemeData(
           margin: EdgeInsets.zero,
           elevation: 0,
+          color: scheme.surfaceContainerLow,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         ),
         listTileTheme: ListTileThemeData(
@@ -232,6 +233,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
           ),
         ),
         chipTheme: ChipThemeData(
+          backgroundColor: scheme.surfaceContainerLow,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           labelStyle: const TextStyle(fontWeight: FontWeight.w700),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
