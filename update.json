@@ -1,6 +1,6 @@
 {
-  "latestVersion": "0.2.0",
+  "latestVersion": "0.3.0",
   "minimumSupportedVersion": "0.2.0",
-  "releaseUrl": "https://github.com/mahirlabib478-del/new-app/releases/latest",
-  "apkUrl": ""
+  "releaseUrl": "https://github.com/mahirlabib478-del/new-app/releases/tag/v0.3.0+8",
+  "apkUrl": "https://github.com/mahirlabib478-del/new-app/releases/download/v0.3.0+8/app-release.apk"
 }
