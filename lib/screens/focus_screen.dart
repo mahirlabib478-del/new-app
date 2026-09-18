@@ -242,16 +242,36 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
                     constraints: const BoxConstraints(maxWidth: 560),
                     child: Column(
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.center_focus_strong_rounded, color: scheme.primary),
-                            const SizedBox(width: 8),
-                            Text('DEEP FOCUS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: scheme.primary)),
-                            const Spacer(),
-                            Text('Block ${activeBlockIndex + 1}/$totalBlocks', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: scheme.onSurfaceVariant)),
-                          ],
+                        Card(
+                          color: scheme.primaryContainer,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                            child: Row(
+                              children: [
+                                Icon(Icons.center_focus_strong_rounded, color: scheme.onPrimaryContainer),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'DEEP FOCUS',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: scheme.onPrimaryContainer),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: scheme.surface.withValues(alpha: 0.72),
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                  child: Text(
+                                    'Block ${activeBlockIndex + 1}/$totalBlocks',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: scheme.onSurface),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         Text(item.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
                         if (item.topic.isNotEmpty) ...[
                           const SizedBox(height: 5),
