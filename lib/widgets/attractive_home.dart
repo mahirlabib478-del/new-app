@@ -148,6 +148,8 @@ class AttractiveHome extends StatelessWidget {
         ],
       ),
     );
+  }
+
   String _greeting(AppStrings strings) {
     final hour = DateTime.now().hour;
     if (strings.isBangla) {
