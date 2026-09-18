@@ -50,12 +50,18 @@ jobs:
           grep -q 'targetSdk = 35' android/app/build.gradle.kts
           grep -q 'android:icon="@drawable/study_os_logo"' android/app/src/main/AndroidManifest.xml
           test -f android/app/src/main/res/drawable/ic_notification.xml
+          test -f android/app/src/main/res/values/keep.xml
       - name: Install dependencies
         run: flutter pub get
       - name: Build Android debug APK
         run: flutter build apk --debug
       - name: Build Android release APK
         run: flutter build apk --release
+      - name: Verify built release notification configuration
+        run: |
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump permissions build/app/outputs/flutter-apk/app-release.apk | grep -q 'android.permission.POST_NOTIFICATIONS'
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump xmltree build/app/outputs/flutter-apk/app-release.apk AndroidManifest.xml | grep -q 'ScheduledNotificationReceiver'
+          unzip -l build/app/outputs/flutter-apk/app-release.apk | grep -q 'res/drawable/ic_notification'
       - name: Package Android APKs
         run: |
           mkdir -p build/apk-artifacts
