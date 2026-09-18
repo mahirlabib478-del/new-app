@@ -46,6 +46,7 @@ manifest = Path('android/app/src/main/AndroidManifest.xml')
 text = manifest.read_text()
 
 permissions = (
+    '    <uses-permission android:name="android.permission.INTERNET" />\n'
     '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
     '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
 )
