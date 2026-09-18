@@ -353,6 +353,7 @@ class StudyHub extends StatelessWidget {
                         s.isBangla ? 'একটি কাজ বেছে নিয়ে সরাসরি শুরু করুন।' : 'Pick a path and get straight into studying.',
                         style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
