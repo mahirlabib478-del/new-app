@@ -211,7 +211,39 @@ class _Achievement extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool unlocked;
-  @override Widget build(BuildContext context) => Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(leading: CircleAvatar(child: Icon(icon)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(subtitle), trailing: Icon(unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded)));
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      color: unlocked ? scheme.primaryContainer : null,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: unlocked ? scheme.surface : scheme.surfaceContainerHighest,
+          foregroundColor: unlocked ? scheme.primary : scheme.onSurfaceVariant,
+          child: Icon(icon),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: unlocked ? scheme.onPrimaryContainer : null,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            color: unlocked ? scheme.onPrimaryContainer.withValues(alpha: 0.78) : null,
+          ),
+        ),
+        trailing: Icon(
+          unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded,
+          color: unlocked ? scheme.primary : scheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
 }
 
 class _ProgressItem extends StatelessWidget {
