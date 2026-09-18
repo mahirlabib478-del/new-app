@@ -518,7 +518,7 @@ class _StudyHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: scheme.onPrimaryContainer)),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
                       maxLines: 2,
