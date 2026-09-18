@@ -512,7 +512,7 @@ class _StudyHero extends StatelessWidget {
                 ),
                 child: Icon(icon, color: scheme.primary),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
