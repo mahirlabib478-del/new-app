@@ -528,7 +528,7 @@ class _StudyHero extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Flexible(
                 child: FilledButton(
                   onPressed: onTap,
