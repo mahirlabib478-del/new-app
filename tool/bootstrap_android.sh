@@ -21,7 +21,8 @@ build = Path('android/app/build.gradle.kts')
 text = build.read_text()
 
 if 'isCoreLibraryDesugaringEnabled = true' not in text:
-    marker = '    defaultConfig {'
+    marker = '    defaultConfig {
+        targetSdk = 35'
     if marker not in text:
         raise SystemExit('Could not find android defaultConfig block')
     text = text.replace(
