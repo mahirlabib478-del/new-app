@@ -58,7 +58,7 @@ class AttractiveHome extends StatelessWidget {
           _SectionTitle(strings.isBangla ? 'তোমার স্টাডি জার্নি' : 'Your study journey'),
           const SizedBox(height: 10),
           if (snapshot.plan == null)
-            _EmptyJourney(strings: strings, onTap: () => _tap(onRegularStudy))
+            _EmptyJourney(strings: strings, onTap: onRegularStudy)
           else
             ...snapshot.plan!.items.asMap().entries.map((entry) {
               final item = entry.value;
