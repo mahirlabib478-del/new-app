@@ -294,7 +294,7 @@ class CompletionScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '$' + '{completed} / $' + '{planned} minutes completed',
+                            '${completed} / ${planned} minutes completed',
                             textAlign: TextAlign.center,
                             style: textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w700,
@@ -322,7 +322,7 @@ class CompletionScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '$' + '{(progress * 100).round()}%',
+                                '${(progress * 100).round()}%',
                                 style: textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -352,12 +352,12 @@ class CompletionScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _Stat(label: 'Focused', value: '$' + '{completed} min'),
+                          _Stat(label: 'Focused', value: '${completed} min'),
                           _Stat(
                             label: 'Progress',
-                            value: '$' + '{(progress * 100).round()}%',
+                            value: '${(progress * 100).round()}%',
                           ),
-                          _Stat(label: 'XP earned', value: '+$' + '{xp}'),
+                          _Stat(label: 'XP earned', value: '+${xp}'),
                         ],
                       ),
                     ),
