@@ -161,19 +161,11 @@ class ReminderCoordinator {
       if (request != null) {
         try {
           await scheduler.initialize();
-          final notificationAware = scheduler is ReminderSchedulerNotificationAware
-              ? scheduler as ReminderSchedulerNotificationAware
-              : null;
-          final notificationsEnabled =
-              notificationAware == null ||
-                  (await notificationAware.areNotificationsEnabled() ?? true);
-          if (notificationsEnabled) {
-            await scheduler.showNow(
-              id: breakId,
-              title: request.title,
-              body: request.body,
-            );
-          }
+          await scheduler.showNow(
+            id: breakId,
+            title: request.title,
+            body: request.body,
+          );
         } on Exception {
           // Focus completion remains successful if notifications fail.
         }
