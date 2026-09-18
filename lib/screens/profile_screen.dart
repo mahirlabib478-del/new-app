@@ -77,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _syncReminders({required ReminderSettings settingsToSync}) async {
     final anyEnabled = settingsToSync.studyEnabled || settingsToSync.breakEnabled || settingsToSync.planEnabled;
-    if (!anyEnabled && !requestPermission) {
+    if (!anyEnabled) {
       await reminderCoordinator.sync(settingsOverride: settingsToSync);
       return;
     }
