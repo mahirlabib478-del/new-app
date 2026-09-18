@@ -96,10 +96,12 @@ class NotificationService
       // runtime permission flow independent from plugin-side permission timing.
       try {
         await _nativeNotificationChannel.invokeMethod<void>('requestPermission');
+        return true;
+      } on MissingPluginException {
+        return android.requestNotificationsPermission();
       } on PlatformException {
-        // Fall back to the plugin API below.
+        return android.requestNotificationsPermission();
       }
-      return android.requestNotificationsPermission();
     }
 
     final ios =
