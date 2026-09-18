@@ -369,6 +369,7 @@ class StudyHub extends StatelessWidget {
                       if (savedCount > 0) ...[
                         const SizedBox(height: 12),
                         Card(
+                          color: theme.colorScheme.surfaceContainerLow,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(22),
                             onTap: () => Navigator.push(
@@ -550,6 +551,7 @@ class _Mode extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
+      color: scheme.surfaceContainerLow,
       margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
