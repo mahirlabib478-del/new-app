@@ -6,7 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'reminder_scheduler.dart';
 
 class NotificationService
-    implements ReminderScheduler, ReminderSchedulerNotificationAware, ReminderSchedulerTimeZoneAware {
+    implements ReminderScheduler, ReminderSchedulerTimeZoneAware {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
