@@ -8,6 +8,10 @@ flutter create --platforms=android --org com.mahirlabib --project-name study_os 
 # flutter create adds its default counter-app widget_test.dart when the
 # repository does not already contain one. Study OS has its own test suite,
 # so remove only that generated default test before CI analysis/test runs.
+# flutter create also generates a default analysis_options.yaml. The app does
+# not keep that generated lint profile in source control; remove it so release
+# analysis uses the same analyzer configuration as normal CI.
+rm -f analysis_options.yaml
 rm -f test/widget_test.dart
 
 python3 - <<'PY'
