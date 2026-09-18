@@ -347,7 +347,35 @@ class _ProgressItem extends StatelessWidget {
   @override Widget build(BuildContext context) {
     final done = completed.clamp(0, item.minutes).toInt();
     final progress = item.minutes <= 0 ? 0.0 : (done / item.minutes).clamp(0.0, 1.0).toDouble();
-    return Card(margin: const EdgeInsets.only(bottom: 10), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w900))), Text('$done/${item.minutes}m')]), if (item.topic.isNotEmpty) Text(item.topic), const SizedBox(height: 10), LinearProgressIndicator(value: progress)])));
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w900)),
+                ),
+                Text('$' + '{done}/${item.minutes}m', style: TextStyle(fontWeight: FontWeight.w800, color: scheme.primary)),
+              ],
+            ),
+            if (item.topic.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(item.topic, style: TextStyle(color: scheme.onSurfaceVariant)),
+            ],
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(value: progress, minHeight: 8),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
