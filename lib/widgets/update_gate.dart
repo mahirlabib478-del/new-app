@@ -28,7 +28,7 @@ class _UpdateGateState extends State<UpdateGate> {
         await Future<void>.delayed(const Duration(milliseconds: 1000));
       }
       final packageInfo = await PackageInfo.fromPlatform();
-      return await UpdateService(currentVersion: packageInfo.version, prefs: widget.store.prefs).checkForUpdate();
+      return await UpdateService(currentVersion: '${packageInfo.version}+${packageInfo.buildNumber}', prefs: widget.store.prefs).checkForUpdate();
     } catch (_) {
       // Update checks are optional. Never let them block or terminate the app.
       return null;
