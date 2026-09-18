@@ -241,69 +241,117 @@ class StudyHub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppStrings(language);
+    final theme = Theme.of(context);
     final savedCount = StudySessionStore(store).sessions.length;
+
     return Scaffold(
-      appBar: AppBar(title: Text(s.isBangla ? 'স্টাডি' : 'Study')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(s.isBangla ? 'পরবর্তী কাজ বেছে নিন' : 'Choose your next move', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 18),
-          Card(
-            margin: const EdgeInsets.only(bottom: 14),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
-              leading: const CircleAvatar(child: Icon(Icons.auto_awesome_rounded)),
-              title: const Text('Today Engine', style: TextStyle(fontWeight: FontWeight.w900)),
-              subtitle: Text(s.isBangla ? 'আজ কী পড়বেন, কতক্ষণ পড়বেন এবং পরের কাজ কী—এক নজরে দেখুন।' : 'See today’s remaining work, next action and recommended focus at a glance.'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TodayEngineScreen(store: store, onOpenFocus: onOpenFocus))),
-            ),
-          ),
-          if (savedCount > 0) ...[
-            Card(
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(14),
-                leading: const CircleAvatar(child: Icon(Icons.bookmark_rounded)),
-                title: Text(s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions', style: const TextStyle(fontWeight: FontWeight.w900)),
-                subtitle: Text(s.isBangla ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে' : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting'),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SavedSessionsScreen(
-                      store: store,
-                      onOpenFocus: () async {
-                        final restoredPlan = store.loadPlan();
-                        if (restoredPlan == null) return;
-                        await onStartPlan(restoredPlan);
-                      },
-                    ),
+      appBar: AppBar(
+        title: Text(s.isBangla ? 'স্টাডি' : 'Study', style: const TextStyle(fontWeight: FontWeight.w900)),
+        centerTitle: false,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth > 700 ? 680.0 : double.infinity;
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.isBangla ? 'আজকের পড়াশোনা' : 'Your study space',
+                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        s.isBangla ? 'একটি কাজ বেছে নিয়ে সরাসরি শুরু করুন।' : 'Pick a path and get straight into studying.',
+                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 18),
+                      _StudyHero(
+                        icon: Icons.auto_awesome_rounded,
+                        title: s.isBangla ? 'আজকের পরিকল্পনা' : 'Today Engine',
+                        subtitle: s.isBangla
+                            ? 'আজ কী পড়বেন এবং পরের ফোকাস কী—এক নজরে দেখুন।'
+                            : 'See what is left today and jump to your next focus.',
+                        actionLabel: s.isBangla ? 'দেখুন' : 'Open',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TodayEngineScreen(store: store, onOpenFocus: onOpenFocus),
+                          ),
+                        ),
+                      ),
+                      if (savedCount > 0) ...[
+                        const SizedBox(height: 12),
+                        Card(
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            leading: CircleAvatar(
+                              backgroundColor: theme.colorScheme.secondaryContainer,
+                              foregroundColor: theme.colorScheme.onSecondaryContainer,
+                              child: const Icon(Icons.bookmark_rounded),
+                            ),
+                            title: Text(
+                              s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions',
+                              style: const TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                            subtitle: Text(
+                              s.isBangla
+                                  ? '\$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে'
+                                  : '\$savedCount unfinished session\${savedCount == 1 ? '' : 's'} waiting',
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SavedSessionsScreen(
+                                  store: store,
+                                  onOpenFocus: () async {
+                                    final restoredPlan = store.loadPlan();
+                                    if (restoredPlan == null) return;
+                                    await onStartPlan(restoredPlan);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 22),
+                      Text(
+                        s.isBangla ? 'স্টাডি মোড' : 'Study modes',
+                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 10),
+                      _Mode(
+                        icon: Icons.menu_book_rounded,
+                        title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
+                        subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.',
+                        onTap: onRegularStudy,
+                      ),
+                      _Mode(
+                        icon: Icons.auto_awesome_rounded,
+                        title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation',
+                        subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক পরীক্ষার পরিকল্পনা।' : 'Build a focused exam plan.',
+                        onTap: () => _openExam(context, false),
+                      ),
+                      _Mode(
+                        icon: Icons.bolt_rounded,
+                        title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam',
+                        subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশনকে আগে আনুন।' : 'Bring high-priority revision forward.',
+                        onTap: () => _openExam(context, true),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 14),
-          ],
-          _Mode(
-            icon: Icons.menu_book_rounded,
-            title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
-            subtitle: s.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Plan subjects, chapters and focus blocks.',
-            onTap: onRegularStudy,
-          ),
-          _Mode(
-            icon: Icons.auto_awesome_rounded,
-            title: s.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation',
-            subtitle: s.isBangla ? 'অগ্রাধিকারভিত্তিক পরীক্ষার পরিকল্পনা।' : 'Priority-based exam planning.',
-            onTap: () => _openExam(context, false),
-          ),
-          _Mode(
-            icon: Icons.bolt_rounded,
-            title: s.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam',
-            subtitle: s.isBangla ? 'গুরুত্বপূর্ণ রিভিশন।' : 'High-impact revision.',
-            onTap: () => _openExam(context, true),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -316,6 +364,63 @@ class StudyHub extends StatelessWidget {
     })));
   }
 }
+
+class _StudyHero extends StatelessWidget {
+  const _StudyHero({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String actionLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: scheme.primaryContainer,
+                foregroundColor: scheme.onPrimaryContainer,
+                child: Icon(icon),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.tonal(
+                onPressed: onTap,
+                child: Text(actionLabel),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 class _Mode extends StatelessWidget {
   const _Mode({required this.icon, required this.title, required this.subtitle, required this.onTap});
