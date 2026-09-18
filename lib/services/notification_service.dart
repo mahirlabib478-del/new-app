@@ -40,7 +40,7 @@ class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZon
     tz.initializeTimeZones();
     await _refreshTimeZone(timeZoneName: timeZoneName);
 
-    const android = AndroidInitializationSettings('ic_launcher');
+    const android = AndroidInitializationSettings('ic_notification');
     const darwin = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -115,6 +115,7 @@ class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZon
         _channelId,
         _channelName,
         channelDescription: _channelDescription,
+        icon: 'ic_notification',
       ),
       iOS: DarwinNotificationDetails(),
       macOS: DarwinNotificationDetails(),
