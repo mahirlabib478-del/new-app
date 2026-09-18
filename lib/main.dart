@@ -444,6 +444,11 @@ class StudyHub extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
+                      Text(
+                        s.isBangla ? 'আপনার পড়ার লক্ষ্য অনুযায়ী একটি মোড বেছে নিন।' : 'Choose a mode that matches what you want to study.',
+                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 10),
                       _Mode(
                         icon: Icons.menu_book_rounded,
                         title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
@@ -591,12 +596,12 @@ class _Mode extends StatelessWidget {
         highlightColor: scheme.primary.withValues(alpha: 0.08),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   color: scheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(16),
