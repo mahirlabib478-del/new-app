@@ -193,7 +193,7 @@ void main() {
     expect(scheduler.permissionRequests, 1);
   });
 
-  test('denied notification permission is reported and prevents scheduling', () async {
+  test('denied notification permission is reported without discarding the schedule', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final scheduler = FakeScheduler()..notificationsEnabled = false;
@@ -206,7 +206,7 @@ void main() {
     expect(await coordinator.requestPermissions(), isFalse);
     await coordinator.sync();
 
-    expect(scheduler.scheduled, isEmpty);
+    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
   });
 
   test('permission request failure does not escape into the study flow', () async {
