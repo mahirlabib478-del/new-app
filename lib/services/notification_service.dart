@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -18,7 +17,6 @@ class NotificationService
   static const _channelId = 'study_os_reminders';
   static const _channelName = 'Study reminders';
   static const _channelDescription = 'Study, break and plan reminders.';
-  static const _nativeNotificationChannel = MethodChannel('study_os/notifications');
 
   @override
   Future<void> initialize() => _initialize();
@@ -55,6 +53,21 @@ class NotificationService
       macOS: darwin,
     );
     await _plugin.initialize(settings);
+
+    // Create the Android channel explicitly so its importance is deterministic
+    // on a fresh install. The channel's importance cannot be upgraded after
+    // Android creates it with a lower value.
+    final androidPlugin =
+        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _channelId,
+        _channelName,
+        description: _channelDescription,
+        importance: Importance.high,
+      ),
+    );
+
     _initialized = true;
   }
 
@@ -92,16 +105,10 @@ class NotificationService
     final android =
         _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
-      // Request through the app Activity as a fallback as well. This keeps the
-      // runtime permission flow independent from plugin-side permission timing.
-      try {
-        final granted = await _nativeNotificationChannel.invokeMethod<bool>('requestPermission');
-        return granted;
-      } on MissingPluginException {
-        return android.requestNotificationsPermission();
-      } on PlatformException {
-        return android.requestNotificationsPermission();
-      }
+      // Use the plugin's supported Android 13+ runtime-permission API.
+      // Keeping the request on the plugin side avoids a second native
+      // permission channel racing with Flutter's plugin lifecycle.
+      return android.requestNotificationsPermission();
     }
 
     final ios =
@@ -153,6 +160,9 @@ class NotificationService
         _channelId,
         _channelName,
         channelDescription: _channelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true,
         icon: 'ic_notification',
       ),
       iOS: DarwinNotificationDetails(),
