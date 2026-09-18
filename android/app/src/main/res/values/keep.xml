@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- flutter_local_notifications needs its notification icon in release APKs. -->
-    <keep>
-        <item type="drawable" name="ic_notification" />
-    </keep>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <keep tools:keep="@drawable/ic_notification" />
 </resources>
