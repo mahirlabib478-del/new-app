@@ -89,7 +89,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      if (requestPermission) await reminderCoordinator.requestPermissions();
+      if (requestPermission) {
+        final granted = await reminderCoordinator.requestPermissions();
+        if (!granted) return;
+      }
       await reminderCoordinator.sync(settingsOverride: settingsToSync);
     } on Exception {
       // Reminder failures must never block settings changes or normal app use.
