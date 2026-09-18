@@ -194,7 +194,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
                   Expanded(
                     child: _Stat(
                       icon: Icons.local_fire_department_rounded,
-                      value: 'undefined',
+                      value: '${store.streak}',
                       label: 'Streak',
                     ),
                   ),
@@ -202,7 +202,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
                   Expanded(
                     child: _Stat(
                       icon: Icons.bolt_rounded,
-                      value: 'undefined',
+                      value: '${store.xp}',
                       label: 'XP',
                     ),
                   ),
@@ -210,7 +210,7 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
                   Expanded(
                     child: _Stat(
                       icon: Icons.timer_rounded,
-                      value: 'undefined',
+                      value: '${store.completedMinutes}',
                       label: 'Minutes',
                     ),
                   ),
