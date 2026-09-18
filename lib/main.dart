@@ -579,7 +579,7 @@ class _Mode extends StatelessWidget {
                 ),
                 child: Icon(icon, color: scheme.onSecondaryContainer),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
