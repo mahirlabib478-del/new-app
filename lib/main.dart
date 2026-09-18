@@ -403,7 +403,7 @@ class StudyHub extends StatelessWidget {
                                       color: theme.colorScheme.onSecondaryContainer,
                                     ),
                                   ),
-                                  const SizedBox(width: 14),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
