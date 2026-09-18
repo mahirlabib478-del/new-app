@@ -595,7 +595,7 @@ class _Mode extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Icon(Icons.arrow_forward_rounded, color: scheme.primary),
             ],
           ),
