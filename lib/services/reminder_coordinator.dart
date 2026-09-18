@@ -87,22 +87,6 @@ class ReminderCoordinator {
     final timeZoneFingerprint =
         timeZoneAwareScheduler?.timeZoneFingerprint ?? 'unknown';
 
-    final notificationAware = scheduler is ReminderSchedulerNotificationAware
-        ? scheduler as ReminderSchedulerNotificationAware
-        : null;
-    final notificationsEnabled =
-        notificationAware == null ||
-            (await notificationAware.areNotificationsEnabled() ?? true);
-
-    if (!notificationsEnabled) {
-      _scheduledFingerprints.remove(studyId);
-      _scheduledFingerprints.remove(planId);
-      await _safeCancel(studyId);
-      await _safeCancel(planId);
-      await _safeCancel(breakId);
-      return;
-    }
-
     if (!settings.breakEnabled) {
       await _safeCancel(breakId);
     }
