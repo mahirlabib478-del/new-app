@@ -144,6 +144,14 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _syncRemindersSafely() async {
+    try {
+      await reminderCoordinator.sync();
+    } catch (_) {
+      // Reminders are non-critical and must never terminate the app on resume.
+    }
+  }
+
   Future<void> setTheme(String key) async {
     final theme = themes[key];
     if (theme == null) return;
