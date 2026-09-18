@@ -555,6 +555,8 @@ class _Mode extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
+        splashColor: scheme.primary.withValues(alpha: 0.18),
+        highlightColor: scheme.primary.withValues(alpha: 0.08),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
