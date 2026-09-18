@@ -191,7 +191,6 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
         ),
         inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
         iconButtonTheme: IconButtonThemeData(
-          enableFeedback: true,
           style: ButtonStyle(
             overlayColor: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.pressed)) {
