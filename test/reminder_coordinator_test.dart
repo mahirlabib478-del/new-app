@@ -43,9 +43,6 @@ class FakeScheduler implements ReminderScheduler {
   }
 
   @override
-  Future<bool?> areNotificationsEnabled() async => notificationsEnabled;
-
-  @override
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
