@@ -178,6 +178,14 @@ class NotificationService
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
+
+    // Do not treat a successful platform-channel call as proof that Android
+    // accepted the alarm. Verify that the request is actually pending.
+    final pending = await _plugin.pendingNotificationRequests();
+    final accepted = pending.any((request) => request.id == id);
+    if (!accepted) {
+      throw StateError('Android did not retain scheduled reminder $id');
+    }
   }
 
   @override
