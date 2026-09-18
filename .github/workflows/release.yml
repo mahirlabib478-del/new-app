@@ -95,10 +95,7 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release-key.jks
           chmod 600 android/app/release-key.jks
 
-          keytool -list \
-            -keystore android/app/release-key.jks \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -alias "$KEY_ALIAS" >/dev/null
+          keytool -list             -keystore android/app/release-key.jks             -storepass "$KEYSTORE_PASSWORD"             -alias "$KEY_ALIAS" >/dev/null
 
           python3 - <<'PY'
           from pathlib import Path
@@ -136,9 +133,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          flutter build apk --release \
-            --build-name "${{ steps.version.outputs.version_name }}" \
-            --build-number "${{ steps.version.outputs.version_code }}"
+          flutter build apk --release             --build-name "${{ steps.version.outputs.version_name }}"             --build-number "${{ steps.version.outputs.version_code }}"
 
       - name: Verify signed release APK
         run: |
@@ -154,9 +149,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          flutter build appbundle --release \
-            --build-name "${{ steps.version.outputs.version_name }}" \
-            --build-number "${{ steps.version.outputs.version_code }}"
+          flutter build appbundle --release             --build-name "${{ steps.version.outputs.version_name }}"             --build-number "${{ steps.version.outputs.version_code }}"
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
@@ -181,14 +174,11 @@ jobs:
             build/app/outputs/bundle/release/app-release.aab
           generate_release_notes: true
 
-
       - name: Update in-app release policy
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          VERSION="${RELEASE_TAG#v}"
-          VERSION_NAME="${VERSION%%+*}"
           python3 - <<'PY'
           import json
           import os
@@ -196,9 +186,9 @@ jobs:
 
           path = Path("update.json")
           policy = json.loads(path.read_text())
-          version = os.environ["VERSION_NAME"]
           tag = os.environ["RELEASE_TAG"]
           repo = os.environ["REPOSITORY"]
+          version = tag.removeprefix("v").split("+", 1)[0]
 
           policy["latestVersion"] = version
           policy["releaseUrl"] = f"https://github.com/{repo}/releases/tag/{tag}"
