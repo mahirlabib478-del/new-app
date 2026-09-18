@@ -612,7 +612,7 @@ class _Mode extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Card(
       color: scheme.surfaceContainerLow,
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         splashColor: scheme.primary.withValues(alpha: 0.18),
@@ -647,8 +647,15 @@ class _Mode extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
-              Icon(Icons.arrow_forward_rounded, color: scheme.primary),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.arrow_forward_rounded, size: 20, color: scheme.primary),
+              ),
             ],
           ),
         ),
