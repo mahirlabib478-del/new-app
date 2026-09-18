@@ -40,11 +40,16 @@ jobs:
         run: bash tool/bootstrap_android.sh
       - name: Verify notification manifest configuration
         run: |
+          grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.POST_NOTIFICATIONS' android/app/src/main/AndroidManifest.xml
           grep -q 'android.permission.RECEIVE_BOOT_COMPLETED' android/app/src/main/AndroidManifest.xml
           grep -q 'ScheduledNotificationReceiver' android/app/src/main/AndroidManifest.xml
           grep -q 'ScheduledNotificationBootReceiver' android/app/src/main/AndroidManifest.xml
           grep -q 'isCoreLibraryDesugaringEnabled = true' android/app/build.gradle.kts
           grep -q 'desugar_jdk_libs:2.1.4' android/app/build.gradle.kts
+          grep -q 'targetSdk = 35' android/app/build.gradle.kts
+          grep -q 'android:icon="@drawable/study_os_logo"' android/app/src/main/AndroidManifest.xml
+          test -f android/app/src/main/res/drawable/ic_notification.xml
       - name: Install dependencies
         run: flutter pub get
       - name: Build Android debug APK
