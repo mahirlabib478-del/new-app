@@ -240,7 +240,7 @@ class MainActivity : FlutterActivity() {
         pendingNotificationPermissionResult = null
     }
 }
-'''))
+''')
 
 PY
 
