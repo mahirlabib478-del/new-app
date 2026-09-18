@@ -154,7 +154,6 @@ activity.parent.mkdir(parents=True, exist_ok=True)
 activity.write_text('''package com.mahirlabib.study_os
 
 import android.Manifest
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.ToneGenerator
@@ -197,21 +196,6 @@ class MainActivity : FlutterActivity() {
                     )
                 }
             }
-        }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray,
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != notificationPermissionRequestCode) return
-
-        val granted = grantResults.isNotEmpty() &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED
-        pendingNotificationPermissionResult?.success(granted)
-        pendingNotificationPermissionResult = null
-    }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, soundChannel)
             .setMethodCallHandler { call, result ->
@@ -241,8 +225,22 @@ class MainActivity : FlutterActivity() {
                 }
             }
     }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != notificationPermissionRequestCode) return
+
+        val granted = grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        pendingNotificationPermissionResult?.success(granted)
+        pendingNotificationPermissionResult = null
+    }
 }
-''')
+'''))
 
 PY
 
