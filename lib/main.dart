@@ -437,7 +437,7 @@ class StudyHub extends StatelessWidget {
                         s.isBangla ? 'স্টাডি মোড' : 'Study modes',
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       _Mode(
                         icon: Icons.menu_book_rounded,
                         title: s.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
