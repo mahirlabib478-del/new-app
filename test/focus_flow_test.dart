@@ -53,7 +53,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: CompletionScreen(plan: plan, store: store)));
     await tester.pumpAndSettle();
     expect(find.text('50 / 50 minutes completed'), findsOneWidget);
-    expect(find.text('100%'), findsOneWidget);
+    expect(find.text('100%'), findsNWidgets(2));
     await tester.pumpWidget(const SizedBox());
   });
 
