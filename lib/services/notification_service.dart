@@ -5,7 +5,8 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'reminder_scheduler.dart';
 
-class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZoneAware {
+class NotificationService
+    implements ReminderScheduler, ReminderSchedulerNotificationAware, ReminderSchedulerTimeZoneAware {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
@@ -86,14 +87,33 @@ class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZon
   @override
   Future<bool?> requestPermissions() async {
     await _initialize();
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final android =
+        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) return android.requestNotificationsPermission();
 
-    final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-    if (ios != null) return ios.requestPermissions(alert: true, badge: true, sound: true);
+    final ios =
+        _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    if (ios != null) {
+      return ios.requestPermissions(alert: true, badge: true, sound: true);
+    }
 
-    final macos = _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>();
-    if (macos != null) return macos.requestPermissions(alert: true, badge: true, sound: true);
+    final macos =
+        _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>();
+    if (macos != null) {
+      return macos.requestPermissions(alert: true, badge: true, sound: true);
+    }
+
+    return null;
+  }
+
+  @override
+  Future<bool?> areNotificationsEnabled() async {
+    await _initialize();
+    final android =
+        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (android != null) {
+      return android.areNotificationsEnabled();
+    }
 
     return null;
   }
@@ -107,6 +127,11 @@ class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZon
     required int minute,
   }) async {
     await _initialize();
+    final enabled = await areNotificationsEnabled();
+    if (enabled == false) {
+      throw StateError('Notifications are disabled');
+    }
+
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextDailyOccurrence(now, hour, minute);
 
@@ -127,15 +152,25 @@ class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZon
       body,
       scheduled,
       details,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
   @override
-  Future<void> showNow({required int id, required String title, required String body}) async {
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
     await _initialize();
+    final enabled = await areNotificationsEnabled();
+    if (enabled == false) {
+      throw StateError('Notifications are disabled');
+    }
+
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
@@ -177,8 +212,6 @@ class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZon
     );
 
     if (!scheduled.isAfter(now)) {
-      // Reconstruct the next local calendar date instead of adding 24 hours.
-      // This keeps the configured wall-clock time stable across DST changes.
       scheduled = tz.TZDateTime(
         now.location,
         now.year,
