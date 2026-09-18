@@ -372,6 +372,8 @@ class StudyHub extends StatelessWidget {
                           color: theme.colorScheme.surfaceContainerLow,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(22),
+                            splashColor: theme.colorScheme.primary.withValues(alpha: 0.18),
+                            highlightColor: theme.colorScheme.primary.withValues(alpha: 0.08),
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
