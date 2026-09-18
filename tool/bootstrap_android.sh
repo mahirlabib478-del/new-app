@@ -123,6 +123,19 @@ drawable.write_text('''<?xml version="1.0" encoding="utf-8"?>
     <path android:fillColor="#43D3A5" android:pathData="M79,64 C85,55 92,52 99,53 C96,62 89,66 79,68 Z" />
 </vector>
 ''')
+notification_icon = Path('android/app/src/main/res/drawable/ic_notification.xml')
+notification_icon.parent.mkdir(parents=True, exist_ok=True)
+notification_icon.write_text('''<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M4,5 L10,4 L12,6 L14,4 L20,5 L20,18 C17,17 14,18 12,20 C10,18 7,17 4,18 Z" />
+    <path android:fillColor="#081A33" android:pathData="M11,6 L12,7 L13,6 L13,16 L12,17 L11,16 Z" />
+</vector>
+''')
+
 
 activity = Path('android/app/src/main/kotlin/com/mahirlabib/study_os/MainActivity.kt')
 activity.parent.mkdir(parents=True, exist_ok=True)
