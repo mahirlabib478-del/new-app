@@ -91,13 +91,14 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   Future<void> _prepareRemindersSafely() async {
     try {
       final settings = ReminderSettingsStore(widget.prefs).settings;
-      final remindersEnabled =
-          settings.studyEnabled ||
-          settings.breakEnabled ||
-          settings.planEnabled;
-      if (remindersEnabled) {
-        await reminderCoordinator.requestPermissions();
-      }
+
+      // Ask Android for notification access as soon as the app is ready.
+      // Do not gate this on a reminder toggle: the permission prompt is a
+      // platform requirement for all reminder types and must not be skipped
+      // because settings were loaded in a different state.
+      await reminderCoordinator.requestPermissions();
+
+      // Only schedule reminders after permission state has been checked.
       await reminderCoordinator.sync(settingsOverride: settings);
     } catch (_) {
       // Reminders are non-critical and must never terminate the app at startup.
