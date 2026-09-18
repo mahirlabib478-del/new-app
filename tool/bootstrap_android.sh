@@ -80,11 +80,17 @@ if 'ScheduledNotificationReceiver' not in text:
     text = text.replace(marker, receiver + marker, 1)
 
 # Use the Study OS launcher icon on the generated Android host.
-application_marker = '<application'
-if 'android:icon="@drawable/study_os_logo"' not in text:
+if 'android:icon="@mipmap/ic_launcher"' in text:
+    text = text.replace(
+        'android:icon="@mipmap/ic_launcher"',
+        'android:icon="@drawable/study_os_logo"',
+        1,
+    )
+elif 'android:icon="@drawable/study_os_logo"' not in text:
+    application_marker = '<application'
     text = text.replace(
         application_marker,
-        '<application android:icon="@drawable/study_os_logo" android:roundIcon="@drawable/study_os_logo"',
+        '<application android:icon="@drawable/study_os_logo"',
         1,
     )
 
@@ -98,42 +104,18 @@ drawable.write_text('''<?xml version="1.0" encoding="utf-8"?>
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#081A33"
-        android:pathData="M8,0 L100,0 Q108,0 108,8 L108,100 Q108,108 100,108 L8,108 Q0,108 0,100 L0,8 Q0,0 8,0 Z" />
-    <path
-        android:fillColor="#168AAD"
-        android:pathData="M18,57 A36,36 0,1 1,90 57 A36,36 0,1 1,18 57 Z" />
-    <path
-        android:fillColor="#081A33"
-        android:pathData="M23,57 A31,31 0,1 1,85 57 A31,31 0,1 1,23 57 Z" />
-    <path
-        android:fillColor="#F5F7FA"
-        android:pathData="M24,60 C34,58 44,60 54,68 L54,88 C44,80 34,78 24,81 Z" />
-    <path
-        android:fillColor="#E8EDF3"
-        android:pathData="M54,68 C64,60 74,58 84,60 L84,81 C74,78 64,80 54,88 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,67 L54,89 L50,85 L50,68 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M50,41 L55,41 L55,55 L50,55 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M52,50 L72,34 L75,38 L55,55 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M52,50 L37,38 L34,42 L50,55 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M48,51 A6,6 0,1 1,60 51 A6,6 0,1 1,48 51 Z" />
-    <path
-        android:fillColor="#2A9D8F"
-        android:pathData="M79,60 C78,49 84,38 96,34 C96,48 90,57 79,60 Z" />
-    <path
-        android:fillColor="#43D3A5"
-        android:pathData="M79,64 C85,55 92,52 99,53 C96,62 89,66 79,68 Z" />
+    <path android:fillColor="#081A33" android:pathData="M8,0 L100,0 Q108,0 108,8 L108,100 Q108,108 100,108 L8,108 Q0,108 0,100 L0,8 Q0,0 8,0 Z" />
+    <path android:fillColor="#168AAD" android:pathData="M18,57 A36,36 0,1 1,90 57 A36,36 0,1 1,18 57 Z" />
+    <path android:fillColor="#081A33" android:pathData="M23,57 A31,31 0,1 1,85 57 A31,31 0,1 1,23 57 Z" />
+    <path android:fillColor="#F5F7FA" android:pathData="M24,60 C34,58 44,60 54,68 L54,88 C44,80 34,78 24,81 Z" />
+    <path android:fillColor="#E8EDF3" android:pathData="M54,68 C64,60 74,58 84,60 L84,81 C74,78 64,80 54,88 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,67 L54,89 L50,85 L50,68 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M50,41 L55,41 L55,55 L50,55 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M52,50 L72,34 L75,38 L55,55 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M52,50 L37,38 L34,42 L50,55 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M48,51 A6,6 0,1 1,60 51 A6,6 0,1 1,48 51 Z" />
+    <path android:fillColor="#2A9D8F" android:pathData="M79,60 C78,49 84,38 96,34 C96,48 90,57 79,60 Z" />
+    <path android:fillColor="#43D3A5" android:pathData="M79,64 C85,55 92,52 99,53 C96,62 89,66 79,68 Z" />
 </vector>
 ''')
 
