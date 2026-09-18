@@ -8,9 +8,7 @@ flutter create --platforms=android --org com.mahirlabib --project-name study_os 
 # flutter create adds its default counter-app widget_test.dart when the
 # repository does not already contain one. Study OS has its own test suite,
 # so remove only that generated default test before CI analysis/test runs.
-if [[ -f test/widget_test.dart ]] && grep -q "MyApp" test/widget_test.dart; then
-    rm -f test/widget_test.dart
-fi
+rm -f test/widget_test.dart
 
 python3 - <<'PY'
 from pathlib import Path
