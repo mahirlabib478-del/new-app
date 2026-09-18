@@ -15,13 +15,6 @@ abstract interface class ReminderScheduler {
 
   Future<bool?> requestPermissions();
 }
-
-/// Optional capability for schedulers that can report whether notifications
-/// are currently allowed by the platform.
-abstract interface class ReminderSchedulerNotificationAware {
-  Future<bool?> areNotificationsEnabled();
-}
-
 /// Optional capability for schedulers that cache timezone state.
 abstract interface class ReminderSchedulerTimeZoneAware {
   Future<void> refreshTimeZone();
