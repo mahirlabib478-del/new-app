@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/study_models.dart';
 import '../services/app_language.dart';
 import '../services/local_store.dart';
-import '../services/sound_effects.dart';
 import '../services/today_engine.dart';
 
 /// Study-focused home surface.
@@ -17,11 +16,6 @@ class AttractiveHome extends StatelessWidget {
   final Future<void> Function({StudyPlan? plan}) onOpenFocus;
   final VoidCallback onRegularStudy;
   final void Function(bool nextDay) onExam;
-
-  void _tap(VoidCallback action) {
-    SoundEffects(store).tap();
-    action();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +41,7 @@ class AttractiveHome extends StatelessWidget {
                 _MissionCard(
                   snapshot: snapshot,
                   strings: strings,
-                  onStart: snapshot.hasRemainingWork ? () => _tap(() => onOpenFocus()) : () => _tap(onRegularStudy),
+                  onStart: snapshot.hasRemainingWork ? onOpenFocus : onRegularStudy,
                 ),
                 const SizedBox(height: 12),
                 _GoalCard(snapshot: snapshot, strings: strings),
@@ -96,7 +90,7 @@ class AttractiveHome extends StatelessWidget {
                         active: active,
                         complete: complete,
                         minutesLabel: strings.minutes,
-                        onTap: active ? () => _tap(() => onOpenFocus()) : null,
+                        onTap: active ? () => onOpenFocus() : null,
                       ),
                     );
                   },
@@ -114,19 +108,19 @@ class AttractiveHome extends StatelessWidget {
                   icon: Icons.menu_book_rounded,
                   title: strings.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
                   subtitle: strings.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Build a focused plan for your subjects.',
-                  onTap: () => _tap(onRegularStudy),
+                  onTap: onRegularStudy,
                 ),
                 _ModeCard(
                   icon: Icons.auto_awesome_rounded,
                   title: strings.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation',
                   subtitle: strings.isBangla ? 'অগ্রাধিকার অনুযায়ী রিভিশন করুন।' : 'Prioritize the work that matters most.',
-                  onTap: () => _tap(() => onExam(false)),
+                  onTap: () => onExam(false),
                 ),
                 _ModeCard(
                   icon: Icons.bolt_rounded,
                   title: strings.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam',
                   subtitle: strings.isBangla ? 'জরুরি বিষয়গুলো আগে শেষ করুন।' : 'Focus on high-impact revision first.',
-                  onTap: () => _tap(() => onExam(true)),
+                  onTap: () => onExam(true),
                 ),
                 const SizedBox(height: 6),
                 Card(
