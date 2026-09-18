@@ -76,16 +76,29 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     _tabs[0] = _buildHomeTab();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (kReleaseMode) {
-        unawaited(Future<void>.delayed(const Duration(milliseconds: 800), _syncRemindersSafely));
+        unawaited(
+          Future<void>.delayed(
+            const Duration(milliseconds: 800),
+            _prepareRemindersSafely,
+          ),
+        );
       } else {
-        unawaited(_syncRemindersSafely());
+        unawaited(_prepareRemindersSafely());
       }
     });
   }
 
-  Future<void> _syncRemindersSafely() async {
+  Future<void> _prepareRemindersSafely() async {
     try {
-      await reminderCoordinator.sync();
+      final settings = ReminderSettingsStore(widget.prefs).settings;
+      final remindersEnabled =
+          settings.studyEnabled ||
+          settings.breakEnabled ||
+          settings.planEnabled;
+      if (remindersEnabled) {
+        await reminderCoordinator.requestPermissions();
+      }
+      await reminderCoordinator.sync(settingsOverride: settings);
     } catch (_) {
       // Reminders are non-critical and must never terminate the app at startup.
     }
