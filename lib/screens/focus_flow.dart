@@ -235,7 +235,152 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
 }
 
 class CompletionScreen extends StatelessWidget {
-  const CompletionScreen({super.key, required this.plan, required this.store}); final StudyPlan plan; final LocalStore store;
-  @override Widget build(BuildContext context) { final completed = plan.items.asMap().entries.fold<int>(0, (sum, entry) => sum + store.itemCompletedMinutes(entry.key).clamp(0, entry.value.minutes).toInt()); final planned = plan.allocatedMinutes; final progress = planned <= 0 ? 0.0 : (completed / planned).clamp(0.0, 1.0).toDouble(); final xp = completed * 2; return Scaffold(body: SafeArea(child: Center(child: Padding(padding: const EdgeInsets.all(28), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.emoji_events_rounded, size: 76, color: Theme.of(context).colorScheme.primary), const SizedBox(height: 20), Text('Study complete', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 10), Text('$completed / $planned minutes completed', style: const TextStyle(fontWeight: FontWeight.w700)), const SizedBox(height: 18), LinearProgressIndicator(value: progress, minHeight: 9), const SizedBox(height: 22), Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_Stat(label: 'Focused', value: '$completed min'), _Stat(label: 'Progress', value: '${(progress * 100).round()}%'), _Stat(label: 'XP earned', value: '+$xp')]))), const SizedBox(height: 24), FilledButton.icon(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), icon: const Icon(Icons.home_rounded), label: const Text('Back to home'))])))))); }
+  const CompletionScreen({super.key, required this.plan, required this.store});
+
+  final StudyPlan plan;
+  final LocalStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final completed = plan.items.asMap().entries.fold<int>(
+      0,
+      (sum, entry) =>
+          sum + store.itemCompletedMinutes(entry.key).clamp(0, entry.value.minutes).toInt(),
+    );
+    final planned = plan.allocatedMinutes;
+    final progress = planned <= 0
+        ? 0.0
+        : (completed / planned).clamp(0.0, 1.0).toDouble();
+    final xp = completed * 2;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                children: [
+                  Card(
+                    color: scheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: scheme.surface,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.emoji_events_rounded,
+                              size: 40,
+                              color: scheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Study complete',
+                            textAlign: TextAlign.center,
+                            style: textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: scheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '$' + '{completed} / $' + '{planned} minutes completed',
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: scheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Session progress',
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                '$' + '{(progress * 100).round()}%',
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(99),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 10,
+                              backgroundColor: scheme.surfaceContainerHighest,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 18,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _Stat(label: 'Focused', value: '$' + '{completed} min'),
+                          _Stat(
+                            label: 'Progress',
+                            value: '$' + '{(progress * 100).round()}%',
+                          ),
+                          _Stat(label: 'XP earned', value: '+$' + '{xp}'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.popUntil(
+                        context,
+                        (route) => route.isFirst,
+                      ),
+                      icon: const Icon(Icons.home_rounded),
+                      label: const Text('Back to home'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 class _Stat extends StatelessWidget { const _Stat({required this.label, required this.value}); final String label; final String value; @override Widget build(BuildContext context) => Column(children: [Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), const SizedBox(height: 4), Text(label)]); }
