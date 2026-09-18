@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/study_models.dart';
@@ -73,7 +74,13 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
     _tabs[0] = _buildHomeTab();
-    WidgetsBinding.instance.addPostFrameCallback((_) { unawaited(_syncRemindersSafely()); });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (kReleaseMode) {
+        unawaited(Future<void>.delayed(const Duration(milliseconds: 800), _syncRemindersSafely));
+      } else {
+        unawaited(_syncRemindersSafely());
+      }
+    });
   }
 
   Future<void> _syncRemindersSafely() async {
