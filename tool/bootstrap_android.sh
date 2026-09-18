@@ -20,6 +20,8 @@ from pathlib import Path
 build = Path('android/app/build.gradle.kts')
 text = build.read_text()
 
+text = text.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 35', 1)
+
 if 'isCoreLibraryDesugaringEnabled = true' not in text:
     marker = '    defaultConfig {'
     if marker not in text:
