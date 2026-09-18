@@ -31,9 +31,15 @@ Future<void> main() async {
 
 const themes = <String, _AppTheme>{
   'midnight': _AppTheme('Midnight', Icons.nights_stay_rounded, Color(0xFF6C63FF), Brightness.dark),
-  'ocean': _AppTheme('Ocean', Icons.water_rounded, Color(0xFF1479A8), Brightness.dark),
+  'ocean': _AppTheme('Ocean Dark', Icons.water_rounded, Color(0xFF1479A8), Brightness.dark),
   'forest': _AppTheme('Forest', Icons.forest_rounded, Color(0xFF3F7D58), Brightness.dark),
   'sunrise': _AppTheme('Sunrise', Icons.wb_sunny_rounded, Color(0xFFE4774E), Brightness.light),
+  'ocean_light': _AppTheme('Ocean', Icons.water_drop_rounded, Color(0xFF168AAD), Brightness.light),
+  'mint': _AppTheme('Mint', Icons.spa_rounded, Color(0xFF2A9D8F), Brightness.light),
+  'rose': _AppTheme('Rose', Icons.local_florist_rounded, Color(0xFFC85572), Brightness.light),
+  'peach': _AppTheme('Peach', Icons.wb_sunny_outlined, Color(0xFFE07A5F), Brightness.light),
+  'lavender': _AppTheme('Lavender', Icons.auto_awesome_rounded, Color(0xFF7B61A8), Brightness.light),
+  'sky': _AppTheme('Sky', Icons.cloud_rounded, Color(0xFF3D7EA6), Brightness.light),
 };
 
 class _AppTheme {
