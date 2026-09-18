@@ -351,7 +351,30 @@ class StudyHub extends StatelessWidget {
                         s.isBangla ? 'একটি কাজ বেছে নিয়ে সরাসরি শুরু করুন।' : 'Pick a path and get straight into studying.',
                         style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
-                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.today_rounded, size: 20, color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                s.isBangla ? 'আজকের ফোকাস' : 'Today’s focus',
+                                style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            Text(
+                              s.isBangla ? 'সরাসরি শুরু করুন' : 'Start focused',
+                              style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       _StudyHero(
                         icon: Icons.auto_awesome_rounded,
                         title: s.isBangla ? 'আজকের পরিকল্পনা' : 'Today Engine',
@@ -367,7 +390,7 @@ class StudyHub extends StatelessWidget {
                         ),
                       ),
                       if (savedCount > 0) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Card(
                           color: theme.colorScheme.surfaceContainerLow,
                           child: InkWell(
@@ -432,7 +455,7 @@ class StudyHub extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
                       Row(
                         children: [
                           Icon(Icons.tune_rounded, size: 22, color: theme.colorScheme.primary),
