@@ -560,7 +560,7 @@ class _Mode extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Card(
       color: scheme.surfaceContainerLow,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         splashColor: scheme.primary.withValues(alpha: 0.18),
