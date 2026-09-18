@@ -27,9 +27,15 @@ class ProfileScreen extends StatefulWidget {
 
   static const _presets = <String, _ThemeOption>{
     'midnight': _ThemeOption('Midnight', Icons.nights_stay_rounded, 'Deep focus, low visual noise'),
-    'ocean': _ThemeOption('Ocean', Icons.water_rounded, 'Cool and calm'),
+    'ocean': _ThemeOption('Ocean Dark', Icons.water_rounded, 'Cool and calm'),
     'forest': _ThemeOption('Forest', Icons.forest_rounded, 'Natural and grounded'),
     'sunrise': _ThemeOption('Sunrise', Icons.wb_sunny_rounded, 'Warm and bright'),
+    'ocean_light': _ThemeOption('Ocean', Icons.water_drop_rounded, 'Fresh and focused'),
+    'mint': _ThemeOption('Mint', Icons.spa_rounded, 'Soft and refreshing'),
+    'rose': _ThemeOption('Rose', Icons.local_florist_rounded, 'Warm and gentle'),
+    'peach': _ThemeOption('Peach', Icons.wb_sunny_outlined, 'Friendly and energetic'),
+    'lavender': _ThemeOption('Lavender', Icons.auto_awesome_rounded, 'Calm and creative'),
+    'sky': _ThemeOption('Sky', Icons.cloud_rounded, 'Light and airy'),
   };
 
   @override
