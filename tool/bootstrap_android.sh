@@ -33,6 +33,9 @@ if 'mavenCentral()' not in settings_text:
 
 text = text.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 35', 1)
 
+# flutter_local_notifications 22.x requires compileSdk 35+; use 36 on the current stable toolchain.
+text = text.replace('compileSdk = flutter.compileSdkVersion', 'compileSdk = 36', 1)
+
 if 'isCoreLibraryDesugaringEnabled = true' not in text:
     marker = '    defaultConfig {'
     if marker not in text:
