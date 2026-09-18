@@ -501,19 +501,10 @@ class _StudyHero extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: scheme.primary),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 520;
+              final text = Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -527,19 +518,46 @@ class _StudyHero extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: FilledButton(
-                  onPressed: onTap,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 50),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  ),
-                  child: Text(actionLabel),
+              );
+              final iconBox = Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-            ],
+                child: Icon(icon, color: scheme.primary),
+              );
+              final button = FilledButton(
+                onPressed: onTap,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 50),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                ),
+                child: Text(actionLabel),
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(children: [iconBox, const SizedBox(width: 8), text]),
+                    const SizedBox(height: 10),
+                    button,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  iconBox,
+                  const SizedBox(width: 8),
+                  text,
+                  const SizedBox(width: 6),
+                  Flexible(child: button),
+                ],
+              );
+            },
           ),
         ),
       ),
