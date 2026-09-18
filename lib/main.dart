@@ -412,7 +412,7 @@ class StudyHub extends StatelessWidget {
                                           s.isBangla ? 'সেভ করা সেশন' : 'Saved sessions',
                                           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                                         ),
-                                        const SizedBox(height: 3),
+                                        const SizedBox(height: 2),
                                         Text(
                                           s.isBangla
                                               ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে'
