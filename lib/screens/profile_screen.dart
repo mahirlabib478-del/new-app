@@ -62,12 +62,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveSettings(ReminderSettings next) async {
-    final previous = settings;
-    final requestsPermission =
-        (!previous.studyEnabled && next.studyEnabled) ||
-        (!previous.breakEnabled && next.breakEnabled) ||
-        (!previous.planEnabled && next.planEnabled);
-
     // Reflect the user's choice immediately. Persistence and notification sync
     // happen afterwards so a slow platform/network operation cannot make a tap
     // look ignored.
@@ -75,13 +69,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       await ReminderSettingsStore(widget.prefs).save(next);
-      await _syncReminders(settingsToSync: next, requestPermission: requestsPermission);
+      await _syncReminders(settingsToSync: next);
     } on Exception {
       // Reminder failures must never block settings changes or normal app use.
     }
   }
 
-  Future<void> _syncReminders({required ReminderSettings settingsToSync, required bool requestPermission}) async {
+  Future<void> _syncReminders({required ReminderSettings settingsToSync}) async {
     final anyEnabled = settingsToSync.studyEnabled || settingsToSync.breakEnabled || settingsToSync.planEnabled;
     if (!anyEnabled && !requestPermission) {
       await reminderCoordinator.sync(settingsOverride: settingsToSync);
@@ -89,7 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      if (requestPermission) {
+      // Settings can start enabled from persisted defaults, so a time change
+      // or another reminder action must also be able to recover a missing
+      // runtime grant.
+      if (anyEnabled) {
         final granted = await reminderCoordinator.requestPermissions();
         if (!granted) return;
       }
