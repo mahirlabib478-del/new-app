@@ -190,6 +190,31 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
         inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+        iconButtonTheme: IconButtonThemeData(
+          enableFeedback: true,
+          style: ButtonStyle(
+            overlayColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.pressed)) {
+                return scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.30 : 0.18);
+              }
+              if (states.contains(WidgetState.hovered)) {
+                return scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.10 : 0.06);
+              }
+              return null;
+            }),
+          ),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.26 : 0.16);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.10 : 0.06);
+            }
+            return null;
+          }),
+        ),
         splashFactory: InkRipple.splashFactory,
         splashColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.30 : 0.18),
         highlightColor: scheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.12 : 0.08),
