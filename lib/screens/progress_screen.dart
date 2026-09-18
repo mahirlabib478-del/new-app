@@ -24,7 +24,7 @@ class ProgressScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         children: [
           Text('Your momentum', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
           const SizedBox(height: 16),
