@@ -41,6 +41,17 @@ class UpdatePolicy {
   }
 }
 
+class _Version {
+  const _Version(this.major, this.minor, this.patch, this.build);
+
+  final int major;
+  final int minor;
+  final int patch;
+  final int build;
+
+  List<int> get parts => [major, minor, patch, build];
+}
+
 class UpdateService {
   const UpdateService({this.currentVersion = '0.2.0', this.prefs});
 
@@ -62,7 +73,7 @@ class UpdateService {
     final mandatory = isMandatoryVersion(minimum, currentVersion);
     final optional = _isNewer(latest, currentVersion);
     if (!mandatory && !optional) return null;
-    return UpdateInfo(latestVersion: latest, releaseUrl: policy.releaseUrl, apkUrl: policy.apkUrl, isMandatory: mandatory);
+    return UpdateInfo(latestVersion: _formatVersion(latest), releaseUrl: policy.releaseUrl, apkUrl: policy.apkUrl, isMandatory: mandatory);
   }
 
   Future<UpdatePolicy?> fetchPolicy() async {
@@ -98,12 +109,7 @@ class UpdateService {
     final minimum = _normalizeVersion(minimumSupported);
     final normalizedCurrent = _normalizeVersion(current);
     if (minimum == null || normalizedCurrent == null) return false;
-    final currentParts = _parse(normalizedCurrent);
-    final minimumParts = _parse(minimum);
-    for (var i = 0; i < 3; i++) {
-      if (currentParts[i] != minimumParts[i]) return currentParts[i] < minimumParts[i];
-    }
-    return false;
+    return _compareVersions(normalizedCurrent, minimum) < 0;
   }
 
   bool isNewerVersion(String latest, String current) => _isNewer(latest, current);
@@ -112,12 +118,7 @@ class UpdateService {
     final latestNormalized = _normalizeVersion(latest);
     final currentNormalized = _normalizeVersion(current);
     if (latestNormalized == null || currentNormalized == null) return false;
-    final latestParts = _parse(latestNormalized);
-    final currentParts = _parse(currentNormalized);
-    for (var i = 0; i < 3; i++) {
-      if (latestParts[i] != currentParts[i]) return latestParts[i] > currentParts[i];
-    }
-    return false;
+    return _compareVersions(latestNormalized, currentNormalized) > 0;
   }
 
   String? _normalizeVersion(String value) {
@@ -151,7 +152,7 @@ class UpdateService {
     final minimum = _normalizeVersion(policy.minimumSupportedVersion);
     if (latest == null || minimum == null || !_isSafeReleaseUrl(policy.releaseUrl)) return false;
     if (policy.apkUrl != null && !_isSafeDownloadUrl(policy.apkUrl!)) return false;
-    return !_isNewer(minimum, latest);
+    return _compareVersions(minimum, latest) <= 0;
   }
 
   bool _isSafeReleaseUrl(String value) {
