@@ -588,7 +588,7 @@ class _Mode extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),
