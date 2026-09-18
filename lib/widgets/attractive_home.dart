@@ -31,71 +31,123 @@ class AttractiveHome extends StatelessWidget {
     final completedByItem = snapshot.plan == null ? const <int, int>{} : store.itemCompletedMinutesMap;
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
-        children: [
-          Text(_greeting(strings), style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 3),
-          Text(
-            strings.isBangla ? 'আজকের পড়াশোনা এক ধাপ করে এগিয়ে নিন' : 'Move through today one focused step at a time',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate.fixed([
+                Text(_greeting(strings), style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 3),
+                Text(
+                  strings.isBangla ? 'আজকের পড়াশোনা এক ধাপ করে এগিয়ে নিন' : 'Move through today one focused step at a time',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 16),
+                _MissionCard(
+                  snapshot: snapshot,
+                  strings: strings,
+                  onStart: snapshot.hasRemainingWork ? () => _tap(() => onOpenFocus()) : () => _tap(onRegularStudy),
+                ),
+                const SizedBox(height: 12),
+                _GoalCard(snapshot: snapshot, strings: strings),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: _StatCard(icon: Icons.local_fire_department_rounded, value: '${snapshot.streak}', label: strings.isBangla ? 'দিন স্ট্রিক' : 'streak')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _StatCard(icon: Icons.bolt_rounded, value: '${snapshot.xp}', label: 'XP')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _StatCard(icon: Icons.workspace_premium_rounded, value: '${snapshot.level}', label: strings.isBangla ? 'লেভেল' : 'level')),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                _SectionTitle(strings.isBangla ? 'তোমার স্টাডি জার্নি' : 'Your study journey'),
+                const SizedBox(height: 10),
+              ]),
+            ),
           ),
-          const SizedBox(height: 16),
-          _MissionCard(snapshot: snapshot, strings: strings, onStart: snapshot.hasRemainingWork ? () => _tap(() => onOpenFocus()) : () => _tap(onRegularStudy)),
-          const SizedBox(height: 12),
-          _GoalCard(snapshot: snapshot, strings: strings),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _StatCard(icon: Icons.local_fire_department_rounded, value: '${snapshot.streak}', label: strings.isBangla ? 'দিন স্ট্রিক' : 'streak')),
-              const SizedBox(width: 8),
-              Expanded(child: _StatCard(icon: Icons.bolt_rounded, value: '${snapshot.xp}', label: 'XP')),
-              const SizedBox(width: 8),
-              Expanded(child: _StatCard(icon: Icons.workspace_premium_rounded, value: '${snapshot.level}', label: strings.isBangla ? 'লেভেল' : 'level')),
-            ],
-          ),
-          const SizedBox(height: 22),
-          _SectionTitle(strings.isBangla ? 'তোমার স্টাডি জার্নি' : 'Your study journey'),
-          const SizedBox(height: 10),
           if (snapshot.plan == null)
-            _EmptyJourney(strings: strings, onTap: onRegularStudy)
-          else
-            ...snapshot.plan!.items.asMap().entries.map((entry) {
-              final item = entry.value;
-              final completed = completedByItem[entry.key] ?? 0;
-              final progress = item.minutes <= 0 ? 1.0 : (completed / item.minutes).clamp(0.0, 1.0).toDouble();
-              final active = snapshot.currentIndex == entry.key && snapshot.hasRemainingWork;
-              final complete = item.minutes > 0 && completed >= item.minutes;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _JourneyItem(item: item, progress: progress, active: active, complete: complete, minutesLabel: strings.minutes, onTap: active ? () => _tap(() => onOpenFocus()) : null),
-              );
-            }),
-          const SizedBox(height: 14),
-          _SectionTitle(strings.isBangla ? 'স্টাডি মোড' : 'Study modes'),
-          const SizedBox(height: 10),
-          _ModeCard(icon: Icons.menu_book_rounded, title: strings.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study', subtitle: strings.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Build a focused plan for your subjects.', onTap: () => _tap(onRegularStudy)),
-          _ModeCard(icon: Icons.auto_awesome_rounded, title: strings.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation', subtitle: strings.isBangla ? 'অগ্রাধিকার অনুযায়ী রিভিশন করুন।' : 'Prioritize the work that matters most.', onTap: () => _tap(() => onExam(false))),
-          _ModeCard(icon: Icons.bolt_rounded, title: strings.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam', subtitle: strings.isBangla ? 'জরুরি বিষয়গুলো আগে শেষ করুন।' : 'Focus on high-impact revision first.', onTap: () => _tap(() => onExam(true))),
-          const SizedBox(height: 6),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.lightbulb_outline_rounded, color: scheme.primary),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(snapshot.recommendationReason, style: const TextStyle(fontWeight: FontWeight.w700))),
-                ],
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate.fixed([
+                  _EmptyJourney(strings: strings, onTap: onRegularStudy),
+                  const SizedBox(height: 14),
+                ]),
               ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = snapshot.plan!.items[index];
+                    final completed = completedByItem[index] ?? 0;
+                    final progress = item.minutes <= 0 ? 1.0 : (completed / item.minutes).clamp(0.0, 1.0).toDouble();
+                    final active = snapshot.currentIndex == index && snapshot.hasRemainingWork;
+                    final complete = item.minutes > 0 && completed >= item.minutes;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _JourneyItem(
+                        item: item,
+                        progress: progress,
+                        active: active,
+                        complete: complete,
+                        minutesLabel: strings.minutes,
+                        onTap: active ? () => _tap(() => onOpenFocus()) : null,
+                      ),
+                    );
+                  },
+                  childCount: snapshot.plan!.items.length,
+                ),
+              ),
+            ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 6, 18, 28),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate.fixed([
+                _SectionTitle(strings.isBangla ? 'স্টাডি মোড' : 'Study modes'),
+                const SizedBox(height: 10),
+                _ModeCard(
+                  icon: Icons.menu_book_rounded,
+                  title: strings.isBangla ? 'রেগুলার স্টাডি' : 'Regular Study',
+                  subtitle: strings.isBangla ? 'বিষয়, অধ্যায় ও ফোকাস ব্লক পরিকল্পনা করুন।' : 'Build a focused plan for your subjects.',
+                  onTap: () => _tap(onRegularStudy),
+                ),
+                _ModeCard(
+                  icon: Icons.auto_awesome_rounded,
+                  title: strings.isBangla ? 'পরীক্ষার প্রস্তুতি' : 'Exam Preparation',
+                  subtitle: strings.isBangla ? 'অগ্রাধিকার অনুযায়ী রিভিশন করুন।' : 'Prioritize the work that matters most.',
+                  onTap: () => _tap(() => onExam(false)),
+                ),
+                _ModeCard(
+                  icon: Icons.bolt_rounded,
+                  title: strings.isBangla ? 'আগামীকালের পরীক্ষা' : 'Next Day Exam',
+                  subtitle: strings.isBangla ? 'জরুরি বিষয়গুলো আগে শেষ করুন।' : 'Focus on high-impact revision first.',
+                  onTap: () => _tap(() => onExam(true)),
+                ),
+                const SizedBox(height: 6),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.lightbulb_outline_rounded, color: scheme.primary),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(snapshot.recommendationReason, style: const TextStyle(fontWeight: FontWeight.w700))),
+                      ],
+                    ),
+                  ),
+                ),
+              ]),
             ),
           ),
         ],
       ),
     );
-  }
-
   String _greeting(AppStrings strings) {
     final hour = DateTime.now().hour;
     if (strings.isBangla) {
