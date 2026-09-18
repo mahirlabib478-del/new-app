@@ -135,10 +135,6 @@ class NotificationService
     required int minute,
   }) async {
     await _initialize();
-    final enabled = await areNotificationsEnabled();
-    if (enabled == false) {
-      throw StateError('Notifications are disabled');
-    }
 
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextDailyOccurrence(now, hour, minute);
