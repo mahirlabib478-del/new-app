@@ -117,8 +117,8 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             ),
           ),
           const SizedBox(height: 12),
-          Card(color: Theme.of(context).colorScheme.surfaceContainerLow, child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [Icon(Icons.health_and_safety_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 8), Text('Study health', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Study health', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 14),
             Row(children: [
               Expanded(child: _InsightStat(icon: Icons.event_available_rounded, value: '${(analytics.consistencyRate * 100).round()}%', label: 'Consistency')),
@@ -134,8 +134,8 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
           ]))),
           const SizedBox(height: 12),
           if (plan != null)
-            Card(color: Theme.of(context).colorScheme.surfaceContainerLow, child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [Icon(Icons.speed_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 8), Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
+            Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [Expanded(child: Text('Plan pace', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))), Text('${analytics.planCompletedMinutes}/${analytics.plannedMinutes} min', style: const TextStyle(fontWeight: FontWeight.w900))]),
               const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(99),
@@ -149,9 +149,9 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
                       : '${analytics.planRemainingMinutes} min remaining • about ${analytics.estimatedPlanDaysRemaining} day${analytics.estimatedPlanDaysRemaining == 1 ? '' : 's'} at your recent pace'),
             ]))),
           const SizedBox(height: 12),
-          Card(color: Theme.of(context).colorScheme.surfaceContainerLow, child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Icon(Icons.task_alt_rounded, color: Theme.of(context).colorScheme.primary), const SizedBox(width: 8), Text('Overall plan', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900))]), const SizedBox(height: 10), Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 12), ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: progress, minHeight: 9)), const SizedBox(height: 10), Text('${(progress * 100).round()}% plan complete')]))),
+          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('$completed / $planned min', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 12), ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: progress, minHeight: 9)), const SizedBox(height: 10), Text('${(progress * 100).round()}% plan complete')]))),
           const SizedBox(height: 12),
-          Card(color: Theme.of(context).colorScheme.surfaceContainerLow, child: Padding(padding: const EdgeInsets.all(18), child: Column(children: [
+          Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(children: [
             Row(children: [CircleAvatar(radius: 24, child: Text('${store.level}', style: const TextStyle(fontWeight: FontWeight.w900))), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Level ${store.level}', style: const TextStyle(fontWeight: FontWeight.w900)), Text(nextLevelXp <= 0 ? 'Level complete' : '$nextLevelXp XP to next level')])), Text('${store.levelProgress}/250 XP', style: const TextStyle(fontWeight: FontWeight.w800))]),
             const SizedBox(height: 12), LinearProgressIndicator(value: levelProgress.clamp(0.0, 1.0).toDouble(), minHeight: 7),
           ]))),
@@ -387,5 +387,5 @@ class _Stat extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)]));
+  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(children: [Icon(icon), const SizedBox(height: 6), Text(value, style: const TextStyle(fontWeight: FontWeight.w900)), Text(label)])));
 }

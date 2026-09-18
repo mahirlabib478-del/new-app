@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/study_models.dart';
@@ -74,13 +73,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
     _tabs[0] = _buildHomeTab();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (kReleaseMode) {
-        unawaited(Future<void>.delayed(const Duration(milliseconds: 800), _syncRemindersSafely));
-      } else {
-        unawaited(_syncRemindersSafely());
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) { unawaited(_syncRemindersSafely()); });
   }
 
   Future<void> _syncRemindersSafely() async {
@@ -496,13 +489,7 @@ class _StudyHero extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: scheme.primary,
-                  foregroundColor: scheme.onPrimary,
-                  minimumSize: const Size(0, 46),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                ),
+              FilledButton.tonal(
                 onPressed: onTap,
                 child: Text(actionLabel),
               ),
@@ -525,24 +512,14 @@ class _Mode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         onTap: onTap,
-        enableFeedback: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        leading: CircleAvatar(
-          radius: 25,
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-          child: Icon(icon),
-        ),
+        contentPadding: const EdgeInsets.all(12),
+        leading: CircleAvatar(radius: 27, child: Icon(icon)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Text(subtitle),
-        ),
-        trailing: Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right_rounded),
       ),
     );
   }

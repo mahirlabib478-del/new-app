@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -24,11 +23,6 @@ class _UpdateGateState extends State<UpdateGate> {
   Future<UpdateInfo?> _runCheck() async {
     try {
       if (widget.checkForUpdate != null) return await widget.checkForUpdate!();
-      // Keep production network/package metadata work away from the first interactive frame.
-      // Tests and debug builds stay immediate so widget tests remain deterministic.
-      if (kReleaseMode) {
-        await Future<void>.delayed(const Duration(milliseconds: 1200));
-      }
       final packageInfo = await PackageInfo.fromPlatform();
       return await UpdateService(currentVersion: packageInfo.version, prefs: widget.store.prefs).checkForUpdate();
     } catch (_) {
