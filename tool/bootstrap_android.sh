@@ -20,6 +20,17 @@ from pathlib import Path
 build = Path('android/app/build.gradle.kts')
 text = build.read_text()
 
+# Keep plugin resolution resilient when the Gradle Plugin Portal is temporarily
+# missing a Kotlin artifact that is available from Maven Central.
+settings = Path('android/settings.gradle.kts')
+settings_text = settings.read_text()
+if 'mavenCentral()' not in settings_text:
+    marker = '    repositories {\n'
+    if marker not in settings_text:
+        raise SystemExit('Could not find pluginManagement repositories block')
+    settings_text = settings_text.replace(marker, marker + '        mavenCentral()\n', 1)
+    settings.write_text(settings_text)
+
 text = text.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 35', 1)
 
 if 'isCoreLibraryDesugaringEnabled = true' not in text:
