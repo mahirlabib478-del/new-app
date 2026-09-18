@@ -105,7 +105,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   }
 
   Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
-  Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: (plan) => openFocus(plan: plan), onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language);
+  Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: _startPlanAndSyncReminders, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language);
   Widget _buildProgressTab() => ProgressDashboard(store: widget.store);
   Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage);
 
@@ -190,11 +190,19 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _startPlanAndSyncReminders(StudyPlan plan) async {
+    // A newly-created plan changes both Study Reminder and Plan Reminder
+    // eligibility. Sync immediately instead of waiting for an app resume.
+    await _syncRemindersSafely();
+    if (!mounted) return;
+    await openFocus(plan: plan);
+  }
+
   void openRegularStudy() {
     navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => Setup(store: widget.store, onStartPlan: (plan) async {
       if (!mounted) return;
       navigatorKey.currentState?.pop();
-      await openFocus(plan: plan);
+      await _startPlanAndSyncReminders(plan);
     })));
   }
 
@@ -319,7 +327,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => ExamPlannerScreen(nextDay: nextDay, store: widget.store, onStartPlan: (plan) async {
       if (!mounted) return;
       navigatorKey.currentState?.pop();
-      await openFocus(plan: plan);
+      await _startPlanAndSyncReminders(plan);
     })));
   }
 }
