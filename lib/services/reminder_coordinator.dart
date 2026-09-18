@@ -31,15 +31,7 @@ class ReminderCoordinator {
   Future<bool> requestPermissions() async {
     try {
       await scheduler.initialize();
-      final result = await scheduler.requestPermissions();
-      if (result == false) return false;
-
-      final notificationAware = scheduler is ReminderSchedulerNotificationAware
-          ? scheduler as ReminderSchedulerNotificationAware
-          : null;
-      if (notificationAware == null) return result ?? true;
-
-      return await notificationAware.areNotificationsEnabled() ?? result ?? true;
+      return await scheduler.requestPermissions() ?? true;
     } on Exception {
       return false;
     }
