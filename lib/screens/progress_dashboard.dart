@@ -89,9 +89,13 @@ class _ProgressDashboardState extends State<ProgressDashboard> {
             ),
           ),
           const SizedBox(height: 18),
-          Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Card(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [const Expanded(child: Text("Today's goal", style: TextStyle(fontWeight: FontWeight.w900))), Text('$today / $goal min', style: const TextStyle(fontWeight: FontWeight.w900)), IconButton(onPressed: _changeGoal, tooltip: 'Change goal', icon: const Icon(Icons.edit_rounded))]),
-            const SizedBox(height: 10), LinearProgressIndicator(value: goalProgress, minHeight: 9), const SizedBox(height: 8),
+            const SizedBox(height: 10), ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: goalProgress, minHeight: 9)), const SizedBox(height: 8),
             Text(goalProgress >= 1 ? 'Goal reached. Keep the momentum.' : '${goal - today > 0 ? goal - today : 0} min left to reach today\'s goal'),
           ]))),
           const SizedBox(height: 12),
