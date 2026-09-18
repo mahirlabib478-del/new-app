@@ -554,8 +554,8 @@ class _StudyHero extends StatelessWidget {
                 ),
               );
               final iconBox = Container(
-                width: 52,
-                height: 52,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   color: scheme.surface,
                   borderRadius: BorderRadius.circular(16),
@@ -566,7 +566,7 @@ class _StudyHero extends StatelessWidget {
                 onPressed: onTap,
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(0, 50),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
                 child: Text(actionLabel),
               );
