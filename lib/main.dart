@@ -428,6 +428,7 @@ class StudyHub extends StatelessWidget {
                             ),
                           ),
                         ),
+                      ],
                       const SizedBox(height: 18),
                       Text(
                         s.isBangla ? 'স্টাডি মোড' : 'Study modes',
