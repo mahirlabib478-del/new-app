@@ -27,7 +27,7 @@ class StudyHistoryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Study history')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
         children: [
           Card(
             color: Theme.of(context).colorScheme.primaryContainer,
