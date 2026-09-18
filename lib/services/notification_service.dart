@@ -127,18 +127,6 @@ class NotificationService
   }
 
   @override
-  Future<bool?> areNotificationsEnabled() async {
-    await _initialize();
-    final android =
-        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (android != null) {
-      return android.areNotificationsEnabled();
-    }
-
-    return null;
-  }
-
-  @override
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
