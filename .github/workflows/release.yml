@@ -188,7 +188,7 @@ jobs:
           policy = json.loads(path.read_text())
           tag = os.environ["RELEASE_TAG"]
           repo = os.environ["REPOSITORY"]
-          version = tag.removeprefix("v").split("+", 1)[0]
+          version = tag.removeprefix("v")
 
           policy["latestVersion"] = version
           policy["releaseUrl"] = f"https://github.com/{repo}/releases/tag/{tag}"
