@@ -121,17 +121,28 @@ class UpdateService {
     return _compareVersions(latestNormalized, currentNormalized) > 0;
   }
 
-  String? _normalizeVersion(String value) {
+  _Version? _normalizeVersion(String value) {
     var normalized = value.trim();
     if (normalized.startsWith('v') || normalized.startsWith('V')) normalized = normalized.substring(1);
-    final match = RegExp(r'^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$').firstMatch(normalized);
+    final match = RegExp(r'^(\\d+)\\.(\\d+)\\.(\\d+)(?:\\+(\\d+))?(?:-[^+]+)?$').firstMatch(normalized);
     if (match == null) return null;
-    return '${match.group(1)}.${match.group(2)}.${match.group(3)}';
+    return _Version(
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+      int.tryParse(match.group(4) ?? '0') ?? 0,
+    );
   }
 
-  List<int> _parse(String value) {
-    final parts = value.split('.');
-    return [int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2])];
+  int _compareVersions(_Version left, _Version right) {
+    for (var i = 0; i < left.parts.length; i++) {
+      if (left.parts[i] != right.parts[i]) return left.parts[i].compareTo(right.parts[i]);
+    }
+    return 0;
+  }
+
+  String _formatVersion(_Version version) {
+    return '\${version.major}.\${version.minor}.\${version.patch}\${version.build > 0 ? '+\${version.build}' : ''}';
   }
 
   UpdatePolicy? _loadCachedPolicy() {
