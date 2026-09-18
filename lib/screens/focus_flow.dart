@@ -142,7 +142,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
   @override void dispose() { WidgetsBinding.instance.removeObserver(this); timer?.cancel(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
-    final clock = '\${(seconds ~/ 60).toString().padLeft(2, '0')}:\${(seconds % 60).toString().padLeft(2, '0')}';
+    final clock = '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final progress = (1 - seconds / (breakMinutes * 60)).clamp(0.0, 1.0).toDouble();
     final scheme = Theme.of(context).colorScheme;
 
@@ -180,7 +180,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
                   const SizedBox(height: 16),
                   Text('Break time', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900), textAlign: TextAlign.center),
                   const SizedBox(height: 8),
-                  Text('You completed \${widget.completed} minute\${widget.completed == 1 ? '' : 's'}.', textAlign: TextAlign.center),
+                  Text('You completed ${widget.completed} minute${widget.completed == 1 ? '' : 's'}.', textAlign: TextAlign.center),
                   const SizedBox(height: 20),
                   Card(
                     child: Padding(
