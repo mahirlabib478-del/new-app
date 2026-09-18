@@ -141,6 +141,7 @@ class NotificationService implements ReminderScheduler, ReminderSchedulerTimeZon
         _channelId,
         _channelName,
         channelDescription: _channelDescription,
+        icon: 'ic_notification',
       ),
       iOS: DarwinNotificationDetails(),
       macOS: DarwinNotificationDetails(),
