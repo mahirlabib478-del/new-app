@@ -301,8 +301,8 @@ class StudyHub extends StatelessWidget {
                             ),
                             subtitle: Text(
                               s.isBangla
-                                  ? '\$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে'
-                                  : '\$savedCount unfinished session\${savedCount == 1 ? '' : 's'} waiting',
+                                  ? '$savedCountটি অসম্পূর্ণ সেশন অপেক্ষা করছে'
+                                  : '$savedCount unfinished session${savedCount == 1 ? '' : 's'} waiting',
                             ),
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () => Navigator.push(
