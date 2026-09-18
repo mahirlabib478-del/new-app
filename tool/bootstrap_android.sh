@@ -35,6 +35,9 @@ if 'isCoreLibraryDesugaringEnabled = true' not in text:
         + marker,
         1,
     )
+    if 'targetSdk = 35' not in text:
+        target_marker = '    defaultConfig {\n'
+        text = text.replace(target_marker, target_marker + '        targetSdk = 35\n', 1)
 
 if 'desugar_jdk_libs' not in text:
     text += '\n\ndependencies {\n'
