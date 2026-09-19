@@ -4,9 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_os/screens/profile_screen.dart';
 import 'package:study_os/services/app_language.dart';
 import 'package:study_os/services/local_store.dart';
+import 'package:study_os/services/reminder_coordinator.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  ReminderCoordinator? coordinator;
 
   testWidgets('Profile refreshes daily goal after saving', (tester) async {
     SharedPreferences.setMockInitialValues({'daily_goal_minutes': 120});
