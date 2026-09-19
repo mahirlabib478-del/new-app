@@ -325,7 +325,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
       if (!mounted) return;
       navigatorKey.currentState?.pop();
       await _startPlanAndSyncReminders(plan);
-    })));
+    }, onPlanSaved: (_) => _syncRemindersSafely())));
   }
 }
 
@@ -536,7 +536,7 @@ class StudyHub extends StatelessWidget {
       if (!context.mounted) return;
       Navigator.of(context).pop();
       await onStartPlan(plan);
-    })));
+    }, onPlanSaved: onPlanSaved)));
   }
 }
 
