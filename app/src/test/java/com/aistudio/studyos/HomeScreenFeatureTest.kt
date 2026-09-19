@@ -29,8 +29,8 @@ class HomeScreenFeatureTest {
         val todayStr = sdf.format(Date())
 
         val logs = listOf(
-            SessionLogEntity(id = 1, subject = "Math", chapter = "Calculus", durationMinutes = 25, xpEarned = 25, timestamp = System.currentTimeMillis()),
-            SessionLogEntity(id = 2, subject = "Physics", chapter = "Mechanics", durationMinutes = 20, xpEarned = 20, timestamp = System.currentTimeMillis())
+            SessionLogEntity(id = 1, subject = "Math", chapter = "Calculus", durationMinutes = 25, mode = "regular", xpEarned = 25, timestamp = System.currentTimeMillis()),
+            SessionLogEntity(id = 2, subject = "Physics", chapter = "Mechanics", durationMinutes = 20, mode = "regular", xpEarned = 20, timestamp = System.currentTimeMillis())
         )
 
         val todayMinutes = logs.filter { log ->
@@ -103,10 +103,10 @@ class HomeScreenFeatureTest {
     @Test
     fun testRecentSessionsTakeFirstThree() {
         val logs = listOf(
-            SessionLogEntity(id = 1, subject = "Math", chapter = "Calculus", durationMinutes = 25, xpEarned = 25, timestamp = 1000L),
-            SessionLogEntity(id = 2, subject = "Chemistry", chapter = "Periodic Table", durationMinutes = 30, xpEarned = 30, timestamp = 2000L),
-            SessionLogEntity(id = 3, subject = "English", chapter = "Poetry", durationMinutes = 15, xpEarned = 15, timestamp = 3000L),
-            SessionLogEntity(id = 4, subject = "History", chapter = "WWII", durationMinutes = 25, xpEarned = 25, timestamp = 4000L)
+            SessionLogEntity(id = 1, subject = "Math", chapter = "Calculus", durationMinutes = 25, mode = "regular", xpEarned = 25, timestamp = 1000L),
+            SessionLogEntity(id = 2, subject = "Chemistry", chapter = "Periodic Table", durationMinutes = 30, mode = "regular", xpEarned = 30, timestamp = 2000L),
+            SessionLogEntity(id = 3, subject = "English", chapter = "Poetry", durationMinutes = 15, mode = "regular", xpEarned = 15, timestamp = 3000L),
+            SessionLogEntity(id = 4, subject = "History", chapter = "WWII", durationMinutes = 25, mode = "regular", xpEarned = 25, timestamp = 4000L)
         )
 
         val recentThree = logs.take(3)
