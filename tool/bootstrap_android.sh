@@ -59,6 +59,15 @@ if 'desugar_jdk_libs' not in text:
     text += '    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n'
     text += '}\n'
 
+# Keep the notification plugin's receiver and serialized notification details intact in release builds.
+proguard = Path('android/app/proguard-rules.pro')
+proguard.write_text('''-keep class com.dexterous.flutterlocalnotifications.** { *; }\n''')
+if 'proguard-rules.pro' not in text:
+    text = text.replace(
+        '            proguardFiles(\n',
+        '            proguardFiles(\n',
+        1,
+    )
 build.write_text(text)
 
 manifest = Path('android/app/src/main/AndroidManifest.xml')
@@ -68,6 +77,8 @@ permissions = (
     '    <uses-permission android:name="android.permission.INTERNET" />\n'
     '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
     '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
+    '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />\n'
+    '    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n'
 )
 if 'android.permission.RECEIVE_BOOT_COMPLETED' not in text:
     insert_at = text.find('>', text.find('<manifest')) + 1
