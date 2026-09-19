@@ -60,6 +60,7 @@ jobs:
         run: |
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump permissions build/app/outputs/flutter-apk/app-release.apk | grep -q 'android.permission.POST_NOTIFICATIONS'
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump xmltree build/app/outputs/flutter-apk/app-release.apk AndroidManifest.xml | grep -q 'ScheduledNotificationReceiver'
+          unzip -l build/app/outputs/flutter-apk/app-release.apk | grep -q 'res/drawable/ic_notification.xml'
       - name: Package Android APKs
         run: |
           mkdir -p build/apk-artifacts
