@@ -169,7 +169,10 @@ class NotificationService
         iOS: DarwinNotificationDetails(),
         macOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      // Treat user-set study reminders as alarm-clock-grade exact events. Android
+      // gives setAlarmClock() the strongest delivery semantics for a user-visible
+      // time-based event and it is not deferred the way idle alarms can be.
+      androidScheduleMode: AndroidScheduleMode.alarmClock,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
