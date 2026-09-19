@@ -62,12 +62,12 @@ if 'desugar_jdk_libs' not in text:
 # Keep the notification plugin's receiver and serialized notification details intact in release builds.
 proguard = Path('android/app/proguard-rules.pro')
 proguard.write_text('''-keep class com.dexterous.flutterlocalnotifications.** { *; }\n''')
-if 'proguard-rules.pro' not in text:
-    text = text.replace(
-        '            proguardFiles(\n',
-        '            proguardFiles(\n',
-        1,
-    )
+release_proguard = 'proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")'
+if release_proguard not in text:
+    marker = '        release {'
+    if marker not in text:
+        raise SystemExit('Could not find Android release build type')
+    text = text.replace(marker, marker + '\n            ' + release_proguard, 1)
 build.write_text(text)
 
 manifest = Path('android/app/src/main/AndroidManifest.xml')
