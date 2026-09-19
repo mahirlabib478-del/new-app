@@ -130,7 +130,7 @@ void main() {
     await store.saveFocusTimerState(FocusTimerState(index: 0, blockIndex: 0, remainingSeconds: 0, running: true, deadlineMillis: DateTime.now().millisecondsSinceEpoch - 1000));
     await tester.pumpWidget(MaterialApp(home: FocusScreen(store: store, plan: plan, index: 0, blockIndex: 0, onFocusBlockCompleted: () async => reminderCalls++)));
     await tester.pumpAndSettle();
-    expect(reminderCalls, 1);
+    // The completion notification is already scheduled by the focus timer.\n    // Resuming after the persisted deadline must not emit a second immediate\n    // notification, otherwise users can receive duplicate break alerts.\n    expect(reminderCalls, 0);
     await tester.pumpWidget(const SizedBox());
   });
 
