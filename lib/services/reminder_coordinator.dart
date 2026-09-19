@@ -148,7 +148,7 @@ class ReminderCoordinator {
 
   Future<void> _syncDaily({
     required bool enabled,
-    required ReminderRequest? request,
+    required ReminderRequest request,
     required int id,
     required int hour,
     required int minute,
