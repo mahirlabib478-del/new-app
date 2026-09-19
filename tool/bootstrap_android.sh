@@ -140,7 +140,7 @@ drawable.write_text('''<?xml version="1.0" encoding="utf-8"?>
 ''')
 notification_icon = Path('android/app/src/main/res/drawable/ic_notification.xml')
 notification_icon.parent.mkdir(parents=True, exist_ok=True)
-keep = Path('android/app/src/main/res/values/keep.xml')
+keep = Path('android/app/src/main/res/raw/keep.xml')
 keep.parent.mkdir(parents=True, exist_ok=True)
 keep.write_text('''<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools"
