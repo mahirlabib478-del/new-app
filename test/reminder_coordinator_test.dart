@@ -8,11 +8,12 @@ import 'package:study_os/services/reminder_coordinator.dart';
 import 'package:study_os/services/reminder_scheduler.dart';
 import 'package:study_os/services/reminder_settings.dart';
 
-class FakeScheduler implements ReminderScheduler {
+class FakeScheduler implements ReminderScheduler, ReminderSchedulerFirstOccurrence {
   final scheduled = <int>[];
   final cancelled = <int>[];
   final shown = <int>[];
   final oneShot = <int>[];
+  final firstOccurrences = <int, DateTime>{}
   var permissionRequests = 0;
   bool? permissionResult = true;
   var initializeCalls = 0;
@@ -46,6 +47,12 @@ class FakeScheduler implements ReminderScheduler {
   @override
   Future<void> scheduleOnce({required int id, required String title, required String body, required DateTime at}) async {
     oneShot.add(id);
+  }
+
+  @override
+  Future<void> scheduleDailyReminderAt({required int id, required String title, required String body, required DateTime firstAt}) async {
+    firstOccurrences[id] = firstAt;
+    scheduled.add(id);
   }
 
   @override
@@ -95,7 +102,7 @@ void main() {
 
     await coordinator.sync();
 
-    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.planId]);
   });
 
   test('study reminder schedules when a plan has remaining work', () async {
@@ -124,7 +131,7 @@ void main() {
     expect(await coordinator.requestPermissions(), isFalse);
     await coordinator.sync();
 
-    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.planId]);
   });
 
   test('permission failures are contained', () async {
@@ -153,7 +160,7 @@ void main() {
     scheduler.scheduleError = null;
     await coordinator.sync();
 
-    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.planId]);
   });
 
   test('focus completion schedules a one-shot background notification', () async {
@@ -182,7 +189,7 @@ void main() {
 
     await expectLater(coordinator.notifyFocusBlockCompleted(), completes);
 
-    expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.planId]);
   });
 
   test('disabled break reminder cancels its notification', () async {
@@ -217,7 +224,7 @@ void main() {
     await coordinator.sync();
     await coordinator.sync();
 
-    expect(scheduler.scheduled, [ReminderCoordinator.planId, ReminderCoordinator.planId]);
+    expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.planId, ReminderCoordinator.studyId, ReminderCoordinator.planId]);
     expect(
       scheduler.cancelled.where((id) => id == ReminderCoordinator.planId).length,
       2,
@@ -319,7 +326,7 @@ void main() {
     await store.addItemCompletedMinutes(0, 25);
     await coordinator.sync();
 
-    expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
-    expect(scheduler.scheduled, isNot(contains(ReminderCoordinator.planId)));
+    expect(scheduler.scheduled, contains(ReminderCoordinator.studyId));
+    expect(scheduler.scheduled, contains(ReminderCoordinator.planId));
   });
 }
