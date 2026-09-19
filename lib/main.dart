@@ -84,9 +84,28 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
       final anyEnabled = settings.studyEnabled || settings.breakEnabled || settings.planEnabled;
       if (!anyEnabled) return;
 
-      // The first frame gives Android a visible activity before showing its
-      // runtime permission dialog. Without this, default-enabled reminders
-      // never request access and are discarded by the platform.
+      // Explain why the system permission is needed before opening the
+      // Android dialog, so the first prompt has clear context.
+      if (!await reminderCoordinator.areNotificationsEnabled()) {
+        final allow = await showDialog<bool>(
+          context: navigatorKey.currentState!.overlay!.context,
+          builder: (context) => AlertDialog(
+            title: Text(strings.notificationPermissionTitle),
+            content: Text(strings.notificationPermissionBody),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(strings.notificationLater),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(strings.allowNotifications),
+              ),
+            ],
+          ),
+        );
+        if (allow != true) return;
+      }
       await reminderCoordinator.requestPermissions();
       await reminderCoordinator.sync(settingsOverride: settings);
     } on Exception {
