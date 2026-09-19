@@ -95,14 +95,22 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     private var hasDismissedUpdateDialog: Boolean = false
 
-    fun checkAppUpdate(context: Context, isManual: Boolean = false) {
-        if (!isManual && hasDismissedUpdateDialog) return
+    fun checkAppUpdate(
+        context: Context,
+        isManual: Boolean = false,
+        forceCheck: Boolean = false
+    ) {
+        if (!isManual && !forceCheck && hasDismissedUpdateDialog) return
 
         viewModelScope.launch {
             if (isManual) {
                 _updateCheckState.value = UpdateCheckState.Checking
             }
-            val update = UpdateManager.checkForUpdate(context.applicationContext, isManual)
+            val update = UpdateManager.checkForUpdate(
+                context.applicationContext,
+                isManual = isManual,
+                forceCheck = forceCheck
+            )
             if (update != null) {
                 _availableUpdate.value = update
                 _updateCheckState.value = UpdateCheckState.Available(update)
