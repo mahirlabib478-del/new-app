@@ -295,6 +295,6 @@ void main() {
     await coordinator.sync();
 
     expect(scheduler.cancelled, contains(ReminderCoordinator.studyId));
-    expect(scheduler.scheduled, contains(ReminderCoordinator.planId));
+    expect(scheduler.scheduled, isNot(contains(ReminderCoordinator.planId)));
   });
 }
