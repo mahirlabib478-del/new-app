@@ -115,7 +115,8 @@ fun MainApp(
     // forceCheck bypasses the 2-hour auto-check throttle so a newly published
     // version can show its update dialog on every fresh app launch.
     LaunchedEffect(Unit) {
-        delay(300)
+        // Let the first frame settle before the network update check competes for startup resources.
+        delay(1200)
         viewModel.checkAppUpdate(context, isManual = false, forceCheck = true)
     }
 
