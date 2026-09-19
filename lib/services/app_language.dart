@@ -52,4 +52,9 @@ class AppStrings {
   String get allowNotifications => isBangla ? 'নোটিফিকেশন চালু করুন' : 'Allow notifications';
   String get notificationLater => isBangla ? 'এখন নয়' : 'Not now';
   String get backgroundReminderHint => isBangla ? 'কিছু ফোনে ব্যাকগ্রাউন্ড রেস্ট্রিকশন থাকলে রিমাইন্ডার দেরি হতে পারে। ব্যাটারি/অটোস্টার্টে Study OS-কে অনুমতি দিন।' : 'Some phones restrict background apps. Allow Study OS to run in the background if reminders are delayed.';
+  String get ambientSound => isBangla ? 'অ্যাম্বিয়েন্ট সাউন্ড' : 'Ambient sound';
+  String get ambientSoundSubtitle => isBangla ? 'মনোযোগ বাড়াতে ব্যাকগ্রাউন্ড সাউন্ড চালান' : 'Mask distractions with soothing background sound';
+  String get ambientSoundVolume => isBangla ? 'ভলিউম' : 'Volume';
+  String get autoPlayWithFocus => isBangla ? 'ফোকাস শুরু হলে স্বয়ংক্রিয়ভাবে চালু' : 'Auto-play when focus starts';
+  String get noSound => isBangla ? 'শব্দহীন' : 'Muted';
 }

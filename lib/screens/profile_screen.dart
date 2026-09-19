@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/ambient_audio_service.dart';
 import '../services/app_language.dart';
 import '../services/local_store.dart';
 import '../services/reminder_coordinator.dart';
@@ -225,6 +226,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () => _editGoal(context, goal),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: ListenableBuilder(
+              listenable: AmbientAudioService.instance,
+              builder: (context, _) {
+                final audio = AmbientAudioService.instance;
+                final isBn = strings.isBangla;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.waves_rounded, size: 20, color: scheme.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              strings.ambientSound.toUpperCase(),
+                              style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1),
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(audio.isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded),
+                            color: scheme.primary,
+                            tooltip: audio.isPlaying ? (isBn ? 'থামান' : 'Stop') : (isBn ? 'চালিয়ে শুনুন' : 'Test sound'),
+                            onPressed: () => audio.togglePlay(prefs: widget.prefs),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: Text(
+                        strings.ambientSoundSubtitle,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: AmbientAudioService.presets.map((preset) {
+                            final isSelected = audio.currentPreset == preset.id;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                avatar: Icon(preset.icon, size: 16),
+                                label: Text(preset.name(isBn)),
+                                selected: isSelected,
+                                onSelected: (_) => audio.playPreset(preset.id, prefs: widget.prefs),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: Row(
+                        children: [
+                          Icon(Icons.volume_up_rounded, size: 20, color: scheme.onSurfaceVariant),
+                          const SizedBox(width: 10),
+                          Text(
+                            '${strings.ambientSoundVolume}: ${(audio.volume * 100).round()}%',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                          ),
+                          Expanded(
+                            child: Slider(
+                              value: audio.volume,
+                              onChanged: (v) => audio.setVolume(v, prefs: widget.prefs),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SwitchListTile(
+                      value: audio.autoPlayOnFocus,
+                      title: Text(
+                        strings.autoPlayWithFocus,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: Text(
+                        isBn
+                            ? 'ফোকাস মোড বা টাইমার চালু হলেই ব্যাকগ্রাউন্ড সাউন্ড শুরু হবে'
+                            : 'Automatically starts playing when focus timer begins',
+                      ),
+                      onChanged: (val) => audio.setAutoPlayOnFocus(val, prefs: widget.prefs),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 14),

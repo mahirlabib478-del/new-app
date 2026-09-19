@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/study_models.dart';
+import 'services/ambient_audio_service.dart';
 import 'services/app_language.dart';
 import 'services/local_store.dart';
 import 'services/reminder_coordinator.dart';
@@ -73,6 +74,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     reminderCoordinator = ReminderCoordinator(store: widget.store, settingsStore: ReminderSettingsStore(widget.prefs), scheduler: NotificationService());
     _tabs[0] = _buildHomeTab();
+    unawaited(AmbientAudioService.instance.init(widget.prefs));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_prepareRemindersSafely());
     });

@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/study_models.dart';
+import '../services/ambient_audio_service.dart';
 import '../services/local_store.dart';
 import '../services/study_session_store.dart';
+import '../widgets/ambient_sound_panel.dart';
 
 class FocusScreen extends StatefulWidget {
   const FocusScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, this.onFocusBlockCompleted, this.onFocusBlockScheduled, this.onFocusBlockScheduleCancelled});
@@ -65,6 +67,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       if (running) {
         _scheduleCompletionNotification();
         _startTimer();
+        AmbientAudioService.instance.onFocusTimerStarted();
       }
     }
   }
@@ -94,7 +97,20 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       _startTimer();
     }
   }
-  void _toggleRunning() { if (transitioning || seconds <= 0) return; setState(() => running = !running); if (running) _scheduleCompletionNotification(); else _cancelCompletionNotification(); _persistTimerState(); unawaited(StudySessionStore(widget.store).archiveCurrentPlan()); if (running) _startTimer(); else timer?.cancel(); }
+  void _toggleRunning() {
+    if (transitioning || seconds <= 0) return;
+    setState(() => running = !running);
+    if (running) {
+      _scheduleCompletionNotification();
+      AmbientAudioService.instance.onFocusTimerStarted();
+    } else {
+      _cancelCompletionNotification();
+      AmbientAudioService.instance.onFocusTimerPaused();
+    }
+    _persistTimerState();
+    unawaited(StudySessionStore(widget.store).archiveCurrentPlan());
+    if (running) _startTimer(); else timer?.cancel();
+  }
 
   Future<void> _confirmLeave() async {
     if (transitioning || !mounted) return;
@@ -113,6 +129,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     setState(() => running = false);
     timer?.cancel();
     _cancelCompletionNotification();
+    AmbientAudioService.instance.onFocusTimerEnded();
     _persistTimerState();
     await StudySessionStore(widget.store).archiveCurrentPlan();
     if (mounted) Navigator.of(context).pop();
@@ -120,7 +137,12 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
 
   Future<void> _showCompletion() async {
     if (!mounted || transitioning) return;
-    transitioning = true; timer?.cancel(); await widget.store.clearFocusTimerState(); await widget.store.clearPlanPosition(); await StudySessionStore(widget.store).removeActivePlanSession(widget.plan);
+    transitioning = true;
+    timer?.cancel();
+    AmbientAudioService.instance.onFocusTimerEnded();
+    await widget.store.clearFocusTimerState();
+    await widget.store.clearPlanPosition();
+    await StudySessionStore(widget.store).removeActivePlanSession(widget.plan);
     if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
   }
 
@@ -129,6 +151,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     transitioning = true;
     timer?.cancel();
     _cancelCompletionNotification();
+    AmbientAudioService.instance.onFocusTimerEnded();
     final safeCompleted = completed.clamp(0, currentBlockMinutes).toInt();
     if (safeCompleted > 0) { await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted); if (showNotification && widget.onFocusBlockCompleted != null) await widget.onFocusBlockCompleted!(); }
     await widget.store.clearFocusTimerState();
@@ -137,7 +160,12 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: safeCompleted, onFocusBlockCompleted: widget.onFocusBlockCompleted, onFocusBlockScheduled: widget.onFocusBlockScheduled, onFocusBlockScheduleCancelled: widget.onFocusBlockScheduleCancelled)));
   }
 
-  @override void dispose() { WidgetsBinding.instance.removeObserver(this); timer?.cancel(); super.dispose(); }
+  @override void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    timer?.cancel();
+    AmbientAudioService.instance.onFocusTimerEnded();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,14 +174,36 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     final itemProgress = item.minutes <= 0 ? 0.0 : (completedForItem / item.minutes).clamp(0.0, 1.0).toDouble();
     final elapsedMinutes = ((currentBlockMinutes * 60 - seconds) / 60).floor();
     final scheme = Theme.of(context).colorScheme;
-    return PopScope(canPop: false, onPopInvokedWithResult: (didPop, result) { if (!didPop) _confirmLeave(); }, child: Scaffold(appBar: AppBar(title: const Text('Focus mode'), centerTitle: true), body: SafeArea(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 20, 24, 30), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: Column(children: [
+    return PopScope(canPop: false, onPopInvokedWithResult: (didPop, result) { if (!didPop) _confirmLeave(); }, child: Scaffold(
+      appBar: AppBar(
+        title: const Text('Focus mode'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.waves_rounded),
+            tooltip: 'Ambient sound',
+            onPressed: () {
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                builder: (sheetContext) => AmbientSoundBottomSheet(
+                  language: widget.store.appLanguage,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 20, 24, 30), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: Column(children: [
       Text('DEEP FOCUS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, color: scheme.primary)), const SizedBox(height: 18),
       Text(item.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), if (item.topic.isNotEmpty) ...[const SizedBox(height: 6), Text(item.topic, textAlign: TextAlign.center)], const SizedBox(height: 18),
       Card(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Row(children: [Icon(Icons.check_circle_outline_rounded, color: scheme.primary), const SizedBox(width: 10), const Expanded(child: Text('Topics completed', style: TextStyle(fontWeight: FontWeight.w800))), Text('$completedTopicCount / $totalTopicCount', style: TextStyle(fontWeight: FontWeight.w900, color: scheme.primary))]))),
       const SizedBox(height: 12), Row(children: [const Expanded(child: Text('Topic progress', style: TextStyle(fontWeight: FontWeight.w800))), Text('${completedForItem}/${item.minutes} min', style: const TextStyle(fontWeight: FontWeight.w800))]), const SizedBox(height: 8), LinearProgressIndicator(value: itemProgress, minHeight: 7), const SizedBox(height: 26),
       Container(width: 280, height: 280, decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.surfaceContainerHighest), child: Stack(alignment: Alignment.center, children: [SizedBox(width: 258, height: 258, child: CircularProgressIndicator(value: progress, strokeWidth: 10, strokeCap: StrokeCap.round)), Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(clock, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 3), Text(running ? 'Stay with one task' : 'Timer paused')])])), const SizedBox(height: 24),
       Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 24),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: transitioning ? null : _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: transitioning || elapsedMinutes < 1 ? null : () => unawaited(_openBreak(elapsedMinutes)), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]), const SizedBox(height: 22),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: transitioning ? null : _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: transitioning || elapsedMinutes < 1 ? null : () => unawaited(_openBreak(elapsedMinutes)), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]), const SizedBox(height: 18),
+      AmbientSoundFocusCard(language: widget.store.appLanguage),
+      const SizedBox(height: 18),
       Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your session is saved locally. If you switch modes or the app closes, your latest topic progress and position are kept in Saved sessions.', style: Theme.of(context).textTheme.bodyMedium))),
     ])))))));
   }
