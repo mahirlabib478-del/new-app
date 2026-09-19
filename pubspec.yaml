@@ -1,7 +1,7 @@
 name: study_os
 description: A professional, offline-first study companion.
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.3.0+20
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
