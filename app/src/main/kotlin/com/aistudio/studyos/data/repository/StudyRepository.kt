@@ -103,13 +103,27 @@ class StudyRepository(
 
     suspend fun updatePlanProgress(planId: Long, blockIndex: Int, isCompleted: Boolean) {
         val plan = database.studyPlanDao().getPlanById(planId) ?: return
+        val studySec = plan.durationPerBlockMinutes * 60
         database.studyPlanDao().updatePlan(
             plan.copy(
                 currentBlockIndex = blockIndex,
+                remainingSecondsInBlock = studySec,
+                isBreakPhase = false,
                 isCompleted = isCompleted,
                 lastUpdated = System.currentTimeMillis()
             )
         )
+    }
+
+    suspend fun updateSessionProgress(planId: Long, remainingSec: Int, isBreak: Boolean, blockIndex: Int) {
+        database.studyPlanDao().updateSessionTimer(planId, remainingSec, isBreak, blockIndex)
+    }
+
+    suspend fun completePlanEarly(planId: Long, minutesStudied: Int, subject: String, chapter: String) {
+        database.studyPlanDao().markPlanCompleted(planId)
+        if (minutesStudied > 0) {
+            recordCompletedSession(subject, chapter, minutesStudied, "early_finish")
+        }
     }
 
     suspend fun recordCompletedSession(

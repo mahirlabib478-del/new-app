@@ -29,6 +29,12 @@ interface StudyPlanDao {
     @Delete
     suspend fun deletePlan(plan: StudyPlanEntity)
 
+    @Query("UPDATE study_plans SET remainingSecondsInBlock = :remainingSec, isBreakPhase = :isBreak, currentBlockIndex = :blockIndex, lastUpdated = :timestamp WHERE id = :planId")
+    suspend fun updateSessionTimer(planId: Long, remainingSec: Int, isBreak: Boolean, blockIndex: Int, timestamp: Long = System.currentTimeMillis())
+
+    @Query("UPDATE study_plans SET isCompleted = 1, lastUpdated = :timestamp WHERE id = :planId")
+    suspend fun markPlanCompleted(planId: Long, timestamp: Long = System.currentTimeMillis())
+
     @Query("DELETE FROM study_plans WHERE id = :id")
     suspend fun deletePlanById(id: Long)
 }

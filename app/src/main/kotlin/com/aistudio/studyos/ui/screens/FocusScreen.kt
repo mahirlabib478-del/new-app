@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,12 +32,15 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,13 +62,42 @@ fun FocusScreen(
 ) {
     val state by viewModel.focusState.collectAsState()
     val primaryColor = if (state.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
+    var showEndDialog by remember { mutableStateOf(false) }
+
+    if (showEndDialog) {
+        AlertDialog(
+            onDismissRequest = { showEndDialog = false },
+            title = { Text("End Study Session?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text("Your elapsed study minutes will be saved to your progress and stats.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showEndDialog = false
+                        viewModel.finishActiveSessionEarly()
+                        onBack()
+                    }
+                ) {
+                    Text("End Session", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndDialog = false }) {
+                    Text("Keep Studying")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
             FocusTopBar(
                 subject = state.currentSubject,
                 chapter = state.currentChapter,
-                onBack = onBack
+                isRunning = state.isRunning,
+                onBack = onBack,
+                onEndSession = { showEndDialog = true }
             )
         }
     ) { padding ->
@@ -124,7 +157,9 @@ fun FocusScreen(
 private fun FocusTopBar(
     subject: String,
     chapter: String,
-    onBack: () -> Unit
+    isRunning: Boolean,
+    onBack: () -> Unit,
+    onEndSession: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -135,7 +170,7 @@ private fun FocusTopBar(
                     fontSize = 17.sp
                 )
                 Text(
-                    text = chapter,
+                    text = if (isRunning) "$chapter • Active in background" else "$chapter • Paused",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -143,7 +178,16 @@ private fun FocusTopBar(
         },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Minimize and return home")
+            }
+        },
+        actions = {
+            TextButton(onClick = onEndSession) {
+                Text(
+                    text = "End",
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

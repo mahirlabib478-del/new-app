@@ -52,6 +52,14 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 }
             }
         }
+        viewModelScope.launch {
+            repository.getActivePlan().collect { plan ->
+                // Auto-restore active session if memory was empty (cold boot or process recreation)
+                if (plan != null && _focusState.value.planId == null) {
+                    continueActiveSession(plan)
+                }
+            }
+        }
     }
 
     val activePlan: StateFlow<StudyPlanEntity?> = repository.getActivePlan()
@@ -122,9 +130,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         mode: String,
         totalBlocks: Int = 4,
         blockMinutes: Int = 25,
-        breakMinutes: Int = 5
+        breakMinutes: Int = 5,
+        autoStart: Boolean = true
     ) {
         viewModelScope.launch {
+            val studySec = blockMinutes * 60
+            val breakSec = breakMinutes * 60
             val plan = StudyPlanEntity(
                 title = title.ifBlank { "$subject - $chapter" },
                 subject = subject,
@@ -134,11 +145,29 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 currentBlockIndex = 0,
                 durationPerBlockMinutes = blockMinutes,
                 breakMinutes = breakMinutes,
+                remainingSecondsInBlock = studySec,
+                isBreakPhase = false,
                 isCompleted = false,
                 isDraft = false
             )
             val planId = repository.savePlan(plan)
-            setupFocusSession(plan.copy(id = planId))
+            pauseTimer()
+            _focusState.value = FocusTimerState(
+                isRunning = false,
+                isBreak = false,
+                secondsRemaining = studySec,
+                totalBlockSeconds = studySec,
+                studyBlockSeconds = studySec,
+                breakBlockSeconds = breakSec,
+                currentBlockIndex = 0,
+                totalBlocks = totalBlocks,
+                currentSubject = subject,
+                currentChapter = chapter,
+                planId = planId
+            )
+            if (autoStart) {
+                startTimer()
+            }
         }
     }
 
@@ -152,6 +181,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         breakMinutes: Int = 5
     ) {
         viewModelScope.launch {
+            val studySec = blockMinutes * 60
             val plan = StudyPlanEntity(
                 title = title.ifBlank { "$subject - $chapter" },
                 subject = subject,
@@ -161,6 +191,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 currentBlockIndex = 0,
                 durationPerBlockMinutes = blockMinutes,
                 breakMinutes = breakMinutes,
+                remainingSecondsInBlock = studySec,
+                isBreakPhase = false,
                 isCompleted = false,
                 isDraft = true
             )
@@ -172,19 +204,31 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         viewModelScope.launch {
             val updated = plan.copy(isDraft = false, lastUpdated = System.currentTimeMillis())
             repository.updatePlan(updated)
-            setupFocusSession(updated)
+            continueActiveSession(updated)
         }
     }
 
-    fun setupFocusSession(plan: StudyPlanEntity) {
+    fun continueActiveSession(plan: StudyPlanEntity) {
+        val current = _focusState.value
+        // If current in-memory state is already running/holding this active plan, preserve it!
+        if (current.planId == plan.id) {
+            return
+        }
         pauseTimer()
         val studySec = plan.durationPerBlockMinutes * 60
         val breakSec = plan.breakMinutes * 60
+        val totalBlockSec = if (plan.isBreakPhase) breakSec else studySec
+        val remainingSec = if (plan.remainingSecondsInBlock in 1..totalBlockSec) {
+            plan.remainingSecondsInBlock
+        } else {
+            totalBlockSec
+        }
+
         _focusState.value = FocusTimerState(
             isRunning = false,
-            isBreak = false,
-            secondsRemaining = studySec,
-            totalBlockSeconds = studySec,
+            isBreak = plan.isBreakPhase,
+            secondsRemaining = remainingSec,
+            totalBlockSeconds = totalBlockSec,
             studyBlockSeconds = studySec,
             breakBlockSeconds = breakSec,
             currentBlockIndex = plan.currentBlockIndex,
@@ -195,6 +239,29 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         )
     }
 
+    fun setupFocusSession(plan: StudyPlanEntity) {
+        continueActiveSession(plan)
+    }
+
+    fun finishActiveSessionEarly() {
+        val current = _focusState.value
+        pauseTimer()
+        val planId = current.planId
+        val minutesStudied = ((current.totalBlockSeconds - current.secondsRemaining) / 60).coerceAtLeast(0)
+
+        viewModelScope.launch {
+            if (planId != null) {
+                repository.completePlanEarly(
+                    planId = planId,
+                    minutesStudied = if (!current.isBreak) minutesStudied else 0,
+                    subject = current.currentSubject,
+                    chapter = current.currentChapter
+                )
+            }
+            _focusState.value = FocusTimerState()
+        }
+    }
+
     fun toggleTimer() {
         if (_focusState.value.isRunning) {
             pauseTimer()
@@ -203,10 +270,11 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
-    private fun startTimer() {
+    fun startTimer() {
         _focusState.value = _focusState.value.copy(isRunning = true)
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
+            var saveCounter = 0
             while (isActive && _focusState.value.isRunning && _focusState.value.secondsRemaining > 0) {
                 delay(1000)
                 val remaining = _focusState.value.secondsRemaining - 1
@@ -214,15 +282,39 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     onBlockFinished()
                 } else {
                     _focusState.value = _focusState.value.copy(secondsRemaining = remaining)
+                    saveCounter++
+                    if (saveCounter >= 5) {
+                        saveCounter = 0
+                        val current = _focusState.value
+                        if (current.planId != null) {
+                            repository.updateSessionProgress(
+                                current.planId,
+                                remaining,
+                                current.isBreak,
+                                current.currentBlockIndex
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 
-    private fun pauseTimer() {
+    fun pauseTimer() {
         timerJob?.cancel()
         timerJob = null
         _focusState.value = _focusState.value.copy(isRunning = false)
+        val current = _focusState.value
+        if (current.planId != null) {
+            viewModelScope.launch {
+                repository.updateSessionProgress(
+                    current.planId,
+                    current.secondsRemaining,
+                    current.isBreak,
+                    current.currentBlockIndex
+                )
+            }
+        }
     }
 
     private fun onBlockFinished() {
@@ -267,6 +359,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     totalBlockSeconds = breakSec,
                     currentBlockIndex = nextBlockIndex
                 )
+                if (current.planId != null) {
+                    viewModelScope.launch {
+                        repository.updateSessionProgress(
+                            current.planId,
+                            breakSec,
+                            true,
+                            nextBlockIndex
+                        )
+                    }
+                }
             }
         } else {
             // Break finished, ready for next study block
@@ -276,6 +378,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 secondsRemaining = blockSec,
                 totalBlockSeconds = blockSec
             )
+            if (current.planId != null) {
+                viewModelScope.launch {
+                    repository.updateSessionProgress(
+                        current.planId,
+                        blockSec,
+                        false,
+                        current.currentBlockIndex
+                    )
+                }
+            }
         }
     }
 

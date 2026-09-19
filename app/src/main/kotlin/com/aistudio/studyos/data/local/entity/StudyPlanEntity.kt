@@ -15,6 +15,8 @@ data class StudyPlanEntity(
     val currentBlockIndex: Int = 0,
     val durationPerBlockMinutes: Int = 25,
     val breakMinutes: Int = 5,
+    val remainingSecondsInBlock: Int = 25 * 60,
+    val isBreakPhase: Boolean = false,
     val isCompleted: Boolean = false,
     val isDraft: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),

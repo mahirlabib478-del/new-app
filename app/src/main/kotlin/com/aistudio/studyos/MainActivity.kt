@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -36,6 +37,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aistudio.studyos.data.update.UpdateManager
+import com.aistudio.studyos.ui.components.ActiveSessionMiniBar
 import com.aistudio.studyos.ui.components.UpdateDialog
 import com.aistudio.studyos.ui.screens.ExamPlannerScreen
 import com.aistudio.studyos.ui.screens.FocusScreen
@@ -134,32 +136,43 @@ fun MainApp(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(
-                    modifier = Modifier.testTag("bottom_nav_bar")
-                ) {
-                    BOTTOM_NAV_SCREENS.forEach { screen ->
-                        val isSelected = currentRoute == screen.route
-                        NavigationBarItem(
-                            selected = isSelected,
-                            onClick = {
-                                if (currentRoute != screen.route) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
-                            icon = {
-                                screen.icon?.let {
-                                    Icon(imageVector = it, contentDescription = screen.title)
-                                }
-                            },
-                            label = { Text(screen.title) },
-                            modifier = Modifier.testTag("nav_item_${screen.route}")
+                val focusState by viewModel.focusState.collectAsState()
+                Column {
+                    if (focusState.planId != null) {
+                        ActiveSessionMiniBar(
+                            focusState = focusState,
+                            onOpenFocus = { navController.navigate(Screen.Focus.route) },
+                            onToggleTimer = { viewModel.toggleTimer() }
                         )
+                    }
+
+                    NavigationBar(
+                        modifier = Modifier.testTag("bottom_nav_bar")
+                    ) {
+                        BOTTOM_NAV_SCREENS.forEach { screen ->
+                            val isSelected = currentRoute == screen.route
+                            NavigationBarItem(
+                                selected = isSelected,
+                                onClick = {
+                                    if (currentRoute != screen.route) {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                },
+                                icon = {
+                                    screen.icon?.let {
+                                        Icon(imageVector = it, contentDescription = screen.title)
+                                    }
+                                },
+                                label = { Text(screen.title) },
+                                modifier = Modifier.testTag("nav_item_${screen.route}")
+                            )
+                        }
                     }
                 }
             }
@@ -208,21 +221,33 @@ fun MainApp(
                 RegularStudyScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onStartFocus = { navController.navigate(Screen.Focus.route) }
+                    onStartFocus = {
+                        navController.navigate(Screen.Focus.route) {
+                            popUpTo(Screen.Home.route)
+                        }
+                    }
                 )
             }
             composable(Screen.ExamPlanner.route) {
                 ExamPlannerScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onStartFocus = { navController.navigate(Screen.Focus.route) }
+                    onStartFocus = {
+                        navController.navigate(Screen.Focus.route) {
+                            popUpTo(Screen.Home.route)
+                        }
+                    }
                 )
             }
             composable(Screen.SavedSessions.route) {
                 SavedSessionsScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onResumeSession = { navController.navigate(Screen.Focus.route) }
+                    onResumeSession = {
+                        navController.navigate(Screen.Focus.route) {
+                            popUpTo(Screen.Home.route)
+                        }
+                    }
                 )
             }
         }

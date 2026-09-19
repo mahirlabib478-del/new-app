@@ -264,7 +264,7 @@ fun HomeScreen(
                     Button(
                         onClick = {
                             if (activePlan != null) {
-                                viewModel.setupFocusSession(activePlan!!)
+                                viewModel.continueActiveSession(activePlan!!)
                                 onOpenFocus()
                             } else {
                                 onOpenRegularStudy()

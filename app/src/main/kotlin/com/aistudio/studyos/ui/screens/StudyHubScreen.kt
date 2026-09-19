@@ -77,7 +77,10 @@ fun StudyHubScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenFocus() },
+                        .clickable {
+                            viewModel.continueActiveSession(activePlan!!)
+                            onOpenFocus()
+                        },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
