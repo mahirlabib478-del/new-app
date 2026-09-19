@@ -1,0 +1,8 @@
+{
+  "name": "Study OS",
+  "description": "An offline-first study companion with focus timer, exam planner, habit tracking, and ambient sounds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

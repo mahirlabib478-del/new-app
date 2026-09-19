@@ -1,0 +1,188 @@
+package com.aistudio.studyos
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.aistudio.studyos.ui.screens.ExamPlannerScreen
+import com.aistudio.studyos.ui.screens.FocusScreen
+import com.aistudio.studyos.ui.screens.HomeScreen
+import com.aistudio.studyos.ui.screens.ProfileScreen
+import com.aistudio.studyos.ui.screens.ProgressScreen
+import com.aistudio.studyos.ui.screens.RegularStudyScreen
+import com.aistudio.studyos.ui.screens.SavedSessionsScreen
+import com.aistudio.studyos.ui.screens.StudyHubScreen
+import com.aistudio.studyos.ui.theme.StudyOSTheme
+import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.viewmodel.StudyViewModelFactory
+
+sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
+    object Home : Screen("home", "Home", Icons.Default.Home)
+    object StudyHub : Screen("study_hub", "Study", Icons.Default.School)
+    object Progress : Screen("progress", "Progress", Icons.Default.BarChart)
+    object Profile : Screen("profile", "Profile", Icons.Default.Person)
+
+    // Full screen sub-destinations
+    object Focus : Screen("focus", "Focus Flow")
+    object RegularStudy : Screen("regular_study", "Regular Study")
+    object ExamPlanner : Screen("exam_planner", "Exam Planner")
+    object SavedSessions : Screen("saved_sessions", "Saved Sessions")
+}
+
+class MainActivity : ComponentActivity() {
+    private val viewModel: StudyViewModel by viewModels {
+        StudyViewModelFactory((application as StudyApplication).repository)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        setContent {
+            val profile by viewModel.userProfile.collectAsState()
+            val themePreset = profile?.themePreset ?: "midnight"
+
+            StudyOSTheme(preset = themePreset) {
+                val navController = rememberNavController()
+                MainApp(viewModel = viewModel, navController = navController)
+            }
+        }
+    }
+}
+
+@Composable
+fun MainApp(
+    viewModel: StudyViewModel,
+    navController: NavHostController
+) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val bottomNavScreens = listOf(
+        Screen.Home,
+        Screen.StudyHub,
+        Screen.Progress,
+        Screen.Profile
+    )
+
+    val showBottomBar = currentRoute in bottomNavScreens.map { it.route }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar(
+                    modifier = Modifier.testTag("bottom_nav_bar")
+                ) {
+                    bottomNavScreens.forEach { screen ->
+                        val isSelected = currentRoute == screen.route
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            icon = {
+                                screen.icon?.let {
+                                    Icon(imageVector = it, contentDescription = screen.title)
+                                }
+                            },
+                            label = { Text(screen.title) },
+                            modifier = Modifier.testTag("nav_item_${screen.route}")
+                        )
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Home.route,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    viewModel = viewModel,
+                    onOpenFocus = { navController.navigate(Screen.Focus.route) },
+                    onOpenRegularStudy = { navController.navigate(Screen.RegularStudy.route) },
+                    onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
+                    onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) }
+                )
+            }
+            composable(Screen.StudyHub.route) {
+                StudyHubScreen(
+                    viewModel = viewModel,
+                    onOpenRegularStudy = { navController.navigate(Screen.RegularStudy.route) },
+                    onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
+                    onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) },
+                    onOpenFocus = { navController.navigate(Screen.Focus.route) }
+                )
+            }
+            composable(Screen.Progress.route) {
+                ProgressScreen(viewModel = viewModel)
+            }
+            composable(Screen.Profile.route) {
+                ProfileScreen(viewModel = viewModel)
+            }
+            composable(Screen.Focus.route) {
+                FocusScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.RegularStudy.route) {
+                RegularStudyScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onStartFocus = { navController.navigate(Screen.Focus.route) }
+                )
+            }
+            composable(Screen.ExamPlanner.route) {
+                ExamPlannerScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onStartFocus = { navController.navigate(Screen.Focus.route) }
+                )
+            }
+            composable(Screen.SavedSessions.route) {
+                SavedSessionsScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onResumeSession = { navController.navigate(Screen.Focus.route) }
+                )
+            }
+        }
+    }
+}

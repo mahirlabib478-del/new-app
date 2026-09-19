@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Glow Circle -->
+    <path
+        android:fillColor="#336366F1"
+        android:pathData="M54,54m-28,0a28,28 0 1,0 56,0a28,28 0 1,0 -56,0" />
+    <!-- Book Left Page -->
+    <path
+        android:fillColor="#818CF8"
+        android:pathData="M52,38 L36,40 C34,40.2 32,42 32,44 L32,68 C32,69.5 33.5,70.5 35,70.3 L52,66 Z" />
+    <!-- Book Right Page -->
+    <path
+        android:fillColor="#6366F1"
+        android:pathData="M56,38 L72,40 C74,40.2 76,42 76,44 L76,68 C76,69.5 74.5,70.5 73,70.3 L56,66 Z" />
+    <!-- Sparkle / Star on top of Book -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M54,26 L56,31 L61,33 L56,35 L54,40 L52,35 L47,33 L52,31 Z" />
+</vector>
