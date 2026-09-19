@@ -93,10 +93,9 @@ class NotificationService
           await android.requestNotificationsPermission() ?? false;
       if (!notificationsGranted) return false;
 
-      // Exact alarms are preferred, but they are a special app access on
-      // Android 12+ and may be unavailable on some devices. Notification
-      // delivery must not depend on that optional access because the plugin
-      // supports an idle-safe inexact fallback.
+      // Reminders only need reliable delivery, not exact-alarm privileges.
+      // Using the idle-safe inexact scheduler avoids Android special-access
+      // prompts while still allowing delivery when the app is backgrounded.
       return true;
     }
 
@@ -162,19 +161,15 @@ class NotificationService
       macOS: DarwinNotificationDetails(),
     );
 
-    try {
-      await _plugin.zonedSchedule(
-        id: id,
-        title: title,
-        body: body,
-        scheduledDate: scheduled,
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-    } on Exception {
-      rethrow;
-    }
+    await _plugin.zonedSchedule(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: scheduled,
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
   }
 
   @override
