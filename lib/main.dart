@@ -171,7 +171,9 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     final sameAsStored = storedPlan != null && StudySessionStore(widget.store).samePlan(storedPlan, activePlan);
     final index = sameAsStored ? snapshot.currentIndex : 0;
     final blockIndex = sameAsStored ? snapshot.currentBlockIndex : 0;
-    await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: activePlan, index: index, blockIndex: blockIndex, onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted)));
+    await navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: activePlan, index: index, blockIndex: blockIndex, onFocusBlockCompleted: reminderCoordinator.notifyFocusBlockCompleted,
+      onFocusBlockScheduled: reminderCoordinator.scheduleFocusBlockCompletion,
+      onFocusBlockScheduleCancelled: reminderCoordinator.cancelFocusBlockCompletion)));
     if (mounted) {
       _tabs[0] = _buildHomeTab();
       _tabs[1] = _buildStudyTab();
