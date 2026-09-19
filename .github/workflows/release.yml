@@ -81,20 +81,20 @@ jobs:
 
       - name: Configure release signing
         env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
             echo "Configuring release keystore..."
-            printf '%s' "$KEYSTORE_BASE64" | base64 --decode > app/release-key.jks
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > app/release-key.jks
             chmod 600 app/release-key.jks
 
             keytool -list \
               -keystore app/release-key.jks \
-              -storepass "$KEYSTORE_PASSWORD" \
-              -alias "$KEY_ALIAS" >/dev/null
+              -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+              -alias "$ANDROID_KEY_ALIAS" >/dev/null
 
             python3 .github/scripts/configure_signing.py
           else
@@ -102,6 +102,10 @@ jobs:
           fi
 
       - name: Build release APK & AAB
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           ./gradlew -PreleaseVersionName="${{ steps.version.outputs.version_name }}" -PreleaseVersionCode="${{ steps.version.outputs.version_code }}" assembleRelease bundleRelease
 
