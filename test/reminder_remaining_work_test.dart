@@ -16,6 +16,9 @@ class CapturingScheduler implements ReminderScheduler {
   Future<void> cancel(int id) async {}
 
   @override
+  Future<bool> areNotificationsEnabled() async => true;
+
+  @override
   Future<bool?> requestPermissions() async => true;
 
   @override
