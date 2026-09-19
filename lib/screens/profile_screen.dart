@@ -233,7 +233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (notificationsEnabled == false)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(18, 14, 18, 2),
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
