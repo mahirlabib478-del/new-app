@@ -27,7 +27,13 @@ class AppStrings {
   String get english => 'English';
   String get bangla => 'বাংলা';
   String get profile => isBangla ? 'প্রোফাইল' : 'Profile';
-  String get appearance => isBangla ? 'চেহারা' : 'Appearance';
+  String get appearance => isBangla ? 'চেহারা ও থিম' : 'Appearance & Theme';
+  String get fontSize => isBangla ? 'ফন্ট সাইজ' : 'Font Size';
+  String get fontSizeSub => isBangla ? 'পড়ার সুবিধার জন্য লেখার আকার' : 'Text scaling for comfortable reading';
+  String get fontSmall => isBangla ? 'ছোট' : 'Small';
+  String get fontNormal => isBangla ? 'স্বাভাবিক' : 'Normal';
+  String get fontLarge => isBangla ? 'বড়' : 'Large';
+  String get fontExtraLarge => isBangla ? 'খুব বড়' : 'Extra Large';
   String get dailyGoal => isBangla ? 'দৈনিক লক্ষ্য' : 'Daily goal';
   String get reminders => isBangla ? 'রিমাইন্ডার' : 'Reminders';
   String get studyReminder => isBangla ? 'স্টাডি রিমাইন্ডার' : 'Study reminder';

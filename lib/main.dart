@@ -31,24 +31,25 @@ Future<void> main() async {
 }
 
 const themes = <String, _AppTheme>{
-  'midnight': _AppTheme('Midnight', Icons.nights_stay_rounded, Color(0xFF6C63FF), Brightness.dark),
-  'ocean': _AppTheme('Ocean Dark', Icons.water_rounded, Color(0xFF1479A8), Brightness.dark),
-  'forest': _AppTheme('Forest', Icons.forest_rounded, Color(0xFF3F7D58), Brightness.dark),
-  'sunrise': _AppTheme('Sunrise', Icons.wb_sunny_rounded, Color(0xFFE4774E), Brightness.light),
-  'ocean_light': _AppTheme('Ocean', Icons.water_drop_rounded, Color(0xFF168AAD), Brightness.light),
-  'mint': _AppTheme('Mint', Icons.spa_rounded, Color(0xFF2A9D8F), Brightness.light),
-  'rose': _AppTheme('Rose', Icons.local_florist_rounded, Color(0xFFC85572), Brightness.light),
-  'peach': _AppTheme('Peach', Icons.wb_sunny_outlined, Color(0xFFE07A5F), Brightness.light),
-  'lavender': _AppTheme('Lavender', Icons.auto_awesome_rounded, Color(0xFF7B61A8), Brightness.light),
-  'sky': _AppTheme('Sky', Icons.cloud_rounded, Color(0xFF3D7EA6), Brightness.light),
+  'midnight': _AppTheme('Midnight', Icons.nights_stay_rounded, Color(0xFF6366F1), Brightness.dark, scaffoldBackground: Color(0xFF0C0E17)),
+  'pitch_black': _AppTheme('Pitch Black', Icons.dark_mode_rounded, Color(0xFF00E5FF), Brightness.dark, scaffoldBackground: Color(0xFF000000)),
+  'espresso': _AppTheme('Espresso', Icons.coffee_rounded, Color(0xFFD4A373), Brightness.dark, scaffoldBackground: Color(0xFF14100D)),
+  'ocean': _AppTheme('Ocean Dark', Icons.water_rounded, Color(0xFF0284C7), Brightness.dark, scaffoldBackground: Color(0xFF08121E)),
+  'forest': _AppTheme('Forest', Icons.forest_rounded, Color(0xFF10B981), Brightness.dark, scaffoldBackground: Color(0xFF07140B)),
+  'paper': _AppTheme('Paper Sepia', Icons.menu_book_rounded, Color(0xFF8B5A2B), Brightness.light, scaffoldBackground: Color(0xFFF7F4EB)),
+  'mint': _AppTheme('Mint', Icons.spa_rounded, Color(0xFF0D9488), Brightness.light, scaffoldBackground: Color(0xFFF0FDF4)),
+  'matcha': _AppTheme('Matcha', Icons.eco_rounded, Color(0xFF4D7C0F), Brightness.light, scaffoldBackground: Color(0xFFF4F8EE)),
+  'sunrise': _AppTheme('Sunrise', Icons.wb_sunny_rounded, Color(0xFFEA580C), Brightness.light, scaffoldBackground: Color(0xFFFFF7ED)),
+  'slate': _AppTheme('Nordic Slate', Icons.filter_drama_rounded, Color(0xFF475569), Brightness.light, scaffoldBackground: Color(0xFFF1F5F9)),
 };
 
 class _AppTheme {
-  const _AppTheme(this.name, this.icon, this.seed, this.brightness);
+  const _AppTheme(this.name, this.icon, this.seed, this.brightness, {this.scaffoldBackground});
   final String name;
   final IconData icon;
   final Color seed;
   final Brightness brightness;
+  final Color? scaffoldBackground;
 }
 
 class StudyOS extends StatefulWidget {
@@ -64,6 +65,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   late final ReminderCoordinator reminderCoordinator;
   late String themeKey = themes.containsKey(widget.store.themePreset) ? widget.store.themePreset : 'midnight';
   late AppLanguage language = widget.store.appLanguage;
+  late double textScale = widget.store.textScale;
   int tab = 0;
   late final List<Widget?> _tabs = List<Widget?>.filled(4, null);
   AppStrings get strings => AppStrings(language);
@@ -120,7 +122,18 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
   Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: _startPlanAndSyncReminders, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language, onPlanSaved: (_) => _syncRemindersSafely());
   Widget _buildProgressTab() => ProgressDashboard(store: widget.store);
-  Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage, reminderCoordinator: reminderCoordinator, onDataChanged: _refreshAllTabs);
+  Widget _buildProfileTab() => ProfileScreen(
+        store: widget.store,
+        prefs: widget.prefs,
+        themeKey: themeKey,
+        onThemeChanged: setTheme,
+        language: language,
+        onLanguageChanged: setLanguage,
+        textScale: textScale,
+        onTextScaleChanged: setTextScale,
+        reminderCoordinator: reminderCoordinator,
+        onDataChanged: _refreshAllTabs,
+      );
 
   void _ensureTab(int index) {
     if (_tabs[index] != null) return;
@@ -192,6 +205,15 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> setTextScale(double value) async {
+    await widget.store.setTextScale(value);
+    if (!mounted) return;
+    setState(() {
+      textScale = value;
+      _tabs[3] = _buildProfileTab();
+    });
+  }
+
   Future<void> openFocus({StudyPlan? plan}) async {
     final snapshot = TodayEngine(widget.store).build();
     final activePlan = plan ?? snapshot.plan;
@@ -231,48 +253,72 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final theme = themes[themeKey]!;
+    final isDark = theme.brightness == Brightness.dark;
     final scheme = ColorScheme.fromSeed(seedColor: theme.seed, brightness: theme.brightness);
     _ensureTab(tab);
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Study OS',
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: scheme,
         brightness: theme.brightness,
-        scaffoldBackgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF0B0D13) : null,
+        scaffoldBackgroundColor: theme.scaffoldBackground ?? (isDark ? const Color(0xFF0C0E14) : null),
         appBarTheme: AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0,
-          titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: scheme.onSurface),
+          titleTextStyle: TextStyle(
+            fontSize: 21,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.2,
+            color: scheme.onSurface,
+          ),
         ),
         cardTheme: CardThemeData(
           margin: EdgeInsets.zero,
-          elevation: 0,
-          color: scheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          elevation: isDark ? 0 : 0.8,
+          color: isDark ? scheme.surfaceContainerLow : scheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(
+              color: isDark
+                  ? scheme.outlineVariant.withValues(alpha: 0.38)
+                  : scheme.outlineVariant.withValues(alpha: 0.30),
+              width: 1.0,
+            ),
+          ),
         ),
         listTileTheme: ListTileThemeData(
           enableFeedback: true,
-          minVerticalPadding: 8,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          minVerticalPadding: 6,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            minimumSize: const Size(0, 50),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            minimumSize: const Size(0, 52),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 0.2),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size(0, 50),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            minimumSize: const Size(0, 52),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.7), width: 1.2),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 0.2),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
@@ -280,8 +326,17 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
             minimumSize: const Size(0, 46),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
           ),
+        ),
+        textTheme: TextTheme(
+          titleLarge: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: scheme.onSurface),
+          titleMedium: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: scheme.onSurface),
+          titleSmall: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: scheme.onSurface),
+          bodyLarge: TextStyle(fontSize: 15.5, color: scheme.onSurface, height: 1.4),
+          bodyMedium: TextStyle(fontSize: 14, color: scheme.onSurface, height: 1.35),
+          bodySmall: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant, height: 1.3),
+          labelLarge: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: scheme.onSurface),
         ),
         chipTheme: ChipThemeData(
           backgroundColor: scheme.surfaceContainerLow,

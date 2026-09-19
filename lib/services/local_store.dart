@@ -44,6 +44,7 @@ class LocalStore {
   static const _blockKey = 'current_block_index';
   static const _themeKey = 'dark_mode';
   static const _themePresetKey = 'theme_preset';
+  static const _textScaleKey = 'text_scale_factor';
   static const _historyKey = 'study_daily_history';
   static const _dailyGoalKey = 'daily_goal_minutes';
   static const _focusTimerKey = 'focus_timer_state';
@@ -126,6 +127,8 @@ class LocalStore {
   Future<void> setDarkMode(bool value) => prefs.setBool(_themeKey, value);
   String get themePreset => (prefs.getString(_themePresetKey)?.isNotEmpty ?? false) ? prefs.getString(_themePresetKey)! : (darkMode ? 'midnight' : 'sunrise');
   Future<void> setThemePreset(String value) => prefs.setString(_themePresetKey, value);
+  double get textScale => (prefs.getDouble(_textScaleKey) ?? 1.0).clamp(0.85, 1.35);
+  Future<void> setTextScale(double value) => prefs.setDouble(_textScaleKey, value.clamp(0.85, 1.35));
   AppLanguage get appLanguage => AppLanguageStore(prefs).language;
   Future<void> setAppLanguage(AppLanguage value) => AppLanguageStore(prefs).setLanguage(value);
   int get completedMinutes => prefs.getInt(_minutesKey) ?? 0;

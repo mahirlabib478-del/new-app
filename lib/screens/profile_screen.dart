@@ -16,6 +16,8 @@ class ProfileScreen extends StatefulWidget {
     required this.onThemeChanged,
     required this.language,
     required this.onLanguageChanged,
+    required this.textScale,
+    required this.onTextScaleChanged,
     this.reminderCoordinator,
     this.onDataChanged,
   });
@@ -26,20 +28,102 @@ class ProfileScreen extends StatefulWidget {
   final Future<void> Function(String key) onThemeChanged;
   final AppLanguage language;
   final Future<void> Function(AppLanguage language) onLanguageChanged;
+  final double textScale;
+  final Future<void> Function(double scale) onTextScaleChanged;
   final ReminderCoordinator? reminderCoordinator;
   final VoidCallback? onDataChanged;
 
   static const _presets = <String, _ThemeOption>{
-    'midnight': _ThemeOption('Midnight', Icons.nights_stay_rounded, 'Deep focus, low visual noise'),
-    'ocean': _ThemeOption('Ocean Dark', Icons.water_rounded, 'Cool and calm'),
-    'forest': _ThemeOption('Forest', Icons.forest_rounded, 'Natural and grounded'),
-    'sunrise': _ThemeOption('Sunrise', Icons.wb_sunny_rounded, 'Warm and bright'),
-    'ocean_light': _ThemeOption('Ocean', Icons.water_drop_rounded, 'Fresh and focused'),
-    'mint': _ThemeOption('Mint', Icons.spa_rounded, 'Soft and refreshing'),
-    'rose': _ThemeOption('Rose', Icons.local_florist_rounded, 'Warm and gentle'),
-    'peach': _ThemeOption('Peach', Icons.wb_sunny_outlined, 'Friendly and energetic'),
-    'lavender': _ThemeOption('Lavender', Icons.auto_awesome_rounded, 'Calm and creative'),
-    'sky': _ThemeOption('Sky', Icons.cloud_rounded, 'Light and airy'),
+    'midnight': _ThemeOption(
+      'Midnight',
+      'মিডনাইট',
+      Icons.nights_stay_rounded,
+      Color(0xFF6366F1),
+      true,
+      'Deep focus, indigo accent',
+      'গভীর ফোকাস ও শান্ত নীল',
+    ),
+    'pitch_black': _ThemeOption(
+      'Pitch Black',
+      'পিচ ব্ল্যাক (OLED)',
+      Icons.dark_mode_rounded,
+      Color(0xFF00E5FF),
+      true,
+      'OLED pure black, zero eye strain',
+      'পিওর ব্ল্যাক, রাতে চোখের পরম আরাম',
+    ),
+    'espresso': _ThemeOption(
+      'Espresso',
+      'এসপ্রেসো কফি',
+      Icons.coffee_rounded,
+      Color(0xFFD4A373),
+      true,
+      'Warm dark roast coffee vibe',
+      'উষ্ণ কফি ভাইব ও আরামদায়ক ডার্ক',
+    ),
+    'ocean': _ThemeOption(
+      'Ocean Dark',
+      'ওশান ডার্ক',
+      Icons.water_rounded,
+      Color(0xFF0284C7),
+      true,
+      'Cool deep sea calm',
+      'গভীর সমুদ্রের শীতল প্রশান্তি',
+    ),
+    'forest': _ThemeOption(
+      'Forest',
+      'ফরেস্ট ডার্ক',
+      Icons.forest_rounded,
+      Color(0xFF10B981),
+      true,
+      'Natural evergreen focus',
+      'সবুজ পাইন বনের স্থির একাগ্রতা',
+    ),
+    'paper': _ThemeOption(
+      'Paper Sepia',
+      'পেপার সেপিয়া',
+      Icons.menu_book_rounded,
+      Color(0xFF8B5A2B),
+      false,
+      'Warm book page, easiest on eyes',
+      'বইয়ের পাতার মতো উষ্ণ, রিডিং স্পেশাল',
+    ),
+    'mint': _ThemeOption(
+      'Mint',
+      'মিন্ট',
+      Icons.spa_rounded,
+      Color(0xFF0D9488),
+      false,
+      'Soft refreshing teal',
+      'সতেজ ও হালকা রিফ্রেশিং টিল',
+    ),
+    'matcha': _ThemeOption(
+      'Matcha',
+      'মাচা গ্রিন',
+      Icons.eco_rounded,
+      Color(0xFF4D7C0F),
+      false,
+      'Calming organic herbal green',
+      'প্রাকৃতিক শান্ত হারবাল গ্রিন',
+    ),
+    'sunrise': _ThemeOption(
+      'Sunrise',
+      'সানরাইজ',
+      Icons.wb_sunny_rounded,
+      Color(0xFFEA580C),
+      false,
+      'Warm and energized study',
+      'উষ্ণ সকালের অনুপ্রেরণাদায়ী আলো',
+    ),
+    'slate': _ThemeOption(
+      'Nordic Slate',
+      'নর্ডিক স্লেট',
+      Icons.filter_drama_rounded,
+      Color(0xFF475569),
+      false,
+      'Crisp Scandinavian minimal',
+      'মিনিমালিস্ট ও পরিষ্কার হালকা গ্রে',
+    ),
   };
 
   @override
@@ -191,9 +275,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () => widget.onThemeChanged(entry.key),
                     splashColor: tapColor,
                     enableFeedback: true,
-                    leading: Icon(entry.value.icon),
-                    title: Text(entry.value.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                    subtitle: Text(entry.value.description),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: entry.value.previewColor.withValues(alpha: entry.value.isDark ? 0.22 : 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: entry.value.previewColor.withValues(alpha: 0.5),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Icon(entry.value.icon, color: entry.value.previewColor, size: 20),
+                    ),
+                    title: Text(
+                      strings.isBangla ? entry.value.nameBn : entry.value.name,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: Text(
+                      strings.isBangla ? entry.value.descriptionBn : entry.value.description,
+                      style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+                    ),
                     trailing: Icon(
                       widget.themeKey == entry.key ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
                       color: widget.themeKey == entry.key ? scheme.primary : scheme.outline,
@@ -201,6 +303,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.format_size_rounded, color: scheme.primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              strings.fontSize,
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              strings.fontSizeSub,
+                              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _FontSizeOption(
+                        label: strings.fontSmall,
+                        scale: 0.90,
+                        currentScale: widget.textScale,
+                        onTap: () => widget.onTextScaleChanged(0.90),
+                        scheme: scheme,
+                      ),
+                      const SizedBox(width: 8),
+                      _FontSizeOption(
+                        label: strings.fontNormal,
+                        scale: 1.0,
+                        currentScale: widget.textScale,
+                        onTap: () => widget.onTextScaleChanged(1.0),
+                        scheme: scheme,
+                      ),
+                      const SizedBox(width: 8),
+                      _FontSizeOption(
+                        label: strings.fontLarge,
+                        scale: 1.15,
+                        currentScale: widget.textScale,
+                        onTap: () => widget.onTextScaleChanged(1.15),
+                        scheme: scheme,
+                      ),
+                      const SizedBox(width: 8),
+                      _FontSizeOption(
+                        label: strings.fontExtraLarge,
+                        scale: 1.30,
+                        currentScale: widget.textScale,
+                        onTap: () => widget.onTextScaleChanged(1.30),
+                        scheme: scheme,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -446,8 +624,87 @@ class _DailyGoalDialogState extends State<_DailyGoalDialog> {
 }
 
 class _ThemeOption {
-  const _ThemeOption(this.name, this.icon, this.description);
+  const _ThemeOption(
+    this.name,
+    this.nameBn,
+    this.icon,
+    this.previewColor,
+    this.isDark,
+    this.description,
+    this.descriptionBn,
+  );
   final String name;
+  final String nameBn;
   final IconData icon;
+  final Color previewColor;
+  final bool isDark;
   final String description;
+  final String descriptionBn;
+}
+
+class _FontSizeOption extends StatelessWidget {
+  const _FontSizeOption({
+    required this.label,
+    required this.scale,
+    required this.currentScale,
+    required this.onTap,
+    required this.scheme,
+  });
+
+  final String label;
+  final double scale;
+  final double currentScale;
+  final VoidCallback onTap;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = (currentScale - scale).abs() < 0.04;
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? scheme.primaryContainer
+                : scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? scheme.primary
+                  : scheme.outlineVariant.withValues(alpha: 0.35),
+              width: isSelected ? 1.8 : 1.0,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Aa',
+                style: TextStyle(
+                  fontSize: 13.0 * scale,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? scheme.onPrimaryContainer : scheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
