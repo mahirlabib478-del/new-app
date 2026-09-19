@@ -59,7 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _refreshNotificationStatus() async {
-    final enabled = await widget.reminderCoordinator.areNotificationsEnabled();
+    final coordinator = widget.reminderCoordinator;
+    if (coordinator == null) return;
+    final enabled = await coordinator.areNotificationsEnabled();
     if (mounted) setState(() => notificationsEnabled = enabled);
   }
 
@@ -80,9 +82,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _syncReminders({required ReminderSettings settingsToSync}) async {
+    final coordinator = widget.reminderCoordinator;
+    if (coordinator == null) return;
     final anyEnabled = settingsToSync.studyEnabled || settingsToSync.breakEnabled || settingsToSync.planEnabled;
     if (!anyEnabled) {
-      await widget.reminderCoordinator!.sync(settingsOverride: settingsToSync);
+      await coordinator.sync(settingsOverride: settingsToSync);
       return;
     }
 
@@ -91,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // or another reminder action must also be able to recover a missing
       // runtime grant.
       if (anyEnabled) {
-        final granted = await widget.reminderCoordinator!.requestPermissions();
+        final granted = await coordinator.requestPermissions();
         if (!granted) return;
       }
       await widget.reminderCoordinator!.sync(settingsOverride: settingsToSync);
