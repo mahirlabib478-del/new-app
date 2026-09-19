@@ -98,18 +98,28 @@ jobs:
           PY
 
       - name: Build Android release APK
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: flutter build apk --release
+
       - name: Verify built release notification configuration
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump permissions build/app/outputs/flutter-apk/app-release.apk | grep -q 'android.permission.POST_NOTIFICATIONS'
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump xmltree build/app/outputs/flutter-apk/app-release.apk AndroidManifest.xml | grep -q 'ScheduledNotificationReceiver'
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt" dump resources build/app/outputs/flutter-apk/app-release.apk | grep -q 'ic_notification'
+
       - name: Package Android APKs
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           mkdir -p build/apk-artifacts
           cp build/app/outputs/flutter-apk/app-debug.apk build/apk-artifacts/study-os-debug.apk
           cp build/app/outputs/flutter-apk/app-release.apk build/apk-artifacts/study-os-release.apk
       - name: Upload Android APKs
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: study-os-apks
