@@ -45,6 +45,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late ReminderSettings settings;
+  bool? notificationsEnabled;
 
   AppStrings get strings => AppStrings(widget.language);
 
@@ -52,6 +53,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     settings = ReminderSettingsStore(widget.prefs).settings;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshNotificationStatus());
+  }
+
+  Future<void> _refreshNotificationStatus() async {
+    final enabled = await widget.reminderCoordinator.areNotificationsEnabled();
+    if (mounted) setState(() => notificationsEnabled = enabled);
   }
 
   Future<void> _saveSettings(ReminderSettings next) async {
@@ -63,6 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await ReminderSettingsStore(widget.prefs).save(next);
       await _syncReminders(settingsToSync: next);
+      await _refreshNotificationStatus();
     } on Exception {
       // Reminder failures must never block settings changes or normal app use.
     }
@@ -216,6 +224,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (notificationsEnabled == false)
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(18, 14, 18, 2),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.notifications_off_rounded),
+                      title: Text('Notifications are blocked', style: TextStyle(fontWeight: FontWeight.w800)),
+                      subtitle: Text('Allow notifications in Android Settings to receive study and break reminders.'),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(18, 18, 18, 4),
                   child: Text(strings.reminders.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1)),
