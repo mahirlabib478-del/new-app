@@ -135,7 +135,15 @@ class LocalStore {
   int get planCompletedMinutes => prefs.getInt(_planMinutesKey) ?? 0;
   int get dailyGoalMinutes => (prefs.getInt(_dailyGoalKey) ?? 120).clamp(15, 720).toInt();
   int get xp => prefs.getInt(_xpKey) ?? 0;
-  int get streak => prefs.getInt(_streakKey) ?? 0;
+  int get streak {
+    final stored = prefs.getInt(_streakKey) ?? 0;
+    if (stored <= 0) return 0;
+    final lastStudy = prefs.getString(_lastStudyKey);
+    if (lastStudy == null) return 0;
+    final today = _dateKey(DateTime.now());
+    final yesterday = _dateKey(DateTime.now().subtract(const Duration(days: 1)));
+    return lastStudy == today || lastStudy == yesterday ? stored : 0;
+  }
   int get sessions => prefs.getInt(_sessionsKey) ?? 0;
   int get level => (xp ~/ 250) + 1;
   int get levelProgress => xp % 250;
