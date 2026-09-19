@@ -238,8 +238,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(Icons.notifications_off_rounded),
-                      title: Text('Notifications are blocked', style: TextStyle(fontWeight: FontWeight.w800)),
-                      subtitle: Text('Allow notifications in Android Settings to receive study and break reminders.'),
+                      title: Text(strings.notificationPermissionTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+                      subtitle: Text(strings.notificationPermissionBody),
                     ),
                   ),
                 Padding(
@@ -275,6 +275,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle: Text('${strings.planTime}: ${_formatTime(settings.planHour, settings.planMinute)}'),
                   value: settings.planEnabled,
                   onChanged: (value) => _saveSettings(settings.copyWith(planEnabled: value)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 6, 18, 14),
+                  child: Text(strings.backgroundReminderHint, style: Theme.of(context).textTheme.bodySmall),
                 ),
                 ListTile(
                   enabled: settings.planEnabled,
