@@ -83,9 +83,10 @@ object UpdateManager {
 
     suspend fun checkForUpdate(
         context: Context,
-        isManual: Boolean = false
+        isManual: Boolean = false,
+        forceCheck: Boolean = false
     ): AppUpdateInfo? = withContext(Dispatchers.IO) {
-        if (!isManual && shouldThrottleAutoCheck(context)) {
+        if (!isManual && !forceCheck && shouldThrottleAutoCheck(context)) {
             return@withContext null
         }
 
