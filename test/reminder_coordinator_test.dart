@@ -13,7 +13,7 @@ class FakeScheduler implements ReminderScheduler, ReminderSchedulerFirstOccurren
   final cancelled = <int>[];
   final shown = <int>[];
   final oneShot = <int>[];
-  final firstOccurrences = <int, DateTime>{}
+  final firstOccurrences = <int, DateTime>{};
   var permissionRequests = 0;
   bool? permissionResult = true;
   var initializeCalls = 0;
@@ -51,6 +51,7 @@ class FakeScheduler implements ReminderScheduler, ReminderSchedulerFirstOccurren
 
   @override
   Future<void> scheduleDailyReminderAt({required int id, required String title, required String body, required DateTime firstAt}) async {
+    if (scheduleError != null) throw scheduleError!;
     firstOccurrences[id] = firstAt;
     scheduled.add(id);
   }
