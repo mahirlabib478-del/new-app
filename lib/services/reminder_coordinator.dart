@@ -222,19 +222,6 @@ class ReminderCoordinator {
     await _safeCancel(breakId);
   }
 
-  Future<void> notifyNotificationsEnabled() async {
-    await scheduler.initialize();
-    final enabled = await scheduler.areNotificationsEnabled();
-    if (!enabled) return;
-    await scheduler.showNow(
-      id: 1099,
-      title: store.appLanguage == AppLanguage.bangla ? 'নোটিফিকেশন চালু হয়েছে' : 'Notifications enabled',
-      body: store.appLanguage == AppLanguage.bangla
-          ? 'স্টাডি রিমাইন্ডার এখন এই ডিভাইসে পাঠানো হবে।'
-          : 'Study reminders are now enabled on this device.',
-    );
-  }
-
   Future<void> notifyFocusBlockCompleted() async {
     final settings = settingsStore.settings;
     if (settings.breakEnabled) {
