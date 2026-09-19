@@ -50,6 +50,7 @@ jobs:
           grep -q 'targetSdk = 35' android/app/build.gradle.kts
           grep -q 'android:icon="@drawable/study_os_logo"' android/app/src/main/AndroidManifest.xml
           test -f android/app/src/main/res/drawable/ic_notification.xml
+          test -f android/app/src/main/res/raw/keep.xml
       - name: Install dependencies
         run: flutter pub get
       - name: Build Android debug APK
