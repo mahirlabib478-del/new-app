@@ -42,7 +42,7 @@ class ReminderPolicy {
   ReminderRequest? breakReminder({required bool focusSessionCompleted, bool bangla = false}) {
     if (!focusSessionCompleted) return null;
 
-    return const ReminderRequest(
+    return ReminderRequest(
       kind: ReminderKind.breakTime,
       title: bangla ? 'একটু বিরতি নিন' : 'Take a break',
       body: bangla ? 'ফোকাস ব্লক শেষ হয়েছে। পরের ব্লকের আগে একটু বিরতি নিন।' : 'Your focus block is complete. Take a short break before the next block.',
@@ -52,7 +52,7 @@ class ReminderPolicy {
   ReminderRequest? planReminder({required bool hasPlan, required bool hasRemainingWork, bool bangla = false}) {
     if (hasPlan || hasRemainingWork) return null;
 
-    return const ReminderRequest(
+    return ReminderRequest(
       kind: ReminderKind.plan,
       title: bangla ? 'স্টাডি প্ল্যান তৈরি করুন' : 'Plan your study',
       body: bangla ? 'শুরু করতে আজকের স্টাডি প্ল্যান তৈরি করুন।' : 'Create today\'s study plan to get started.',
