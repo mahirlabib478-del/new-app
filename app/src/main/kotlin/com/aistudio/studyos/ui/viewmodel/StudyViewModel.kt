@@ -78,6 +78,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     val recentLogs: StateFlow<List<SessionLogEntity>> = repository.getRecentLogs(15)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val todayMinutes: StateFlow<Int> = repository.getTodayMinutes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
     val allLogs: StateFlow<List<SessionLogEntity>> = repository.getAllLogs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
