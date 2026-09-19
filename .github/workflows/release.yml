@@ -79,6 +79,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Configuring release keystore..."
             printf '%s' "$KEYSTORE_BASE64" | base64 --decode > app/release-key.jks
             chmod 600 app/release-key.jks
 
@@ -87,63 +88,49 @@ jobs:
               -storepass "$KEYSTORE_PASSWORD" \
               -alias "$KEY_ALIAS" >/dev/null
 
-            python3 - <<'PY'
-            from pathlib import Path
-
-            build = Path('app/build.gradle.kts')
-            text = build.read_text()
-            marker = '    buildTypes {'
-            signing = '''    signingConfigs {
-                    create("release") {
-                        storeFile = file("release-key.jks")
-                        storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                        keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-                        keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-                    }
-                }
-
-            '''
-            if marker not in text:
-                raise SystemExit('Could not find Android buildTypes block')
-            if 'create("release")' not in text:
-                text = text.replace(marker, signing + marker, 1)
-
-            if 'signingConfig = signingConfigs.getByName("release")' not in text:
-                text = text.replace(
-                    'isMinifyEnabled = false',
-                    'isMinifyEnabled = false\n            signingConfig = signingConfigs.getByName("release")',
-                    1,
-                )
-            build.write_text(text)
-            PY
+            python3 .github/scripts/configure_signing.py
+          else
+            echo "No ANDROID_KEYSTORE_BASE64 found, skipping release signing configuration."
           fi
 
       - name: Build release APK & AAB
         run: |
           ./gradlew assembleRelease bundleRelease || ./gradlew assembleDebug
 
+      - name: Stage release artifacts
+        run: |
+          mkdir -p release-artifacts
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            cp app/build/outputs/apk/release/app-release.apk release-artifacts/app-release.apk
+          elif [ -f app/build/outputs/apk/release/app-release-unsigned.apk ]; then
+            cp app/build/outputs/apk/release/app-release-unsigned.apk release-artifacts/app-release.apk
+          elif [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+            cp app/build/outputs/apk/debug/app-debug.apk release-artifacts/app-release.apk
+          fi
+
+          if [ -f app/build/outputs/bundle/release/app-release.aab ]; then
+            cp app/build/outputs/bundle/release/app-release.aab release-artifacts/app-release.aab
+          fi
+
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: study-os-release-apk
-          path: app/build/outputs/apk/**/*.apk
+          path: release-artifacts/*.apk
           if-no-files-found: warn
 
       - name: Upload release AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: study-os-release-aab
-          path: app/build/outputs/bundle/**/*.aab
+          path: release-artifacts/*.aab
           if-no-files-found: warn
 
       - name: Create GitHub release for tag
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.tag }}
-          files: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/bundle/release/*.aab
+          files: release-artifacts/*
           generate_release_notes: true
 
       - name: Update in-app release policy
@@ -151,24 +138,7 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          path = Path("update.json")
-          if path.exists():
-            policy = json.loads(path.read_text())
-            tag = os.environ["RELEASE_TAG"]
-            repo = os.environ["REPOSITORY"]
-            version = tag.removeprefix("v")
-
-            policy["latestVersion"] = version
-            policy["releaseUrl"] = f"https://github.com/{repo}/releases/tag/{tag}"
-            policy["apkUrl"] = f"https://github.com/{repo}/releases/download/{tag}/app-release.apk"
-
-            path.write_text(json.dumps(policy, indent=2) + "\n")
-          PY
+          python3 .github/scripts/update_release_policy.py
 
           git fetch origin main || true
           git checkout main || true
