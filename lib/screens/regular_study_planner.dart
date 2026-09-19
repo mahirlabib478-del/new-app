@@ -88,7 +88,10 @@ class _RegularStudyPlannerState extends State<RegularStudyPlanner> {
       final list = topics[subject]!;
       final topicAllocated = list.fold(0, (a, t) => a + t.minutes);
       final leftover = subjectTotal - topicAllocated;
-      if (leftover < 0) return;
+      if (leftover < 0) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Topic allocation is above the subject budget. Reduce a topic first.')));
+        return;
+      }
       if (leftover > 0) hasUnassigned = true;
       for (final topic in list) { if (topic.minutes > 0) items.add(StudyItem(title: subject, topic: topic.name, minutes: topic.minutes)); }
       if (leftover > 0) items.add(StudyItem(title: subject, topic: list.isEmpty ? 'General study' : 'Other / review', minutes: leftover));
