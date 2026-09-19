@@ -65,6 +65,16 @@ class UpdateAndReleaseTest {
     }
 
     @Test
+    fun testUpdateDetectionLatestBuildCodeIsNotShownAgain() {
+        val hasUpdate = UpdateManager.isNewerVersion(
+            currentVersionName = "0.3.0",
+            currentVersionCode = 29L,
+            remoteVersionString = "0.3.0+29"
+        )
+        assertFalse(hasUpdate)
+    }
+
+    @Test
     fun testUpdateDetectionSameSemVerSameBuildCode() {
         val hasUpdate = UpdateManager.isNewerVersion(
             currentVersionName = "0.3.0",
