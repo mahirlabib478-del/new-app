@@ -44,25 +44,6 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val _currentTheme = MutableStateFlow(repository.getInitialTheme())
     val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            repository.ensureCleanInitialData()
-            userProfile.collect { profile ->
-                if (profile != null && profile.themePreset.isNotBlank()) {
-                    _currentTheme.value = profile.themePreset
-                }
-            }
-        }
-        viewModelScope.launch {
-            activePlan.collect { plan ->
-                // Auto-restore active session if memory was empty (cold boot or process recreation)
-                if (plan != null && _focusState.value.planId == null) {
-                    continueActiveSession(plan)
-                }
-            }
-        }
-    }
-
     val activePlan: StateFlow<StudyPlanEntity?> = repository.getActivePlan()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -97,6 +78,26 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     val updateCheckState: StateFlow<UpdateCheckState> = _updateCheckState.asStateFlow()
 
     private var hasDismissedUpdateDialog: Boolean = false
+
+    init {
+        viewModelScope.launch {
+            repository.ensureCleanInitialData()
+            userProfile.collect { profile ->
+                if (profile != null && profile.themePreset.isNotBlank()) {
+                    _currentTheme.value = profile.themePreset
+                }
+            }
+        }
+        viewModelScope.launch {
+            activePlan.collect { plan ->
+                // Auto-restore active session if memory was empty (cold boot or process recreation)
+                if (plan != null && _focusState.value.planId == null) {
+                    continueActiveSession(plan)
+                }
+            }
+        }
+    }
+
 
     fun checkAppUpdate(
         context: Context,
