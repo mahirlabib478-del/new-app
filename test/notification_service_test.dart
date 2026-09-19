@@ -22,6 +22,12 @@ void main() {
     expect(next, tz.TZDateTime.utc(2026, 9, 17, 19, 0));
   });
 
+  test('skipToday moves a future daily occurrence to tomorrow', () {
+    final now = tz.TZDateTime.utc(2026, 9, 16, 18, 30);
+    final next = NotificationService.nextDailyOccurrence(now, 19, 0, skipToday: true);
+    expect(next, tz.TZDateTime.utc(2026, 9, 17, 19, 0));
+  });
+
   test('same-time daily occurrence rolls to tomorrow instead of firing immediately', () {
     final now = tz.TZDateTime.utc(2026, 9, 16, 19, 0);
 
