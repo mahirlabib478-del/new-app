@@ -104,5 +104,8 @@ class _TimezoneTrackingScheduler implements ReminderScheduler, ReminderScheduler
   }
 
   @override
+  Future<bool> areNotificationsEnabled() async => true;
+
+  @override
   Future<bool?> requestPermissions() async => null;
 }
