@@ -111,10 +111,12 @@ fun MainApp(
     val availableUpdate by viewModel.availableUpdate.collectAsState()
     val (currentVersionName, _) = remember { UpdateManager.getCurrentVersionInfo(context) }
 
-    // Low-end device friendly background startup update check (non-blocking 1.2s delay)
+    // Check on every app launch without blocking the UI thread.
+    // forceCheck bypasses the 2-hour auto-check throttle so a newly published
+    // version can show its update dialog on every fresh app launch.
     LaunchedEffect(Unit) {
-        delay(1200)
-        viewModel.checkAppUpdate(context, isManual = false)
+        delay(300)
+        viewModel.checkAppUpdate(context, isManual = false, forceCheck = true)
     }
 
     if (availableUpdate != null) {
@@ -182,10 +184,12 @@ fun MainApp(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding),
-            enterTransition = { fadeIn(animationSpec = tween(150)) },
-            exitTransition = { fadeOut(animationSpec = tween(150)) },
-            popEnterTransition = { fadeIn(animationSpec = tween(150)) },
-            popExitTransition = { fadeOut(animationSpec = tween(150)) }
+            // Bottom-tab navigation should feel immediate; avoid a 150 ms
+            // fade on every tap that makes the UI feel slower than it is.
+            enterTransition = { null },
+            exitTransition = { null },
+            popEnterTransition = { null },
+            popExitTransition = { null }
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
