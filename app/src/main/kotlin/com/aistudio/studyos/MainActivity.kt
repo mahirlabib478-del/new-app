@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -184,12 +185,21 @@ fun MainApp(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding),
-            // Bottom-tab navigation should feel immediate; avoid a 150 ms
-            // fade on every tap that makes the UI feel slower than it is.
-            enterTransition = { null },
-            exitTransition = { null },
-            popEnterTransition = { null },
-            popExitTransition = { null }
+            // Keep navigation visually smooth without making taps feel delayed.
+            // A short 90 ms cross-screen transition avoids the abrupt "dhup" change
+            // while remaining fast enough to feel immediate.
+            enterTransition = {
+                fadeIn(animationSpec = tween(90))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(90))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(90))
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(90))
+            }
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
