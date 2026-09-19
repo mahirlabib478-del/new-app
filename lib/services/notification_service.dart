@@ -97,9 +97,6 @@ class NotificationService
       // Android 12+ and may be unavailable on some devices. Notification
       // delivery must not depend on that optional access because the plugin
       // supports an idle-safe inexact fallback.
-      if (!await android.canScheduleExactNotifications()) {
-        await android.requestExactAlarmsPermission();
-      }
       return true;
     }
 
@@ -172,22 +169,11 @@ class NotificationService
         body: body,
         scheduledDate: scheduled,
         notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-    } on Exception {
-      // If exact-alarm access is unavailable or rejected by the device,
-      // retry the same registration with an idle-safe inexact alarm. This
-      // keeps reminders deliverable instead of silently losing them.
-      await _plugin.zonedSchedule(
-        id: id,
-        title: title,
-        body: body,
-        scheduledDate: scheduled,
-        notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
+    } on Exception {
+      rethrow;
     }
   }
 
