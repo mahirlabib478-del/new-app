@@ -6,7 +6,7 @@ import '../services/local_store.dart';
 import '../services/study_session_store.dart';
 
 class FocusScreen extends StatefulWidget {
-  const FocusScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, this.onFocusBlockCompleted});
+  const FocusScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, this.onFocusBlockCompleted, this.onFocusBlockScheduled, this.onFocusBlockScheduleCancelled});
   final LocalStore store;
   final StudyPlan plan;
   final int index;
@@ -110,7 +110,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     await widget.store.clearFocusTimerState();
     await StudySessionStore(widget.store).archiveCurrentPlan();
     if (!mounted) return;
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: safeCompleted, onFocusBlockCompleted: widget.onFocusBlockCompleted)));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => BreakScreen(store: widget.store, plan: widget.plan, index: activeIndex, blockIndex: activeBlockIndex, completed: safeCompleted, onFocusBlockCompleted: widget.onFocusBlockCompleted, onFocusBlockScheduled: widget.onFocusBlockScheduled, onFocusBlockScheduleCancelled: widget.onFocusBlockScheduleCancelled)));
   }
 
   @override void dispose() { WidgetsBinding.instance.removeObserver(this); timer?.cancel(); super.dispose(); }
@@ -136,8 +136,8 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
 }
 
 class BreakScreen extends StatefulWidget {
-  const BreakScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, required this.completed, this.onFocusBlockCompleted});
-  final LocalStore store; final StudyPlan plan; final int index; final int blockIndex; final int completed; final Future<void> Function()? onFocusBlockCompleted;
+  const BreakScreen({super.key, required this.store, required this.plan, required this.index, required this.blockIndex, required this.completed, this.onFocusBlockCompleted, this.onFocusBlockScheduled, this.onFocusBlockScheduleCancelled});
+  final LocalStore store; final StudyPlan plan; final int index; final int blockIndex; final int completed; final Future<void> Function()? onFocusBlockCompleted; final Future<void> Function(DateTime at)? onFocusBlockScheduled; final Future<void> Function()? onFocusBlockScheduleCancelled;
   @override State<BreakScreen> createState() => _BreakScreenState();
 }
 
@@ -157,7 +157,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
     final item = widget.plan.items[widget.index]; final itemCompleted = widget.store.itemCompletedMinutes(widget.index).clamp(0, item.minutes).toInt();
     if (itemCompleted < item.minutes) { final nextBlock = (itemCompleted ~/ FocusScreen.focusBlock).clamp(0, 100000).toInt(); await widget.store.setPlanPosition(widget.index, nextBlock); await StudySessionStore(widget.store).archiveCurrentPlan(); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: widget.index, blockIndex: nextBlock, onFocusBlockCompleted: widget.onFocusBlockCompleted, onFocusBlockScheduled: widget.onFocusBlockScheduled, onFocusBlockScheduleCancelled: widget.onFocusBlockScheduleCancelled))); return; }
     var nextIndex = widget.index + 1; while (nextIndex < widget.plan.items.length) { final nextItem = widget.plan.items[nextIndex]; final nextCompleted = widget.store.itemCompletedMinutes(nextIndex).clamp(0, nextItem.minutes).toInt(); if (nextCompleted < nextItem.minutes) break; nextIndex++; }
-    if (nextIndex < widget.plan.items.length) { await widget.store.setPlanPosition(nextIndex, 0); await StudySessionStore(widget.store).archiveCurrentPlan(); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: nextIndex, blockIndex: 0, onFocusBlockCompleted: widget.onFocusBlockCompleted))); return; }
+    if (nextIndex < widget.plan.items.length) { await widget.store.setPlanPosition(nextIndex, 0); await StudySessionStore(widget.store).archiveCurrentPlan(); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: nextIndex, blockIndex: 0, onFocusBlockCompleted: widget.onFocusBlockCompleted, onFocusBlockScheduled: widget.onFocusBlockScheduled, onFocusBlockScheduleCancelled: widget.onFocusBlockScheduleCancelled))); return; }
     await widget.store.clearPlanPosition(); await StudySessionStore(widget.store).removeActivePlanSession(widget.plan); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
   }
   @override void dispose() { WidgetsBinding.instance.removeObserver(this); timer?.cancel(); super.dispose(); }
