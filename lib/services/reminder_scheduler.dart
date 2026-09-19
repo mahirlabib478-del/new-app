@@ -16,6 +16,8 @@ abstract interface class ReminderScheduler {
   Future<void> cancel(int id);
 
   Future<bool?> requestPermissions();
+
+  Future<bool> areNotificationsEnabled() async => true;
 }
 /// Optional capability for schedulers that cache timezone state.
 abstract interface class ReminderSchedulerTimeZoneAware {
