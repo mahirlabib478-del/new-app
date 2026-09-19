@@ -57,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _refreshNotificationStatus() async {
-    final enabled = await widget.widget.reminderCoordinator.areNotificationsEnabled();
+    final enabled = await widget.reminderCoordinator.areNotificationsEnabled();
     if (mounted) setState(() => notificationsEnabled = enabled);
   }
 
