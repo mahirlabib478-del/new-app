@@ -43,8 +43,8 @@ class _SetupState extends State<Setup> {
   }
 
   int get totalMinutes {
-    final hours = int.tryParse(_hoursController.text.trim()) ?? 0;
-    return (hours * 60).clamp(0, 24 * 60).toInt();
+    final hours = double.tryParse(_hoursController.text.trim().replaceAll(',', '.')) ?? 0;
+    return (hours * 60).round().clamp(0, 24 * 60).toInt();
   }
 
   void _toggleSubject(String subject, bool value) {
@@ -100,7 +100,7 @@ class _SetupState extends State<Setup> {
     }
     if (total <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter at least 1 hour of study time.')),
+        const SnackBar(content: Text('Enter at least 1 hour of study time. You can use values such as 1.5.')),
       );
       return;
     }
