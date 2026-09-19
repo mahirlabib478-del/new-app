@@ -135,6 +135,41 @@ class NotificationService
   }
 
   @override
+  Future<void> scheduleOnce({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime at,
+  }) async {
+    await initialize();
+    await _plugin.zonedSchedule(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: tz.TZDateTime.from(at, tz.local),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelId,
+          channelName,
+          channelDescription: channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+          icon: 'ic_notification',
+        ),
+        iOS: DarwinNotificationDetails(),
+        macOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  Future<bool> areNotificationsEnabled() async {
+    await initialize();
+    return await _android?.areNotificationsEnabled() ?? true;
+  }
+
+  @override
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
