@@ -130,7 +130,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     timer?.cancel();
     _cancelCompletionNotification();
     final safeCompleted = completed.clamp(0, currentBlockMinutes).toInt();
-    if (safeCompleted > 0) { await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted); if (showNotification && widget.onFocusBlockCompleted != null) unawaited(widget.onFocusBlockCompleted!()); }
+    if (safeCompleted > 0) { await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted); if (showNotification && widget.onFocusBlockCompleted != null) await widget.onFocusBlockCompleted!(); }
     await widget.store.clearFocusTimerState();
     await StudySessionStore(widget.store).archiveCurrentPlan();
     if (!mounted) return;
