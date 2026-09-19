@@ -16,3 +16,9 @@ sealed class UpdateCheckState {
     data class UpToDate(val currentVersion: String) : UpdateCheckState()
     data class Error(val message: String) : UpdateCheckState()
 }
+
+sealed class UpdateCheckResult {
+    data class Available(val updateInfo: AppUpdateInfo) : UpdateCheckResult()
+    data class UpToDate(val currentVersion: String) : UpdateCheckResult()
+    data class Error(val message: String) : UpdateCheckResult()
+}

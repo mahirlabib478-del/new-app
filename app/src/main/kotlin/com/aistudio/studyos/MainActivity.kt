@@ -5,9 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Column
@@ -143,7 +146,17 @@ fun MainApp(
             if (showBottomBar) {
                 val focusState by viewModel.focusState.collectAsState()
                 Column {
-                    if (focusState.planId != null) {
+                    AnimatedVisibility(
+                        visible = focusState.planId != null,
+                        enter = slideInVertically(
+                            initialOffsetY = { it },
+                            animationSpec = tween(150)
+                        ) + fadeIn(animationSpec = tween(150)),
+                        exit = slideOutVertically(
+                            targetOffsetY = { it },
+                            animationSpec = tween(150)
+                        ) + fadeOut(animationSpec = tween(150))
+                    ) {
                         ActiveSessionMiniBar(
                             focusState = focusState,
                             onOpenFocus = { navController.navigate(Screen.Focus.route) },
@@ -192,14 +205,14 @@ fun MainApp(
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it / 12 },
-                    animationSpec = tween(100)
-                ) + fadeIn(animationSpec = tween(100))
+                    animationSpec = tween(150)
+                ) + fadeIn(animationSpec = tween(150))
             },
             exitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { -it / 12 },
                     animationSpec = tween(100)
-                ) + fadeOut(animationSpec = tween(80))
+                ) + fadeOut(animationSpec = tween(150))
             },
             popEnterTransition = {
                 slideInHorizontally(

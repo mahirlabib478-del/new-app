@@ -41,6 +41,7 @@ data class FocusTimerState(
 class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     private var timerJob: Job? = null
+    private var updateCheckJob: Job? = null
 
     private val _currentTheme = MutableStateFlow(repository.getInitialTheme())
     val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
@@ -107,22 +108,27 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     ) {
         if (!isManual && !forceCheck && hasDismissedUpdateDialog) return
 
-        viewModelScope.launch {
+        updateCheckJob?.cancel()
+        updateCheckJob = viewModelScope.launch {
             if (isManual) {
                 _updateCheckState.value = UpdateCheckState.Checking
             }
-            val update = UpdateManager.checkForUpdate(
+
+            when (val result = UpdateManager.checkForUpdate(
                 context.applicationContext,
                 isManual = isManual,
                 forceCheck = forceCheck
-            )
-            if (update != null) {
-                _availableUpdate.value = update
-                _updateCheckState.value = UpdateCheckState.Available(update)
-            } else {
-                if (isManual) {
-                    val (vName, _) = UpdateManager.getCurrentVersionInfo(context.applicationContext)
-                    _updateCheckState.value = UpdateCheckState.UpToDate(vName)
+            )) {
+                is com.aistudio.studyos.data.update.UpdateCheckResult.Available -> {
+                    _availableUpdate.value = result.updateInfo
+                    _updateCheckState.value = UpdateCheckState.Available(result.updateInfo)
+                }
+                is com.aistudio.studyos.data.update.UpdateCheckResult.UpToDate -> {
+                    _availableUpdate.value = null
+                    _updateCheckState.value = UpdateCheckState.UpToDate(result.currentVersion)
+                }
+                is com.aistudio.studyos.data.update.UpdateCheckResult.Error -> {
+                    _updateCheckState.value = UpdateCheckState.Error(result.message)
                 }
             }
         }
@@ -506,6 +512,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+        updateCheckJob?.cancel()
     }
 }
 

@@ -85,44 +85,80 @@ object UpdateManager {
         context: Context,
         isManual: Boolean = false,
         forceCheck: Boolean = false
-    ): AppUpdateInfo? = withContext(Dispatchers.IO) {
+    ): UpdateCheckResult = withContext(Dispatchers.IO) {
         if (!isManual && !forceCheck && shouldThrottleAutoCheck(context)) {
-            return@withContext null
+            val (currentName, _) = getCurrentVersionInfo(context)
+            return@withContext UpdateCheckResult.UpToDate(currentName)
         }
 
         try {
             val (currentName, currentCode) = getCurrentVersionInfo(context)
 
-            // Try raw update.json first (fastest, CDN cached, no rate limits)
-            val updateInfo = fetchFromUpdateJson() ?: fetchFromGitHubApi()
-
-            if (updateInfo != null) {
-                recordCheckTimestamp(context)
-                if (isNewerVersion(currentName, currentCode, updateInfo.latestVersion)) {
-                    val isMandatory = isNewerVersion(
-                        currentName,
-                        currentCode,
-                        updateInfo.minimumSupportedVersion
-                    )
-                    return@withContext updateInfo.copy(isMandatory = isMandatory)
+            // Check both sources and use the newest result. This prevents a stale
+            // raw update.json CDN response from hiding a newer GitHub release.
+            val updateInfo = listOfNotNull(
+                fetchFromUpdateJson(),
+                fetchFromGitHubApi()
+            ).maxWithOrNull(
+                Comparator { left, right ->
+                    compareVersionStrings(left.latestVersion, right.latestVersion)
                 }
+            ) ?: return@withContext UpdateCheckResult.Error(
+                "Could not reach the update servers."
+            )
+
+            recordCheckTimestamp(context)
+
+            if (isNewerVersion(currentName, currentCode, updateInfo.latestVersion)) {
+                val isMandatory = isNewerVersion(
+                    currentName,
+                    currentCode,
+                    updateInfo.minimumSupportedVersion
+                )
+                return@withContext UpdateCheckResult.Available(
+                    updateInfo.copy(isMandatory = isMandatory)
+                )
             }
-            null
+
+            UpdateCheckResult.UpToDate(currentName)
         } catch (e: Exception) {
-            // Low-end device friendly: zero crash, non-blocking silent failure
-            null
+            UpdateCheckResult.Error("Update check failed. Please try again.")
         }
+    }
+
+    private fun compareVersionStrings(left: String, right: String): Int {
+        fun parse(value: String): Pair<List<Int>, Long> {
+            val clean = value.trim().removePrefix("v").removePrefix("V")
+            val parts = clean.split("+")
+            val semver = parts[0].split(".").map { it.toIntOrNull() ?: 0 }
+            val build = parts.getOrNull(1)?.toLongOrNull() ?: 0L
+            return semver to build
+        }
+
+        val (leftSemVer, leftBuild) = parse(left)
+        val (rightSemVer, rightBuild) = parse(right)
+        val maxLen = maxOf(leftSemVer.size, rightSemVer.size)
+
+        for (i in 0 until maxLen) {
+            val l = leftSemVer.getOrElse(i) { 0 }
+            val r = rightSemVer.getOrElse(i) { 0 }
+            if (l != r) return l.compareTo(r)
+        }
+
+        return leftBuild.compareTo(rightBuild)
     }
 
     private fun fetchFromUpdateJson(): AppUpdateInfo? {
         var connection: HttpURLConnection? = null
         return try {
-            val url = URL(UPDATE_JSON_PRIMARY_URL)
+            val url = URL("$UPDATE_JSON_PRIMARY_URL?ts=${System.currentTimeMillis()}")
             connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 connectTimeout = TIMEOUT_MS
                 readTimeout = TIMEOUT_MS
                 useCaches = false
+                setRequestProperty("Cache-Control", "no-cache, no-store")
+                setRequestProperty("Pragma", "no-cache")
                 setRequestProperty("User-Agent", "StudyOS-App")
                 setRequestProperty("Accept", "application/json")
             }
@@ -159,6 +195,8 @@ object UpdateManager {
                 connectTimeout = TIMEOUT_MS
                 readTimeout = TIMEOUT_MS
                 useCaches = false
+                setRequestProperty("Cache-Control", "no-cache, no-store")
+                setRequestProperty("Pragma", "no-cache")
                 setRequestProperty("User-Agent", "StudyOS-App")
                 setRequestProperty("Accept", "application/vnd.github.v3+json")
             }

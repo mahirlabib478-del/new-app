@@ -1,5 +1,12 @@
 package com.aistudio.studyos.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -475,7 +482,21 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    when (val state = updateState) {
+                    AnimatedContent(
+                        targetState = updateState,
+                        transitionSpec = {
+                            (slideInVertically(
+                                initialOffsetY = { it / 8 },
+                                animationSpec = tween(150)
+                            ) + fadeIn(animationSpec = tween(150))) togetherWith
+                                (slideOutVertically(
+                                    targetOffsetY = { -it / 8 },
+                                    animationSpec = tween(150)
+                                ) + fadeOut(animationSpec = tween(150)))
+                        },
+                        label = "update_state_transition"
+                    ) { state ->
+                    when (state) {
                         is UpdateCheckState.Checking -> {
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
@@ -577,7 +598,22 @@ fun ProfileScreen(
                                 }
                             }
                         }
-                        else -> {
+                        is UpdateCheckState.Error -> {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(text = state.message, fontSize = 13.sp, color = MaterialTheme.colorScheme.error)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = { viewModel.checkAppUpdate(context, isManual = true) },
+                                    modifier = Modifier.fillMaxWidth().height(40.dp),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Try Again", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                        is UpdateCheckState.Idle -> {
                             Button(
                                 onClick = {
                                     viewModel.checkAppUpdate(context, isManual = true)
@@ -604,6 +640,7 @@ fun ProfileScreen(
                                 )
                             }
                         }
+                    }
                     }
                 }
             }
