@@ -97,7 +97,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
   Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: _startPlanAndSyncReminders, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language);
   Widget _buildProgressTab() => ProgressDashboard(store: widget.store);
-  Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage);
+  Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage, reminderCoordinator: reminderCoordinator);
 
   void _ensureTab(int index) {
     if (_tabs[index] != null) return;
