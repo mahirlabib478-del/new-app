@@ -15,7 +15,7 @@ class ProfileScreen extends StatefulWidget {
     required this.onThemeChanged,
     required this.language,
     required this.onLanguageChanged,
-    required this.reminderCoordinator,
+    this.reminderCoordinator,
   });
 
   final LocalStore store;
@@ -24,7 +24,7 @@ class ProfileScreen extends StatefulWidget {
   final Future<void> Function(String key) onThemeChanged;
   final AppLanguage language;
   final Future<void> Function(AppLanguage language) onLanguageChanged;
-  final ReminderCoordinator reminderCoordinator;
+  final ReminderCoordinator? reminderCoordinator;
 
   static const _presets = <String, _ThemeOption>{
     'midnight': _ThemeOption('Midnight', Icons.nights_stay_rounded, 'Deep focus, low visual noise'),
@@ -79,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _syncReminders({required ReminderSettings settingsToSync}) async {
     final anyEnabled = settingsToSync.studyEnabled || settingsToSync.breakEnabled || settingsToSync.planEnabled;
     if (!anyEnabled) {
-      await widget.reminderCoordinator.sync(settingsOverride: settingsToSync);
+      await widget.reminderCoordinator!.sync(settingsOverride: settingsToSync);
       return;
     }
 
@@ -88,10 +88,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // or another reminder action must also be able to recover a missing
       // runtime grant.
       if (anyEnabled) {
-        final granted = await widget.reminderCoordinator.requestPermissions();
+        final granted = await widget.reminderCoordinator!.requestPermissions();
         if (!granted) return;
       }
-      await widget.reminderCoordinator.sync(settingsOverride: settingsToSync);
+      await widget.reminderCoordinator!.sync(settingsOverride: settingsToSync);
     } on Exception {
       // Reminder failures must never block settings changes or normal app use.
     }
