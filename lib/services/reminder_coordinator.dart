@@ -159,15 +159,9 @@ class ReminderCoordinator {
       return;
     }
 
-    // Always replace the platform registration. This removes stale alarms
-    // after a time, plan, goal or message change and keeps the source of truth
-    // in the persisted app state rather than an in-memory fingerprint.
-    try {
-      await scheduler.cancel(id);
-    } on Exception {
-      // Continue: scheduling the new request is still preferable to dropping it.
-    }
-
+    // Scheduling with the same ID updates the existing platform
+    // registration. Register the new reminder first so a transient scheduling
+    // error never deletes a previously valid alarm.
     try {
       final firstAt = _nextLocalOccurrence(hour, minute, skipToday: skipToday);
       final firstOccurrence = scheduler is ReminderSchedulerFirstOccurrence
