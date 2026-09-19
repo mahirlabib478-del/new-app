@@ -135,14 +135,16 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   }
 
   void _refreshAllTabs() {
-    _tabs[0] = _buildHomeTab();
-    _tabs[1] = _buildStudyTab();
+    _refreshDependentTabs();
     _tabs[2] = _buildProgressTab();
-    _tabs[3] = _buildProfileTab();
     if (mounted) setState(() {});
   }
 
-  void _refreshDependentTabs() => _refreshAllTabs();
+  void _refreshDependentTabs() {
+    _tabs[0] = _buildHomeTab();
+    _tabs[1] = _buildStudyTab();
+    _tabs[3] = _buildProfileTab();
+  }
 
   @override
   void dispose() {
