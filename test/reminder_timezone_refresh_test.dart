@@ -62,7 +62,7 @@ void main() {
   });
 }
 
-class _TimezoneTrackingScheduler implements ReminderScheduler, ReminderSchedulerTimeZoneAware {
+class _TimezoneTrackingScheduler extends ReminderScheduler implements ReminderSchedulerTimeZoneAware {
   int initializeCalls = 0;
   int refreshTimeZoneCalls = 0;
   bool refreshOccurredAfterInitialize = false;
