@@ -49,4 +49,9 @@ class AppStrings {
   String get naturalGrounded => isBangla ? 'প্রাকৃতিক ও স্থির' : 'Natural and grounded';
   String get warmBright => isBangla ? 'উষ্ণ ও উজ্জ্বল' : 'Warm and bright';
   String get dailyGoalUpdated => isBangla ? 'দৈনিক লক্ষ্য আপডেট হয়েছে।' : 'Daily goal updated.';
+  String get notificationPermissionTitle => isBangla ? 'রিমাইন্ডার চালু করুন' : 'Turn on reminders';
+  String get notificationPermissionBody => isBangla ? 'স্টাডি OS আপনার নির্ধারিত সময়ে পড়াশোনা ও বিরতির নোটিফিকেশন পাঠাবে।' : 'Study OS uses notifications to remind you about study and break times.';
+  String get allowNotifications => isBangla ? 'নোটিফিকেশন চালু করুন' : 'Allow notifications';
+  String get notificationLater => isBangla ? 'এখন নয়' : 'Not now';
+  String get backgroundReminderHint => isBangla ? 'কিছু ফোনে ব্যাকগ্রাউন্ড রেস্ট্রিকশন থাকলে রিমাইন্ডার দেরি হতে পারে। ব্যাটারি/অটোস্টার্টে Study OS-কে অনুমতি দিন।' : 'Some phones restrict background apps. Allow Study OS to run in the background if reminders are delayed.';
 }
