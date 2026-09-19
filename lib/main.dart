@@ -95,7 +95,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   }
 
   Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
-  Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: _startPlanAndSyncReminders, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language);
+  Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: _startPlanAndSyncReminders, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language, onPlanSaved: (_) => _syncRemindersSafely());
   Widget _buildProgressTab() => ProgressDashboard(store: widget.store);
   Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage, reminderCoordinator: reminderCoordinator, onDataChanged: _refreshAllTabs);
 
@@ -340,12 +340,13 @@ class Home extends StatelessWidget {
 }
 
 class StudyHub extends StatelessWidget {
-  const StudyHub({super.key, required this.store, required this.onStartPlan, required this.onOpenFocus, required this.onRegularStudy, required this.language});
+  const StudyHub({super.key, required this.store, required this.onStartPlan, required this.onOpenFocus, required this.onRegularStudy, required this.language, required this.onPlanSaved});
   final LocalStore store;
   final Future<void> Function(StudyPlan plan) onStartPlan;
   final Future<void> Function({StudyPlan? plan}) onOpenFocus;
   final VoidCallback onRegularStudy;
   final AppLanguage language;
+  final Future<void> Function(StudyPlan plan) onPlanSaved;
 
   @override
   Widget build(BuildContext context) {
