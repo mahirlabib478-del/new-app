@@ -187,6 +187,8 @@ fun ProgressScreen(
     val xpNeededForNext = 200 - xpInCurrentLevel
     val levelProgress = (xpInCurrentLevel.toFloat() / 200f).coerceIn(0f, 1f)
     val levelPercentage = (levelProgress * 100).toInt()
+    // Keep tiny progress visible without changing the displayed percentage/value.
+    val visibleLevelProgress = if (levelProgress > 0f) maxOf(levelProgress, 0.04f) else 0f
 
     val streak = profile?.streakDays ?: 0
     val streakText = if (streak == 1) "1 Day" else "$streak Days"
@@ -450,7 +452,7 @@ fun ProgressScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     LinearProgressIndicator(
-                        progress = { levelProgress },
+                        progress = { visibleLevelProgress },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(10.dp)
