@@ -97,7 +97,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   Widget _buildHomeTab() => Home(store: widget.store, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, onExam: _openExam, language: language);
   Widget _buildStudyTab() => StudyHub(store: widget.store, onStartPlan: _startPlanAndSyncReminders, onOpenFocus: openFocus, onRegularStudy: openRegularStudy, language: language);
   Widget _buildProgressTab() => ProgressDashboard(store: widget.store);
-  Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage, reminderCoordinator: reminderCoordinator);
+  Widget _buildProfileTab() => ProfileScreen(store: widget.store, prefs: widget.prefs, themeKey: themeKey, onThemeChanged: setTheme, language: language, onLanguageChanged: setLanguage, reminderCoordinator: reminderCoordinator, onDataChanged: _refreshAllTabs);
 
   void _ensureTab(int index) {
     if (_tabs[index] != null) return;
@@ -115,11 +115,15 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
     if (tab != value) setState(() => tab = value);
   }
 
-  void _refreshDependentTabs() {
+  void _refreshAllTabs() {
     _tabs[0] = _buildHomeTab();
     _tabs[1] = _buildStudyTab();
+    _tabs[2] = _buildProgressTab();
     _tabs[3] = _buildProfileTab();
+    if (mounted) setState(() {});
   }
+
+  void _refreshDependentTabs() => _refreshAllTabs();
 
   @override
   void dispose() {
@@ -130,6 +134,7 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _refreshAllTabs();
       unawaited(Future<void>.delayed(const Duration(milliseconds: 500), _syncRemindersSafely));
     }
   }
