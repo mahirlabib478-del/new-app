@@ -13,8 +13,8 @@ android {
         applicationId = "com.aistudio.studyos.kxvpt"
         minSdk = 26
         targetSdk = 35
-        versionCode = 30
-        versionName = "0.3.0"
+        versionCode = providers.gradleProperty("releaseVersionCode").map(String::toInt).orElse(30).get()
+        versionName = providers.gradleProperty("releaseVersionName").orElse("0.3.0").get()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
