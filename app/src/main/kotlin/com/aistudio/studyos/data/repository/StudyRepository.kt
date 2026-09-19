@@ -7,6 +7,10 @@ import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import kotlinx.coroutines.flow.Flow
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class StudyRepository(
     private val database: StudyDatabase,
@@ -60,6 +64,24 @@ class StudyRepository(
             if (profile.themePreset.isNotBlank() && profile.themePreset != currentSavedTheme) {
                 themePreferences.setThemePreset(profile.themePreset)
             }
+            // Check if streak was broken (last active date was before yesterday)
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val todayStr = sdf.format(Date())
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_YEAR, -1)
+            val yesterdayStr = sdf.format(cal.time)
+
+            if (profile.lastActiveDate.isNotBlank() &&
+                profile.lastActiveDate != todayStr &&
+                profile.lastActiveDate != yesterdayStr &&
+                profile.streakDays > 0
+            ) {
+                // Streak broken because more than 1 day missed without studying
+                database.userProfileDao().insertOrUpdate(
+                    profile.copy(streakDays = 0)
+                )
+            }
+
             if (profile.streakDays == 3 && profile.totalXP == 450 && profile.totalStudyMinutes == 150) {
                 // Old dummy seed cleanup if updating from prior installation
                 database.userProfileDao().insertOrUpdate(
@@ -120,12 +142,34 @@ class StudyRepository(
         val newTotalXP = currentProfile.totalXP + xpGained
         val newLevel = (newTotalXP / 200) + 1
 
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val todayStr = sdf.format(Date())
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, -1)
+        val yesterdayStr = sdf.format(cal.time)
+
+        val updatedStreak = when {
+            currentProfile.lastActiveDate == todayStr -> {
+                // Already studied today, maintain existing streak
+                if (currentProfile.streakDays <= 0) 1 else currentProfile.streakDays
+            }
+            currentProfile.lastActiveDate == yesterdayStr -> {
+                // Consecutive day! Increment streak
+                currentProfile.streakDays + 1
+            }
+            else -> {
+                // First day or streak was broken, restart at 1
+                1
+            }
+        }
+
         database.userProfileDao().insertOrUpdate(
             currentProfile.copy(
                 totalStudyMinutes = newTotalMinutes,
                 totalXP = newTotalXP,
                 currentLevel = newLevel,
-                streakDays = if (currentProfile.streakDays == 0) 1 else currentProfile.streakDays
+                streakDays = updatedStreak,
+                lastActiveDate = todayStr
             )
         )
     }

@@ -329,6 +329,48 @@ fun ExamPlannerScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
+                    Text(
+                        text = "Days Remaining: $daysLeft ${if (daysLeft == 1) "day" else "days"}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(1, 2, 3, 5, 7, 14).forEach { d ->
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        daysLeft = d
+                                        if (examDate == "In 3 days" || examDate.startsWith("In ")) {
+                                            examDate = if (d == 1) "Tomorrow" else "In $d days"
+                                        }
+                                    },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (daysLeft == d)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${d}d",
+                                        fontSize = 11.sp,
+                                        fontWeight = if (daysLeft == d) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (daysLeft == d) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)

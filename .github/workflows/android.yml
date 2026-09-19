@@ -28,6 +28,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Restore Debug Keystore
+        run: |
+          if [ -f debug.keystore.base64 ]; then
+            echo "Restoring debug.keystore from base64..."
+            base64 --decode debug.keystore.base64 > debug.keystore
+          fi
+
       - name: Assemble Debug APK
         run: ./gradlew assembleDebug --stacktrace
 

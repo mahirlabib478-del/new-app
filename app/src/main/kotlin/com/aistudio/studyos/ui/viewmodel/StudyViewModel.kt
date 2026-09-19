@@ -27,6 +27,8 @@ data class FocusTimerState(
     val isBreak: Boolean = false,
     val secondsRemaining: Int = 25 * 60,
     val totalBlockSeconds: Int = 25 * 60,
+    val studyBlockSeconds: Int = 25 * 60,
+    val breakBlockSeconds: Int = 5 * 60,
     val currentBlockIndex: Int = 0,
     val totalBlocks: Int = 4,
     val currentSubject: String = "Quick Focus",
@@ -65,6 +67,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val recentLogs: StateFlow<List<SessionLogEntity>> = repository.getRecentLogs(15)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allLogs: StateFlow<List<SessionLogEntity>> = repository.getAllLogs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val userProfile: StateFlow<UserProfileEntity?> = repository.getUserProfile()
@@ -137,13 +142,51 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
+    fun saveDraftPlan(
+        title: String,
+        subject: String,
+        chapter: String,
+        mode: String,
+        totalBlocks: Int = 4,
+        blockMinutes: Int = 25,
+        breakMinutes: Int = 5
+    ) {
+        viewModelScope.launch {
+            val plan = StudyPlanEntity(
+                title = title.ifBlank { "$subject - $chapter" },
+                subject = subject,
+                chapter = chapter,
+                mode = mode,
+                totalBlocks = totalBlocks,
+                currentBlockIndex = 0,
+                durationPerBlockMinutes = blockMinutes,
+                breakMinutes = breakMinutes,
+                isCompleted = false,
+                isDraft = true
+            )
+            repository.savePlan(plan)
+        }
+    }
+
+    fun resumeSavedPlan(plan: StudyPlanEntity) {
+        viewModelScope.launch {
+            val updated = plan.copy(isDraft = false, lastUpdated = System.currentTimeMillis())
+            repository.updatePlan(updated)
+            setupFocusSession(updated)
+        }
+    }
+
     fun setupFocusSession(plan: StudyPlanEntity) {
         pauseTimer()
+        val studySec = plan.durationPerBlockMinutes * 60
+        val breakSec = plan.breakMinutes * 60
         _focusState.value = FocusTimerState(
             isRunning = false,
             isBreak = false,
-            secondsRemaining = plan.durationPerBlockMinutes * 60,
-            totalBlockSeconds = plan.durationPerBlockMinutes * 60,
+            secondsRemaining = studySec,
+            totalBlockSeconds = studySec,
+            studyBlockSeconds = studySec,
+            breakBlockSeconds = breakSec,
             currentBlockIndex = plan.currentBlockIndex,
             totalBlocks = plan.totalBlocks,
             currentSubject = plan.subject,
@@ -217,7 +260,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 )
             } else {
                 // Switch to break
-                val breakSec = 5 * 60
+                val breakSec = current.breakBlockSeconds
                 _focusState.value = current.copy(
                     isBreak = true,
                     secondsRemaining = breakSec,
@@ -227,11 +270,11 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             }
         } else {
             // Break finished, ready for next study block
-            val planMinutes = 25
+            val blockSec = current.studyBlockSeconds
             _focusState.value = current.copy(
                 isBreak = false,
-                secondsRemaining = planMinutes * 60,
-                totalBlockSeconds = planMinutes * 60
+                secondsRemaining = blockSec,
+                totalBlockSeconds = blockSec
             )
         }
     }
@@ -241,7 +284,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val current = _focusState.value
         if (!current.isBreak) {
             // Switch to break
-            val breakSec = 5 * 60
+            val breakSec = current.breakBlockSeconds
             _focusState.value = current.copy(
                 isBreak = true,
                 secondsRemaining = breakSec,
@@ -250,7 +293,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             )
         } else {
             // Switch to next focus block
-            val blockSec = 25 * 60
+            val blockSec = current.studyBlockSeconds
             _focusState.value = current.copy(
                 isBreak = false,
                 secondsRemaining = blockSec,

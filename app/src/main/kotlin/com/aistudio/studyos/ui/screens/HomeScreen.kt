@@ -48,6 +48,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -77,12 +80,21 @@ fun HomeScreen(
     val profile by viewModel.userProfile.collectAsState()
     val upcomingExams by viewModel.upcomingExams.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
+    val allLogs by viewModel.allLogs.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
 
     val streak = profile?.streakDays ?: 0
     val totalMinutes = profile?.totalStudyMinutes ?: 0
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
-    val progressFraction = totalMinutes.toFloat() / dailyGoal.coerceAtLeast(1)
+
+    val todayMinutes = remember(allLogs) {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val todayStr = sdf.format(Date())
+        allLogs.filter { log ->
+            sdf.format(Date(log.timestamp)) == todayStr
+        }.sumOf { it.durationMinutes }
+    }
+    val progressFraction = if (dailyGoal > 0) todayMinutes.toFloat() / dailyGoal else 0f
 
     var showThemeDialog by remember { mutableStateOf(false) }
 
@@ -231,7 +243,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "${totalMinutes} / ${dailyGoal}m",
+                            text = "${todayMinutes} / ${dailyGoal}m",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary
                         )

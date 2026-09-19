@@ -289,7 +289,7 @@ fun RegularStudyScreen(
 
                 OutlinedButton(
                     onClick = {
-                        viewModel.startNewPlan(
+                        viewModel.saveDraftPlan(
                             title = "$subject: $chapter (Draft)",
                             subject = subject,
                             chapter = chapter,

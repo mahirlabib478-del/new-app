@@ -28,10 +28,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,7 +42,62 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import java.util.Calendar
+
+data class DayActivityData(
+    val dayName: String,
+    val dayNumber: Int,
+    val minutes: Int,
+    val isToday: Boolean
+)
+
+private fun calculateWeeklyActivity(logs: List<SessionLogEntity>): List<DayActivityData> {
+    val now = Calendar.getInstance()
+    val todayYear = now.get(Calendar.YEAR)
+    val todayDayOfYear = now.get(Calendar.DAY_OF_YEAR)
+
+    // Rewind to Monday of the current week
+    val cal = Calendar.getInstance().apply {
+        firstDayOfWeek = Calendar.MONDAY
+    }
+    while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+        cal.add(Calendar.DAY_OF_MONTH, -1)
+    }
+    cal.set(Calendar.HOUR_OF_DAY, 0)
+    cal.set(Calendar.MINUTE, 0)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+
+    val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val result = mutableListOf<DayActivityData>()
+
+    for (i in 0 until 7) {
+        val startOfDay = cal.timeInMillis
+        val dayYear = cal.get(Calendar.YEAR)
+        val dayOfYear = cal.get(Calendar.DAY_OF_YEAR)
+        val dayNumber = cal.get(Calendar.DAY_OF_MONTH)
+
+        cal.add(Calendar.DAY_OF_MONTH, 1)
+        val endOfDay = cal.timeInMillis
+
+        val isToday = (dayYear == todayYear && dayOfYear == todayDayOfYear)
+
+        val minutes = logs.filter { it.timestamp in startOfDay until endOfDay }
+            .sumOf { it.durationMinutes }
+
+        result.add(
+            DayActivityData(
+                dayName = dayNames[i],
+                dayNumber = dayNumber,
+                minutes = minutes,
+                isToday = isToday
+            )
+        )
+    }
+    return result
+}
 
 @Composable
 fun ProgressScreen(
@@ -48,6 +105,9 @@ fun ProgressScreen(
 ) {
     val profile by viewModel.userProfile.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
+    val allLogs by viewModel.allLogs.collectAsState()
+    val weeklyData = remember(allLogs) { calculateWeeklyActivity(allLogs) }
+    val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
 
     val totalMins = profile?.totalStudyMinutes ?: 0
     val totalHours = totalMins / 60
@@ -236,8 +296,15 @@ fun ProgressScreen(
 
         // Weekly Activity Visualizer
         item {
+            val weekHours = totalWeekMinutes / 60
+            val weekRemMins = totalWeekMinutes % 60
+            val maxDayMinutes = weeklyData.maxOfOrNull { it.minutes } ?: 0
+            val ceilingMinutes = maxOf(maxDayMinutes, profile?.dailyGoalMinutes ?: 60)
+
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("weekly_activity_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -245,58 +312,149 @@ fun ProgressScreen(
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Insights,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Weekly Activity Pattern",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Insights,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Weekly Activity Pattern",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (totalWeekMinutes > 0) {
+                                        if (weekHours > 0) "$weekHours hrs $weekRemMins mins logged this week"
+                                        else "$weekRemMins mins logged this week"
+                                    } else {
+                                        "No study time recorded this week yet"
+                                    },
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        if (totalWeekMinutes > 0) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    text = if (weekHours > 0) "${weekHours}h ${weekRemMins}m" else "${weekRemMins}m",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
                     }
 
-                    val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                    val heights = listOf(0.4f, 0.7f, 0.5f, 0.9f, 0.6f, 0.85f, 0.4f)
+                    Spacer(modifier = Modifier.height(18.dp))
 
+                    // 7-day Bar Chart
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp),
+                            .height(130.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Bottom
                     ) {
-                        days.forEachIndexed { i, day ->
+                        weeklyData.forEach { day ->
+                            val heightFraction = if (ceilingMinutes > 0) {
+                                (day.minutes.toFloat() / ceilingMinutes).coerceIn(0f, 1f)
+                            } else 0f
+                            val barHeightDp = if (day.minutes > 0) {
+                                (14f + (70f * heightFraction)).dp
+                            } else {
+                                4.dp
+                            }
+
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Bottom,
                                 modifier = Modifier.weight(1f)
                             ) {
+                                // Minute tag above bar
+                                if (day.minutes > 0) {
+                                    val minLabel = if (day.minutes >= 60) {
+                                        "${day.minutes / 60}h"
+                                    } else {
+                                        "${day.minutes}m"
+                                    }
+                                    Text(
+                                        text = minLabel,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (day.isToday) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurface
+                                    )
+                                } else {
+                                    Text(
+                                        text = "-",
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                // Visual Bar
                                 Box(
                                     modifier = Modifier
-                                        .width(20.dp)
-                                        .height((80 * heights[i]).dp)
+                                        .width(22.dp)
+                                        .height(barHeightDp)
                                         .clip(RoundedCornerShape(6.dp))
                                         .background(
-                                            if (i == 3 || i == 5) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                            when {
+                                                day.isToday && day.minutes > 0 -> MaterialTheme.colorScheme.primary
+                                                day.isToday && day.minutes == 0 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                                                day.minutes > 0 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+                                                else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                                            }
                                         )
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                // Day Name
                                 Text(
-                                    text = day,
+                                    text = day.dayName,
                                     fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (day.isToday) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                // Date Number
+                                Text(
+                                    text = "${day.dayNumber}",
+                                    fontSize = 10.sp,
+                                    color = if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                 )
                             }
                         }
+                    }
+
+                    if (totalWeekMinutes == 0) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Start a focus or regular session to track your daily pattern.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
                     }
                 }
             }

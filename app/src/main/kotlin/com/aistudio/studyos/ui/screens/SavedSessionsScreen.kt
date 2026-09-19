@@ -182,7 +182,7 @@ fun SavedSessionsScreen(
 
                                 Button(
                                     onClick = {
-                                        viewModel.setupFocusSession(plan)
+                                        viewModel.resumeSavedPlan(plan)
                                         onResumeSession()
                                     },
                                     shape = RoundedCornerShape(12.dp),
