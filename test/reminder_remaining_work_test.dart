@@ -6,7 +6,7 @@ import 'package:study_os/services/reminder_coordinator.dart';
 import 'package:study_os/services/reminder_scheduler.dart';
 import 'package:study_os/services/reminder_settings.dart';
 
-class CapturingScheduler implements ReminderScheduler {
+class CapturingScheduler extends ReminderScheduler {
   String? scheduledBody;
 
   @override
