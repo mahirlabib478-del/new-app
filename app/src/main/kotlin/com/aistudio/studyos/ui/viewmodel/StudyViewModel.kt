@@ -47,14 +47,14 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     init {
         viewModelScope.launch {
             repository.ensureCleanInitialData()
-            repository.getUserProfile().collect { profile ->
+            userProfile.collect { profile ->
                 if (profile != null && profile.themePreset.isNotBlank()) {
                     _currentTheme.value = profile.themePreset
                 }
             }
         }
         viewModelScope.launch {
-            repository.getActivePlan().collect { plan ->
+            activePlan.collect { plan ->
                 // Auto-restore active session if memory was empty (cold boot or process recreation)
                 if (plan != null && _focusState.value.planId == null) {
                     continueActiveSession(plan)
