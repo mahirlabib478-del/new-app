@@ -12,6 +12,7 @@ class FakeScheduler implements ReminderScheduler {
   final scheduled = <int>[];
   final cancelled = <int>[];
   final shown = <int>[];
+  final oneShot = <int>[];
   var permissionRequests = 0;
   bool? permissionResult = true;
   var initializeCalls = 0;
@@ -40,6 +41,11 @@ class FakeScheduler implements ReminderScheduler {
     permissionRequests++;
     if (permissionError != null) throw permissionError!;
     return permissionResult;
+  }
+
+  @override
+  Future<void> scheduleOnce({required int id, required String title, required String body, required DateTime at}) async {
+    oneShot.add(id);
   }
 
   @override
@@ -148,6 +154,25 @@ void main() {
     await coordinator.sync();
 
     expect(scheduler.scheduled, [ReminderCoordinator.planId]);
+  });
+
+  test('focus completion schedules a one-shot background notification', () async {
+    final coordinator = await makeCoordinator();
+    final scheduler = coordinator.scheduler as FakeScheduler;
+
+    final at = DateTime.now().add(const Duration(minutes: 25));
+    await coordinator.scheduleFocusBlockCompletion(at);
+
+    expect(scheduler.oneShot, [ReminderCoordinator.breakId]);
+  });
+
+  test('focus completion alarm can be cancelled', () async {
+    final coordinator = await makeCoordinator();
+    final scheduler = coordinator.scheduler as FakeScheduler;
+
+    await coordinator.cancelFocusBlockCompletion();
+
+    expect(scheduler.cancelled, [ReminderCoordinator.breakId]);
   });
 
   test('focus completion notification failure does not break daily sync', () async {
