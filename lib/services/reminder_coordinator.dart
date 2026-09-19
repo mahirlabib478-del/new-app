@@ -33,6 +33,15 @@ class ReminderCoordinator {
   ReminderSettings? _latestOverride;
   bool _latestUsesPersistedSettings = true;
 
+  Future<bool> areNotificationsEnabled() async {
+    try {
+      await scheduler.initialize();
+      return await scheduler.areNotificationsEnabled();
+    } on Exception {
+      return false;
+    }
+  }
+
   Future<bool> requestPermissions() async {
     try {
       await scheduler.initialize();
