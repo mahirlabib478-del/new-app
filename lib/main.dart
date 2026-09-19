@@ -106,7 +106,18 @@ class _StudyOSState extends State<StudyOS> with WidgetsBindingObserver {
         );
         if (allow != true) return;
       }
-      await reminderCoordinator.requestPermissions();
+      final granted = await reminderCoordinator.requestPermissions();
+      if (!granted) return;
+
+      // Give the user an immediate, visible confirmation that Android has
+      // actually granted notification delivery. This also validates the
+      // complete runtime-permission -> notification channel -> post path
+      // before we schedule background reminders.
+      try {
+        await reminderCoordinator.notifyNotificationsEnabled();
+      } on Exception {
+        // A confirmation notification must never block reminder scheduling.
+      }
       await reminderCoordinator.sync(settingsOverride: settings);
     } on Exception {
       // Reminders are non-critical and must never terminate the app at startup.
