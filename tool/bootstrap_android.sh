@@ -144,7 +144,7 @@ keep = Path('android/app/src/main/res/raw/keep.xml')
 keep.parent.mkdir(parents=True, exist_ok=True)
 keep.write_text('''<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@drawable/ic_notification" />
+    tools:keep="@drawable/*" />
 ''')
 
 notification_icon.write_text('''<?xml version="1.0" encoding="utf-8"?>
