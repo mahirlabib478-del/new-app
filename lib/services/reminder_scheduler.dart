@@ -24,3 +24,14 @@ abstract interface class ReminderSchedulerTimeZoneAware {
   Future<void> refreshTimeZone();
   String? get timeZoneFingerprint;
 }
+
+/// Optional scheduling capability that lets a daily reminder start tomorrow
+/// without cancelling the repeating registration.
+abstract interface class ReminderSchedulerFirstOccurrence {
+  Future<void> scheduleDailyReminderAt({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime firstAt,
+  });
+}
