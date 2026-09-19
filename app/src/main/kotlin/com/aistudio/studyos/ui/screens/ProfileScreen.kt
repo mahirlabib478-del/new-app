@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.DarkMode
@@ -86,7 +88,7 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("espresso", "Espresso", Icons.Default.Coffee, Color(0xFFD4A373)),
     ThemeOption("ocean", "Ocean Dark", Icons.Default.Water, Color(0xFF0284C7)),
     ThemeOption("forest", "Forest", Icons.Default.Forest, Color(0xFF10B981)),
-    ThemeOption("paper", "Paper Sepia", Icons.Default.MenuBook, Color(0xFF8B5A2B)),
+    ThemeOption("paper", "Paper Sepia", Icons.AutoMirrored.Filled.MenuBook, Color(0xFF8B5A2B)),
     ThemeOption("mint", "Mint Fresh", Icons.Default.Spa, Color(0xFF0D9488)),
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C))
 )
@@ -463,7 +465,7 @@ fun ProfileScreen(
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.OpenInNew,
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                                 contentDescription = "View GitHub Releases",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(18.dp)
