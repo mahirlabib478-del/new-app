@@ -174,50 +174,11 @@ activity = Path('android/app/src/main/kotlin/com/mahirlabib/study_os/MainActivit
 activity.parent.mkdir(parents=True, exist_ok=True)
 activity.write_text('''package com.mahirlabib.study_os
 
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.os.Handler
-import android.os.Looper
 import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
-    private val soundChannel = "study_os/sound"
-
-    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
-
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, soundChannel)
-            .setMethodCallHandler { call, result ->
-                if (call.method != "play") {
-                    result.notImplemented()
-                    return@setMethodCallHandler
-                }
-
-                val effect = call.arguments as? String ?: "tap"
-                val tone = if (effect == "success") {
-                    ToneGenerator.TONE_PROP_ACK
-                } else {
-                    ToneGenerator.TONE_PROP_BEEP
-                }
-
-                try {
-                    val generator = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
-                    val duration = if (effect == "success") 250 else 80
-                    generator.startTone(tone, duration)
-                    Handler(Looper.getMainLooper()).postDelayed(
-                        { generator.release() },
-                        (duration + 100).toLong(),
-                    )
-                    result.success(null)
-                } catch (error: Exception) {
-                    result.error("SOUND_ERROR", error.message, null)
-                }
-            }
-    }
-}
+class MainActivity : FlutterActivity()
 ''')
+
 
 
 PY
