@@ -261,7 +261,7 @@ fun ProfileScreen(
                                     customGoalInput = dailyGoal.toString()
                                     showCustomGoalDialog = true
                                 },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(32.dp).testTag("btn_edit_custom_goal")
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
@@ -652,7 +652,8 @@ fun ProfileScreen(
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
-                    )
+                    ),
+                    modifier = Modifier.testTag("btn_confirm_reset_everything")
                 ) {
                     Text("Reset Everything")
                 }
