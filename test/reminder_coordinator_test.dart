@@ -97,7 +97,7 @@ Future<ReminderCoordinator> makeCoordinator({
 }
 
 void main() {
-  test('default settings schedule only the plan reminder when no plan exists', () async {
+  test('default settings schedule enabled daily reminders when no plan exists', () async {
     final coordinator = await makeCoordinator();
     final scheduler = coordinator.scheduler as FakeScheduler;
 
@@ -218,7 +218,7 @@ void main() {
     expect(scheduler.shown, [ReminderCoordinator.breakId]);
   });
 
-  test('each sync replaces the platform registration instead of using stale memory', () async {
+  test('each sync updates the platform registration instead of cancelling first', () async {
     final coordinator = await makeCoordinator();
     final scheduler = coordinator.scheduler as FakeScheduler;
 
@@ -228,7 +228,7 @@ void main() {
     expect(scheduler.scheduled, [ReminderCoordinator.studyId, ReminderCoordinator.planId, ReminderCoordinator.studyId, ReminderCoordinator.planId]);
     expect(
       scheduler.cancelled.where((id) => id == ReminderCoordinator.planId).length,
-      2,
+      0,
     );
   });
 
@@ -297,7 +297,7 @@ void main() {
     ]);
     expect(
       scheduler.cancelled.where((id) => id == ReminderCoordinator.studyId).length,
-      2,
+      0,
     );
   });
 
