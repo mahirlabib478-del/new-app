@@ -211,11 +211,12 @@ class ReminderCoordinator {
       await cancelFocusBlockCompletion();
       return;
     }
+    final bangla = store.appLanguage == AppLanguage.bangla;
     try {
       await scheduler.scheduleOnce(
         id: breakId,
-        title: 'Take a break',
-        body: 'Your focus block is complete. Take a short break before the next block.',
+        title: bangla ? 'একটু বিরতি নিন' : 'Take a break',
+        body: bangla ? 'ফোকাস ব্লক শেষ হয়েছে। পরের ব্লকের আগে একটু বিরতি নিন।' : 'Your focus block is complete. Take a short break before the next block.',
         at: at,
       );
     } on Exception catch (error, stackTrace) {
@@ -230,7 +231,7 @@ class ReminderCoordinator {
   Future<void> notifyFocusBlockCompleted() async {
     final settings = settingsStore.settings;
     if (settings.breakEnabled) {
-      final request = policy.breakReminder(focusSessionCompleted: true);
+      final request = policy.breakReminder(focusSessionCompleted: true, bangla: store.appLanguage == AppLanguage.bangla);
       if (request != null) {
         try {
           await scheduler.initialize();
