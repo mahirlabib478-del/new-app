@@ -154,6 +154,23 @@ class ReminderCoordinator {
     }
   }
 
+  Future<void> scheduleFocusBlockCompletion(DateTime at) async {
+    try {
+      await scheduler.scheduleOnce(
+        id: breakId,
+        title: 'Take a break',
+        body: 'Your focus block is complete. Take a short break before the next block.',
+        at: at,
+      );
+    } on Exception {
+      // The foreground completion path still attempts an immediate notification.
+    }
+  }
+
+  Future<void> cancelFocusBlockCompletion() async {
+    await _safeCancel(breakId);
+  }
+
   Future<void> notifyFocusBlockCompleted() async {
     final settings = settingsStore.settings;
     if (settings.breakEnabled) {
