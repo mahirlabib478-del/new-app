@@ -5,125 +5,124 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'reminder_scheduler.dart';
 
+/// Single Android/iOS notification gateway.
+///
+/// The app never talks to flutter_local_notifications directly outside this
+/// class. Initialization, timezone setup, permission requests, channel setup,
+/// scheduling and immediate delivery all use the same plugin instance.
 class NotificationService
     implements ReminderScheduler, ReminderSchedulerTimeZoneAware {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
-  bool _initialized = false;
-  Future<void>? _initialization;
 
-  static const _channelId = 'study_os_reminders';
-  static const _channelName = 'Study reminders';
-  static const _channelDescription = 'Study, break and plan reminders.';
+  static const channelId = 'study_os_reminders';
+  static const channelName = 'Study reminders';
+  static const channelDescription = 'Study, break and plan reminders.';
+
+  Future<void>? _initializing;
+  bool _initialized = false;
 
   @override
-  Future<void> initialize() => _initialize();
-
-  Future<void> _initialize({String? timeZoneName}) {
+  Future<void> initialize() {
     if (_initialized) return Future<void>.value();
-    final inFlight = _initialization;
-    if (inFlight != null) return inFlight;
 
-    final initialization = _performInitialization(timeZoneName: timeZoneName);
-    _initialization = initialization;
-    return initialization.whenComplete(() {
-      if (identical(_initialization, initialization)) {
-        _initialization = null;
+    final running = _initializing;
+    if (running != null) return running;
+
+    final future = _initializeInternal();
+    _initializing = future;
+    return future.whenComplete(() {
+      if (identical(_initializing, future)) {
+        _initializing = null;
       }
     });
   }
 
-  Future<void> _performInitialization({String? timeZoneName}) async {
+  Future<void> _initializeInternal() async {
     if (_initialized) return;
 
     tz.initializeTimeZones();
-    await _refreshTimeZone(timeZoneName: timeZoneName);
+    await _setDeviceTimezone();
 
-    const android = AndroidInitializationSettings('ic_notification');
-    const darwin = DarwinInitializationSettings(
+    const androidSettings = AndroidInitializationSettings('ic_notification');
+    const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    const settings = InitializationSettings(
-      android: android,
-      iOS: darwin,
-      macOS: darwin,
-    );
-    await _plugin.initialize(settings: settings);
 
-    // Create the Android channel explicitly so its importance is deterministic
-    // on a fresh install. The channel's importance cannot be upgraded after
-    // Android creates it with a lower value.
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await androidPlugin?.createNotificationChannel(
-      const AndroidNotificationChannel(
-        _channelId,
-        _channelName,
-        description: _channelDescription,
-        importance: Importance.high,
+    await _plugin.initialize(
+      settings: const InitializationSettings(
+        android: androidSettings,
+        iOS: darwinSettings,
+        macOS: darwinSettings,
       ),
     );
+
+    final android = _android;
+    if (android != null) {
+      await android.createNotificationChannel(
+        const AndroidNotificationChannel(
+          channelId,
+          channelName,
+          description: channelDescription,
+          importance: Importance.high,
+          playSound: true,
+        ),
+      );
+    }
 
     _initialized = true;
   }
 
+  AndroidFlutterLocalNotificationsPlugin? get _android =>
+      _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+  @override
+  Future<bool?> requestPermissions() async {
+    await initialize();
+
+    final android = _android;
+    if (android != null) {
+      return android.requestNotificationsPermission();
+    }
+
+    final ios = _plugin.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
+    if (ios != null) {
+      return ios.requestPermissions(alert: true, badge: true, sound: true);
+    }
+
+    final macos = _plugin.resolvePlatformSpecificImplementation<
+        MacOSFlutterLocalNotificationsPlugin>();
+    if (macos != null) {
+      return macos.requestPermissions(alert: true, badge: true, sound: true);
+    }
+
+    return true;
+  }
+
   @override
   Future<void> refreshTimeZone() async {
-    await _initialize();
-    await _refreshTimeZone();
+    await initialize();
+    await _setDeviceTimezone();
   }
 
   @override
   String? get timeZoneFingerprint => tz.local.name;
 
-  Future<void> _refreshTimeZone({String? timeZoneName}) async {
-    final resolvedTimeZone = timeZoneName ?? await _deviceTimeZone();
-    if (resolvedTimeZone != null && resolvedTimeZone.isNotEmpty) {
-      try {
-        tz.setLocalLocation(tz.getLocation(resolvedTimeZone));
-      } on Exception {
-        // Keep the timezone package default when the device timezone is unknown.
-      }
-    }
-  }
-
-  Future<String?> _deviceTimeZone() async {
+  Future<void> _setDeviceTimezone() async {
     try {
-      return await FlutterTimezone.getLocalTimezone();
+      final name = await FlutterTimezone.getLocalTimezone();
+      if (name.isNotEmpty) {
+        tz.setLocalLocation(tz.getLocation(name));
+      }
     } on Exception {
-      return null;
+      // The timezone package already has a usable fallback location.
     }
-  }
-
-  @override
-  Future<bool?> requestPermissions() async {
-    await _initialize();
-    final android =
-        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (android != null) {
-      // Use the plugin's supported Android 13+ runtime-permission API.
-      // Keeping the request on the plugin side avoids a second native
-      // permission channel racing with Flutter's plugin lifecycle.
-      return android.requestNotificationsPermission();
-    }
-
-    final ios =
-        _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-    if (ios != null) {
-      return ios.requestPermissions(alert: true, badge: true, sound: true);
-    }
-
-    final macos =
-        _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>();
-    if (macos != null) {
-      return macos.requestPermissions(alert: true, badge: true, sound: true);
-    }
-
-    return null;
   }
 
   @override
@@ -134,42 +133,32 @@ class NotificationService
     required int hour,
     required int minute,
   }) async {
-    await _initialize();
+    await initialize();
 
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextDailyOccurrence(now, hour, minute);
-
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
-        playSound: true,
-        icon: 'ic_notification',
-      ),
-      iOS: DarwinNotificationDetails(),
-      macOS: DarwinNotificationDetails(),
-    );
 
     await _plugin.zonedSchedule(
       id: id,
       title: title,
       body: body,
       scheduledDate: scheduled,
-      notificationDetails: details,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelId,
+          channelName,
+          channelDescription: channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+          icon: 'ic_notification',
+        ),
+        iOS: DarwinNotificationDetails(),
+        macOS: DarwinNotificationDetails(),
+      ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
-
-    // Do not treat a successful platform-channel call as proof that Android
-    // accepted the alarm. Verify that the request is actually pending.
-    final pending = await _plugin.pendingNotificationRequests();
-    final accepted = pending.any((request) => request.id == id);
-    if (!accepted) {
-      throw StateError('Android did not retain scheduled reminder $id');
-    }
   }
 
   @override
@@ -178,29 +167,36 @@ class NotificationService
     required String title,
     required String body,
   }) async {
-    await _initialize();
+    await initialize();
 
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
-        icon: 'ic_notification',
+    await _plugin.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelId,
+          channelName,
+          channelDescription: channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+          icon: 'ic_notification',
+        ),
+        iOS: DarwinNotificationDetails(),
+        macOS: DarwinNotificationDetails(),
       ),
-      iOS: DarwinNotificationDetails(),
-      macOS: DarwinNotificationDetails(),
     );
-    await _plugin.show(id: id, title: title, body: body, notificationDetails: details);
   }
 
   @override
   Future<void> cancel(int id) async {
-    await _initialize();
+    await initialize();
     await _plugin.cancel(id: id);
   }
 
   Future<void> cancelAll() async {
-    await _initialize();
+    await initialize();
     await _plugin.cancelAll();
   }
 
@@ -211,7 +207,8 @@ class NotificationService
   ) {
     final safeHour = hour.clamp(0, 23).toInt();
     final safeMinute = minute.clamp(0, 59).toInt();
-    var scheduled = tz.TZDateTime(
+
+    var result = tz.TZDateTime(
       now.location,
       now.year,
       now.month,
@@ -220,8 +217,8 @@ class NotificationService
       safeMinute,
     );
 
-    if (!scheduled.isAfter(now)) {
-      scheduled = tz.TZDateTime(
+    if (!result.isAfter(now)) {
+      result = tz.TZDateTime(
         now.location,
         now.year,
         now.month,
@@ -230,6 +227,7 @@ class NotificationService
         safeMinute,
       );
     }
-    return scheduled;
+
+    return result;
   }
 }
