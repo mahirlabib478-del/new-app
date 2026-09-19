@@ -22,9 +22,12 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -32,6 +35,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.aistudio.studyos.data.update.UpdateManager
+import com.aistudio.studyos.ui.components.UpdateDialog
 import com.aistudio.studyos.ui.screens.ExamPlannerScreen
 import com.aistudio.studyos.ui.screens.FocusScreen
 import com.aistudio.studyos.ui.screens.HomeScreen
@@ -43,6 +48,7 @@ import com.aistudio.studyos.ui.screens.StudyHubScreen
 import com.aistudio.studyos.ui.theme.StudyOSTheme
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.viewmodel.StudyViewModelFactory
+import kotlinx.coroutines.delay
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
     object Home : Screen("home", "Home", Icons.Default.Home)
@@ -96,8 +102,31 @@ fun MainApp(
     viewModel: StudyViewModel,
     navController: NavHostController
 ) {
+    val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    val availableUpdate by viewModel.availableUpdate.collectAsState()
+    val (currentVersionName, _) = remember { UpdateManager.getCurrentVersionInfo(context) }
+
+    // Low-end device friendly background startup update check (non-blocking 1.2s delay)
+    LaunchedEffect(Unit) {
+        delay(1200)
+        viewModel.checkAppUpdate(context, isManual = false)
+    }
+
+    if (availableUpdate != null) {
+        UpdateDialog(
+            currentVersion = currentVersionName,
+            updateInfo = availableUpdate!!,
+            onUpdateClick = { targetUrl ->
+                UpdateManager.openUpdateLink(context, targetUrl)
+            },
+            onDismiss = {
+                viewModel.dismissUpdateDialog()
+            }
+        )
+    }
 
     val showBottomBar = currentRoute in BOTTOM_NAV_ROUTES
 

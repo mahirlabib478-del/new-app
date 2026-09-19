@@ -1,5 +1,6 @@
 package com.aistudio.studyos.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,9 @@ import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import com.aistudio.studyos.data.repository.StudyRepository
+import com.aistudio.studyos.data.update.AppUpdateInfo
+import com.aistudio.studyos.data.update.UpdateCheckState
+import com.aistudio.studyos.data.update.UpdateManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +72,43 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     private val _focusState = MutableStateFlow(FocusTimerState())
     val focusState: StateFlow<FocusTimerState> = _focusState.asStateFlow()
+
+    private val _availableUpdate = MutableStateFlow<AppUpdateInfo?>(null)
+    val availableUpdate: StateFlow<AppUpdateInfo?> = _availableUpdate.asStateFlow()
+
+    private val _updateCheckState = MutableStateFlow<UpdateCheckState>(UpdateCheckState.Idle)
+    val updateCheckState: StateFlow<UpdateCheckState> = _updateCheckState.asStateFlow()
+
+    private var hasDismissedUpdateDialog: Boolean = false
+
+    fun checkAppUpdate(context: Context, isManual: Boolean = false) {
+        if (!isManual && hasDismissedUpdateDialog) return
+
+        viewModelScope.launch {
+            if (isManual) {
+                _updateCheckState.value = UpdateCheckState.Checking
+            }
+            val update = UpdateManager.checkForUpdate(context.applicationContext, isManual)
+            if (update != null) {
+                _availableUpdate.value = update
+                _updateCheckState.value = UpdateCheckState.Available(update)
+            } else {
+                if (isManual) {
+                    val (vName, _) = UpdateManager.getCurrentVersionInfo(context.applicationContext)
+                    _updateCheckState.value = UpdateCheckState.UpToDate(vName)
+                }
+            }
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        hasDismissedUpdateDialog = true
+        _availableUpdate.value = null
+    }
+
+    fun resetManualUpdateState() {
+        _updateCheckState.value = UpdateCheckState.Idle
+    }
 
     fun startNewPlan(
         title: String,
