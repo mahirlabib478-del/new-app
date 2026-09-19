@@ -13,6 +13,7 @@ import com.aistudio.studyos.data.update.AppUpdateInfo
 import com.aistudio.studyos.data.update.UpdateCheckState
 import com.aistudio.studyos.data.update.UpdateManager
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -80,7 +81,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private var hasDismissedUpdateDialog: Boolean = false
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.ensureCleanInitialData()
             userProfile.collect { profile ->
                 if (profile != null && profile.themePreset.isNotBlank()) {
