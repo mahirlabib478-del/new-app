@@ -257,8 +257,9 @@ class NotificationService
   static tz.TZDateTime nextDailyOccurrence(
     tz.TZDateTime now,
     int hour,
-    int minute,
-    {bool skipToday = false},
+    int minute, {
+    bool skipToday = false,
+  },
   ) {
     final safeHour = hour.clamp(0, 23).toInt();
     final safeMinute = minute.clamp(0, 59).toInt();
