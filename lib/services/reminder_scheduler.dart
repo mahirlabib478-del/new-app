@@ -1,6 +1,8 @@
 abstract interface class ReminderScheduler {
   Future<void> initialize() async {}
 
+  Future<void> scheduleOnce({required int id, required String title, required String body, required DateTime at});
+
   Future<void> scheduleDailyReminder({
     required int id,
     required String title,
