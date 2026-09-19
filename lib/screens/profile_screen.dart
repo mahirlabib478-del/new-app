@@ -16,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
     required this.language,
     required this.onLanguageChanged,
     this.reminderCoordinator,
+    this.onDataChanged,
   });
 
   final LocalStore store;
@@ -25,6 +26,7 @@ class ProfileScreen extends StatefulWidget {
   final AppLanguage language;
   final Future<void> Function(AppLanguage language) onLanguageChanged;
   final ReminderCoordinator? reminderCoordinator;
+  final VoidCallback? onDataChanged;
 
   static const _presets = <String, _ThemeOption>{
     'midnight': _ThemeOption('Midnight', Icons.nights_stay_rounded, 'Deep focus, low visual noise'),
@@ -71,6 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await ReminderSettingsStore(widget.prefs).save(next);
       await _syncReminders(settingsToSync: next);
       await _refreshNotificationStatus();
+      widget.onDataChanged?.call();
     } on Exception {
       // Reminder failures must never block settings changes or normal app use.
     }
@@ -120,6 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await widget.store.setDailyGoalMinutes(value);
     if (!mounted) return;
     setState(() {});
+    widget.onDataChanged?.call();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(strings.dailyGoalUpdated)));
   }
 
