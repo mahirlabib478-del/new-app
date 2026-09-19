@@ -1,5 +1,3 @@
-import 'app_language.dart';
-
 enum ReminderKind { study, breakTime, plan }
 
 class ReminderRequest {
