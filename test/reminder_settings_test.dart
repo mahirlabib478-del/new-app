@@ -12,7 +12,7 @@ void main() {
 
   test('uses safe defaults for a new install', () async {
     final store = await makeStore();
-    expect(store.settings.studyEnabled, isFalse);
+    expect(store.settings.studyEnabled, isTrue);
     expect(store.settings.breakEnabled, isTrue);
     expect(store.settings.planEnabled, isTrue);
     expect(store.settings.studyHour, 19);
