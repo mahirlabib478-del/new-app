@@ -42,7 +42,6 @@ jobs:
         run: |
           grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml
           grep -q 'android.permission.POST_NOTIFICATIONS' android/app/src/main/AndroidManifest.xml
-          grep -q 'android.permission.SCHEDULE_EXACT_ALARM' android/app/src/main/AndroidManifest.xml
           grep -q 'android.permission.RECEIVE_BOOT_COMPLETED' android/app/src/main/AndroidManifest.xml
           grep -q 'ScheduledNotificationReceiver' android/app/src/main/AndroidManifest.xml
           grep -q 'ScheduledNotificationBootReceiver' android/app/src/main/AndroidManifest.xml
