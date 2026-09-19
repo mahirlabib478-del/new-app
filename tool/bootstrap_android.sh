@@ -67,7 +67,7 @@ text = manifest.read_text()
 permissions = (
     '    <uses-permission android:name="android.permission.INTERNET" />\n'
     '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
-    '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
+    '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n'
 )
 if 'android.permission.RECEIVE_BOOT_COMPLETED' not in text:
     insert_at = text.find('>', text.find('<manifest')) + 1
