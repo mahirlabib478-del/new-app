@@ -37,6 +37,7 @@ class StudyRepository(
     // Logs & Stats
     fun getAllLogs(): Flow<List<SessionLogEntity>> = database.sessionLogDao().getAllLogs()
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
+    fun getTodayMinutes(): Flow<Int> = database.sessionLogDao().getTodayMinutes()
     fun getTotalMinutes(): Flow<Int?> = database.sessionLogDao().getTotalMinutes()
     suspend fun logSession(log: SessionLogEntity): Long = database.sessionLogDao().insertLog(log)
     suspend fun deleteSessionLog(log: SessionLogEntity) {
