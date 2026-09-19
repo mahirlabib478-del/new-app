@@ -8,6 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -185,20 +187,31 @@ fun MainApp(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding),
-            // Keep navigation visually smooth without making taps feel delayed.
-            // A short 90 ms cross-screen transition avoids the abrupt "dhup" change
-            // while remaining fast enough to feel immediate.
+            // Subtle slide + fade keeps navigation from feeling like a hard "dhup"
+            // screen swap while staying fast enough for low-end devices.
             enterTransition = {
-                fadeIn(animationSpec = tween(90))
+                slideInHorizontally(
+                    initialOffsetX = { it / 12 },
+                    animationSpec = tween(100)
+                ) + fadeIn(animationSpec = tween(100))
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(90))
+                slideOutHorizontally(
+                    targetOffsetX = { -it / 12 },
+                    animationSpec = tween(100)
+                ) + fadeOut(animationSpec = tween(80))
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(90))
+                slideInHorizontally(
+                    initialOffsetX = { -it / 12 },
+                    animationSpec = tween(100)
+                ) + fadeIn(animationSpec = tween(100))
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(90))
+                slideOutHorizontally(
+                    targetOffsetX = { it / 12 },
+                    animationSpec = tween(100)
+                ) + fadeOut(animationSpec = tween(80))
             }
         ) {
             composable(Screen.Home.route) {
