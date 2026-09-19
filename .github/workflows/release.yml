@@ -103,7 +103,7 @@ jobs:
 
       - name: Build release APK & AAB
         run: |
-          ./gradlew assembleRelease bundleRelease || ./gradlew assembleDebug
+          ./gradlew assembleRelease bundleRelease
 
       - name: Stage release artifacts
         run: |
