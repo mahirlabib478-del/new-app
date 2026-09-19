@@ -61,10 +61,11 @@ List<StudyItem> generateExamPlan({
 }
 
 class ExamPlannerScreen extends StatefulWidget {
-  const ExamPlannerScreen({super.key, required this.nextDay, required this.store, this.onStartPlan});
+  const ExamPlannerScreen({super.key, required this.nextDay, required this.store, this.onStartPlan, this.onPlanSaved});
   final bool nextDay;
   final LocalStore store;
   final Future<void> Function(StudyPlan plan)? onStartPlan;
+  final Future<void> Function(StudyPlan plan)? onPlanSaved;
   @override State<ExamPlannerScreen> createState() => _ExamPlannerScreenState();
 }
 
@@ -155,6 +156,7 @@ class _ExamPlannerScreenState extends State<ExamPlannerScreen> {
                 TextButton(
                   onPressed: () async {
                     await StudySessionStore(widget.store).savePlan(plan, mode: widget.nextDay ? 'Next Day Exam' : 'Exam Preparation');
+                    if (widget.onPlanSaved != null) await widget.onPlanSaved!(plan);
                     if (!sheetContext.mounted) return;
                     Navigator.pop(sheetContext);
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plan saved. You can resume it from Home.')));
