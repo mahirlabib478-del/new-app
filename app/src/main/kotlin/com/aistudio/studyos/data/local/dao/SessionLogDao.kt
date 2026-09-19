@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SessionLogDao {
-    @Query("SELECT * FROM session_logs ORDER BY timestamp DESC")
+    // The UI only needs recent history for Home/Progress calculations.
+    // Avoid loading an unbounded session-log table into Compose on every startup.
+    @Query("SELECT * FROM session_logs ORDER BY timestamp DESC LIMIT 200")
     fun getAllLogs(): Flow<List<SessionLogEntity>>
 
     @Query("SELECT * FROM session_logs ORDER BY timestamp DESC LIMIT :limit")
