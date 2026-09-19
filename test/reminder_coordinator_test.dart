@@ -8,7 +8,7 @@ import 'package:study_os/services/reminder_coordinator.dart';
 import 'package:study_os/services/reminder_scheduler.dart';
 import 'package:study_os/services/reminder_settings.dart';
 
-class FakeScheduler implements ReminderScheduler, ReminderSchedulerFirstOccurrence {
+class FakeScheduler extends ReminderScheduler implements ReminderSchedulerFirstOccurrence {
   final scheduled = <int>[];
   final cancelled = <int>[];
   final shown = <int>[];
