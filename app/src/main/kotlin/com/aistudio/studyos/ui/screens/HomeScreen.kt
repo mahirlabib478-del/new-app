@@ -198,7 +198,10 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(44.dp)
@@ -224,7 +227,24 @@ fun HomeScreen(
                                     text = activePlan?.let { "${it.subject} • ${it.chapter}" }
                                         ?: "Ready for your next session",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                                    maxLines = 1
+                                )
+                            }
+                        }
+
+                        if (activePlan != null) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Block ${activePlan!!.currentBlockIndex + 1}/${activePlan!!.totalBlocks}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -304,6 +324,7 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
+                        .testTag("btn_quick_regular_study")
                         .clickable { onOpenRegularStudy() },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
@@ -335,6 +356,7 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
+                        .testTag("btn_quick_exam_prep")
                         .clickable { onOpenExamPlanner() },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
@@ -372,6 +394,7 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .testTag("spotlight_upcoming_exam_card")
                         .clickable { onOpenExamPlanner() },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
@@ -411,14 +434,14 @@ fun HomeScreen(
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(Color(0xFFEF4444).copy(alpha = 0.15f))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = nextExam.examDate,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFEF4444)
-                                    )
-                                }
+                                    ) {
+                                        Text(
+                                            text = if (nextExam.daysRemaining > 0) "${nextExam.daysRemaining}d left" else nextExam.examDate,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFEF4444)
+                                        )
+                                    }
                             }
                             Text(
                                 text = nextExam.syllabusTopics.ifBlank { "Target revision session" },

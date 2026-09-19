@@ -115,6 +115,7 @@ fun FocusScreen(
                 isBreak = state.isBreak,
                 currentBlockIndex = state.currentBlockIndex,
                 totalBlocks = state.totalBlocks,
+                mode = state.mode,
                 primaryColor = primaryColor
             )
 
@@ -201,24 +202,51 @@ private fun FocusBlockIndicator(
     isBreak: Boolean,
     currentBlockIndex: Int,
     totalBlocks: Int,
+    mode: String,
     primaryColor: Color
 ) {
+    val modeLabel = when (mode.lowercase()) {
+        "cram" -> "⚡ Cram Mode"
+        "exam" -> "📝 Exam Prep"
+        "regular" -> "📖 Regular Study"
+        else -> "🎯 Focus"
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .background(primaryColor.copy(alpha = 0.15f))
-                .padding(horizontal = 16.dp, vertical = 6.dp)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = if (isBreak) "BREAK TIME" else "FOCUS INTERVAL",
-                fontWeight = FontWeight.Black,
-                fontSize = 12.sp,
-                letterSpacing = 1.sp,
-                color = primaryColor
-            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(primaryColor.copy(alpha = 0.15f))
+                    .padding(horizontal = 14.dp, vertical = 5.dp)
+            ) {
+                Text(
+                    text = if (isBreak) "BREAK TIME" else "FOCUS INTERVAL",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 11.sp,
+                    letterSpacing = 1.sp,
+                    color = primaryColor
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
+            ) {
+                Text(
+                    text = modeLabel,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(

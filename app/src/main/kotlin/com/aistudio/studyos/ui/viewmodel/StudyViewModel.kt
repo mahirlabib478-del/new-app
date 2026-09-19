@@ -33,7 +33,8 @@ data class FocusTimerState(
     val totalBlocks: Int = 4,
     val currentSubject: String = "Quick Focus",
     val currentChapter: String = "General Study",
-    val planId: Long? = null
+    val planId: Long? = null,
+    val mode: String = "regular"
 )
 
 class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
@@ -163,7 +164,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 totalBlocks = totalBlocks,
                 currentSubject = subject,
                 currentChapter = chapter,
-                planId = planId
+                planId = planId,
+                mode = mode
             )
             if (autoStart) {
                 startTimer()
@@ -235,7 +237,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             totalBlocks = plan.totalBlocks,
             currentSubject = plan.subject,
             currentChapter = plan.chapter,
-            planId = plan.id
+            planId = plan.id,
+            mode = plan.mode
         )
     }
 
@@ -255,7 +258,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     planId = planId,
                     minutesStudied = if (!current.isBreak) minutesStudied else 0,
                     subject = current.currentSubject,
-                    chapter = current.currentChapter
+                    chapter = current.currentChapter,
+                    mode = current.mode
                 )
             }
             _focusState.value = FocusTimerState()
@@ -332,7 +336,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     subject = current.currentSubject,
                     chapter = current.currentChapter,
                     durationMinutes = blockMinutes,
-                    mode = "focus"
+                    mode = current.mode
                 )
                 if (current.planId != null) {
                     repository.updatePlanProgress(
@@ -471,6 +475,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     fun resetAllStats() {
         viewModelScope.launch {
             repository.resetStats()
+        }
+    }
+
+    fun deleteSessionLog(log: SessionLogEntity) {
+        viewModelScope.launch {
+            repository.deleteSessionLog(log)
         }
     }
 

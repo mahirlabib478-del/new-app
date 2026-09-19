@@ -39,6 +39,22 @@ class StudyRepository(
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
     fun getTotalMinutes(): Flow<Int?> = database.sessionLogDao().getTotalMinutes()
     suspend fun logSession(log: SessionLogEntity): Long = database.sessionLogDao().insertLog(log)
+    suspend fun deleteSessionLog(log: SessionLogEntity) {
+        database.sessionLogDao().deleteLog(log)
+        val profile = database.userProfileDao().getProfileSync()
+        if (profile != null) {
+            val updatedMinutes = (profile.totalStudyMinutes - log.durationMinutes).coerceAtLeast(0)
+            val updatedXP = (profile.totalXP - log.xpEarned).coerceAtLeast(0)
+            val updatedLevel = (updatedXP / 200) + 1
+            database.userProfileDao().insertOrUpdate(
+                profile.copy(
+                    totalStudyMinutes = updatedMinutes,
+                    totalXP = updatedXP,
+                    currentLevel = updatedLevel
+                )
+            )
+        }
+    }
     suspend fun clearHistory() = database.sessionLogDao().clearAll()
 
     // Profile & Gamification
@@ -119,10 +135,10 @@ class StudyRepository(
         database.studyPlanDao().updateSessionTimer(planId, remainingSec, isBreak, blockIndex)
     }
 
-    suspend fun completePlanEarly(planId: Long, minutesStudied: Int, subject: String, chapter: String) {
+    suspend fun completePlanEarly(planId: Long, minutesStudied: Int, subject: String, chapter: String, mode: String = "early_finish") {
         database.studyPlanDao().markPlanCompleted(planId)
         if (minutesStudied > 0) {
-            recordCompletedSession(subject, chapter, minutesStudied, "early_finish")
+            recordCompletedSession(subject, chapter, minutesStudied, mode)
         }
     }
 

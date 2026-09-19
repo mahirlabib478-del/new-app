@@ -1,9 +1,13 @@
 package com.aistudio.studyos.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,34 +21,49 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 data class DayActivityData(
     val dayName: String,
@@ -52,6 +71,50 @@ data class DayActivityData(
     val minutes: Int,
     val isToday: Boolean
 )
+
+fun getRankTitle(level: Int): String = when {
+    level <= 1 -> "Novice Scholar"
+    level == 2 -> "Apprentice Scholar"
+    level == 3 -> "Junior Scholar"
+    level == 4 -> "Adept Scholar"
+    level == 5 -> "Honor Fellow"
+    level == 6 -> "Master Academic"
+    level == 7 -> "Doctoral Fellow"
+    level == 8 -> "Distinguished Professor"
+    else -> "Grandmaster Polymath"
+}
+
+fun formatLogTimestamp(timestamp: Long): String {
+    val now = Calendar.getInstance()
+    val logCal = Calendar.getInstance().apply { timeInMillis = timestamp }
+
+    val isToday = now.get(Calendar.YEAR) == logCal.get(Calendar.YEAR) &&
+            now.get(Calendar.DAY_OF_YEAR) == logCal.get(Calendar.DAY_OF_YEAR)
+
+    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    val isYesterday = yesterday.get(Calendar.YEAR) == logCal.get(Calendar.YEAR) &&
+            yesterday.get(Calendar.DAY_OF_YEAR) == logCal.get(Calendar.DAY_OF_YEAR)
+
+    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
+
+    return when {
+        isToday -> "Today, ${timeFormat.format(Date(timestamp))}"
+        isYesterday -> "Yesterday, ${timeFormat.format(Date(timestamp))}"
+        else -> dateFormat.format(Date(timestamp))
+    }
+}
+
+fun getModeBadgeInfo(mode: String): Pair<String, Color> {
+    return when (mode.lowercase()) {
+        "focus" -> Pair("🎯 Focus Block", Color(0xFF6366F1))
+        "exam" -> Pair("📝 Exam Prep", Color(0xFFEC4899))
+        "cram" -> Pair("⚡ Cram Session", Color(0xFFF59E0B))
+        "early_finish" -> Pair("⏱️ Quick Session", Color(0xFF10B981))
+        "regular" -> Pair("📖 Regular Study", Color(0xFF3B82F6))
+        else -> Pair("📚 Study Session", Color(0xFF8B5CF6))
+    }
+}
 
 private fun calculateWeeklyActivity(logs: List<SessionLogEntity>): List<DayActivityData> {
     val now = Calendar.getInstance()
@@ -109,17 +172,72 @@ fun ProgressScreen(
     val weeklyData = remember(allLogs) { calculateWeeklyActivity(allLogs) }
     val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
 
+    var showAllLogs by remember { mutableStateOf(false) }
+    var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
+
     val totalMins = profile?.totalStudyMinutes ?: 0
     val totalHours = totalMins / 60
     val remainingMins = totalMins % 60
     val totalXP = profile?.totalXP ?: 0
     val currentLevel = profile?.currentLevel ?: 1
-    val nextLevelXP = currentLevel * 200
-    val levelProgress = (totalXP % 200).toFloat() / 200f
+    val currentRankTitle = remember(currentLevel) { getRankTitle(currentLevel) }
+    val nextRankTitle = remember(currentLevel) { getRankTitle(currentLevel + 1) }
+
+    val xpInCurrentLevel = totalXP % 200
+    val xpNeededForNext = 200 - xpInCurrentLevel
+    val levelProgress = (xpInCurrentLevel.toFloat() / 200f).coerceIn(0f, 1f)
+    val levelPercentage = (levelProgress * 100).toInt()
+
+    val streak = profile?.streakDays ?: 0
+    val streakText = if (streak == 1) "1 Day" else "$streak Days"
+    val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val todayDateStr = remember { sdf.format(Date()) }
+    val isStreakDoneToday = profile?.lastActiveDate == todayDateStr && streak > 0
+
+    val displayedLogs = if (showAllLogs) allLogs else recentLogs
+
+    // Delete Log Confirmation Dialog
+    if (logToDelete != null) {
+        val targetLog = logToDelete!!
+        AlertDialog(
+            onDismissRequest = { logToDelete = null },
+            title = {
+                Text(
+                    text = "Delete Session Log",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to remove this record for '${targetLog.subject}'?\n\nThis will deduct ${targetLog.durationMinutes} minutes and ${targetLog.xpEarned} XP from your totals.",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteSessionLog(targetLog)
+                        logToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { logToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -127,16 +245,17 @@ fun ProgressScreen(
             Text(
                 text = "Progress & Analytics",
                 style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Consistency and knowledge building milestones",
+                text = "Track your learning consistency, rankings, and daily habits",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        // Summary Metric Cards
+        // Summary Metric Cards: Streak & Total Time
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -144,7 +263,9 @@ fun ProgressScreen(
             ) {
                 // Streak Card
                 Card(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("streak_metric_card"),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -154,7 +275,7 @@ fun ProgressScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.LocalFireDepartment,
-                                contentDescription = null,
+                                contentDescription = "Streak Fire",
                                 tint = Color(0xFFF97316),
                                 modifier = Modifier.size(24.dp)
                             )
@@ -162,22 +283,36 @@ fun ProgressScreen(
                             Text(
                                 text = "Streak",
                                 style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "${profile?.streakDays ?: 0} Days",
+                            text = streakText,
                             fontWeight = FontWeight.Black,
                             fontSize = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = when {
+                                isStreakDoneToday -> "🔥 Maintained today"
+                                streak > 0 -> "⚡ Study today to keep"
+                                else -> "🌱 Start streak today"
+                            },
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isStreakDoneToday) Color(0xFFF97316) else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
-                // Total Hours Card
+                // Total Study Time Card
                 Card(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("total_time_metric_card"),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -187,7 +322,7 @@ fun ProgressScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Schedule,
-                                contentDescription = null,
+                                contentDescription = "Total Time",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -195,6 +330,7 @@ fun ProgressScreen(
                             Text(
                                 text = "Total Time",
                                 style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -205,12 +341,19 @@ fun ProgressScreen(
                             fontSize = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${allLogs.size} completed sessions",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
         }
 
-        // Gamification & Level Card
+        // Gamification, Level & Next Rank Progress Card
         item {
             Card(
                 modifier = Modifier
@@ -227,18 +370,30 @@ fun ProgressScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = Color(0xFFF59E0B),
-                                modifier = Modifier.size(32.dp)
-                            )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF59E0B).copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.EmojiEvents,
+                                    contentDescription = "Trophy",
+                                    tint = Color(0xFFF59E0B),
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Scholar Level $currentLevel",
+                                    text = currentRankTitle,
                                     style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
@@ -252,43 +407,65 @@ fun ProgressScreen(
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary)
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .padding(horizontal = 14.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = "Lv $currentLevel",
+                                text = "Level $currentLevel",
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary,
-                                fontSize = 12.sp
+                                fontSize = 13.sp
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
+                    // Next Rank Progress Breakdown
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Next Rank: ",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = nextRankTitle,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                         Text(
-                            text = "Next Rank Progress",
+                            text = "$xpInCurrentLevel / 200 XP ($levelPercentage%)",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "${totalXP % 200} / 200 XP",
-                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     LinearProgressIndicator(
                         progress = { levelProgress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp)),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
+                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "$xpNeededForNext XP needed to unlock Level ${currentLevel + 1}",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
                     )
                 }
             }
@@ -319,7 +496,7 @@ fun ProgressScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Insights,
-                                contentDescription = null,
+                                contentDescription = "Weekly Insights",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -460,70 +637,210 @@ fun ProgressScreen(
             }
         }
 
-        // Complete Study History Log
+        // Session History Log Header & Filter
         item {
-            Text(
-                text = "Session History Log",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Session History Log",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (allLogs.isNotEmpty()) "Showing ${displayedLogs.size} of ${allLogs.size} sessions" else "No logged sessions",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (allLogs.size > 10) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        FilterChip(
+                            selected = !showAllLogs,
+                            onClick = { showAllLogs = false },
+                            label = { Text("Recent", fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        )
+                        FilterChip(
+                            selected = showAllLogs,
+                            onClick = { showAllLogs = true },
+                            label = { Text("All (${allLogs.size})", fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        )
+                    }
+                }
+            }
         }
 
-        if (recentLogs.isEmpty()) {
+        if (displayedLogs.isEmpty()) {
             item {
-                Text(
-                    text = "No study sessions recorded yet.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No study sessions recorded yet",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Complete a study session or focus block to start building your knowledge log.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
             }
         } else {
             items(
-                items = recentLogs,
+                items = displayedLogs,
                 key = { it.id }
             ) { log ->
+                val (modeLabel, modeColor) = remember(log.mode) { getModeBadgeInfo(log.mode) }
+                val timeString = remember(log.timestamp) { formatLogTimestamp(log.timestamp) }
+
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("session_log_item_${log.id}"),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = log.subject,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = modeColor,
+                                    modifier = Modifier.size(20.dp)
                                 )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = log.subject,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = log.chapter.ifBlank { "General Practice" },
+                                        fontSize = 13.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                ) {
+                                    Text(
+                                        text = "+${log.xpEarned} XP",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                IconButton(
+                                    onClick = { logToDelete = log },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteOutline,
+                                        contentDescription = "Delete log entry",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Bottom Metadata Row: Mode Chip + Duration + Formatted Time
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Mode Chip
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = modeColor.copy(alpha = 0.15f)
+                            ) {
                                 Text(
-                                    text = "${log.chapter} • ${log.durationMinutes} minutes",
-                                    style = MaterialTheme.typography.bodySmall,
+                                    text = modeLabel,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = modeColor,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                )
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.AccessTime,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "${log.durationMinutes}m • $timeString",
+                                    fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-                        Text(
-                            text = "+${log.xpEarned} XP",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
                     }
                 }
             }

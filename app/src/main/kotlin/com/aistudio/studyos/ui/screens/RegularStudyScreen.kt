@@ -256,10 +256,12 @@ fun RegularStudyScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = {
+                        val finalSubject = subject.ifBlank { "General Study" }
+                        val finalChapter = chapter.ifBlank { "Chapter Review" }
                         viewModel.startNewPlan(
-                            title = "$subject: $chapter",
-                            subject = subject,
-                            chapter = chapter,
+                            title = "$finalSubject: $finalChapter",
+                            subject = finalSubject,
+                            chapter = finalChapter,
                             mode = "regular",
                             totalBlocks = totalBlocks,
                             blockMinutes = selectedDuration,
@@ -289,10 +291,12 @@ fun RegularStudyScreen(
 
                 OutlinedButton(
                     onClick = {
+                        val finalSubject = subject.ifBlank { "General Study" }
+                        val finalChapter = chapter.ifBlank { "Chapter Review" }
                         viewModel.saveDraftPlan(
-                            title = "$subject: $chapter (Draft)",
-                            subject = subject,
-                            chapter = chapter,
+                            title = "$finalSubject: $finalChapter (Draft)",
+                            subject = finalSubject,
+                            chapter = finalChapter,
                             mode = "regular",
                             totalBlocks = totalBlocks,
                             blockMinutes = selectedDuration,

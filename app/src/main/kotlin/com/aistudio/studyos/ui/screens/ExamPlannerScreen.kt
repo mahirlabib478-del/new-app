@@ -68,6 +68,32 @@ fun ExamPlannerScreen(
 ) {
     val exams by viewModel.exams.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var examToDelete by remember { mutableStateOf<com.aistudio.studyos.data.local.entity.ExamEntity?>(null) }
+
+    if (examToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { examToDelete = null },
+            title = { Text("Delete Exam?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text("Are you sure you want to delete ${examToDelete?.subject}? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        examToDelete?.let { viewModel.deleteExam(it) }
+                        examToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { examToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -223,7 +249,7 @@ fun ExamPlannerScreen(
                                         )
                                     }
                                     IconButton(
-                                        onClick = { viewModel.deleteExam(exam) },
+                                        onClick = { examToDelete = exam },
                                         modifier = Modifier.size(28.dp)
                                     ) {
                                         Icon(
@@ -247,7 +273,7 @@ fun ExamPlannerScreen(
 
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            // Confidence & Start Cram CTA
+                            // Confidence & Start Exam Prep CTA
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -279,9 +305,9 @@ fun ExamPlannerScreen(
                                     ),
                                     modifier = Modifier.height(36.dp)
                                 ) {
-                                    Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Cram Session", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Start Prep (90m)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
