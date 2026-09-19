@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/app_language.dart';
 import '../services/local_store.dart';
-import '../services/notification_service.dart';
 import '../services/reminder_coordinator.dart';
 import '../services/reminder_settings.dart';
 
@@ -16,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
     required this.onThemeChanged,
     required this.language,
     required this.onLanguageChanged,
+    required this.reminderCoordinator,
   });
 
   final LocalStore store;
@@ -24,6 +24,7 @@ class ProfileScreen extends StatefulWidget {
   final Future<void> Function(String key) onThemeChanged;
   final AppLanguage language;
   final Future<void> Function(AppLanguage language) onLanguageChanged;
+  final ReminderCoordinator reminderCoordinator;
 
   static const _presets = <String, _ThemeOption>{
     'midnight': _ThemeOption('Midnight', Icons.nights_stay_rounded, 'Deep focus, low visual noise'),
@@ -44,8 +45,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late ReminderSettings settings;
-  late final NotificationService notificationService;
-  late final ReminderCoordinator reminderCoordinator;
 
   AppStrings get strings => AppStrings(widget.language);
 
@@ -53,12 +52,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     settings = ReminderSettingsStore(widget.prefs).settings;
-    notificationService = NotificationService();
-    reminderCoordinator = ReminderCoordinator(
-      store: widget.store,
-      settingsStore: ReminderSettingsStore(widget.prefs),
-      scheduler: notificationService,
-    );
   }
 
   Future<void> _saveSettings(ReminderSettings next) async {
