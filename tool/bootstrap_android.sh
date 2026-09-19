@@ -125,6 +125,18 @@ elif 'android:icon="@drawable/study_os_logo"' not in text:
         1,
     )
 
+# The Android launcher label is separate from the Flutter project name.
+# Keep the internal project name "study_os", but always show "Study OS"
+# to the user after installation.
+if 'android:label="Study OS"' not in text:
+    if '<application' not in text:
+        raise SystemExit('Could not find Android application block')
+    text = text.replace(
+        '<application',
+        '<application android:label="Study OS"',
+        1,
+    )
+
 manifest.write_text(text)
 
 drawable = Path('android/app/src/main/res/drawable/study_os_logo.xml')
