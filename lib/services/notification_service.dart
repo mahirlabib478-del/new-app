@@ -93,12 +93,12 @@ class NotificationService
           await android.requestNotificationsPermission() ?? false;
       if (!notificationsGranted) return false;
 
-      // User-selected reminder times are time-sensitive. Android inexact
-      // alarms can be delayed substantially, so prefer exact alarms when the
-      // platform allows them.
-      final exactGranted = await android.canScheduleExactNotifications() ?? false;
-      if (!exactGranted) {
-        return await android.requestExactAlarmsPermission() ?? false;
+      // Exact alarms are preferred, but they are a special app access on
+      // Android 12+ and may be unavailable on some devices. Notification
+      // delivery must not depend on that optional access because the plugin
+      // supports an idle-safe inexact fallback.
+      if (!await android.canScheduleExactNotifications()) {
+        await android.requestExactAlarmsPermission();
       }
       return true;
     }
@@ -151,30 +151,44 @@ class NotificationService
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextDailyOccurrence(now, hour, minute);
 
-    await _plugin.zonedSchedule(
-      id: id,
-      title: title,
-      body: body,
-      scheduledDate: scheduled,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          channelId,
-          channelName,
-          channelDescription: channelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
-          playSound: true,
-          icon: 'ic_notification',
-        ),
-        iOS: DarwinNotificationDetails(),
-        macOS: DarwinNotificationDetails(),
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: channelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true,
+        icon: 'ic_notification',
       ),
-      // Treat user-set study reminders as alarm-clock-grade exact events. Android
-      // gives setAlarmClock() the strongest delivery semantics for a user-visible
-      // time-based event and it is not deferred the way idle alarms can be.
-      androidScheduleMode: AndroidScheduleMode.alarmClock,
-      matchDateTimeComponents: DateTimeComponents.time,
+      iOS: DarwinNotificationDetails(),
+      macOS: DarwinNotificationDetails(),
     );
+
+    try {
+      await _plugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    } on Exception {
+      // If exact-alarm access is unavailable or rejected by the device,
+      // retry the same registration with an idle-safe inexact alarm. This
+      // keeps reminders deliverable instead of silently losing them.
+      await _plugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    }
   }
 
   @override
