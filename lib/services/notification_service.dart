@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -10,8 +12,10 @@ import 'reminder_scheduler.dart';
 /// The app never talks to flutter_local_notifications directly outside this
 /// class. Initialization, timezone setup, permission requests, channel setup,
 /// scheduling and immediate delivery all use the same plugin instance.
+bool _timeZonesInitialized = false;
+
 class NotificationService
-    implements ReminderScheduler, ReminderSchedulerTimeZoneAware {
+    implements ReminderScheduler, ReminderSchedulerTimeZoneAware, ReminderSchedulerFirstOccurrence {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
@@ -45,7 +49,10 @@ class NotificationService
   Future<void> _initializeInternal() async {
     if (_initialized) return;
 
-    tz.initializeTimeZones();
+    if (!_timeZonesInitialized) {
+      tz.initializeTimeZones();
+      _timeZonesInitialized = true;
+    }
     await _setDeviceTimezone();
 
     const androidSettings = AndroidInitializationSettings('ic_notification');
@@ -126,11 +133,15 @@ class NotificationService
   Future<void> _setDeviceTimezone() async {
     try {
       final name = await FlutterTimezone.getLocalTimezone();
-      if (name.isNotEmpty) {
-        tz.setLocalLocation(tz.getLocation(name));
-      }
-    } on Exception {
-      // The timezone package already has a usable fallback location.
+      if (name.isEmpty) throw const FormatException('empty device timezone');
+      tz.setLocalLocation(tz.getLocation(name));
+    } on Exception catch (error, stackTrace) {
+      developer.log(
+        'Using timezone package fallback because device timezone could not be resolved.',
+        name: 'StudyOS.notifications',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -142,27 +153,61 @@ class NotificationService
     required DateTime at,
   }) async {
     await initialize();
+    final details = _notificationDetails;
+    final scheduled = tz.TZDateTime.from(at, tz.local);
+    try {
+      await _plugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    } on Exception {
+      await _plugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
+  }
+
+  @override
+  Future<void> scheduleDailyReminderAt({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime firstAt,
+  }) async {
+    await initialize();
     await _plugin.zonedSchedule(
       id: id,
       title: title,
       body: body,
-      scheduledDate: tz.TZDateTime.from(at, tz.local),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          channelId,
-          channelName,
-          channelDescription: channelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
-          playSound: true,
-          icon: 'ic_notification',
-        ),
-        iOS: DarwinNotificationDetails(),
-        macOS: DarwinNotificationDetails(),
-      ),
+      scheduledDate: tz.TZDateTime.from(firstAt, tz.local),
+      notificationDetails: _notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
+
+  NotificationDetails get _notificationDetails => const NotificationDetails(
+    android: AndroidNotificationDetails(
+      channelId,
+      channelName,
+      channelDescription: channelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      icon: 'ic_notification',
+    ),
+    iOS: DarwinNotificationDetails(),
+    macOS: DarwinNotificationDetails(),
+  );
 
   Future<bool> areNotificationsEnabled() async {
     await initialize();
@@ -177,34 +222,9 @@ class NotificationService
     required int hour,
     required int minute,
   }) async {
-    await initialize();
-
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = nextDailyOccurrence(now, hour, minute);
-
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        channelId,
-        channelName,
-        channelDescription: channelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
-        playSound: true,
-        icon: 'ic_notification',
-      ),
-      iOS: DarwinNotificationDetails(),
-      macOS: DarwinNotificationDetails(),
-    );
-
-    await _plugin.zonedSchedule(
-      id: id,
-      title: title,
-      body: body,
-      scheduledDate: scheduled,
-      notificationDetails: details,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
+    await scheduleDailyReminderAt(id: id, title: title, body: body, firstAt: scheduled);
   }
 
   @override
@@ -219,19 +239,7 @@ class NotificationService
       id: id,
       title: title,
       body: body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          channelId,
-          channelName,
-          channelDescription: channelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
-          playSound: true,
-          icon: 'ic_notification',
-        ),
-        iOS: DarwinNotificationDetails(),
-        macOS: DarwinNotificationDetails(),
-      ),
+      notificationDetails: _notificationDetails,
     );
   }
 
@@ -250,6 +258,7 @@ class NotificationService
     tz.TZDateTime now,
     int hour,
     int minute,
+    {bool skipToday = false},
   ) {
     final safeHour = hour.clamp(0, 23).toInt();
     final safeMinute = minute.clamp(0, 59).toInt();
@@ -263,7 +272,7 @@ class NotificationService
       safeMinute,
     );
 
-    if (!result.isAfter(now)) {
+    if (skipToday || !result.isAfter(now)) {
       result = tz.TZDateTime(
         now.location,
         now.year,
