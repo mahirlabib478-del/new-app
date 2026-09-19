@@ -80,20 +80,13 @@ fun HomeScreen(
     val profile by viewModel.userProfile.collectAsState()
     val upcomingExams by viewModel.upcomingExams.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
-    val allLogs by viewModel.allLogs.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
 
     val streak = profile?.streakDays ?: 0
     val totalMinutes = profile?.totalStudyMinutes ?: 0
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
 
-    val todayMinutes = remember(allLogs) {
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val todayStr = sdf.format(Date())
-        allLogs.filter { log ->
-            sdf.format(Date(log.timestamp)) == todayStr
-        }.sumOf { it.durationMinutes }
-    }
+    val todayMinutes by viewModel.todayMinutes.collectAsState()
     val progressFraction = if (dailyGoal > 0) todayMinutes.toFloat() / dailyGoal else 0f
 
     var showThemeDialog by remember { mutableStateOf(false) }
