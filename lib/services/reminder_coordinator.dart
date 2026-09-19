@@ -1,4 +1,7 @@
+import 'dart:developer' as developer;
+
 import 'local_store.dart';
+import 'app_language.dart';
 import 'reminder_policy.dart';
 import 'reminder_scheduler.dart';
 import 'reminder_settings.dart';
@@ -98,14 +101,22 @@ class ReminderCoordinator {
 
     final snapshot = TodayEngine(store).build();
 
+    final bangla = store.appLanguage == AppLanguage.bangla;
     final studyRequest = policy.studyReminder(
       hasRemainingWork: snapshot.hasPlan && !snapshot.isComplete,
       goalRemainingMinutes: snapshot.goalRemainingMinutes,
       remainingWorkMinutes: snapshot.remainingMinutes,
+      bangla: bangla,
     );
     await _syncDaily(
       enabled: settings.studyEnabled,
-      request: studyRequest,
+      request: studyRequest ??
+          ReminderRequest(
+            kind: ReminderKind.study,
+            title: bangla ? 'স্টাডির সময়' : 'Time to study',
+            body: bangla ? 'একটি ফোকাস ব্লক শুরু করুন।' : 'Start a focused study block.',
+          ),
+      skipToday: studyRequest == null,
       id: studyId,
       hour: settings.studyHour,
       minute: settings.studyMinute,
@@ -114,10 +125,17 @@ class ReminderCoordinator {
     final planRequest = policy.planReminder(
       hasPlan: snapshot.hasPlan,
       hasRemainingWork: snapshot.hasPlan && !snapshot.isComplete,
+      bangla: bangla,
     );
     await _syncDaily(
       enabled: settings.planEnabled,
-      request: planRequest,
+      request: planRequest ??
+          ReminderRequest(
+            kind: ReminderKind.plan,
+            title: bangla ? 'স্টাডি প্ল্যান তৈরি করুন' : 'Plan your study',
+            body: bangla ? 'শুরু করতে আজকের স্টাডি প্ল্যান তৈরি করুন।' : 'Create today\'s study plan to get started.',
+          ),
+      skipToday: planRequest == null,
       id: planId,
       hour: settings.planHour,
       minute: settings.planMinute,
@@ -134,8 +152,9 @@ class ReminderCoordinator {
     required int id,
     required int hour,
     required int minute,
+    bool skipToday = false,
   }) async {
-    if (!enabled || request == null) {
+    if (!enabled) {
       await _safeCancel(id);
       return;
     }
@@ -150,17 +169,41 @@ class ReminderCoordinator {
     }
 
     try {
-      await scheduler.scheduleDailyReminder(
-        id: id,
-        title: request.title,
-        body: request.body,
-        hour: hour,
-        minute: minute,
+      final firstAt = _nextLocalOccurrence(hour, minute, skipToday: skipToday);
+      final firstOccurrence = scheduler is ReminderSchedulerFirstOccurrence
+          ? scheduler as ReminderSchedulerFirstOccurrence
+          : null;
+      if (firstOccurrence != null) {
+        await firstOccurrence.scheduleDailyReminderAt(
+          id: id,
+          title: request.title,
+          body: request.body,
+          firstAt: firstAt,
+        );
+      } else {
+        await scheduler.scheduleDailyReminder(
+          id: id,
+          title: request.title,
+          body: request.body,
+          hour: hour,
+          minute: minute,
+        );
+      }
+    } on Exception catch (error, stackTrace) {
+      developer.log(
+        'Failed to schedule reminder id=$id',
+        name: 'StudyOS.reminders',
+        error: error,
+        stackTrace: stackTrace,
       );
-    } on Exception {
-      // Notification failure must never break study flows. The next sync
-      // retries because no in-memory success state is recorded.
     }
+  }
+
+  DateTime _nextLocalOccurrence(int hour, int minute, {required bool skipToday}) {
+    final now = DateTime.now();
+    var candidate = DateTime(now.year, now.month, now.day, hour.clamp(0, 23), minute.clamp(0, 59));
+    if (skipToday || !candidate.isAfter(now)) candidate = candidate.add(const Duration(days: 1));
+    return candidate;
   }
 
   Future<void> scheduleFocusBlockCompletion(DateTime at) async {
@@ -171,8 +214,8 @@ class ReminderCoordinator {
         body: 'Your focus block is complete. Take a short break before the next block.',
         at: at,
       );
-    } on Exception {
-      // The foreground completion path still attempts an immediate notification.
+    } on Exception catch (error, stackTrace) {
+      developer.log('Failed to schedule focus completion reminder.', name: 'StudyOS.reminders', error: error, stackTrace: stackTrace);
     }
   }
 
