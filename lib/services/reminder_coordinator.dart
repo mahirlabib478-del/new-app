@@ -4,6 +4,12 @@ import 'reminder_scheduler.dart';
 import 'reminder_settings.dart';
 import 'today_engine.dart';
 
+/// Owns reminder policy and synchronization.
+///
+/// There is deliberately no notification-permission state cache here.
+/// Android owns the actual permission state and the notification plugin owns
+/// the platform interaction. A sync either registers/cancels the requested
+/// notifications or safely leaves the rest of the app untouched.
 class ReminderCoordinator {
   ReminderCoordinator({
     required this.store,
@@ -22,11 +28,10 @@ class ReminderCoordinator {
   final ReminderPolicy policy;
 
   bool _syncing = false;
-  int _syncGeneration = 0;
+  int _requestedGeneration = 0;
   int _completedGeneration = 0;
-  ReminderSettings? _pendingSettingsOverride;
-  bool _pendingPersistedSettings = false;
-  final Map<int, String> _scheduledFingerprints = <int, String>{};
+  ReminderSettings? _latestOverride;
+  bool _latestUsesPersistedSettings = true;
 
   Future<bool> requestPermissions() async {
     try {
@@ -38,57 +43,48 @@ class ReminderCoordinator {
   }
 
   Future<void> sync({ReminderSettings? settingsOverride}) async {
-    _syncGeneration++;
+    _requestedGeneration++;
     if (settingsOverride != null) {
-      _pendingSettingsOverride = settingsOverride;
-      _pendingPersistedSettings = false;
+      _latestOverride = settingsOverride;
+      _latestUsesPersistedSettings = false;
     } else {
-      _pendingSettingsOverride = null;
-      _pendingPersistedSettings = true;
+      _latestOverride = null;
+      _latestUsesPersistedSettings = true;
     }
+
     if (_syncing) return;
 
     _syncing = true;
     try {
-      while (_completedGeneration < _syncGeneration) {
-        final generation = _syncGeneration;
-        final override = _pendingSettingsOverride;
-        final usePersistedSettings = _pendingPersistedSettings || override == null;
-        _pendingSettingsOverride = null;
-        _pendingPersistedSettings = false;
-        await _syncOnce(
-          settingsOverride: usePersistedSettings ? null : override,
-        );
+      while (_completedGeneration < _requestedGeneration) {
+        final generation = _requestedGeneration;
+        final settings = _latestUsesPersistedSettings
+            ? settingsStore.settings
+            : (_latestOverride ?? settingsStore.settings);
+
+        _latestOverride = null;
+        _latestUsesPersistedSettings = true;
+
+        await _syncOnce(settings);
         _completedGeneration = generation;
       }
     } finally {
       _syncing = false;
-      _pendingSettingsOverride = null;
-      _pendingPersistedSettings = false;
-      _completedGeneration = _syncGeneration;
+      _latestOverride = null;
+      _latestUsesPersistedSettings = true;
+      _completedGeneration = _requestedGeneration;
     }
   }
 
-  Future<void> _syncOnce({ReminderSettings? settingsOverride}) async {
-    final settings = settingsOverride ?? settingsStore.settings;
-    final ReminderSchedulerTimeZoneAware? timeZoneAwareScheduler =
-        scheduler is ReminderSchedulerTimeZoneAware
-            ? scheduler as ReminderSchedulerTimeZoneAware
-            : null;
+  Future<void> _syncOnce(ReminderSettings settings) async {
     try {
       await scheduler.initialize();
-      if (timeZoneAwareScheduler != null) {
-        await timeZoneAwareScheduler.refreshTimeZone();
-      }
+      final timeZoneAware = scheduler is ReminderSchedulerTimeZoneAware
+          ? scheduler as ReminderSchedulerTimeZoneAware
+          : null;
+      await timeZoneAware?.refreshTimeZone();
     } on Exception {
       return;
-    }
-
-    final timeZoneFingerprint =
-        timeZoneAwareScheduler?.timeZoneFingerprint ?? 'unknown';
-
-    if (!settings.breakEnabled) {
-      await _safeCancel(breakId);
     }
 
     final snapshot = TodayEngine(store).build();
@@ -104,7 +100,6 @@ class ReminderCoordinator {
       id: studyId,
       hour: settings.studyHour,
       minute: settings.studyMinute,
-      timeZoneFingerprint: timeZoneFingerprint,
     );
 
     final planRequest = policy.planReminder(
@@ -117,8 +112,11 @@ class ReminderCoordinator {
       id: planId,
       hour: settings.planHour,
       minute: settings.planMinute,
-      timeZoneFingerprint: timeZoneFingerprint,
     );
+
+    if (!settings.breakEnabled) {
+      await _safeCancel(breakId);
+    }
   }
 
   Future<void> _syncDaily({
@@ -127,20 +125,22 @@ class ReminderCoordinator {
     required int id,
     required int hour,
     required int minute,
-    required String timeZoneFingerprint,
   }) async {
     if (!enabled || request == null) {
-      _scheduledFingerprints.remove(id);
       await _safeCancel(id);
       return;
     }
 
-    final fingerprint =
-        '$id|${request.kind}|${request.title}|${request.body}|$hour|$minute|$timeZoneFingerprint';
-    if (_scheduledFingerprints[id] == fingerprint) return;
+    // Always replace the platform registration. This removes stale alarms
+    // after a time, plan, goal or message change and keeps the source of truth
+    // in the persisted app state rather than an in-memory fingerprint.
+    try {
+      await scheduler.cancel(id);
+    } on Exception {
+      // Continue: scheduling the new request is still preferable to dropping it.
+    }
 
     try {
-      await _safeCancel(id);
       await scheduler.scheduleDailyReminder(
         id: id,
         title: request.title,
@@ -148,9 +148,9 @@ class ReminderCoordinator {
         hour: hour,
         minute: minute,
       );
-      _scheduledFingerprints[id] = fingerprint;
     } on Exception {
-      // A transient scheduling failure should not break the study flow.
+      // Notification failure must never break study flows. The next sync
+      // retries because no in-memory success state is recorded.
     }
   }
 
@@ -167,10 +167,11 @@ class ReminderCoordinator {
             body: request.body,
           );
         } on Exception {
-          // Focus completion remains successful if notifications fail.
+          // Focus completion remains successful if notification delivery fails.
         }
       }
     }
+
     await sync();
   }
 
