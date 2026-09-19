@@ -93,4 +93,35 @@ class UpdateAndReleaseTest {
         )
         assertTrue(hasUpdate)
     }
+
+    @Test
+    fun testUpdateDetectionNextBuildAfterCurrentRelease() {
+        val hasUpdate = UpdateManager.isNewerVersion(
+            currentVersionName = "0.3.0",
+            currentVersionCode = 33L,
+            remoteVersionString = "0.3.0+34"
+        )
+        assertTrue(hasUpdate)
+    }
+
+    @Test
+    fun testUpdateDetectionDoesNotRepeatCurrentBuild() {
+        val hasUpdate = UpdateManager.isNewerVersion(
+            currentVersionName = "0.3.0",
+            currentVersionCode = 34L,
+            remoteVersionString = "0.3.0+34"
+        )
+        assertFalse(hasUpdate)
+    }
+
+    @Test
+    fun testUpdateDetectionPrefersSemVerOverOlderBuildCode() {
+        val hasUpdate = UpdateManager.isNewerVersion(
+            currentVersionName = "0.3.0",
+            currentVersionCode = 99L,
+            remoteVersionString = "0.3.1+1"
+        )
+        assertTrue(hasUpdate)
+    }
+
 }
