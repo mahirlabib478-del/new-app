@@ -188,7 +188,7 @@ fun MainApp(
             // A short 90 ms cross-screen transition avoids the abrupt "dhup" change
             // while remaining fast enough to feel immediate.
             enterTransition = {
-                fadeIn(animationSpec = tween(90))
+                fadeIn(animationSpec = tween(60))
             },
             exitTransition = {
                 fadeOut(animationSpec = tween(90))
