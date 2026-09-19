@@ -97,8 +97,8 @@ fun ExamPlannerScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
+                .padding(padding),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
@@ -154,7 +154,10 @@ fun ExamPlannerScreen(
                     }
                 }
             } else {
-                items(exams) { exam ->
+                items(
+                    items = exams,
+                    key = { it.id }
+                ) { exam ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

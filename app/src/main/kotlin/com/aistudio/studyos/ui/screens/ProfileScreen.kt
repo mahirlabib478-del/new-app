@@ -71,6 +71,17 @@ data class ThemeOption(
     val color: Color
 )
 
+private val THEME_OPTIONS = listOf(
+    ThemeOption("midnight", "Midnight", Icons.Default.NightsStay, Color(0xFF6366F1)),
+    ThemeOption("pitch_black", "Pitch Black", Icons.Default.DarkMode, Color(0xFF00E5FF)),
+    ThemeOption("espresso", "Espresso", Icons.Default.Coffee, Color(0xFFD4A373)),
+    ThemeOption("ocean", "Ocean Dark", Icons.Default.Water, Color(0xFF0284C7)),
+    ThemeOption("forest", "Forest", Icons.Default.Forest, Color(0xFF10B981)),
+    ThemeOption("paper", "Paper Sepia", Icons.Default.MenuBook, Color(0xFF8B5A2B)),
+    ThemeOption("mint", "Mint Fresh", Icons.Default.Spa, Color(0xFF0D9488)),
+    ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C))
+)
+
 @Composable
 fun ProfileScreen(
     viewModel: StudyViewModel
@@ -80,24 +91,12 @@ fun ProfileScreen(
     var showCustomGoalDialog by remember { mutableStateOf(false) }
     var customGoalInput by remember { mutableStateOf("") }
 
-    val themes = listOf(
-        ThemeOption("midnight", "Midnight", Icons.Default.NightsStay, Color(0xFF6366F1)),
-        ThemeOption("pitch_black", "Pitch Black", Icons.Default.DarkMode, Color(0xFF00E5FF)),
-        ThemeOption("espresso", "Espresso", Icons.Default.Coffee, Color(0xFFD4A373)),
-        ThemeOption("ocean", "Ocean Dark", Icons.Default.Water, Color(0xFF0284C7)),
-        ThemeOption("forest", "Forest", Icons.Default.Forest, Color(0xFF10B981)),
-        ThemeOption("paper", "Paper Sepia", Icons.Default.MenuBook, Color(0xFF8B5A2B)),
-        ThemeOption("mint", "Mint Fresh", Icons.Default.Spa, Color(0xFF0D9488)),
-        ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C))
-    )
-
-    val currentTheme = profile?.themePreset ?: "midnight"
+    val currentTheme by viewModel.currentTheme.collectAsState()
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -147,7 +146,10 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(themes) { option ->
+                        items(
+                            items = THEME_OPTIONS,
+                            key = { it.key }
+                        ) { option ->
                             val isSelected = currentTheme == option.key
                             Card(
                                 modifier = Modifier

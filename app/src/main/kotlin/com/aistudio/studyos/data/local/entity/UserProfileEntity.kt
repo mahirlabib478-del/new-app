@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class UserProfileEntity(
     @PrimaryKey
     val id: Int = 1,
-    val streakDays: Int = 1,
+    val streakDays: Int = 0,
     val totalStudyMinutes: Int = 0,
     val totalXP: Int = 0,
     val currentLevel: Int = 1,

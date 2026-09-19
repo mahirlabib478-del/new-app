@@ -14,28 +14,37 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +54,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+
+private val THEME_PRESET_LIST = listOf(
+    Triple("midnight", "Midnight Indigo", Color(0xFF6366F1)),
+    Triple("pitch_black", "Pitch Black", Color(0xFF00E5FF)),
+    Triple("espresso", "Espresso Warm", Color(0xFFD4A373)),
+    Triple("ocean", "Ocean Deep", Color(0xFF0284C7)),
+    Triple("forest", "Forest Green", Color(0xFF10B981)),
+    Triple("paper", "Paper Sepia", Color(0xFF8B5A2B)),
+    Triple("mint", "Mint Fresh", Color(0xFF0D9488)),
+    Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C))
+)
 
 @Composable
 fun HomeScreen(
@@ -59,15 +79,16 @@ fun HomeScreen(
     val recentLogs by viewModel.recentLogs.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
 
-    val streak = profile?.streakDays ?: 1
+    val streak = profile?.streakDays ?: 0
     val totalMinutes = profile?.totalStudyMinutes ?: 0
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
     val progressFraction = totalMinutes.toFloat() / dailyGoal.coerceAtLeast(1)
 
+    var showThemeDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -92,41 +113,58 @@ fun HomeScreen(
                     )
                 }
 
-                // Streak & Level Pill
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocalFireDepartment,
-                        contentDescription = "Streak",
-                        tint = Color(0xFFF97316),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "$streak d",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { showThemeDialog = true },
                         modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.outlineVariant)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Lv ${profile?.currentLevel ?: 1}",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                            .size(38.dp)
+                            .testTag("btn_quick_theme")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Palette,
+                            contentDescription = "Change Theme",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    // Streak & Level Pill
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocalFireDepartment,
+                            contentDescription = "Streak",
+                            tint = Color(0xFFF97316),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "$streak d",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Lv ${profile?.currentLevel ?: 1}",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }
@@ -213,8 +251,12 @@ fun HomeScreen(
 
                     Button(
                         onClick = {
-                            activePlan?.let { viewModel.setupFocusSession(it) }
-                            onOpenFocus()
+                            if (activePlan != null) {
+                                viewModel.setupFocusSession(activePlan!!)
+                                onOpenFocus()
+                            } else {
+                                onOpenRegularStudy()
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -233,7 +275,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (activePlan != null) "Continue Active Session" else "Start Focus Flow",
+                            text = if (activePlan != null) "Continue Active Session" else "Start Study Session",
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -423,8 +465,10 @@ fun HomeScreen(
                 }
             }
         } else {
-            items(recentLogs.take(3).size) { index ->
-                val log = recentLogs[index]
+            items(
+                items = recentLogs.take(3),
+                key = { it.id }
+            ) { log ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -475,5 +519,71 @@ fun HomeScreen(
         item {
             Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+
+    if (showThemeDialog) {
+        val currentPreset by viewModel.currentTheme.collectAsState()
+
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            title = { Text("Theme Preset", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    THEME_PRESET_LIST.forEach { (key, label, accentColor) ->
+                        val isSelected = currentPreset == key
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.setTheme(key)
+                                    showThemeDialog = false
+                                },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clip(CircleShape)
+                                            .background(accentColor)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = label,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }

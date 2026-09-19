@@ -3,8 +3,6 @@ package com.aistudio.studyos.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.aistudio.studyos.audio.AmbientSound
-import com.aistudio.studyos.audio.AmbientSoundSynthesizer
 import com.aistudio.studyos.data.local.entity.ExamEntity
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
@@ -27,15 +25,28 @@ data class FocusTimerState(
     val totalBlockSeconds: Int = 25 * 60,
     val currentBlockIndex: Int = 0,
     val totalBlocks: Int = 4,
-    val currentSubject: String = "Mathematics",
-    val currentChapter: String = "Linear Algebra",
-    val activeSound: AmbientSound = AmbientSound.NONE
+    val currentSubject: String = "Quick Focus",
+    val currentChapter: String = "General Study",
+    val planId: Long? = null
 )
 
 class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
-    private val soundSynthesizer = AmbientSoundSynthesizer()
     private var timerJob: Job? = null
+
+    private val _currentTheme = MutableStateFlow(repository.getInitialTheme())
+    val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            repository.ensureCleanInitialData()
+            repository.getUserProfile().collect { profile ->
+                if (profile != null && profile.themePreset.isNotBlank()) {
+                    _currentTheme.value = profile.themePreset
+                }
+            }
+        }
+    }
 
     val activePlan: StateFlow<StudyPlanEntity?> = repository.getActivePlan()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -96,7 +107,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             totalBlocks = plan.totalBlocks,
             currentSubject = plan.subject,
             currentChapter = plan.chapter,
-            activeSound = _focusState.value.activeSound
+            planId = plan.id
         )
     }
 
@@ -137,6 +148,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         if (!current.isBreak) {
             // Completed study block! Record session log and reward XP
             val blockMinutes = current.totalBlockSeconds / 60
+            val nextBlockIndex = current.currentBlockIndex + 1
+            val allCompleted = nextBlockIndex >= current.totalBlocks
+
             viewModelScope.launch {
                 repository.recordCompletedSession(
                     subject = current.currentSubject,
@@ -144,10 +158,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     durationMinutes = blockMinutes,
                     mode = "focus"
                 )
+                if (current.planId != null) {
+                    repository.updatePlanProgress(
+                        planId = current.planId,
+                        blockIndex = nextBlockIndex,
+                        isCompleted = allCompleted
+                    )
+                }
             }
 
-            val nextBlockIndex = current.currentBlockIndex + 1
-            if (nextBlockIndex >= current.totalBlocks) {
+            if (allCompleted) {
                 // All blocks completed!
                 _focusState.value = current.copy(
                     secondsRemaining = 0,
@@ -205,11 +225,6 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         )
     }
 
-    fun setAmbientSound(sound: AmbientSound) {
-        soundSynthesizer.play(sound)
-        _focusState.value = _focusState.value.copy(activeSound = sound)
-    }
-
     fun addExam(
         subject: String,
         examDate: String,
@@ -245,6 +260,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     fun setTheme(themeKey: String) {
+        _currentTheme.value = themeKey
         viewModelScope.launch {
             repository.updateTheme(themeKey)
         }
@@ -270,7 +286,6 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        soundSynthesizer.stop()
         timerJob?.cancel()
     }
 }

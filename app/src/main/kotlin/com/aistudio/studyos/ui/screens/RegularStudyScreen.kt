@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
+private val PRESET_SUBJECTS = listOf("Mathematics", "Physics", "Computer Science", "Biology", "Chemistry", "Literature")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegularStudyScreen(
@@ -58,8 +60,6 @@ fun RegularStudyScreen(
     var selectedDuration by remember { mutableIntStateOf(25) }
     var selectedBreak by remember { mutableIntStateOf(5) }
     var totalBlocks by remember { mutableIntStateOf(4) }
-
-    val presetSubjects = listOf("Mathematics", "Physics", "Computer Science", "Biology", "Chemistry", "Literature")
 
     Scaffold(
         topBar = {
@@ -79,8 +79,8 @@ fun RegularStudyScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
+                .padding(padding),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -105,7 +105,7 @@ fun RegularStudyScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    presetSubjects.take(3).forEach { sub ->
+                    PRESET_SUBJECTS.take(3).forEach { sub ->
                         Card(
                             modifier = Modifier
                                 .weight(1f)

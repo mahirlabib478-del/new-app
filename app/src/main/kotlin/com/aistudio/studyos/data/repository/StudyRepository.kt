@@ -1,13 +1,19 @@
 package com.aistudio.studyos.data.repository
 
 import com.aistudio.studyos.data.local.StudyDatabase
+import com.aistudio.studyos.data.local.ThemePreferences
 import com.aistudio.studyos.data.local.entity.ExamEntity
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import kotlinx.coroutines.flow.Flow
 
-class StudyRepository(private val database: StudyDatabase) {
+class StudyRepository(
+    private val database: StudyDatabase,
+    private val themePreferences: ThemePreferences
+) {
+
+    fun getInitialTheme(): String = themePreferences.getThemePreset()
 
     // Study Plan
     fun getActivePlan(): Flow<StudyPlanEntity?> = database.studyPlanDao().getActivePlan()
@@ -34,6 +40,56 @@ class StudyRepository(private val database: StudyDatabase) {
     // Profile & Gamification
     fun getUserProfile(): Flow<UserProfileEntity?> = database.userProfileDao().getProfile()
 
+    suspend fun ensureCleanInitialData() {
+        val profile = database.userProfileDao().getProfileSync()
+        val currentSavedTheme = themePreferences.getThemePreset()
+        if (profile == null) {
+            database.userProfileDao().insertOrUpdate(
+                UserProfileEntity(
+                    id = 1,
+                    streakDays = 0,
+                    totalStudyMinutes = 0,
+                    totalXP = 0,
+                    currentLevel = 1,
+                    dailyGoalMinutes = 60,
+                    themePreset = currentSavedTheme,
+                    lastActiveDate = ""
+                )
+            )
+        } else {
+            if (profile.themePreset.isNotBlank() && profile.themePreset != currentSavedTheme) {
+                themePreferences.setThemePreset(profile.themePreset)
+            }
+            if (profile.streakDays == 3 && profile.totalXP == 450 && profile.totalStudyMinutes == 150) {
+                // Old dummy seed cleanup if updating from prior installation
+                database.userProfileDao().insertOrUpdate(
+                    profile.copy(
+                        streakDays = 0,
+                        totalStudyMinutes = 0,
+                        totalXP = 0,
+                        currentLevel = 1
+                    )
+                )
+                val oldPlan = database.studyPlanDao().getPlanById(1)
+                if (oldPlan?.title == "Calculus & Linear Algebra") {
+                    database.studyPlanDao().deletePlanById(1)
+                }
+                database.sessionLogDao().clearAll()
+            }
+        }
+    }
+
+    suspend fun updatePlanProgress(planId: Long, blockIndex: Int, isCompleted: Boolean) {
+        val plan = database.studyPlanDao().getPlanById(planId) ?: return
+        database.studyPlanDao().updatePlan(
+            plan.copy(
+                currentBlockIndex = blockIndex,
+                isCompleted = isCompleted,
+                lastUpdated = System.currentTimeMillis()
+            )
+        )
+    }
+
     suspend fun recordCompletedSession(
         subject: String,
         chapter: String,
@@ -51,12 +107,20 @@ class StudyRepository(private val database: StudyDatabase) {
             )
         )
 
-        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity()
+        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
+            id = 1,
+            streakDays = 0,
+            totalStudyMinutes = 0,
+            totalXP = 0,
+            currentLevel = 1,
+            dailyGoalMinutes = 60,
+            themePreset = "midnight"
+        )
         val newTotalMinutes = currentProfile.totalStudyMinutes + durationMinutes
         val newTotalXP = currentProfile.totalXP + xpGained
         val newLevel = (newTotalXP / 200) + 1
 
-        database.userProfileDao().update(
+        database.userProfileDao().insertOrUpdate(
             currentProfile.copy(
                 totalStudyMinutes = newTotalMinutes,
                 totalXP = newTotalXP,
@@ -67,26 +131,46 @@ class StudyRepository(private val database: StudyDatabase) {
     }
 
     suspend fun updateTheme(themeKey: String) {
-        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity()
-        database.userProfileDao().update(currentProfile.copy(themePreset = themeKey))
+        themePreferences.setThemePreset(themeKey)
+        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
+            id = 1,
+            streakDays = 0,
+            totalStudyMinutes = 0,
+            totalXP = 0,
+            currentLevel = 1,
+            dailyGoalMinutes = 60,
+            themePreset = themeKey
+        )
+        database.userProfileDao().insertOrUpdate(currentProfile.copy(themePreset = themeKey))
     }
 
     suspend fun updateDailyGoal(minutes: Int) {
-        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity()
-        database.userProfileDao().update(currentProfile.copy(dailyGoalMinutes = minutes))
+        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
+            id = 1,
+            streakDays = 0,
+            totalStudyMinutes = 0,
+            totalXP = 0,
+            currentLevel = 1,
+            dailyGoalMinutes = 60,
+            themePreset = "midnight"
+        )
+        database.userProfileDao().insertOrUpdate(currentProfile.copy(dailyGoalMinutes = minutes))
     }
 
     suspend fun resetStats() {
         database.sessionLogDao().clearAll()
-        database.userProfileDao().update(
+        val currentProfile = database.userProfileDao().getProfileSync()
+        val currentTheme = currentProfile?.themePreset ?: "midnight"
+        val currentGoal = currentProfile?.dailyGoalMinutes ?: 60
+        database.userProfileDao().insertOrUpdate(
             UserProfileEntity(
                 id = 1,
-                streakDays = 1,
+                streakDays = 0,
                 totalStudyMinutes = 0,
                 totalXP = 0,
                 currentLevel = 1,
-                dailyGoalMinutes = 60,
-                themePreset = "midnight"
+                dailyGoalMinutes = currentGoal,
+                themePreset = currentTheme
             )
         )
     }

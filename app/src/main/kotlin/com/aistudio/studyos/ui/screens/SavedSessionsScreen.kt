@@ -68,8 +68,8 @@ fun SavedSessionsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
+                .padding(padding),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
@@ -125,7 +125,10 @@ fun SavedSessionsScreen(
                     }
                 }
             } else {
-                items(savedPlans) { plan ->
+                items(
+                    items = savedPlans,
+                    key = { it.id }
+                ) { plan ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

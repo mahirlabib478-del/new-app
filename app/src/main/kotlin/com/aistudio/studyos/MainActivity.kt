@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -64,8 +67,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val profile by viewModel.userProfile.collectAsState()
-            val themePreset = profile?.themePreset ?: "midnight"
+            val themePreset by viewModel.currentTheme.collectAsState()
 
             StudyOSTheme(preset = themePreset) {
                 val navController = rememberNavController()
@@ -75,6 +77,20 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private val BOTTOM_NAV_SCREENS = listOf(
+    Screen.Home,
+    Screen.StudyHub,
+    Screen.Progress,
+    Screen.Profile
+)
+
+private val BOTTOM_NAV_ROUTES = setOf(
+    Screen.Home.route,
+    Screen.StudyHub.route,
+    Screen.Progress.route,
+    Screen.Profile.route
+)
+
 @Composable
 fun MainApp(
     viewModel: StudyViewModel,
@@ -83,14 +99,7 @@ fun MainApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val bottomNavScreens = listOf(
-        Screen.Home,
-        Screen.StudyHub,
-        Screen.Progress,
-        Screen.Profile
-    )
-
-    val showBottomBar = currentRoute in bottomNavScreens.map { it.route }
+    val showBottomBar = currentRoute in BOTTOM_NAV_ROUTES
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -99,7 +108,7 @@ fun MainApp(
                 NavigationBar(
                     modifier = Modifier.testTag("bottom_nav_bar")
                 ) {
-                    bottomNavScreens.forEach { screen ->
+                    BOTTOM_NAV_SCREENS.forEach { screen ->
                         val isSelected = currentRoute == screen.route
                         NavigationBarItem(
                             selected = isSelected,
@@ -130,7 +139,11 @@ fun MainApp(
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = { fadeIn(animationSpec = tween(150)) },
+            exitTransition = { fadeOut(animationSpec = tween(150)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+            popExitTransition = { fadeOut(animationSpec = tween(150)) }
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(

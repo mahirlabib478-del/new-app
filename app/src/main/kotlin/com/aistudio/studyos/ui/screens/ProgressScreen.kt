@@ -58,9 +58,8 @@ fun ProgressScreen(
     val levelProgress = (totalXP % 200).toFloat() / 200f
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -108,7 +107,7 @@ fun ProgressScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "${profile?.streakDays ?: 1} Days",
+                            text = "${profile?.streakDays ?: 0} Days",
                             fontWeight = FontWeight.Black,
                             fontSize = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -321,7 +320,10 @@ fun ProgressScreen(
                 )
             }
         } else {
-            items(recentLogs) { log ->
+            items(
+                items = recentLogs,
+                key = { it.id }
+            ) { log ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
