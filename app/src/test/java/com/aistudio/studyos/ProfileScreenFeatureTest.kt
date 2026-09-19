@@ -134,7 +134,6 @@ class ProfileScreenFeatureTest {
         val available = UpdateCheckState.Available(
             AppUpdateInfo(
                 latestVersion = "1.1.0",
-                latestVersionCode = 2,
                 releaseNotes = "New features added",
                 apkUrl = "https://github.com/releases/download/v1.1.0/app.apk",
                 releaseUrl = "https://github.com/releases/tag/v1.1.0"
