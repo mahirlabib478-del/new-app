@@ -207,6 +207,10 @@ class ReminderCoordinator {
   }
 
   Future<void> scheduleFocusBlockCompletion(DateTime at) async {
+    if (!settingsStore.settings.breakEnabled) {
+      await cancelFocusBlockCompletion();
+      return;
+    }
     try {
       await scheduler.scheduleOnce(
         id: breakId,
