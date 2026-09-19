@@ -49,12 +49,12 @@ class HomeScreenFeatureTest {
             title = "Organic Chemistry Study",
             subject = "Chemistry",
             chapter = "Alkanes & Reaction Mechanisms",
+            mode = "regular",
             totalBlocks = 4,
             currentBlockIndex = 1,
             durationPerBlockMinutes = 25,
-            breakDurationMinutes = 5,
-            isCompleted = false,
-            isActive = true
+            breakMinutes = 5,
+            isCompleted = false
         )
 
         assertNotNull(activePlan)
