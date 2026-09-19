@@ -20,7 +20,7 @@ class ReminderSettings {
   final int planMinute;
 
   static const defaults = ReminderSettings(
-    studyEnabled: false,
+    studyEnabled: true,
     breakEnabled: true,
     planEnabled: true,
     studyHour: 19,
