@@ -48,7 +48,6 @@ class LocalStore {
   static const _dailyGoalKey = 'daily_goal_minutes';
   static const _focusTimerKey = 'focus_timer_state';
   static const _breakTimerKey = 'break_timer_state';
-  static const _soundEffectsKey = 'sound_effects_enabled';
   static const _activeModeKey = 'active_study_mode';
 
   String? _cachedPlanRaw;
@@ -129,8 +128,6 @@ class LocalStore {
   Future<void> setThemePreset(String value) => prefs.setString(_themePresetKey, value);
   AppLanguage get appLanguage => AppLanguageStore(prefs).language;
   Future<void> setAppLanguage(AppLanguage value) => AppLanguageStore(prefs).setLanguage(value);
-  bool get soundEffectsEnabled => prefs.getBool(_soundEffectsKey) ?? true;
-  Future<void> setSoundEffectsEnabled(bool value) => prefs.setBool(_soundEffectsKey, value);
   int get completedMinutes => prefs.getInt(_minutesKey) ?? 0;
   int get planCompletedMinutes => prefs.getInt(_planMinutesKey) ?? 0;
   int get dailyGoalMinutes => (prefs.getInt(_dailyGoalKey) ?? 120).clamp(15, 720).toInt();
