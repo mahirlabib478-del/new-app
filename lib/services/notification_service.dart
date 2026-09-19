@@ -17,7 +17,9 @@ class NotificationService
 
   final FlutterLocalNotificationsPlugin _plugin;
 
-  static const channelId = 'study_os_reminders';
+  // Use a fresh channel ID so installs/upgrades are not stuck with an older
+// channel's user-controlled importance or disabled state.
+  static const channelId = 'study_os_reminders_v2';
   static const channelName = 'Study reminders';
   static const channelDescription = 'Study, break and plan reminders.';
 
