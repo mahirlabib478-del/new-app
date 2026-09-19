@@ -1,4 +1,4 @@
-abstract interface class ReminderScheduler {
+abstract class ReminderScheduler {
   Future<void> initialize() async {}
 
   Future<void> scheduleOnce({required int id, required String title, required String body, required DateTime at}) async {}
