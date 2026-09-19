@@ -12,6 +12,8 @@ class FocusScreen extends StatefulWidget {
   final int index;
   final int blockIndex;
   final Future<void> Function()? onFocusBlockCompleted;
+  final Future<void> Function(DateTime at)? onFocusBlockScheduled;
+  final Future<void> Function()? onFocusBlockScheduleCancelled;
   static const focusBlock = 25;
   @override State<FocusScreen> createState() => _FocusScreenState();
 }
@@ -56,10 +58,29 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     }
     unawaited(widget.store.setPlanPosition(activeIndex, activeBlockIndex));
     unawaited(StudySessionStore(widget.store).archiveCurrentPlan());
-    if (expiredOnResume) WidgetsBinding.instance.addPostFrameCallback((_) => _openBreak(currentBlockMinutes)); else { _persistTimerState(); if (running) _startTimer(); }
+    if (expiredOnResume) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _openBreak(currentBlockMinutes, showNotification: false));
+    } else {
+      _persistTimerState();
+      if (running) {
+        _scheduleCompletionNotification();
+        _startTimer();
+      }
+    }
   }
 
   void _startTimer() { timer?.cancel(); timer = Timer.periodic(const Duration(seconds: 1), (_) { if (!mounted || !running || transitioning) return; if (seconds > 0) setState(() => seconds--); if (seconds == 0) { timer?.cancel(); unawaited(widget.store.clearFocusTimerState()); unawaited(_openBreak(currentBlockMinutes)); } }); }
+  void _scheduleCompletionNotification() {
+    if (!running || seconds <= 0 || transitioning || widget.onFocusBlockScheduled == null) return;
+    unawaited(widget.onFocusBlockScheduled!(DateTime.now().add(Duration(seconds: seconds))));
+  }
+
+  void _cancelCompletionNotification() {
+    if (widget.onFocusBlockScheduleCancelled != null) {
+      unawaited(widget.onFocusBlockScheduleCancelled!());
+    }
+  }
+
   void _persistTimerState() { if (transitioning) return; final deadline = running ? DateTime.now().add(Duration(seconds: seconds)).millisecondsSinceEpoch : null; unawaited(widget.store.saveFocusTimerState(FocusTimerState(index: activeIndex, blockIndex: activeBlockIndex, remainingSeconds: seconds, running: running, deadlineMillis: deadline))); }
 
   @override
@@ -69,11 +90,11 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       unawaited(StudySessionStore(widget.store).archiveCurrentPlan());
     } else if (state == AppLifecycleState.resumed && mounted && running && !transitioning) {
       final saved = widget.store.focusTimerState;
-      if (saved != null && saved.index == activeIndex && saved.blockIndex == activeBlockIndex && saved.deadlineMillis != null) { final nextSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil(); if (nextSeconds <= 0) { seconds = 0; timer?.cancel(); unawaited(_openBreak(currentBlockMinutes)); return; } setState(() => seconds = nextSeconds.clamp(0, currentBlockMinutes * 60).toInt()); }
+      if (saved != null && saved.index == activeIndex && saved.blockIndex == activeBlockIndex && saved.deadlineMillis != null) { final nextSeconds = ((saved.deadlineMillis! - DateTime.now().millisecondsSinceEpoch) / 1000).ceil(); if (nextSeconds <= 0) { seconds = 0; timer?.cancel(); unawaited(_openBreak(currentBlockMinutes, showNotification: false)); return; } setState(() => seconds = nextSeconds.clamp(0, currentBlockMinutes * 60).toInt()); }
       _startTimer();
     }
   }
-  void _toggleRunning() { if (transitioning || seconds <= 0) return; setState(() => running = !running); _persistTimerState(); unawaited(StudySessionStore(widget.store).archiveCurrentPlan()); if (running) _startTimer(); else timer?.cancel(); }
+  void _toggleRunning() { if (transitioning || seconds <= 0) return; setState(() => running = !running); if (running) _scheduleCompletionNotification(); else _cancelCompletionNotification(); _persistTimerState(); unawaited(StudySessionStore(widget.store).archiveCurrentPlan()); if (running) _startTimer(); else timer?.cancel(); }
 
   Future<void> _showCompletion() async {
     if (!mounted || transitioning) return;
@@ -85,7 +106,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     if (transitioning || !mounted) return;
     transitioning = true; timer?.cancel();
     final safeCompleted = completed.clamp(0, currentBlockMinutes).toInt();
-    if (safeCompleted > 0) { await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted); if (widget.onFocusBlockCompleted != null) unawaited(widget.onFocusBlockCompleted!()); }
+    if (safeCompleted > 0) { await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted); if (showNotification && widget.onFocusBlockCompleted != null) unawaited(widget.onFocusBlockCompleted!()); }
     await widget.store.clearFocusTimerState();
     await StudySessionStore(widget.store).archiveCurrentPlan();
     if (!mounted) return;
@@ -134,7 +155,7 @@ class _BreakScreenState extends State<BreakScreen> with WidgetsBindingObserver {
     if (widget.index >= 0 && widget.index < widget.plan.items.length && targetCompleted > 0) { final item = widget.plan.items[widget.index]; final existing = widget.store.itemCompletedMinutes(widget.index).clamp(0, item.minutes).toInt(); final additional = (targetCompleted - existing).clamp(0, targetCompleted).toInt(); if (additional > 0) await widget.store.addItemCompletedMinutes(widget.index, additional); }
     if (widget.index < 0 || widget.index >= widget.plan.items.length) { await widget.store.clearPlanPosition(); await StudySessionStore(widget.store).removeActivePlanSession(widget.plan); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store))); return; }
     final item = widget.plan.items[widget.index]; final itemCompleted = widget.store.itemCompletedMinutes(widget.index).clamp(0, item.minutes).toInt();
-    if (itemCompleted < item.minutes) { final nextBlock = (itemCompleted ~/ FocusScreen.focusBlock).clamp(0, 100000).toInt(); await widget.store.setPlanPosition(widget.index, nextBlock); await StudySessionStore(widget.store).archiveCurrentPlan(); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: widget.index, blockIndex: nextBlock, onFocusBlockCompleted: widget.onFocusBlockCompleted))); return; }
+    if (itemCompleted < item.minutes) { final nextBlock = (itemCompleted ~/ FocusScreen.focusBlock).clamp(0, 100000).toInt(); await widget.store.setPlanPosition(widget.index, nextBlock); await StudySessionStore(widget.store).archiveCurrentPlan(); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: widget.index, blockIndex: nextBlock, onFocusBlockCompleted: widget.onFocusBlockCompleted, onFocusBlockScheduled: widget.onFocusBlockScheduled, onFocusBlockScheduleCancelled: widget.onFocusBlockScheduleCancelled))); return; }
     var nextIndex = widget.index + 1; while (nextIndex < widget.plan.items.length) { final nextItem = widget.plan.items[nextIndex]; final nextCompleted = widget.store.itemCompletedMinutes(nextIndex).clamp(0, nextItem.minutes).toInt(); if (nextCompleted < nextItem.minutes) break; nextIndex++; }
     if (nextIndex < widget.plan.items.length) { await widget.store.setPlanPosition(nextIndex, 0); await StudySessionStore(widget.store).archiveCurrentPlan(); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FocusScreen(store: widget.store, plan: widget.plan, index: nextIndex, blockIndex: 0, onFocusBlockCompleted: widget.onFocusBlockCompleted))); return; }
     await widget.store.clearPlanPosition(); await StudySessionStore(widget.store).removeActivePlanSession(widget.plan); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
