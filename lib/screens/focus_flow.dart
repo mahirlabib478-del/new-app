@@ -96,15 +96,39 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
   }
   void _toggleRunning() { if (transitioning || seconds <= 0) return; setState(() => running = !running); if (running) _scheduleCompletionNotification(); else _cancelCompletionNotification(); _persistTimerState(); unawaited(StudySessionStore(widget.store).archiveCurrentPlan()); if (running) _startTimer(); else timer?.cancel(); }
 
+  Future<void> _confirmLeave() async {
+    if (transitioning || !mounted) return;
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave focus?'),
+        content: const Text('Your position will be saved so you can resume later.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Stay')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save & leave')),
+        ],
+      ),
+    );
+    if (leave != true || !mounted) return;
+    setState(() => running = false);
+    timer?.cancel();
+    _cancelCompletionNotification();
+    _persistTimerState();
+    await StudySessionStore(widget.store).archiveCurrentPlan();
+    if (mounted) Navigator.of(context).pop();
+  }
+
   Future<void> _showCompletion() async {
     if (!mounted || transitioning) return;
     transitioning = true; timer?.cancel(); await widget.store.clearFocusTimerState(); await widget.store.clearPlanPosition(); await StudySessionStore(widget.store).removeActivePlanSession(widget.plan);
     if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CompletionScreen(plan: widget.plan, store: widget.store)));
   }
 
-  Future<void> _openBreak(int completed) async {
+  Future<void> _openBreak(int completed, {bool showNotification = true}) async {
     if (transitioning || !mounted) return;
-    transitioning = true; timer?.cancel();
+    transitioning = true;
+    timer?.cancel();
+    _cancelCompletionNotification();
     final safeCompleted = completed.clamp(0, currentBlockMinutes).toInt();
     if (safeCompleted > 0) { await widget.store.addItemCompletedMinutes(activeIndex, safeCompleted); if (showNotification && widget.onFocusBlockCompleted != null) unawaited(widget.onFocusBlockCompleted!()); }
     await widget.store.clearFocusTimerState();
@@ -122,7 +146,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
     final itemProgress = item.minutes <= 0 ? 0.0 : (completedForItem / item.minutes).clamp(0.0, 1.0).toDouble();
     final elapsedMinutes = ((currentBlockMinutes * 60 - seconds) / 60).floor();
     final scheme = Theme.of(context).colorScheme;
-    return Scaffold(appBar: AppBar(title: const Text('Focus mode'), centerTitle: true), body: SafeArea(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 20, 24, 30), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: Column(children: [
+    return PopScope(canPop: false, onPopInvokedWithResult: (didPop, result) { if (!didPop) _confirmLeave(); }, child: Scaffold(appBar: AppBar(title: const Text('Focus mode'), centerTitle: true), body: SafeArea(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 20, 24, 30), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: Column(children: [
       Text('DEEP FOCUS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, color: scheme.primary)), const SizedBox(height: 18),
       Text(item.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)), if (item.topic.isNotEmpty) ...[const SizedBox(height: 6), Text(item.topic, textAlign: TextAlign.center)], const SizedBox(height: 18),
       Card(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Row(children: [Icon(Icons.check_circle_outline_rounded, color: scheme.primary), const SizedBox(width: 10), const Expanded(child: Text('Topics completed', style: TextStyle(fontWeight: FontWeight.w800))), Text('$completedTopicCount / $totalTopicCount', style: TextStyle(fontWeight: FontWeight.w900, color: scheme.primary))]))),
@@ -131,7 +155,7 @@ class _FocusScreenState extends State<FocusScreen> with WidgetsBindingObserver {
       Text('Block ${activeBlockIndex + 1} of $totalBlocks • $currentBlockMinutes min focus', style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 24),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [FilledButton.icon(onPressed: transitioning ? null : _toggleRunning, icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded), label: Text(running ? 'Pause' : 'Resume')), const SizedBox(width: 12), OutlinedButton.icon(onPressed: transitioning || elapsedMinutes < 1 ? null : () => unawaited(_openBreak(elapsedMinutes)), icon: const Icon(Icons.done_rounded), label: const Text('Finish early'))]), const SizedBox(height: 22),
       Card(child: Padding(padding: const EdgeInsets.all(16), child: Text('Your session is saved locally. If you switch modes or the app closes, your latest topic progress and position are kept in Saved sessions.', style: Theme.of(context).textTheme.bodyMedium))),
-    ]))))));
+    ])))))));
   }
 }
 
