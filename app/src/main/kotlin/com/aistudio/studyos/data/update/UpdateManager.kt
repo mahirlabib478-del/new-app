@@ -28,7 +28,7 @@ object UpdateManager {
             val versionCode = PackageInfoCompat.getLongVersionCode(pInfo)
             Pair(versionName, versionCode)
         } catch (e: Exception) {
-            Pair("0.3.0", 28L)
+            Pair("0.3.0", 29L)
         }
     }
 
