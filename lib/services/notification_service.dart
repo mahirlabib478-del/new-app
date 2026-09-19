@@ -89,7 +89,18 @@ class NotificationService
 
     final android = _android;
     if (android != null) {
-      return android.requestNotificationsPermission();
+      final notificationsGranted =
+          await android.requestNotificationsPermission() ?? false;
+      if (!notificationsGranted) return false;
+
+      // User-selected reminder times are time-sensitive. Android inexact
+      // alarms can be delayed substantially, so prefer exact alarms when the
+      // platform allows them.
+      final exactGranted = await android.canScheduleExactNotifications() ?? false;
+      if (!exactGranted) {
+        return await android.requestExactAlarmsPermission() ?? false;
+      }
+      return true;
     }
 
     final ios = _plugin.resolvePlatformSpecificImplementation<
@@ -158,7 +169,7 @@ class NotificationService
         iOS: DarwinNotificationDetails(),
         macOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
