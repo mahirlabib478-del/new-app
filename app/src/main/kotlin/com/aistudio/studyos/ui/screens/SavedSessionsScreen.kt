@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
+import com.aistudio.studyos.data.local.entity.StudyPlanItemCodec
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
 private fun getSavedPlanModeInfo(mode: String): Pair<String, Color> {
@@ -177,6 +178,8 @@ fun SavedSessionsScreen(
                 ) { plan ->
                     val (modeLabel, modeColor) = getSavedPlanModeInfo(plan.mode)
                     val isDraft = plan.isDraft
+                    val planItems = remember(plan.planItems) { StudyPlanItemCodec.decode(plan.planItems) }
+                    val currentBlockMinutes = planItems.getOrNull(plan.currentBlockIndex)?.minutes ?: plan.durationPerBlockMinutes
 
                     Card(
                         modifier = Modifier
@@ -265,13 +268,13 @@ fun SavedSessionsScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = "Block ${plan.currentBlockIndex + 1}/${plan.totalBlocks} (${plan.durationPerBlockMinutes}m each)",
+                                        text = "Block ${plan.currentBlockIndex + 1}/${plan.totalBlocks} (${currentBlockMinutes}m)",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        text = "Total: ${plan.totalBlocks * plan.durationPerBlockMinutes} mins",
+                                        text = "Total: ${plan.totalDurationMinutes} mins",
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
