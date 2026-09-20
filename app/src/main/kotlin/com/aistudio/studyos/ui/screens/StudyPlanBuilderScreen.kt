@@ -106,7 +106,7 @@ fun StudyPlanBuilderScreen(
         )
     }
 
-    val totalSessionMinutes = parseMinutes(totalSessionText)?.coerceIn(30, 720) ?: 0
+    val totalSessionMinutes = parseMinutes(totalSessionText) ?: 0
     val topicCount = subjects.sumOf { it.topics.size }
     val topicMinutes = subjects.flatMap { it.topics }.mapNotNull { parseMinutes(it.minutesText) }
     val allocatedTotal = topicMinutes.sum()
