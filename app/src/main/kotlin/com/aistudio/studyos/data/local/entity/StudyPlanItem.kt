@@ -11,10 +11,11 @@ data class StudyPlanItem(
 object StudyPlanItemCodec {
     fun encode(items: List<StudyPlanItem>): String =
         items.joinToString("\n") { item ->
-            listOf(item.subject, item.topic, item.minutes.toString())
-                .joinToString("|") { value ->
-                    Base64.getEncoder().encodeToString(value.toByteArray(Charsets.UTF_8))
-                }
+            listOf(
+                Base64.getEncoder().encodeToString(item.subject.toByteArray(Charsets.UTF_8)),
+                Base64.getEncoder().encodeToString(item.topic.toByteArray(Charsets.UTF_8)),
+                item.minutes.toString()
+            ).joinToString("|")
         }
 
     fun decode(raw: String): List<StudyPlanItem> =
