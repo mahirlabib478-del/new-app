@@ -378,6 +378,47 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             return
         }
 
+        if (plan.currentBlockIndex >= currentPlanItems.size) {
+            val completedSeconds = plan.accumulatedStudiedSeconds.coerceAtLeast(0)
+            val completedMinutes = plan.accumulatedBillableMinutes.coerceAtLeast(0)
+            repository.getPlanById(plan.id)?.let { persisted ->
+                if (!persisted.isCompleted) {
+                    repository.updatePlan(
+                        persisted.copy(
+                            currentBlockIndex = currentPlanItems.size,
+                            remainingSecondsInBlock = 0,
+                            isBreakPhase = false,
+                            isTimerRunning = false,
+                            endAtElapsedRealtime = 0L,
+                            endAtWallClockMillis = 0L,
+                            isCompleted = true,
+                            lastUpdated = System.currentTimeMillis()
+                        )
+                    )
+                }
+            }
+            StudyTimerForegroundService.stop(StudyApplication.instance)
+            _focusState.value = FocusTimerState(
+                isRunning = false,
+                isBreak = false,
+                secondsRemaining = 0,
+                totalBlockSeconds = 0,
+                studyBlockSeconds = 0,
+                breakBlockSeconds = normalizeBreakMinutes(plan.breakMinutes) * 60,
+                currentBlockIndex = currentPlanItems.size,
+                totalBlocks = currentPlanItems.size,
+                currentSubject = currentPlanItems.lastOrNull()?.subject ?: plan.subject,
+                currentChapter = currentPlanItems.lastOrNull()?.topic ?: plan.chapter,
+                planId = null,
+                mode = plan.mode,
+                isSessionCompleted = true,
+                completedMinutes = completedMinutes,
+                completedBlocks = currentPlanItems.size,
+                actualStudiedSeconds = completedSeconds
+            )
+            return
+        }
+
         val safeIndex = plan.currentBlockIndex.coerceIn(0, currentPlanItems.lastIndex)
         val currentItem = currentPlanItems[safeIndex]
         val studySec = currentItem.minutes * 60
@@ -403,7 +444,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val priorCompletedSeconds = plan.accumulatedStudiedSeconds.coerceAtLeast(0)
         val plannedFocusSeconds = plan.totalDurationMinutes.coerceAtLeast(0) * 60
 
-        if (plannedFocusSeconds > 0 && priorCompletedSeconds >= plannedFocusSeconds) {
+        if (plan.isCompleted || (plannedFocusSeconds > 0 && priorCompletedSeconds >= plannedFocusSeconds)) {
             StudyTimerForegroundService.stop(StudyApplication.instance)
             _focusState.value = FocusTimerState(
                 isRunning = false,
@@ -899,8 +940,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         transitionInProgress = true
         stopTimerJob()
         val current = _focusState.value
-        val elapsedSeconds = if (current.isBreak) 0 else currentElapsedSeconds(current)
-        val elapsedMinutes = SessionResultCalculator.billableMinutes(elapsedSeconds)
+        // Reset discards the current block's partial progress. Only previously
+        // committed blocks remain in the session totals.
         val resetSeconds = current.totalBlockSeconds
 
         viewModelScope.launch {
@@ -918,31 +959,24 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                                     isTimerRunning = false,
                                     endAtElapsedRealtime = 0L,
                                     endAtWallClockMillis = 0L,
-                                    accumulatedStudiedSeconds = plan.accumulatedStudiedSeconds + elapsedSeconds,
-                                    accumulatedBillableMinutes = plan.accumulatedBillableMinutes + elapsedMinutes,
+                                    accumulatedStudiedSeconds = plan.accumulatedStudiedSeconds,
+                                    accumulatedBillableMinutes = plan.accumulatedBillableMinutes,
                                     lastUpdated = System.currentTimeMillis()
                                 ),
                                 subject = current.currentSubject,
                                 chapter = current.currentChapter,
-                                minutesStudied = elapsedMinutes,
+                                minutesStudied = 0,
                                 mode = current.mode
                             )
                         }
-                    } else if (elapsedMinutes > 0) {
-                        repository.recordCompletedSession(
-                            current.currentSubject,
-                            current.currentChapter,
-                            elapsedMinutes,
-                            current.mode
-                        )
                     }
 
                     StudyTimerForegroundService.stop(StudyApplication.instance)
                     _focusState.value = current.copy(
                         isRunning = false,
                         secondsRemaining = resetSeconds,
-                        actualStudiedSeconds = current.actualStudiedSeconds + elapsedSeconds,
-                        completedMinutes = current.completedMinutes + elapsedMinutes,
+                        actualStudiedSeconds = current.actualStudiedSeconds,
+                        completedMinutes = current.completedMinutes,
                         endAtElapsedRealtime = 0L,
                         endAtWallClockMillis = 0L
                     )
