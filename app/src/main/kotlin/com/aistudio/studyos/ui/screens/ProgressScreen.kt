@@ -388,7 +388,7 @@ fun ProgressScreen(
                         trackColor = MaterialTheme.colorScheme.surface.copy(alpha = .35f)
                     )
                     Text(
-                        "Daily target: ${dailyGoal / 60}h ${dailyGoal % 60}m".replace("0h 0m", "${dailyGoal}m"),
+                        "Daily target: " + if (dailyGoal >= 60) (dailyGoal / 60).toString() + "h " + (dailyGoal % 60).toString() + "m" else dailyGoal.toString() + "m",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .75f)
                     )
