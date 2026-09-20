@@ -72,6 +72,7 @@ fun HomeScreen(
     onOpenFocus: () -> Unit,
     onOpenStudy: () -> Unit,
     onOpenQuickFocus: () -> Unit,
+    onOpenExamPlanner: () -> Unit,
     onOpenSavedSessions: () -> Unit
 ) {
     val profile by viewModel.userProfile.collectAsState()
