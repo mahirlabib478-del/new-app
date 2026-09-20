@@ -26,6 +26,7 @@ class StudyRepository(
     fun getSavedPlans(): Flow<List<StudyPlanEntity>> = database.studyPlanDao().getSavedPlans()
     suspend fun savePlan(plan: StudyPlanEntity): Long = database.studyPlanDao().insertPlan(plan)
     suspend fun updatePlan(plan: StudyPlanEntity) = database.studyPlanDao().updatePlan(plan)
+    suspend fun getPlanById(id: Long): StudyPlanEntity? = database.studyPlanDao().getPlanById(id)
     suspend fun deletePlan(plan: StudyPlanEntity) = database.studyPlanDao().deletePlan(plan)
     suspend fun deletePlanById(id: Long) = database.studyPlanDao().deletePlanById(id)
     suspend fun archiveOtherActivePlans(exceptId: Long) = database.studyPlanDao().archiveOtherActivePlans(exceptId)
@@ -158,7 +159,8 @@ class StudyRepository(
         blockIndex: Int,
         isRunning: Boolean,
         endAtElapsedRealtime: Long,
-        endAtWallClockMillis: Long
+        endAtWallClockMillis: Long,
+        timerBootCount: Int
     ) {
         database.studyPlanDao().updateSessionTimer(
             planId,
@@ -167,7 +169,8 @@ class StudyRepository(
             blockIndex,
             isRunning,
             endAtElapsedRealtime,
-            endAtWallClockMillis
+            endAtWallClockMillis,
+            timerBootCount
         )
     }
 
