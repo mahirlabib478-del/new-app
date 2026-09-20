@@ -1,6 +1,8 @@
 package com.aistudio.studyos.ui.viewmodel
 
 import android.content.Context
+import android.os.SystemClock
+import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,6 +12,9 @@ import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanItem
 import com.aistudio.studyos.data.local.entity.StudyPlanItemCodec
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
+import com.aistudio.studyos.data.repository.SessionResultCalculator
+import com.aistudio.studyos.StudyApplication
+import com.aistudio.studyos.service.StudyTimerForegroundService
 import com.aistudio.studyos.data.repository.StudyRepository
 import com.aistudio.studyos.data.update.AppUpdateInfo
 import com.aistudio.studyos.data.update.UpdateCheckState
@@ -23,6 +28,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.launch
 
 data class FocusTimerState(
@@ -41,7 +48,10 @@ data class FocusTimerState(
     val isSessionCompleted: Boolean = false,
     val completedMinutes: Int = 0,
     val completedBlocks: Int = 0,
-    val actualStudiedSeconds: Int = 0
+    val actualStudiedSeconds: Int = 0,
+    val endAtElapsedRealtime: Long = 0L,
+    val endAtWallClockMillis: Long = 0L,
+    val sessionError: String? = null
 )
 
 private fun splitStudyItem(item: StudyPlanItem): List<StudyPlanItem> {
@@ -172,52 +182,74 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         blockMinutes: Int = 25,
         breakMinutes: Int = 5,
         autoStart: Boolean = true,
-        items: List<StudyPlanItem> = emptyList()
+        items: List<StudyPlanItem> = emptyList(),
+        expectedTotalMinutes: Int? = null,
+        onReady: (() -> Unit)? = null
     ) {
         viewModelScope.launch {
             val sourceItems = if (items.isNotEmpty()) {
                 items
             } else {
                 List(totalBlocks.coerceIn(1, 720)) {
-                    StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720))
+                    StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 25))
                 }
             }
-            val normalizedItems = sourceItems
-                .map { it.copy(minutes = it.minutes.coerceIn(1, 720)) }
-                .filter { it.subject.isNotBlank() && it.topic.isNotBlank() }
-                .flatMap(::splitStudyItem)
-            val boundedItems = normalizedItems.take(720)
-            val first = boundedItems.first()
+
+            val normalizedItems = normalizePlanItems(sourceItems)
+            val allocatedMinutes = normalizedItems.sumOf { it.minutes }
+            if (
+                normalizedItems.isEmpty() ||
+                normalizedItems.size > 720 ||
+                allocatedMinutes <= 0 ||
+                allocatedMinutes > 720 ||
+                (expectedTotalMinutes != null && allocatedMinutes != expectedTotalMinutes)
+            ) {
+                return@launch
+            }
+
+            transitionMutex.withLock {
+                stopTimerJob()
+                transitionInProgress = false
+            }
+
+            val first = normalizedItems.first()
             val studySec = first.minutes * 60
-            val breakSec = normalizeBreakMinutes(breakMinutes) * 60
+            val breakMin = normalizeBreakMinutes(breakMinutes)
+            val multiSubject = normalizedItems.map { it.subject }.distinct().size > 1
             val plan = StudyPlanEntity(
-                title = title.ifBlank { "$subject - $chapter" },
-                subject = first.subject,
-                chapter = first.topic,
+                title = if (multiSubject) {
+                    "Multiple Subjects • ${formatPlanDuration(allocatedMinutes)}"
+                } else {
+                    title.ifBlank { "$subject - $chapter" }
+                },
+                subject = if (multiSubject) "Multiple Subjects" else first.subject,
+                chapter = if (multiSubject) "Study Session" else first.topic,
                 mode = mode,
-                totalBlocks = boundedItems.size,
+                totalBlocks = normalizedItems.size,
                 currentBlockIndex = 0,
                 durationPerBlockMinutes = first.minutes,
-                breakMinutes = normalizeBreakMinutes(breakMinutes),
+                breakMinutes = breakMin,
                 remainingSecondsInBlock = studySec,
                 isBreakPhase = false,
                 isCompleted = false,
                 isDraft = false,
-                planItems = StudyPlanItemCodec.encode(boundedItems),
-                totalDurationMinutes = boundedItems.sumOf { it.minutes }
+                isArchived = false,
+                isTimerRunning = false,
+                endAtElapsedRealtime = 0L,
+                endAtWallClockMillis = 0L,
+                planItems = StudyPlanItemCodec.encode(normalizedItems),
+                totalDurationMinutes = allocatedMinutes
             )
             val planId = repository.savePlan(plan)
-            pauseTimer()
-            currentPlanItems = boundedItems
+            repository.archiveOtherActivePlans(planId)
+            currentPlanItems = normalizedItems
             _focusState.value = FocusTimerState(
-                isRunning = false,
-                isBreak = false,
                 secondsRemaining = studySec,
                 totalBlockSeconds = studySec,
                 studyBlockSeconds = studySec,
-                breakBlockSeconds = breakSec,
+                breakBlockSeconds = breakMin * 60,
                 currentBlockIndex = 0,
-                totalBlocks = boundedItems.size,
+                totalBlocks = normalizedItems.size,
                 currentSubject = first.subject,
                 currentChapter = first.topic,
                 planId = planId,
@@ -227,6 +259,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 completedBlocks = 0,
                 actualStudiedSeconds = 0
             )
+            onReady?.invoke()
             if (autoStart) startTimer()
         }
     }
@@ -246,75 +279,130 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 items
             } else {
                 List(totalBlocks.coerceIn(1, 720)) {
-                    StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720))
+                    StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 25))
                 }
             }
-            val normalizedItems = sourceItems
-                .map { it.copy(minutes = it.minutes.coerceIn(1, 720)) }
-                .filter { it.subject.isNotBlank() && it.topic.isNotBlank() }
-                .flatMap(::splitStudyItem)
-            val boundedItems = normalizedItems.take(720)
+            val boundedItems = normalizePlanItems(sourceItems)
+            if (boundedItems.isEmpty() || boundedItems.size > 720 || boundedItems.sumOf { it.minutes } > 720) {
+                return@launch
+            }
             val first = boundedItems.first()
-            val studySec = first.minutes * 60
+            val allocatedMinutes = boundedItems.sumOf { it.minutes }
+            val multiSubject = boundedItems.map { it.subject }.distinct().size > 1
             val plan = StudyPlanEntity(
-                title = title.ifBlank { "$subject - $chapter" },
-                subject = first.subject,
-                chapter = first.topic,
+                title = if (multiSubject) "Multiple Subjects • ${formatPlanDuration(allocatedMinutes)} (Draft)" else title.ifBlank { "$subject - $chapter" },
+                subject = if (multiSubject) "Multiple Subjects" else first.subject,
+                chapter = if (multiSubject) "Study Session" else first.topic,
                 mode = mode,
                 totalBlocks = boundedItems.size,
                 currentBlockIndex = 0,
                 durationPerBlockMinutes = first.minutes,
                 breakMinutes = normalizeBreakMinutes(breakMinutes),
-                remainingSecondsInBlock = studySec,
+                remainingSecondsInBlock = first.minutes * 60,
                 isBreakPhase = false,
                 isCompleted = false,
                 isDraft = true,
+                isArchived = false,
+                isTimerRunning = false,
+                endAtElapsedRealtime = 0L,
+                endAtWallClockMillis = 0L,
                 planItems = StudyPlanItemCodec.encode(boundedItems),
-                totalDurationMinutes = boundedItems.sumOf { it.minutes }
+                totalDurationMinutes = allocatedMinutes
             )
             repository.savePlan(plan)
         }
     }
 
-    fun resumeSavedPlan(plan: StudyPlanEntity) {
+    fun resumeSavedPlan(plan: StudyPlanEntity, onReady: (() -> Unit)? = null) {
         viewModelScope.launch {
-            val updated = plan.copy(isDraft = false, lastUpdated = System.currentTimeMillis())
-            repository.updatePlan(updated)
-            continueActiveSession(updated)
+            transitionMutex.withLock {
+                if (transitionInProgress) return@withLock
+                transitionInProgress = true
+                try {
+                    stopTimerJob()
+                    val updated = plan.copy(
+                        isDraft = false,
+                        isArchived = false,
+                        lastUpdated = System.currentTimeMillis()
+                    )
+                    repository.archiveOtherActivePlans(updated.id)
+                    repository.updatePlan(updated)
+                    continueActiveSessionInternal(updated)
+                    onReady?.invoke()
+                } finally {
+                    transitionInProgress = false
+                }
+            }
         }
     }
 
     fun continueActiveSession(plan: StudyPlanEntity) {
-        val current = _focusState.value
-        // If current in-memory state is already running/holding this active plan, preserve it!
-        if (current.planId == plan.id) {
+        viewModelScope.launch {
+            transitionMutex.withLock {
+                if (transitionInProgress || _focusState.value.planId == plan.id) return@withLock
+                continueActiveSessionInternal(plan)
+            }
+        }
+    }
+
+    private fun continueActiveSessionInternal(plan: StudyPlanEntity) {
+        stopTimerJob()
+
+        val decodedItems = StudyPlanItemCodec.decode(plan.planItems)
+        if (decodedItems.isEmpty()) {
+            currentPlanItems = emptyList()
+            _focusState.value = FocusTimerState(
+                currentSubject = plan.subject,
+                currentChapter = plan.chapter,
+                mode = plan.mode,
+                sessionError = "This saved study plan could not be restored. Please create it again."
+            )
             return
         }
-        pauseTimer()
-        val decodedItems = StudyPlanItemCodec.decode(plan.planItems).ifEmpty {
-            listOf(StudyPlanItem(plan.subject, plan.chapter, plan.durationPerBlockMinutes))
-        }
-        currentPlanItems = decodedItems.flatMap(::splitStudyItem).take(720)
-        val currentItem = currentPlanItems.getOrElse(plan.currentBlockIndex) { currentPlanItems.last() }
-        val studySec = currentItem.minutes * 60
-        val breakSec = normalizeBreakMinutes(plan.breakMinutes) * 60
-        val totalBlockSec = if (plan.isBreakPhase) breakSec else studySec
-        val remainingSec = if (plan.remainingSecondsInBlock in 1..totalBlockSec) {
-            plan.remainingSecondsInBlock
-        } else {
-            totalBlockSec
+
+        currentPlanItems = normalizePlanItems(decodedItems)
+        if (currentPlanItems.isEmpty()) {
+            _focusState.value = FocusTimerState(
+                currentSubject = plan.subject,
+                currentChapter = plan.chapter,
+                mode = plan.mode,
+                sessionError = "This saved study plan contains invalid topic durations."
+            )
+            return
         }
 
-        val priorCompletedMinutes = currentPlanItems.take(plan.currentBlockIndex).sumOf { it.minutes }
+        val safeIndex = plan.currentBlockIndex.coerceIn(0, currentPlanItems.lastIndex)
+        val currentItem = currentPlanItems[safeIndex]
+        val studySec = currentItem.minutes * 60
+        val breakSec = normalizeBreakMinutes(plan.breakMinutes) * 60
+        val nowElapsed = SystemClock.elapsedRealtime()
+        val nowWall = System.currentTimeMillis()
+        val bootCount = currentBootCount()
+        val elapsedValid = plan.isTimerRunning &&
+            plan.timerBootCount == bootCount &&
+            plan.endAtElapsedRealtime > nowElapsed
+        val wallValid = plan.isTimerRunning && plan.endAtWallClockMillis > nowWall
+        val isRunning = elapsedValid || wallValid
+        val remainingSec = if (isRunning) {
+            if (elapsedValid) {
+                ceilSeconds((plan.endAtElapsedRealtime - nowElapsed) / 1000L)
+            } else {
+                ceilSeconds((plan.endAtWallClockMillis - nowWall) / 1000L)
+            }.coerceIn(1, if (plan.isBreakPhase) breakSec else studySec)
+        } else {
+            plan.remainingSecondsInBlock.coerceIn(1, if (plan.isBreakPhase) breakSec else studySec)
+        }
+        val priorCompletedMinutes = currentPlanItems.take(safeIndex).sumOf { it.minutes }
+        val priorCompletedSeconds = priorCompletedMinutes * 60
 
         _focusState.value = FocusTimerState(
             isRunning = false,
             isBreak = plan.isBreakPhase,
             secondsRemaining = remainingSec,
-            totalBlockSeconds = totalBlockSec,
+            totalBlockSeconds = if (plan.isBreakPhase) breakSec else studySec,
             studyBlockSeconds = studySec,
             breakBlockSeconds = breakSec,
-            currentBlockIndex = plan.currentBlockIndex,
+            currentBlockIndex = safeIndex,
             totalBlocks = currentPlanItems.size,
             currentSubject = currentItem.subject,
             currentChapter = currentItem.topic,
@@ -322,338 +410,407 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             mode = plan.mode,
             isSessionCompleted = false,
             completedMinutes = priorCompletedMinutes,
-            completedBlocks = plan.currentBlockIndex,
-            actualStudiedSeconds = priorCompletedMinutes * 60
+            completedBlocks = safeIndex,
+            actualStudiedSeconds = priorCompletedSeconds
         )
+
+        if (isRunning) startTimer()
     }
 
-    fun setupFocusSession(plan: StudyPlanEntity) {
-        continueActiveSession(plan)
-    }
+    fun setupFocusSession(plan: StudyPlanEntity) = continueActiveSession(plan)
 
     fun finishActiveSessionEarly(): Boolean {
+        if (transitionInProgress) return false
+        transitionInProgress = true
+        stopTimerJob()
         val current = _focusState.value
-        pauseTimer()
-        val planId = current.planId
-        val elapsedInCurrentBlock = if (!current.isBreak) {
-            (current.totalBlockSeconds - current.secondsRemaining).coerceIn(0, current.totalBlockSeconds)
-        } else 0
-        val totalStudiedSec = current.actualStudiedSeconds + elapsedInCurrentBlock
-        val partialMinutes = if (elapsedInCurrentBlock >= 30) (elapsedInCurrentBlock + 29) / 60 else if (elapsedInCurrentBlock > 0) 1 else 0
-        val totalStudiedMin = if (totalStudiedSec >= 30) (totalStudiedSec + 29) / 60 else if (totalStudiedSec > 0) 1 else 0
-
         viewModelScope.launch {
-            if (planId != null) {
-                repository.completePlanEarly(
-                    planId = planId,
-                    minutesStudied = partialMinutes,
-                    subject = current.currentSubject,
-                    chapter = current.currentChapter,
-                    mode = current.mode
-                )
-            } else if (partialMinutes > 0) {
-                repository.recordCompletedSession(
-                    subject = current.currentSubject,
-                    chapter = current.currentChapter,
-                    durationMinutes = partialMinutes,
-                    mode = current.mode
-                )
+            transitionMutex.withLock {
+                try {
+                    val elapsedInCurrentBlock = currentElapsedSeconds(current)
+                    val totalStudiedSec = current.actualStudiedSeconds + elapsedInCurrentBlock
+                    val partialMinutes = SessionResultCalculator.billableMinutes(elapsedInCurrentBlock)
+                    val totalStudiedMin = current.completedMinutes + partialMinutes
+                    val planId = current.planId
+
+                    if (planId != null) {
+                        repository.completePlanEarly(
+                            planId = planId,
+                            minutesStudied = partialMinutes,
+                            subject = current.currentSubject,
+                            chapter = current.currentChapter,
+                            mode = current.mode
+                        )
+                    } else if (partialMinutes > 0) {
+                        repository.recordCompletedSession(
+                            current.currentSubject,
+                            current.currentChapter,
+                            partialMinutes,
+                            current.mode
+                        )
+                    }
+
+                    StudyTimerForegroundService.stop(StudyApplication.instance)
+                    _focusState.value = current.copy(
+                        secondsRemaining = 0,
+                        isRunning = false,
+                        isSessionCompleted = true,
+                        completedMinutes = totalStudiedMin,
+                        completedBlocks = current.completedBlocks + if (elapsedInCurrentBlock > 0) 1 else 0,
+                        actualStudiedSeconds = totalStudiedSec,
+                        planId = null,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L
+                    )
+                } catch (_: Exception) {
+                    _focusState.value = current.copy(
+                        isRunning = false,
+                        sessionError = "The session could not be saved safely. Please try again."
+                    )
+                } finally {
+                    transitionInProgress = false
+                }
             }
         }
-
-        _focusState.value = current.copy(
-            secondsRemaining = 0,
-            isRunning = false,
-            isSessionCompleted = true,
-            completedMinutes = totalStudiedMin,
-            completedBlocks = current.currentBlockIndex + (if (elapsedInCurrentBlock > 0) 1 else 0),
-            actualStudiedSeconds = totalStudiedSec,
-            planId = null
-        )
         return true
     }
 
     fun toggleTimer() {
-        if (_focusState.value.isRunning) {
-            pauseTimer()
-        } else {
-            startTimer()
-        }
+        if (transitionInProgress) return
+        if (_focusState.value.isRunning) pauseTimer() else startTimer()
     }
 
     fun startTimer() {
-        _focusState.value = _focusState.value.copy(isRunning = true)
+        if (transitionInProgress) return
+        val current = _focusState.value
+        if (current.sessionError != null || current.isSessionCompleted || current.secondsRemaining <= 0) return
+
         timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            var saveCounter = 0
-            while (isActive && _focusState.value.isRunning && _focusState.value.secondsRemaining > 0) {
-                delay(1000)
-                val remaining = (_focusState.value.secondsRemaining - 1).coerceAtLeast(0)
-                if (remaining <= 0) {
-                    _focusState.value = _focusState.value.copy(secondsRemaining = 0)
-                    onBlockFinished()
-                } else {
-                    _focusState.value = _focusState.value.copy(secondsRemaining = remaining)
-                    saveCounter++
-                    if (saveCounter >= 5) {
-                        saveCounter = 0
-                        val current = _focusState.value
-                        if (current.planId != null) {
-                            repository.updateSessionProgress(
-                                current.planId,
-                                remaining,
-                                current.isBreak,
-                                current.currentBlockIndex
-                            )
-                        }
-                    }
+        val nowElapsed = SystemClock.elapsedRealtime()
+        val nowWall = System.currentTimeMillis()
+        val bootCount = currentBootCount()
+        val endElapsed = if (current.endAtElapsedRealtime > nowElapsed) current.endAtElapsedRealtime else nowElapsed + current.secondsRemaining * 1000L
+        val endWall = if (current.endAtWallClockMillis > nowWall) current.endAtWallClockMillis else nowWall + current.secondsRemaining * 1000L
+        _focusState.value = current.copy(
+            isRunning = true,
+            endAtElapsedRealtime = endElapsed,
+            endAtWallClockMillis = endWall
+        )
+
+        val planId = current.planId
+        if (planId != null) {
+            viewModelScope.launch {
+                runCatching {
+                    repository.updateSessionProgress(
+                        planId = planId,
+                        remainingSec = current.secondsRemaining,
+                        isBreak = current.isBreak,
+                        blockIndex = current.currentBlockIndex,
+                        isRunning = true,
+                        endAtElapsedRealtime = endElapsed,
+                        endAtWallClockMillis = endWall,
+                        timerBootCount = bootCount
+                    )
                 }
+            }
+        }
+
+        runCatching {
+            StudyTimerForegroundService.start(
+                StudyApplication.instance,
+                endAtWallClockMillis = endWall,
+                isBreak = current.isBreak,
+                subject = current.currentSubject
+            )
+        }
+
+        timerJob = viewModelScope.launch {
+            while (isActive && _focusState.value.isRunning) {
+                val state = _focusState.value
+                val remaining = remainingFromState(state)
+                if (remaining <= 0) {
+                    _focusState.value = state.copy(secondsRemaining = 0)
+                    onBlockFinished()
+                    break
+                }
+                _focusState.value = state.copy(secondsRemaining = remaining)
+                delay(250)
             }
         }
     }
 
     fun pauseTimer() {
-        timerJob?.cancel()
-        timerJob = null
-        _focusState.value = _focusState.value.copy(isRunning = false)
+        if (transitionInProgress) return
+        stopTimerJob()
         val current = _focusState.value
-        if (current.planId != null) {
+        val remaining = remainingFromState(current)
+        _focusState.value = current.copy(
+            isRunning = false,
+            secondsRemaining = remaining,
+            endAtElapsedRealtime = 0L,
+            endAtWallClockMillis = 0L
+        )
+        StudyTimerForegroundService.stop(StudyApplication.instance)
+        val planId = current.planId
+        if (planId != null) {
             viewModelScope.launch {
-                repository.updateSessionProgress(
-                    current.planId,
-                    current.secondsRemaining,
-                    current.isBreak,
-                    current.currentBlockIndex
-                )
+                runCatching {
+                    repository.updateSessionProgress(
+                        planId = planId,
+                        remainingSec = remaining,
+                        isBreak = current.isBreak,
+                        blockIndex = current.currentBlockIndex,
+                        isRunning = false,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L,
+                        timerBootCount = currentBootCount()
+                    )
+                }
             }
         }
     }
 
     private fun onBlockFinished() {
-        pauseTimer()
-        val current = _focusState.value
-
-        if (!current.isBreak) {
-            val blockMinutes = (current.totalBlockSeconds / 60).coerceAtLeast(1)
-            val nextBlockIndex = current.currentBlockIndex + 1
-            val allCompleted = nextBlockIndex >= current.totalBlocks
-            val newTotalStudiedSec = current.actualStudiedSeconds + current.totalBlockSeconds
-            val finalStudiedMin = (newTotalStudiedSec / 60).coerceAtLeast(1)
-
-            viewModelScope.launch {
-                repository.recordCompletedSession(
-                    subject = current.currentSubject,
-                    chapter = current.currentChapter,
-                    durationMinutes = blockMinutes,
-                    mode = current.mode
-                )
-
-                if (current.planId != null) {
-                    repository.updatePlanProgress(
-                        planId = current.planId,
-                        blockIndex = nextBlockIndex,
-                        isCompleted = allCompleted
-                    )
-                }
-
-                if (allCompleted) {
-                    _focusState.value = current.copy(
-                        secondsRemaining = 0,
-                        currentBlockIndex = nextBlockIndex,
+        if (transitionInProgress) return
+        transitionInProgress = true
+        stopTimerJob()
+        viewModelScope.launch {
+            transitionMutex.withLock {
+                try {
+                    val current = _focusState.value
+                    if (current.isBreak) finishBreakTransition(current) else finishFocusTransition(current)
+                } catch (_: Exception) {
+                    _focusState.value = _focusState.value.copy(
                         isRunning = false,
-                        isSessionCompleted = true,
-                        completedMinutes = finalStudiedMin,
-                        completedBlocks = nextBlockIndex,
-                        actualStudiedSeconds = newTotalStudiedSec,
-                        planId = null
+                        sessionError = "The session could not save this transition. Please reopen the session."
                     )
-                } else {
-                    val breakSec = current.breakBlockSeconds.coerceAtLeast(1)
-                    _focusState.value = current.copy(
-                        isBreak = true,
-                        secondsRemaining = breakSec,
-                        totalBlockSeconds = breakSec,
-                        currentBlockIndex = nextBlockIndex,
-                        actualStudiedSeconds = newTotalStudiedSec,
-                        isRunning = false
-                    )
-                    if (current.planId != null) {
-                        repository.updateSessionProgress(
-                            current.planId,
-                            breakSec,
-                            true,
-                            nextBlockIndex
-                        )
-                    }
-                    // Breaks begin automatically
-                    startTimer()
+                    StudyTimerForegroundService.stop(StudyApplication.instance)
+                } finally {
+                    transitionInProgress = false
                 }
             }
-        } else {
-            val isSessionAtEnd = current.currentBlockIndex >= current.totalBlocks
-            if (isSessionAtEnd) {
-                val totalStudiedMin = if (current.actualStudiedSeconds >= 30) (current.actualStudiedSeconds + 29) / 60 else if (current.actualStudiedSeconds > 0) 1 else 0
-                viewModelScope.launch {
-                    if (current.planId != null) {
-                        repository.updatePlanProgress(
-                            planId = current.planId,
-                            blockIndex = current.totalBlocks,
-                            isCompleted = true
-                        )
-                    }
-                }
-                _focusState.value = current.copy(
-                    secondsRemaining = 0,
-                    isRunning = false,
-                    isSessionCompleted = true,
-                    completedMinutes = totalStudiedMin,
-                    completedBlocks = current.totalBlocks,
-                    planId = null
-                )
-                return
-            }
-
-            val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex)
-            val blockSec = (nextItem?.minutes ?: (current.studyBlockSeconds / 60).coerceAtLeast(1)) * 60
-            _focusState.value = current.copy(
-                isBreak = false,
-                secondsRemaining = blockSec,
-                totalBlockSeconds = blockSec,
-                studyBlockSeconds = blockSec,
-                currentSubject = nextItem?.subject ?: current.currentSubject,
-                currentChapter = nextItem?.topic ?: current.currentChapter,
-                isRunning = false
-            )
-            if (current.planId != null) {
-                viewModelScope.launch {
-                    repository.updateSessionProgress(
-                        current.planId,
-                        blockSec,
-                        false,
-                        current.currentBlockIndex
-                    )
-                }
-            }
-            // Next focus block begins automatically
-            startTimer()
         }
     }
 
+    private suspend fun finishFocusTransition(current: FocusTimerState) {
+        val completedBlockMinutes = SessionResultCalculator.billableMinutes(current.totalBlockSeconds)
+        val nextBlockIndex = current.currentBlockIndex + 1
+        val allCompleted = nextBlockIndex >= current.totalBlocks
+        val newActualSeconds = current.actualStudiedSeconds + current.totalBlockSeconds
+        val newCompletedMinutes = current.completedMinutes + completedBlockMinutes
+
+        if (allCompleted) {
+            val planId = current.planId
+            val updatedPlan = planId?.let { repository.getPlanById(it) }
+            if (planId != null && updatedPlan != null) {
+                repository.commitFocusBlock(
+                    planId = planId,
+                    updatedPlan = updatedPlan.copy(
+                        currentBlockIndex = nextBlockIndex,
+                        remainingSecondsInBlock = 0,
+                        isBreakPhase = false,
+                        isCompleted = true,
+                        isTimerRunning = false,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L,
+                        lastUpdated = System.currentTimeMillis()
+                    ),
+                    subject = current.currentSubject,
+                    chapter = current.currentChapter,
+                    minutesStudied = completedBlockMinutes,
+                    mode = current.mode
+                )
+            } else if (completedBlockMinutes > 0) {
+                repository.recordCompletedSession(current.currentSubject, current.currentChapter, completedBlockMinutes, current.mode)
+            }
+            StudyTimerForegroundService.stop(StudyApplication.instance)
+            _focusState.value = current.copy(
+                secondsRemaining = 0,
+                currentBlockIndex = nextBlockIndex,
+                isRunning = false,
+                isSessionCompleted = true,
+                completedMinutes = newCompletedMinutes,
+                completedBlocks = nextBlockIndex,
+                actualStudiedSeconds = newActualSeconds,
+                planId = null,
+                endAtElapsedRealtime = 0L,
+                endAtWallClockMillis = 0L
+            )
+            return
+        }
+
+        val breakSec = current.breakBlockSeconds.coerceAtLeast(1)
+        val planId = current.planId
+        val updatedPlan = planId?.let { repository.getPlanById(it) }
+        if (planId != null && updatedPlan != null) {
+            repository.commitFocusBlock(
+                planId = planId,
+                updatedPlan = updatedPlan.copy(
+                    currentBlockIndex = nextBlockIndex,
+                    durationPerBlockMinutes = currentPlanItems.getOrNull(nextBlockIndex)?.minutes ?: updatedPlan.durationPerBlockMinutes,
+                    remainingSecondsInBlock = breakSec,
+                    isBreakPhase = true,
+                    isCompleted = false,
+                    isTimerRunning = false,
+                    endAtElapsedRealtime = 0L,
+                    endAtWallClockMillis = 0L,
+                    lastUpdated = System.currentTimeMillis()
+                ),
+                subject = current.currentSubject,
+                chapter = current.currentChapter,
+                minutesStudied = completedBlockMinutes,
+                mode = current.mode
+            )
+        } else if (completedBlockMinutes > 0) {
+            repository.recordCompletedSession(current.currentSubject, current.currentChapter, completedBlockMinutes, current.mode)
+        }
+
+        val nextItem = currentPlanItems.getOrNull(nextBlockIndex)
+        _focusState.value = current.copy(
+            isBreak = true,
+            secondsRemaining = breakSec,
+            totalBlockSeconds = breakSec,
+            currentBlockIndex = nextBlockIndex,
+            actualStudiedSeconds = newActualSeconds,
+            completedMinutes = newCompletedMinutes,
+            isRunning = false,
+            currentSubject = nextItem?.subject ?: current.currentSubject,
+            currentChapter = nextItem?.topic ?: current.currentChapter,
+            endAtElapsedRealtime = 0L,
+            endAtWallClockMillis = 0L
+        )
+        startTimer()
+    }
+
+    private suspend fun finishBreakTransition(current: FocusTimerState) {
+        if (current.currentBlockIndex >= current.totalBlocks) {
+            StudyTimerForegroundService.stop(StudyApplication.instance)
+            _focusState.value = current.copy(
+                secondsRemaining = 0,
+                isRunning = false,
+                isSessionCompleted = true,
+                completedMinutes = current.completedMinutes,
+                completedBlocks = current.totalBlocks,
+                planId = null,
+                endAtElapsedRealtime = 0L,
+                endAtWallClockMillis = 0L
+            )
+            return
+        }
+
+        val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex)
+            ?: throw IllegalStateException("Missing next study block")
+        val blockSec = nextItem.minutes * 60
+        val planId = current.planId
+        if (planId != null) {
+            repository.updateSessionProgress(
+                planId = planId,
+                remainingSec = blockSec,
+                isBreak = false,
+                blockIndex = current.currentBlockIndex,
+                isRunning = false,
+                endAtElapsedRealtime = 0L,
+                endAtWallClockMillis = 0L,
+                timerBootCount = currentBootCount()
+            )
+        }
+        _focusState.value = current.copy(
+            isBreak = false,
+            secondsRemaining = blockSec,
+            totalBlockSeconds = blockSec,
+            studyBlockSeconds = blockSec,
+            currentSubject = nextItem.subject,
+            currentChapter = nextItem.topic,
+            isRunning = false,
+            endAtElapsedRealtime = 0L,
+            endAtWallClockMillis = 0L
+        )
+        startTimer()
+    }
+
     fun skipCurrentBlock() {
-        pauseTimer()
+        if (transitionInProgress) return
+        transitionInProgress = true
+        stopTimerJob()
         val current = _focusState.value
+        viewModelScope.launch {
+            transitionMutex.withLock {
+                try {
+                    if (current.isBreak) {
+                        finishBreakTransition(current)
+                    } else {
+                        val elapsedSeconds = currentElapsedSeconds(current)
+                        val partialMinutes = SessionResultCalculator.billableMinutes(elapsedSeconds)
+                        val newTotalStudiedSec = current.actualStudiedSeconds + elapsedSeconds
+                        val newCompletedMinutes = current.completedMinutes + partialMinutes
+                        val isLastBlock = current.currentBlockIndex >= current.totalBlocks - 1
+                        val planId = current.planId
 
-        if (!current.isBreak) {
-            // Focus block skipped: count EXACTLY the actual time studied so far in this block
-            val elapsedSeconds = (current.totalBlockSeconds - current.secondsRemaining).coerceIn(0, current.totalBlockSeconds)
-            val partialMinutes = if (elapsedSeconds >= 30) (elapsedSeconds + 29) / 60 else if (elapsedSeconds > 0) 1 else 0
-            val newTotalStudiedSec = current.actualStudiedSeconds + elapsedSeconds
-            val isLastBlock = current.currentBlockIndex >= current.totalBlocks - 1
-
-            // If actual focus time was spent, log it to update progress, today's minutes, streak, XP!
-            if (partialMinutes > 0) {
-                viewModelScope.launch {
-                    repository.recordCompletedSession(
-                        subject = current.currentSubject,
-                        chapter = current.currentChapter,
-                        durationMinutes = partialMinutes,
-                        mode = current.mode
+                        if (isLastBlock) {
+                            if (planId != null) {
+                                repository.completePlanEarly(
+                                    planId,
+                                    partialMinutes,
+                                    current.currentSubject,
+                                    current.currentChapter,
+                                    current.mode
+                                )
+                            } else if (partialMinutes > 0) {
+                                repository.recordCompletedSession(current.currentSubject, current.currentChapter, partialMinutes, current.mode)
+                            }
+                            StudyTimerForegroundService.stop(StudyApplication.instance)
+                            _focusState.value = current.copy(
+                                secondsRemaining = 0,
+                                currentBlockIndex = current.totalBlocks,
+                                isRunning = false,
+                                isSessionCompleted = true,
+                                completedMinutes = newCompletedMinutes,
+                                completedBlocks = current.completedBlocks + if (elapsedSeconds > 0) 1 else 0,
+                                actualStudiedSeconds = newTotalStudiedSec,
+                                planId = null,
+                                endAtElapsedRealtime = 0L,
+                                endAtWallClockMillis = 0L
+                            )
+                        } else {
+                            val breakSec = current.breakBlockSeconds.coerceAtLeast(1)
+                            if (planId != null) {
+                                repository.updateSessionProgress(
+                                    planId = planId,
+                                    remainingSec = breakSec,
+                                    isBreak = true,
+                                    blockIndex = current.currentBlockIndex + 1,
+                                    isRunning = false,
+                                    endAtElapsedRealtime = 0L,
+                                    endAtWallClockMillis = 0L,
+                                    timerBootCount = currentBootCount()
+                                )
+                            }
+                            val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex + 1)
+                            _focusState.value = current.copy(
+                                isBreak = true,
+                                secondsRemaining = breakSec,
+                                totalBlockSeconds = breakSec,
+                                currentBlockIndex = current.currentBlockIndex + 1,
+                                actualStudiedSeconds = newTotalStudiedSec,
+                                completedMinutes = newCompletedMinutes,
+                                isRunning = false,
+                                currentSubject = nextItem?.subject ?: current.currentSubject,
+                                currentChapter = nextItem?.topic ?: current.currentChapter,
+                                endAtElapsedRealtime = 0L,
+                                endAtWallClockMillis = 0L
+                            )
+                            startTimer()
+                        }
+                    }
+                } catch (_: Exception) {
+                    _focusState.value = current.copy(
+                        isRunning = false,
+                        sessionError = "The session could not save this action safely."
                     )
+                    StudyTimerForegroundService.stop(StudyApplication.instance)
+                } finally {
+                    transitionInProgress = false
                 }
-            }
-
-            if (isLastBlock) {
-                // Final block skipped -> session finishes, show congratulations screen!
-                val totalStudiedMin = if (newTotalStudiedSec >= 30) (newTotalStudiedSec + 29) / 60 else if (newTotalStudiedSec > 0) 1 else 0
-                viewModelScope.launch {
-                    if (current.planId != null) {
-                        repository.updatePlanProgress(
-                            planId = current.planId,
-                            blockIndex = current.totalBlocks,
-                            isCompleted = true
-                        )
-                    }
-                }
-                _focusState.value = current.copy(
-                    secondsRemaining = 0,
-                    currentBlockIndex = current.totalBlocks,
-                    isRunning = false,
-                    isSessionCompleted = true,
-                    completedMinutes = totalStudiedMin,
-                    completedBlocks = current.currentBlockIndex + 1,
-                    actualStudiedSeconds = newTotalStudiedSec,
-                    planId = null
-                )
-            } else {
-                // Intermediate block skipped -> proceed to break phase
-                val breakSec = current.breakBlockSeconds.coerceAtLeast(1)
-                _focusState.value = current.copy(
-                    isBreak = true,
-                    secondsRemaining = breakSec,
-                    totalBlockSeconds = breakSec,
-                    currentBlockIndex = current.currentBlockIndex + 1,
-                    actualStudiedSeconds = newTotalStudiedSec,
-                    isRunning = false
-                )
-                if (current.planId != null) {
-                    viewModelScope.launch {
-                        repository.updateSessionProgress(
-                            current.planId,
-                            breakSec,
-                            true,
-                            current.currentBlockIndex + 1
-                        )
-                    }
-                }
-                startTimer()
-            }
-        } else {
-            // Break phase skipped (breaks are rest, so 0 study time added)
-            val isSessionAtEnd = current.currentBlockIndex >= current.totalBlocks
-            if (isSessionAtEnd) {
-                // No more focus blocks -> session finishes, show congratulations screen!
-                val totalStudiedMin = if (current.actualStudiedSeconds >= 30) (current.actualStudiedSeconds + 29) / 60 else if (current.actualStudiedSeconds > 0) 1 else 0
-                viewModelScope.launch {
-                    if (current.planId != null) {
-                        repository.updatePlanProgress(
-                            planId = current.planId,
-                            blockIndex = current.totalBlocks,
-                            isCompleted = true
-                        )
-                    }
-                }
-                _focusState.value = current.copy(
-                    secondsRemaining = 0,
-                    isRunning = false,
-                    isSessionCompleted = true,
-                    completedMinutes = totalStudiedMin,
-                    completedBlocks = current.totalBlocks,
-                    planId = null
-                )
-            } else {
-                // Move immediately to next focus block
-                val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex)
-                val blockSec = (nextItem?.minutes ?: (current.studyBlockSeconds / 60).coerceAtLeast(1)) * 60
-                _focusState.value = current.copy(
-                    isBreak = false,
-                    secondsRemaining = blockSec,
-                    totalBlockSeconds = blockSec,
-                    studyBlockSeconds = blockSec,
-                    currentSubject = nextItem?.subject ?: current.currentSubject,
-                    currentChapter = nextItem?.topic ?: current.currentChapter,
-                    isRunning = false
-                )
-                if (current.planId != null) {
-                    viewModelScope.launch {
-                        repository.updateSessionProgress(
-                            current.planId,
-                            blockSec,
-                            false,
-                            current.currentBlockIndex
-                        )
-                    }
-                }
-                startTimer()
             }
         }
     }
@@ -664,11 +821,81 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     fun resetBlockTimer() {
-        pauseTimer()
-        _focusState.value = _focusState.value.copy(
-            secondsRemaining = _focusState.value.totalBlockSeconds
+        if (transitionInProgress) return
+        stopTimerJob()
+        val current = _focusState.value
+        val resetSeconds = current.totalBlockSeconds
+        _focusState.value = current.copy(
+            isRunning = false,
+            secondsRemaining = resetSeconds,
+            endAtElapsedRealtime = 0L,
+            endAtWallClockMillis = 0L
         )
+        StudyTimerForegroundService.stop(StudyApplication.instance)
+        val planId = current.planId
+        if (planId != null) {
+            viewModelScope.launch {
+                runCatching {
+                    repository.updateSessionProgress(
+                        planId = planId,
+                        remainingSec = resetSeconds,
+                        isBreak = current.isBreak,
+                        blockIndex = current.currentBlockIndex,
+                        isRunning = false,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L,
+                        timerBootCount = currentBootCount()
+                    )
+                }
+            }
+        }
     }
+
+    private fun stopTimerJob() {
+        timerJob?.cancel()
+        timerJob = null
+    }
+
+    private fun currentElapsedSeconds(state: FocusTimerState): Int {
+        return if (!state.isRunning) {
+            (state.totalBlockSeconds - state.secondsRemaining).coerceIn(0, state.totalBlockSeconds)
+        } else {
+            (state.totalBlockSeconds - remainingFromState(state)).coerceIn(0, state.totalBlockSeconds)
+        }
+    }
+
+    private fun remainingFromState(state: FocusTimerState): Int {
+        if (!state.isRunning) return state.secondsRemaining.coerceIn(0, state.totalBlockSeconds)
+        val nowElapsed = SystemClock.elapsedRealtime()
+        val nowWall = System.currentTimeMillis()
+        val remainingMillis = when {
+            state.endAtElapsedRealtime > nowElapsed -> state.endAtElapsedRealtime - nowElapsed
+            state.endAtWallClockMillis > nowWall -> state.endAtWallClockMillis - nowWall
+            else -> 0L
+        }
+        return ceilSeconds(remainingMillis / 1000L).coerceIn(0, state.totalBlockSeconds)
+    }
+
+    private fun ceilSeconds(value: Long): Int =
+        value.coerceAtLeast(0L).let { ((it + 999L) / 1000L).toInt() }
+
+    private fun currentBootCount(): Int =
+        runCatching {
+            Settings.Global.getInt(
+                StudyApplication.instance.contentResolver,
+                Settings.Global.BOOT_COUNT,
+                -1
+            )
+        }.getOrDefault(-1)
+
+    private fun normalizePlanItems(items: List<StudyPlanItem>): List<StudyPlanItem> =
+        items
+            .filter { it.subject.isNotBlank() && it.topic.isNotBlank() && it.minutes in 1..720 }
+            .flatMap(::splitStudyItem)
+            .take(720)
+
+    private fun formatPlanDuration(minutes: Int): String =
+        if (minutes >= 60) "${minutes / 60}h ${minutes % 60}m" else "${minutes}m"
 
     fun addExam(
         subject: String,
