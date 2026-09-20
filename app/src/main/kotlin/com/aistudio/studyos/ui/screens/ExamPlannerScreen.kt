@@ -288,7 +288,6 @@ fun ExamPlannerScreen(
 
                                 Button(
                                     onClick = { onStartStudySetup(exam) },
-,
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary
