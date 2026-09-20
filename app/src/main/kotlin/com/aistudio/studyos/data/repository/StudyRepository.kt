@@ -160,7 +160,8 @@ class StudyRepository(
         isRunning: Boolean,
         endAtElapsedRealtime: Long,
         endAtWallClockMillis: Long,
-        timerBootCount: Int
+        timerBootCount: Int,
+        expectedEndAtElapsedRealtime: Long = 0L
     ) {
         database.studyPlanDao().updateSessionTimer(
             planId,
@@ -170,7 +171,8 @@ class StudyRepository(
             isRunning,
             endAtElapsedRealtime,
             endAtWallClockMillis,
-            timerBootCount
+            timerBootCount,
+            expectedEndAtElapsedRealtime
         )
     }
 
