@@ -219,9 +219,14 @@ object UpdateManager {
                         }
                     }
                 }
-                if (apkUrl.isBlank()) apkUrl = releaseUrl
+                // GitHub can occasionally return a release without its assets in the
+                // API response. Never fall back to the release page for the Download
+                // button when the release workflow uses our known APK asset name.
+                if (apkUrl.isBlank() && tagName.isNotBlank()) {
+                    apkUrl = "https://github.com/mahirlabib478-del/new-app/releases/download/v$tagName/app-release.apk"
+                }
 
-                if (tagName.isNotBlank() && releaseUrl.isNotBlank()) {
+                if (tagName.isNotBlank() && releaseUrl.isNotBlank() && apkUrl.isNotBlank()) {
                     AppUpdateInfo(
                         latestVersion = tagName,
                         minimumSupportedVersion = "0.0.0",
