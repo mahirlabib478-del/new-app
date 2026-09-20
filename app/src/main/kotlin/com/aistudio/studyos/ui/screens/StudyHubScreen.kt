@@ -17,29 +17,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -57,7 +48,6 @@ fun StudyHubScreen(
 ) {
     val savedPlans by viewModel.savedPlans.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
-    val exams by viewModel.exams.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -67,12 +57,12 @@ fun StudyHubScreen(
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Study Hub",
+                text = "Study",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Pick a path and get straight into studying",
+                text = "Choose how you want to focus.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -218,7 +208,6 @@ fun StudyHubScreen(
                 icon = Icons.AutoMirrored.Filled.MenuBook,
                 title = "Study",
                 subtitle = "Build a simple plan with multiple subjects, topics, and Pomodoro focus blocks.",
-                iconColor = MaterialTheme.colorScheme.primary,
                 testTag = "mode_study",
                 onClick = onOpenStudy
             )
@@ -229,7 +218,6 @@ fun StudyHubScreen(
                 icon = Icons.Default.Bolt,
                 title = "Quick Focus",
                 subtitle = "Start a 25-minute Pomodoro instantly without building a plan.",
-                iconColor = MaterialTheme.colorScheme.secondary,
                 testTag = "mode_quick_focus",
                 onClick = onOpenQuickFocus
             )
@@ -237,6 +225,50 @@ fun StudyHubScreen(
 
         item {
             Spacer(modifier = Modifier.height(80.dp))
+        }
+    }
+}
+
+@Composable
+private fun StudyModeCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().testTag(testTag).clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
