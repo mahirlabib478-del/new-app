@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aistudio.studyos.StudyApplication
+import com.aistudio.studyos.data.repository.StudyTimerBootRecovery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,9 +21,7 @@ class StudyTimerBootReceiver : BroadcastReceiver() {
             try {
                 val plan = StudyApplication.instance.repository.getActivePlan().firstOrNull()
                 if (
-                    plan != null &&
-                    plan.isTimerRunning &&
-                    plan.endAtWallClockMillis > System.currentTimeMillis()
+                    StudyTimerBootRecovery.shouldResume(plan, System.currentTimeMillis())
                 ) {
                     StudyTimerForegroundService.start(
                         context = context,
