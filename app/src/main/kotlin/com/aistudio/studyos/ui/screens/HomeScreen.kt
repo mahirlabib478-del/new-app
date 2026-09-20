@@ -70,7 +70,8 @@ private val THEME_PRESET_LIST = listOf(
 fun HomeScreen(
     viewModel: StudyViewModel,
     onOpenFocus: () -> Unit,
-    onOpenRegularStudy: () -> Unit,
+    onOpenStudy: () -> Unit,
+    onOpenQuickFocus: () -> Unit,
     onOpenExamPlanner: () -> Unit,
     onOpenSavedSessions: () -> Unit
 ) {
@@ -277,7 +278,7 @@ fun HomeScreen(
                                 viewModel.continueActiveSession(activePlan!!)
                                 onOpenFocus()
                             } else {
-                                onOpenRegularStudy()
+                                onOpenStudy()
                             }
                         },
                         modifier = Modifier
@@ -314,8 +315,8 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .testTag("btn_quick_regular_study")
-                        .clickable { onOpenRegularStudy() },
+                        .testTag("btn_quick_study")
+                        .clickable { onOpenStudy() },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -330,13 +331,13 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "Regular Study",
+                            text = "Study",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Blocks & chapters",
+                            text = "Plan your study",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -346,8 +347,8 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .testTag("btn_quick_exam_prep")
-                        .clickable { onOpenExamPlanner() },
+                        .testTag("btn_quick_focus")
+                        .clickable { onOpenQuickFocus() },
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -362,13 +363,13 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "Exam Prep",
+                            text = "Quick Focus",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "High-priority cram",
+                            text = "25-minute Pomodoro",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
