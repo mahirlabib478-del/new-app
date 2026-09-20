@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.data.repository.ProgressAnalyticsCalculator
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -174,6 +175,8 @@ fun ProgressScreen(
     val todayMinutes by viewModel.todayMinutes.collectAsState()
     val weeklyData = remember(allLogs) { calculateWeeklyActivity(allLogs) }
     val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
+    val activePlan by viewModel.activePlan.collectAsState()
+    val analytics = remember(allLogs, activePlan) { ProgressAnalyticsCalculator.calculate(allLogs, activePlan) }
 
     var showAllLogs by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
@@ -425,6 +428,27 @@ fun ProgressScreen(
             }
         }
 
+        item {
+            Card(modifier = Modifier.fillMaxWidth().testTag("plan_analytics_card"), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Plan & Consistency", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    if (analytics.activePlanTitle != null && analytics.plannedMinutes > 0) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(Modifier.weight(1f)) {
+                                Text(analytics.activePlanTitle, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("${analytics.actualMinutes}m completed • ${analytics.activePlanRemainingMinutes}m remaining", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Text("${analytics.planCompletionPercent}%", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                        }
+                        LinearProgressIndicator(progress = { analytics.planCompletionPercent / 100f }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(5.dp)))
+                    } else Text("No active saved plan to compare yet.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column { Text("${analytics.consistencyDays}/7 days", fontWeight = FontWeight.ExtraBold); Text("studied in the last 7 days", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        Column(horizontalAlignment = Alignment.End) { Text("${analytics.averageMinutesOnStudyDays}m", fontWeight = FontWeight.ExtraBold); Text("avg on study days", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    }
+                }
+            }
+        }
         // Gamification, Level & Next Rank Progress Card
         item {
             Card(
