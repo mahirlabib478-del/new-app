@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.data.repository.ProgressAnalyticsCalculator
+import com.aistudio.studyos.data.repository.GamificationCalculator
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -177,6 +178,7 @@ fun ProgressScreen(
     val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
     val activePlan by viewModel.activePlan.collectAsState()
     val analytics = remember(allLogs, activePlan) { ProgressAnalyticsCalculator.calculate(allLogs, activePlan) }
+    val achievements = remember(totalMins, streak, allLogs.size) { GamificationCalculator.achievements(totalMins, streak, allLogs.size) }
 
     var showAllLogs by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
@@ -449,6 +451,25 @@ fun ProgressScreen(
                 }
             }
         }
+        item {
+            Card(modifier = Modifier.fillMaxWidth().testTag("achievement_milestones_card"), shape = RoundedCornerShape(20.dp)) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Study Milestones", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    achievements.forEach { achievement ->
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(if (achievement.unlocked) "✓" else "○", fontWeight = FontWeight.Bold, color = if (achievement.unlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(achievement.title, fontWeight = FontWeight.SemiBold)
+                                Text(achievement.description, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Text(if (achievement.unlocked) "Unlocked" else "Locked", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+
         // Gamification, Level & Next Rank Progress Card
         item {
             Card(
