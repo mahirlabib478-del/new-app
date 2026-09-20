@@ -3,8 +3,6 @@ package com.aistudio.studyos.ui.screens
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
@@ -485,14 +483,8 @@ fun ProfileScreen(
                     AnimatedContent(
                         targetState = updateState,
                         transitionSpec = {
-                            (slideInVertically(
-                                initialOffsetY = { it / 8 },
-                                animationSpec = tween(150)
-                            ) + fadeIn(animationSpec = tween(150))) togetherWith
-                                (slideOutVertically(
-                                    targetOffsetY = { -it / 8 },
-                                    animationSpec = tween(150)
-                                ) + fadeOut(animationSpec = tween(150)))
+                            fadeIn(animationSpec = tween(150)) togetherWith
+                                fadeOut(animationSpec = tween(150))
                         },
                         label = "update_state_transition"
                     ) { state ->
