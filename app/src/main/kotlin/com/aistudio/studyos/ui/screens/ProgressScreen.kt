@@ -169,6 +169,7 @@ fun ProgressScreen(
     val profile by viewModel.userProfile.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
     val allLogs by viewModel.allLogs.collectAsState()
+    val todayMinutes by viewModel.todayMinutes.collectAsState()
     val weeklyData = remember(allLogs) { calculateWeeklyActivity(allLogs) }
     val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
 
@@ -350,6 +351,73 @@ fun ProgressScreen(
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+            }
+        }
+
+        item {
+            val dailyGoal = profile?.dailyGoalMinutes ?: 60
+            val todayProgress = (todayMinutes.toFloat() / dailyGoal.coerceAtLeast(1)).coerceIn(0f, 1f)
+            val remaining = (dailyGoal - todayMinutes).coerceAtLeast(0)
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("today_goal_analytics_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column {
+                            Text("Today", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(
+                                if (remaining > 0) "${todayMinutes}m studied • ${remaining}m remaining" else "${todayMinutes}m studied • Daily target reached",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .78f)
+                            )
+                        }
+                        Text(
+                            "${(todayProgress * 100).toInt()}%",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    LinearProgressIndicator(
+                        progress = { todayProgress },
+                        modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = .35f)
+                    )
+                    Text(
+                        "Daily target: ${dailyGoal / 60}h ${dailyGoal % 60}m".replace("0h 0m", "${dailyGoal}m"),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .75f)
+                    )
+                }
+            }
+        }
+
+        item {
+            val subjectTotals = allLogs.groupBy { it.subject.ifBlank { "Other" } }
+                .mapValues { (_, logs) -> logs.sumOf { it.durationMinutes } }
+                .entries.sortedByDescending { it.value }.take(4)
+            if (subjectTotals.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().testTag("subject_analytics_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Subject Breakdown", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        subjectTotals.forEach { entry ->
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Text(entry.key, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 13.sp)
+                                Text(
+                                    if (entry.value >= 60) "${entry.value / 60}h ${entry.value % 60}m" else "${entry.value}m",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                 }
             }
