@@ -3,6 +3,7 @@ package com.aistudio.studyos.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -193,11 +194,11 @@ fun StudyPlanBuilderScreen(
                             shape = RoundedCornerShape(14.dp)
                         )
 
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(end = 4.dp)
                         ) {
-                            listOf(60, 120, 180, 300, 360).forEach { minutes ->
+                            items(listOf(60, 120, 180, 300, 360)) { minutes ->
                                 FilterChip(
                                     selected = totalSessionMinutes == minutes,
                                     onClick = { totalSessionText = minutes.toString() },
@@ -451,23 +452,36 @@ fun StudyPlanBuilderScreen(
 
             item {
                 val difference = totalSessionMinutes - allocatedTotal
+                val completeSetup = totalSessionText.isNotBlank() && allocatedTotal > 0 && allTimesEntered && namesValid
+                val invalidSetup = completeSetup && (
+                    totalSessionMinutes !in 30..720 || difference != 0
+                )
                 val message = when {
-                    totalSessionMinutes == 0 -> "Enter your total session time."
+                    valid -> "Perfect — the entire session is allocated."
+                    totalSessionText.isBlank() -> "Enter your total session time."
                     allocatedTotal == 0 -> "Set topic times manually or press Split."
-                    difference == 0 -> "Perfect — the entire session is allocated."
+                    !allTimesEntered -> "Add a time to every topic, or press Split."
+                    !namesValid -> "Add a name to every subject and topic."
                     difference > 0 -> "${formatDuration(difference)} still needs to be allocated."
-                    else -> "${formatDuration(-difference)} is over the session limit."
+                    difference < 0 -> "${formatDuration(-difference)} is over the session limit."
+                    else -> "Check the session time and topic allocation."
                 }
                 Card(
                     Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        if (valid) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.errorContainer
+                        when {
+                            valid -> MaterialTheme.colorScheme.primaryContainer
+                            invalidSetup -> MaterialTheme.colorScheme.errorContainer
+                            else -> MaterialTheme.colorScheme.surfaceVariant
+                        }
                     )
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(if (valid) Icons.Default.CheckCircle else Icons.Default.Timer, null)
+                        Icon(
+                            if (valid) Icons.Default.CheckCircle else Icons.Default.Timer,
+                            null
+                        )
                         Spacer(Modifier.width(10.dp))
                         Column {
                             Text(message, fontWeight = FontWeight.Bold)
@@ -495,9 +509,10 @@ fun StudyPlanBuilderScreen(
                                 first.minutes,
                                 breakMinutes,
                                 true,
-                                finalItems
+                                finalItems,
+                                expectedTotalMinutes = totalSessionMinutes,
+                                onReady = onStartFocus
                             )
-                            onStartFocus()
                         }
                     },
                     enabled = valid,
