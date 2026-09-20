@@ -77,11 +77,7 @@ fun StudyPlanBuilderScreen(
     }
     var breakMinutes by remember { mutableStateOf(5) }
     val totalMinutes = items.sumOf { it.minutes.coerceIn(1, 720) }
-    val title = when (mode.lowercase()) {
-        "exam" -> "Exam Preparation Setup"
-        "cram" -> "Next Day Exam Cram"
-        else -> "Regular Study Setup"
-    }
+    val title = "Study Plan"
 
     LaunchedEffect(Unit) {
         if (items.isEmpty()) items.add(EditableStudyItem("Mathematics", "New Topic", 25))
@@ -107,11 +103,7 @@ fun StudyPlanBuilderScreen(
         ) {
             item {
                 Text(
-                    when (mode.lowercase()) {
-                        "exam" -> "Build your exam plan with multiple subjects and topics."
-                        "cram" -> "Add urgent topics and keep the full cram plan within 12 hours."
-                        else -> "Add as many subjects and topics as you need."
-                    },
+                    "Add subjects and topics, then choose your Pomodoro break length. Total study time can be up to 12 hours.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -229,11 +221,7 @@ fun StudyPlanBuilderScreen(
                         }
                         val first = finalItems.first()
                         viewModel.startNewPlan(
-                            title = when (mode.lowercase()) {
-                                "exam" -> "Exam Prep: ${first.subject}"
-                                "cram" -> "Next Day Cram: ${first.subject}"
-                                else -> "${first.subject}: ${first.topic}"
-                            },
+                            title = "${first.subject}: ${first.topic}",
                             subject = first.subject,
                             chapter = first.topic,
                             mode = mode.lowercase(),
