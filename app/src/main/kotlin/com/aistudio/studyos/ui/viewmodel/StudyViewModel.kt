@@ -632,6 +632,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         isTimerRunning = false,
                         endAtElapsedRealtime = 0L,
                         endAtWallClockMillis = 0L,
+                        accumulatedStudiedSeconds = updatedPlan.accumulatedStudiedSeconds + current.totalBlockSeconds,
+                        accumulatedBillableMinutes = updatedPlan.accumulatedBillableMinutes + completedBlockMinutes,
                         lastUpdated = System.currentTimeMillis()
                     ),
                     subject = current.currentSubject,
@@ -673,6 +675,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     isTimerRunning = false,
                     endAtElapsedRealtime = 0L,
                     endAtWallClockMillis = 0L,
+                    accumulatedStudiedSeconds = updatedPlan.accumulatedStudiedSeconds + current.totalBlockSeconds,
+                    accumulatedBillableMinutes = updatedPlan.accumulatedBillableMinutes + completedBlockMinutes,
                     lastUpdated = System.currentTimeMillis()
                 ),
                 subject = current.currentSubject,
