@@ -744,6 +744,58 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     private suspend fun finishFocusTransition(current: FocusTimerState) {
+        // The foreground service can finalize an expired timer while this
+        // ViewModel ticker is waking up at the same moment. Re-read the
+        // persisted plan first so the same block can never be committed twice.
+        val persistedBeforeTransition = current.planId?.let { repository.getPlanById(it) }
+        if (
+            persistedBeforeTransition != null &&
+            (
+                !persistedBeforeTransition.isTimerRunning ||
+                    persistedBeforeTransition.endAtWallClockMillis != current.endAtWallClockMillis
+                )
+        ) {
+            if (persistedBeforeTransition.isCompleted) {
+                StudyTimerForegroundService.stop(StudyApplication.instance)
+                _focusState.value = current.copy(
+                    secondsRemaining = 0,
+                    isRunning = false,
+                    isSessionCompleted = true,
+                    currentBlockIndex = persistedBeforeTransition.currentBlockIndex,
+                    completedMinutes = persistedBeforeTransition.accumulatedBillableMinutes,
+                    completedBlocks = persistedBeforeTransition.currentBlockIndex,
+                    actualStudiedSeconds = persistedBeforeTransition.accumulatedStudiedSeconds,
+                    planId = null,
+                    endAtElapsedRealtime = 0L,
+                    endAtWallClockMillis = 0L
+                )
+                return
+            }
+
+            if (
+                persistedBeforeTransition.isBreakPhase &&
+                    persistedBeforeTransition.currentBlockIndex == current.currentBlockIndex + 1
+            ) {
+                val breakSec = persistedBeforeTransition.remainingSecondsInBlock.coerceAtLeast(1)
+                val nextItem = currentPlanItems.getOrNull(persistedBeforeTransition.currentBlockIndex)
+                _focusState.value = current.copy(
+                    isBreak = true,
+                    secondsRemaining = breakSec,
+                    totalBlockSeconds = breakSec,
+                    currentBlockIndex = persistedBeforeTransition.currentBlockIndex,
+                    actualStudiedSeconds = persistedBeforeTransition.accumulatedStudiedSeconds,
+                    completedMinutes = persistedBeforeTransition.accumulatedBillableMinutes,
+                    isRunning = false,
+                    currentSubject = nextItem?.subject ?: current.currentSubject,
+                    currentChapter = nextItem?.topic ?: current.currentChapter,
+                    endAtElapsedRealtime = 0L,
+                    endAtWallClockMillis = 0L
+                )
+                startTimerInternal()
+                return
+            }
+        }
+
         val completedBlockMinutes = SessionResultCalculator.billableMinutes(current.totalBlockSeconds)
         val nextBlockIndex = current.currentBlockIndex + 1
         val newActualSeconds = current.actualStudiedSeconds + current.totalBlockSeconds
