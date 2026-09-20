@@ -80,8 +80,9 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
     val progress = if (total > 0) ((total - seconds).toFloat() / total).coerceIn(0f, 1f) else 0f
     val mins = seconds / 60; val secs = seconds % 60
     val text = "%02d:%02d".format(mins, secs)
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
     Box(Modifier.size(270.dp).testTag("focus_timer_circle"), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize().drawWithCache { val stroke = 14.dp.toPx(); val bg = Stroke(stroke); val fg = Stroke(stroke, cap = StrokeCap.Round); onDrawBehind { drawCircle(MaterialTheme.colorScheme.surfaceVariant, style = bg); drawArc(accent, -90f, progress * 360f, false, style = fg) } }) {}
+        Canvas(Modifier.fillMaxSize().drawWithCache { val stroke = 14.dp.toPx(); val bg = Stroke(stroke); val fg = Stroke(stroke, cap = StrokeCap.Round); onDrawBehind { drawCircle(trackColor, style = bg); drawArc(accent, -90f, progress * 360f, false, style = fg) } }) {}
         Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(text, fontSize = 56.sp, fontWeight = FontWeight.Black, letterSpacing = (-1).sp); Text(if (running) "In progress" else "Paused", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
