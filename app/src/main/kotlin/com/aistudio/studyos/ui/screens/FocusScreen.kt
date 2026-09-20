@@ -176,7 +176,7 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             Spacer(Modifier.height(14.dp))
 
             if (state.isBreak) {
-                BreakWellnessCard(accent)
+                BreakWellnessCard(accent, state.isRunning)
             } else {
                 FocusInfoCard(
                     subject = state.currentSubject,
@@ -274,18 +274,13 @@ private fun CircularTimerDisplay(
                 letterSpacing = (-1).sp
             )
             Text(
-                when {
-                    stateRunningLabel(running) -> "In progress"
-                    else -> "Paused"
-                },
+                if (running) "In progress" else "Paused",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
-
-private fun stateRunningLabel(running: Boolean): Boolean = running
 
 @Composable
 private fun FocusInfoCard(
@@ -328,7 +323,7 @@ private fun FocusInfoCard(
 }
 
 @Composable
-private fun BreakWellnessCard(accent: Color) {
+private fun BreakWellnessCard(accent: Color, running: Boolean) {
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -363,7 +358,7 @@ private fun BreakWellnessCard(accent: Color) {
             }
 
             Text(
-                if (stateIsRunningPlaceholder()) "Next focus block starts automatically when this break ends." else "Break timer is paused.",
+                if (running) "Next focus block starts automatically when this break ends." else "Break timer is paused.",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = accent
@@ -371,8 +366,6 @@ private fun BreakWellnessCard(accent: Color) {
         }
     }
 }
-
-private fun stateIsRunningPlaceholder(): Boolean = true
 
 @Composable
 private fun WellnessTip(
