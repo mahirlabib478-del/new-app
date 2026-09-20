@@ -152,6 +152,137 @@ class StudyRepository(
         )
     }
 
+    /**
+     * Finalizes an expired foreground timer using the persisted plan as the
+     * single source of truth. The expected deadline makes this operation
+     * idempotent and prevents stale service commands from advancing a newer
+     * timer.
+     */
+    suspend fun expireRunningPlanIfNeeded(
+        planId: Long,
+        expectedEndAtWallClockMillis: Long
+    ): Boolean {
+        if (planId <= 0L || expectedEndAtWallClockMillis <= 0L) return false
+
+        return database.withTransaction {
+            val plan = database.studyPlanDao().getPlanById(planId) ?: return@withTransaction false
+            val now = System.currentTimeMillis()
+
+            if (
+                plan.isCompleted ||
+                !plan.isTimerRunning ||
+                plan.endAtWallClockMillis != expectedEndAtWallClockMillis ||
+                expectedEndAtWallClockMillis > now
+            ) {
+                return@withTransaction false
+            }
+
+            val items = if (plan.planItems.isBlank()) {
+                List(plan.totalBlocks.coerceIn(1, 720)) {
+                    com.aistudio.studyos.data.local.entity.StudyPlanItem(
+                        plan.subject,
+                        plan.chapter,
+                        plan.durationPerBlockMinutes.coerceIn(1, 25)
+                    )
+                }
+            } else {
+                StudyPlanItemCodec.decodeStrict(plan.planItems) ?: return@withTransaction false
+            }
+
+            val safeItems = items.flatMap { item ->
+                buildList {
+                    var remaining = item.minutes.coerceIn(1, 720)
+                    while (remaining > 25) {
+                        add(item.copy(minutes = 25))
+                        remaining -= 25
+                    }
+                    add(item.copy(minutes = remaining))
+                }
+            }.takeIf { it.isNotEmpty() } ?: return@withTransaction false
+
+            val index = plan.currentBlockIndex.coerceIn(0, safeItems.lastIndex)
+            val currentItem = safeItems[index]
+
+            if (plan.isBreakPhase) {
+                // Break expiry only opens the next focus block. It never adds
+                // break time to studied totals.
+                val blockSeconds = safeItems[index].minutes * 60
+                database.studyPlanDao().updatePlan(
+                    plan.copy(
+                        remainingSecondsInBlock = blockSeconds,
+                        durationPerBlockMinutes = safeItems[index].minutes,
+                        isBreakPhase = false,
+                        isTimerRunning = false,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L,
+                        lastUpdated = now
+                    )
+                )
+                false
+            } else {
+                val completedMinutes = SessionResultCalculator.billableMinutes(currentItem.minutes * 60)
+                val newStudiedSeconds = plan.accumulatedStudiedSeconds + currentItem.minutes * 60
+                val newCompletedMinutes = plan.accumulatedBillableMinutes + completedMinutes
+                val nextIndex = index + 1
+                val sessionComplete =
+                    nextIndex >= safeItems.size ||
+                        newStudiedSeconds >= plan.totalDurationMinutes.coerceAtLeast(0) * 60
+
+                if (sessionComplete) {
+                    database.studyPlanDao().updatePlan(
+                        plan.copy(
+                            currentBlockIndex = nextIndex,
+                            remainingSecondsInBlock = 0,
+                            isBreakPhase = false,
+                            isTimerRunning = false,
+                            endAtElapsedRealtime = 0L,
+                            endAtWallClockMillis = 0L,
+                            isCompleted = true,
+                            accumulatedStudiedSeconds = newStudiedSeconds,
+                            accumulatedBillableMinutes = newCompletedMinutes,
+                            lastUpdated = now
+                        )
+                    )
+                    if (completedMinutes > 0) {
+                        recordCompletedSession(
+                            currentItem.subject,
+                            currentItem.topic,
+                            completedMinutes,
+                            plan.mode
+                        )
+                    }
+                    true
+                } else {
+                    val breakSeconds = plan.breakMinutes.coerceIn(0, 120) * 60
+                    database.studyPlanDao().updatePlan(
+                        plan.copy(
+                            currentBlockIndex = nextIndex,
+                            durationPerBlockMinutes = safeItems[nextIndex].minutes,
+                            remainingSecondsInBlock = breakSeconds.coerceAtLeast(1),
+                            isBreakPhase = true,
+                            isTimerRunning = false,
+                            endAtElapsedRealtime = 0L,
+                            endAtWallClockMillis = 0L,
+                            isCompleted = false,
+                            accumulatedStudiedSeconds = newStudiedSeconds,
+                            accumulatedBillableMinutes = newCompletedMinutes,
+                            lastUpdated = now
+                        )
+                    )
+                    if (completedMinutes > 0) {
+                        recordCompletedSession(
+                            currentItem.subject,
+                            currentItem.topic,
+                            completedMinutes,
+                            plan.mode
+                        )
+                    }
+                    false
+                }
+            }
+        }
+    }
+
     suspend fun updateSessionProgress(
         planId: Long,
         remainingSec: Int,
