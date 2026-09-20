@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -34,11 +35,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.service.AmbientSoundManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,8 +68,12 @@ fun FocusScreen(
     val state by viewModel.focusState.collectAsState()
     val primaryColor = if (state.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
     var showEndDialog by remember { mutableStateOf(false) }
+    var ambientPreset by remember { mutableStateOf(AmbientSoundManager.Preset.RAIN) }
+    var ambientVolume by remember { mutableStateOf(0.35f) }
+    var ambientPlaying by remember { mutableStateOf(false) }
 
     if (state.isSessionCompleted) {
+        AmbientSoundManager.stop()
         StudySessionCompleteScreen(
             completedMinutes = state.completedMinutes,
             completedBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks),
@@ -89,6 +97,7 @@ fun FocusScreen(
                     onClick = {
                         showEndDialog = false
                         viewModel.finishActiveSessionEarly()
+                        AmbientSoundManager.stop()
                         onBack()
                     }
                 ) {
@@ -109,7 +118,10 @@ fun FocusScreen(
                 subject = state.currentSubject,
                 chapter = state.currentChapter,
                 isRunning = state.isRunning,
-                onBack = onBack,
+                onBack = {
+                    AmbientSoundManager.stop()
+                    onBack()
+                },
                 onEndSession = { showEndDialog = true }
             )
         }
@@ -176,6 +188,33 @@ fun FocusScreen(
                 isBreak = state.isBreak,
                 isRunning = state.isRunning,
                 primaryColor = primaryColor
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            AmbientSoundCard(
+                preset = ambientPreset,
+                volume = ambientVolume,
+                isPlaying = ambientPlaying,
+                onPresetChange = {
+                    ambientPreset = it
+                    if (ambientPlaying) {
+                        AmbientSoundManager.play(it, ambientVolume)
+                    }
+                },
+                onVolumeChange = {
+                    ambientVolume = it
+                    AmbientSoundManager.setVolume(it)
+                },
+                onToggle = {
+                    if (ambientPlaying) {
+                        AmbientSoundManager.stop()
+                        ambientPlaying = false
+                    } else {
+                        AmbientSoundManager.play(ambientPreset, ambientVolume)
+                        ambientPlaying = true
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -467,6 +506,72 @@ private fun FocusSessionInfoCard(
                     color = if (isRunning) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun AmbientSoundCard(
+    preset: AmbientSoundManager.Preset,
+    volume: Float,
+    isPlaying: Boolean,
+    onPresetChange: (AmbientSoundManager.Preset) -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onToggle: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().testTag("ambient_sound_card"),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.VolumeUp,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Ambient Sound", fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isPlaying) preset.label else "Off",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = onToggle, modifier = Modifier.testTag("btn_toggle_ambient")) {
+                    Text(if (isPlaying) "Stop" else "Play")
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AmbientSoundManager.Preset.values().forEach { option ->
+                    TextButton(
+                        onClick = { onPresetChange(option) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            option.label.substringBefore(" ").take(8),
+                            fontSize = 10.sp,
+                            fontWeight = if (option == preset) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
+
+            Slider(
+                value = volume,
+                onValueChange = onVolumeChange,
+                valueRange = 0f..1f,
+                modifier = Modifier.fillMaxWidth().testTag("ambient_volume_slider")
+            )
         }
     }
 }
