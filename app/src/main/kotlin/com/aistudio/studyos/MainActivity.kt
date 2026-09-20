@@ -10,8 +10,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -150,14 +148,8 @@ fun MainApp(
                 Column {
                     AnimatedVisibility(
                         visible = focusState.planId != null,
-                        enter = slideInVertically(
-                            initialOffsetY = { it },
-                            animationSpec = tween(150)
-                        ) + fadeIn(animationSpec = tween(150)),
-                        exit = slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = tween(150)
-                        ) + fadeOut(animationSpec = tween(150))
+                        enter = fadeIn(animationSpec = tween(180)),
+                        exit = fadeOut(animationSpec = tween(180))
                     ) {
                         ActiveSessionMiniBar(
                             focusState = focusState,
@@ -205,10 +197,10 @@ fun MainApp(
             // Keep navigation visually smooth and consistent across devices.
             // Fade-only avoids scale/layout movement that can feel like a snap on 60Hz devices.
             enterTransition = {
-                fadeIn(animationSpec = tween(150))
+                fadeIn(animationSpec = tween(180))
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(150))
+                fadeOut(animationSpec = tween(180))
             },
             popEnterTransition = {
                 fadeIn(animationSpec = tween(150))
