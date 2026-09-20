@@ -177,12 +177,27 @@ class StudyRepository(
     suspend fun completePlanEarly(
         planId: Long,
         minutesStudied: Int,
+        studiedSeconds: Int,
         subject: String,
         chapter: String,
-        mode: String = "early_finish"
+        mode: String = "early_finish",
+        nextBlockIndex: Int? = null
     ) {
         database.withTransaction {
-            database.studyPlanDao().markPlanCompleted(planId)
+            val plan = database.studyPlanDao().getPlanById(planId) ?: return@withTransaction
+            database.studyPlanDao().updatePlan(
+                plan.copy(
+                    currentBlockIndex = nextBlockIndex ?: plan.currentBlockIndex,
+                    remainingSecondsInBlock = 0,
+                    isTimerRunning = false,
+                    endAtElapsedRealtime = 0L,
+                    endAtWallClockMillis = 0L,
+                    accumulatedStudiedSeconds = plan.accumulatedStudiedSeconds + studiedSeconds.coerceAtLeast(0),
+                    accumulatedBillableMinutes = plan.accumulatedBillableMinutes + minutesStudied.coerceAtLeast(0),
+                    isCompleted = true,
+                    lastUpdated = System.currentTimeMillis()
+                )
+            )
             if (minutesStudied > 0) {
                 recordCompletedSession(subject, chapter, minutesStudied, mode)
             }
