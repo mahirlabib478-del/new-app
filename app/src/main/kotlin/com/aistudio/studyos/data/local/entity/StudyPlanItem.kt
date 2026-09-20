@@ -1,6 +1,6 @@
 package com.aistudio.studyos.data.local.entity
 
-import android.util.Base64
+import java.util.Base64
 
 data class StudyPlanItem(
     val subject: String,
@@ -13,7 +13,7 @@ object StudyPlanItemCodec {
         items.joinToString("\n") { item ->
             listOf(item.subject, item.topic, item.minutes.toString())
                 .joinToString("|") { value ->
-                    Base64.encodeToString(value.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
+                    Base64.getEncoder().encodeToString(value.toByteArray(Charsets.UTF_8))
                 }
         }
 
@@ -23,8 +23,8 @@ object StudyPlanItemCodec {
             if (parts.size != 3) return@mapNotNull null
             runCatching {
                 StudyPlanItem(
-                    subject = String(Base64.decode(parts[0], Base64.NO_WRAP), Charsets.UTF_8),
-                    topic = String(Base64.decode(parts[1], Base64.NO_WRAP), Charsets.UTF_8),
+                    subject = String(Base64.getDecoder().decode(parts[0]), Charsets.UTF_8),
+                    topic = String(Base64.getDecoder().decode(parts[1]), Charsets.UTF_8),
                     minutes = parts[2].toInt().coerceIn(1, 720)
                 )
             }.getOrNull()
