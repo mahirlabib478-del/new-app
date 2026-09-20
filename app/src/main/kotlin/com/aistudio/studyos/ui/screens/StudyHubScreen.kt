@@ -22,23 +22,17 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,215 +50,14 @@ import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 @Composable
 fun StudyHubScreen(
     viewModel: StudyViewModel,
-    onOpenRegularStudy: () -> Unit,
-    onOpenExamPlanner: () -> Unit,
+    onOpenStudy: () -> Unit,
+    onOpenQuickFocus: () -> Unit,
     onOpenSavedSessions: () -> Unit,
-    onOpenFocus: () -> Unit,
-    onOpenCramSetup: (String, String) -> Unit
+    onOpenFocus: () -> Unit
 ) {
     val savedPlans by viewModel.savedPlans.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
     val exams by viewModel.exams.collectAsState()
-
-    var showCramDialog by remember { mutableStateOf(false) }
-
-    if (showCramDialog) {
-        var cramSubject by remember {
-            mutableStateOf(
-                exams.firstOrNull { it.daysRemaining <= 2 && !it.isCompleted }?.subject
-                    ?: exams.firstOrNull { !it.isCompleted }?.subject
-                    ?: "Mathematics"
-            )
-        }
-        var cramTopic by remember { mutableStateOf("Formulas & High-Yield Problems") }
-        var cramBlocks by remember { mutableIntStateOf(3) }
-        var cramMinutes by remember { mutableIntStateOf(20) }
-
-        AlertDialog(
-            onDismissRequest = { showCramDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Bolt,
-                        contentDescription = null,
-                        tint = Color(0xFFF59E0B),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Next Day Exam Cram", fontWeight = FontWeight.Bold)
-                }
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = "Rapid blitz session designed for maximum retention right before an exam.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // Urgent exam recommendations if available
-                    val urgentExams = exams.filter { !it.isCompleted }
-                    if (urgentExams.isNotEmpty()) {
-                        Text(
-                            text = "Select Upcoming Exam:",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            urgentExams.take(3).forEach { exam ->
-                                val isSelected = cramSubject == exam.subject
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = {
-                                        cramSubject = exam.subject
-                                        if (exam.syllabusTopics.isNotBlank()) {
-                                            cramTopic = exam.syllabusTopics
-                                        }
-                                    },
-                                    label = {
-                                        Text(
-                                            "${exam.subject} (${exam.daysRemaining}d)",
-                                            fontSize = 11.sp
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color(0xFFF59E0B).copy(alpha = 0.2f),
-                                        selectedLabelColor = Color(0xFFD97706)
-                                    )
-                                )
-                            }
-                        }
-                    }
-
-                    OutlinedTextField(
-                        value = cramSubject,
-                        onValueChange = { cramSubject = it },
-                        label = { Text("Exam Subject") },
-                        modifier = Modifier.fillMaxWidth().testTag("input_cram_subject"),
-                        singleLine = true
-                    )
-
-                    OutlinedTextField(
-                        value = cramTopic,
-                        onValueChange = { cramTopic = it },
-                        label = { Text("High-Yield Topics / Formulas") },
-                        modifier = Modifier.fillMaxWidth().testTag("input_cram_topic"),
-                        singleLine = true
-                    )
-
-                    Text(
-                        text = "Cram Sprint Format:",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        // Preset 1: Blitz 20m x 3
-                        FilterChip(
-                            selected = cramMinutes == 20 && cramBlocks == 3,
-                            onClick = {
-                                cramMinutes = 20
-                                cramBlocks = 3
-                            },
-                            label = { Text("20m × 3 blocks", fontSize = 11.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        // Preset 2: Formula 15m x 4
-                        FilterChip(
-                            selected = cramMinutes == 15 && cramBlocks == 4,
-                            onClick = {
-                                cramMinutes = 15
-                                cramBlocks = 4
-                            },
-                            label = { Text("15m × 4 blocks", fontSize = 11.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        // Preset 3: Deep 30m x 2
-                        FilterChip(
-                            selected = cramMinutes == 30 && cramBlocks == 2,
-                            onClick = {
-                                cramMinutes = 30
-                                cramBlocks = 2
-                            },
-                            label = { Text("30m × 2 blocks", fontSize = 11.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(
-                            onClick = {
-                                showCramDialog = false
-                                onOpenExamPlanner()
-                            }
-                        ) {
-                            Text("Open Exam Planner", fontSize = 12.sp)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val sub = cramSubject.ifBlank { "Exam Cram" }
-                        val top = cramTopic.ifBlank { "High-Yield Topics" }
-                        viewModel.startNewPlan(
-                            title = "Next Day Cram: $sub",
-                            subject = sub,
-                            chapter = top,
-                            mode = "cram",
-                            totalBlocks = cramBlocks,
-                            blockMinutes = cramMinutes,
-                            breakMinutes = 3,
-                            autoStart = true
-                        )
-                        showCramDialog = false
-                        onOpenFocus()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFF59E0B)
-                    ),
-                    modifier = Modifier.testTag("btn_confirm_start_cram")
-                ) {
-                    Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Start Cram Now", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = {
-                        val sub = cramSubject.ifBlank { "Exam Cram" }
-                        val top = cramTopic.ifBlank { "High-Yield Topics" }
-                        viewModel.saveDraftPlan(
-                            title = "Next Day Cram: $sub (Draft)",
-                            subject = sub,
-                            chapter = top,
-                            mode = "cram",
-                            totalBlocks = cramBlocks,
-                            blockMinutes = cramMinutes,
-                            breakMinutes = 3
-                        )
-                        showCramDialog = false
-                    },
-                    modifier = Modifier.testTag("btn_save_cram_draft")
-                ) {
-                    Text("Save Draft")
-                }
-            }
-        )
-    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -413,111 +206,37 @@ fun StudyHubScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Study Modes",
+                    text = "Study",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
 
-        // Mode 1: Regular Study
         item {
             StudyModeCard(
                 icon = Icons.AutoMirrored.Filled.MenuBook,
-                title = "Regular Study",
-                subtitle = "Plan subjects, chapters, and structured Pomodoro focus blocks.",
+                title = "Study",
+                subtitle = "Build a simple plan with multiple subjects, topics, and Pomodoro focus blocks.",
                 iconColor = MaterialTheme.colorScheme.primary,
-                testTag = "mode_regular_study",
-                onClick = onOpenRegularStudy
+                testTag = "mode_study",
+                onClick = onOpenStudy
             )
         }
 
-        // Mode 2: Exam Preparation
-        item {
-            StudyModeCard(
-                icon = Icons.Default.AutoAwesome,
-                title = "Exam Preparation",
-                subtitle = "Priority-based syllabus planner, revision tracking, and exam countdowns.",
-                iconColor = Color(0xFF6366F1),
-                testTag = "mode_exam_prep",
-                onClick = onOpenExamPlanner
-            )
-        }
-
-        // Mode 3: Next Day Cram
         item {
             StudyModeCard(
                 icon = Icons.Default.Bolt,
-                title = "Next Day Exam",
-                subtitle = "Fast revision cram mode: brings urgent high-priority topics forward.",
-                iconColor = Color(0xFFF59E0B),
-                testTag = "mode_next_day_exam",
-                onClick = { showCramDialog = true }
+                title = "Quick Focus",
+                subtitle = "Start a 25-minute Pomodoro instantly without building a plan.",
+                iconColor = MaterialTheme.colorScheme.secondary,
+                testTag = "mode_quick_focus",
+                onClick = onOpenQuickFocus
             )
         }
 
         item {
             Spacer(modifier = Modifier.height(80.dp))
-        }
-    }
-}
-
-@Composable
-fun StudyModeCard(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    iconColor: Color,
-    testTag: String,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(testTag)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
