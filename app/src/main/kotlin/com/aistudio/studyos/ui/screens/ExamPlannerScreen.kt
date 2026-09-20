@@ -296,7 +296,7 @@ fun ExamPlannerScreen(
                                 ) {
                                     Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Customize Prep", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Create Study Plan", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
