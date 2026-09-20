@@ -567,7 +567,10 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         viewModelScope.launch {
             transitionMutex.withLock {
                 try {
-                    val elapsedInCurrentBlock = currentElapsedSeconds(current)
+                    val elapsedInCurrentBlock = SessionResultCalculator.studiedSecondsForEarlyFinish(
+                        isBreak = current.isBreak,
+                        elapsedSeconds = currentElapsedSeconds(current)
+                    )
                     val totalStudiedSec = current.actualStudiedSeconds + elapsedInCurrentBlock
                     val partialMinutes = SessionResultCalculator.billableMinutes(elapsedInCurrentBlock)
                     val totalStudiedMin = current.completedMinutes + partialMinutes
