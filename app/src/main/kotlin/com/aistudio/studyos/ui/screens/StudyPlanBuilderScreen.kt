@@ -208,7 +208,7 @@ fun StudyPlanBuilderScreen(
                         )
 
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Splitscreen, contentDescription = null, modifier = Modifier.width(20.dp))
+                            Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.width(20.dp))
                             Spacer(Modifier.width(7.dp))
                             Text("Split into focus sessions", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                             FilterChip(
