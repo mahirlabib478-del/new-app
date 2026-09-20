@@ -164,7 +164,8 @@ private fun calculateWeeklyActivity(logs: List<SessionLogEntity>): List<DayActiv
 
 @Composable
 fun ProgressScreen(
-    viewModel: StudyViewModel
+    viewModel: StudyViewModel,
+    onOpenHistory: () -> Unit = {}
 ) {
     val profile by viewModel.userProfile.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
@@ -707,7 +708,19 @@ fun ProgressScreen(
             }
         }
 
-        // Session History Log Header & Filter
+                item {
+            OutlinedButton(
+                onClick = onOpenHistory,
+                modifier = Modifier.fillMaxWidth().testTag("open_history_button"),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("View Full History")
+            }
+        }
+
+// Session History Log Header & Filter
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
