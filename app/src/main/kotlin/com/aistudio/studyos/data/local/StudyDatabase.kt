@@ -49,8 +49,6 @@ abstract class StudyDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE study_plans ADD COLUMN endAtElapsedRealtime INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE study_plans ADD COLUMN endAtWallClockMillis INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE study_plans ADD COLUMN timerBootCount INTEGER NOT NULL DEFAULT -1")
-                db.execSQL("ALTER TABLE study_plans ADD COLUMN accumulatedStudiedSeconds INTEGER NOT NULL DEFAULT 0")
-                db.execSQL("ALTER TABLE study_plans ADD COLUMN accumulatedBillableMinutes INTEGER NOT NULL DEFAULT 0")
             }
         }
 
