@@ -147,7 +147,8 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 .padding(horizontal = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(6.dp))
+            // Compact header/progress area. The timer gets the full remaining viewport.
+            Spacer(Modifier.height(4.dp))
 
             Surface(
                 shape = RoundedCornerShape(50.dp),
@@ -174,7 +175,7 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
 
             Text(
                 "Block ${minOf(state.currentBlockIndex + 1, state.totalBlocks)} of ${state.totalBlocks}",
@@ -182,7 +183,7 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(Modifier.height(7.dp))
+            Spacer(Modifier.height(5.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 repeat(state.totalBlocks.coerceAtMost(12)) { index ->
@@ -202,34 +203,44 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(15.dp))
+            // The middle area owns all flexible space, keeping the timer centered
+            // instead of leaving a visible blank gap underneath it.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CircularTimerDisplay(
+                        seconds = state.secondsRemaining,
+                        total = state.totalBlockSeconds,
+                        running = state.isRunning,
+                        accent = accent
+                    )
 
-            CircularTimerDisplay(
-                seconds = state.secondsRemaining,
-                total = state.totalBlockSeconds,
-                running = state.isRunning,
-                accent = accent
-            )
-
-            Spacer(Modifier.height(14.dp))
-
-            if (state.isBreak) {
-                BreakRechargeView(accent = accent, running = state.isRunning)
-            } else {
-                FocusInfoCard(
-                    subject = state.currentSubject,
-                    topic = state.currentChapter,
-                    minutes = state.totalBlockSeconds / 60,
-                    accent = accent
-                )
+                    if (state.isBreak) {
+                        BreakRechargeView(accent = accent, running = state.isRunning)
+                    } else {
+                        FocusInfoCard(
+                            subject = state.currentSubject,
+                            topic = state.currentChapter,
+                            minutes = state.totalBlockSeconds / 60,
+                            accent = accent
+                        )
+                    }
+                }
             }
 
-            Spacer(Modifier.height(14.dp))
-
+            // Controls are anchored to the bottom of the screen.
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 18.dp),
+                    .navigationBarsPadding()
+                    .padding(top = 6.dp, bottom = 10.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
