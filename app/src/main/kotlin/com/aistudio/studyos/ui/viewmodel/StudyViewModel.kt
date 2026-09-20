@@ -475,11 +475,24 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val wallValid = plan.isTimerRunning && plan.endAtWallClockMillis > nowWall
         val isRunning = elapsedValid || wallValid
         val remainingSec = if (isRunning) {
+            val totalBlockSeconds = if (plan.isBreakPhase) breakSec else studySec
             if (elapsedValid) {
-                ceilSeconds((plan.endAtElapsedRealtime - nowElapsed) / 1000L)
+                TimerDeadlineCalculator.remainingSeconds(
+                    endAtElapsedRealtime = plan.endAtElapsedRealtime,
+                    endAtWallClockMillis = plan.endAtWallClockMillis,
+                    nowElapsedRealtime = nowElapsed,
+                    nowWallClockMillis = nowWall,
+                    totalBlockSeconds = totalBlockSeconds
+                )
             } else {
-                ceilSeconds((plan.endAtWallClockMillis - nowWall) / 1000L)
-            }.coerceIn(1, if (plan.isBreakPhase) breakSec else studySec)
+                TimerDeadlineCalculator.remainingSeconds(
+                    endAtElapsedRealtime = nowElapsed,
+                    endAtWallClockMillis = plan.endAtWallClockMillis,
+                    nowElapsedRealtime = nowElapsed,
+                    nowWallClockMillis = nowWall,
+                    totalBlockSeconds = totalBlockSeconds
+                )
+            }.coerceIn(1, totalBlockSeconds)
         } else {
             plan.remainingSecondsInBlock.coerceIn(1, if (plan.isBreakPhase) breakSec else studySec)
         }
