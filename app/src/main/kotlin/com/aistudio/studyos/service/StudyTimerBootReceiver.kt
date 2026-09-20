@@ -7,6 +7,7 @@ import com.aistudio.studyos.StudyApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class StudyTimerBootReceiver : BroadcastReceiver() {
