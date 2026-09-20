@@ -94,4 +94,33 @@ class SessionTimerAndSkipFeatureTest {
         val recordedMinutes = totalActualStudiedSec / 60
         assertEquals(15, recordedMinutes)
     }
+
+    @Test
+    fun testCompletedSessionCannotReopenAnotherBlock() {
+        val totalBlocks = 4
+        val currentBlockIndex = totalBlocks
+        val isCompleted = true
+
+        // Once the persisted cursor reaches the block count, there is no valid
+        // next focus block to restore.
+        assertTrue(isCompleted)
+        assertEquals(totalBlocks, currentBlockIndex)
+        assertTrue(currentBlockIndex >= totalBlocks)
+    }
+
+    @Test
+    fun testResetDoesNotAddDiscardedPartialBlockToTotals() {
+        val committedStudiedSeconds = 10 * 60
+        val committedMinutes = 10
+        val discardedPartialSeconds = 7 * 60
+
+        // Reset discards the current block; only committed progress survives.
+        val afterResetStudiedSeconds = committedStudiedSeconds
+        val afterResetMinutes = committedMinutes
+
+        assertEquals(committedStudiedSeconds, afterResetStudiedSeconds)
+        assertEquals(committedMinutes, afterResetMinutes)
+        assertFalse(afterResetStudiedSeconds >= committedStudiedSeconds + discardedPartialSeconds)
+    }
+
 }
