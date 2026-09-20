@@ -416,7 +416,19 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             actualStudiedSeconds = priorCompletedSeconds
         )
 
-        if (isRunning) startTimerInternal()
+        if (isRunning) {
+            startTimerInternal()
+        } else if (plan.isTimerRunning) {
+            // The process may have been killed after the persisted end time.
+            // Re-enter the same state machine transition instead of reviving an old countdown.
+            val expiredState = _focusState.value.copy(
+                isRunning = true,
+                endAtElapsedRealtime = nowElapsed,
+                endAtWallClockMillis = nowWall
+            )
+            _focusState.value = expiredState
+            onBlockFinished()
+        }
     }
 
     fun setupFocusSession(plan: StudyPlanEntity) = continueActiveSession(plan)
