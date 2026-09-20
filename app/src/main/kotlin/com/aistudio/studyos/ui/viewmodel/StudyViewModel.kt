@@ -75,6 +75,15 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val transitionMutex = Mutex()
     @Volatile private var transitionInProgress = false
 
+    // Automatic restore is allowed only once, when this ViewModel is created.
+    // Explicitly starting/resuming a session disables it so an old active-plan
+    // Flow emission can never overwrite the newly created timer.
+    @Volatile private var automaticRestoreEnabled = true
+
+    // Every timer loop gets a unique generation. A cancelled/old loop is never
+    // allowed to publish another countdown value.
+    private var timerGeneration = 0L
+
     private val _currentTheme = MutableStateFlow(repository.getInitialTheme())
     val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
 
@@ -124,8 +133,19 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
         viewModelScope.launch {
             activePlan.collect { plan ->
-                // Auto-restore active session if memory was empty (cold boot or process recreation)
-                if (plan != null && _focusState.value.planId == null) {
+                // Restore only on a fresh ViewModel. Do not use planId == null as
+                // the restore signal: completion and explicit new-session creation
+                // also temporarily have a null planId.
+                if (
+                    automaticRestoreEnabled &&
+                    plan != null &&
+                    !plan.isCompleted &&
+                    !plan.isArchived &&
+                    !plan.isDraft &&
+                    _focusState.value.planId == null &&
+                    !_focusState.value.isSessionCompleted
+                ) {
+                    automaticRestoreEnabled = false
                     continueActiveSession(plan)
                 }
             }
@@ -188,6 +208,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         expectedTotalMinutes: Int? = null,
         onReady: (() -> Unit)? = null
     ) {
+        // Disable automatic restoration immediately, before the coroutine starts.
+        // This closes the race where activePlan emits an old plan while a new
+        // session is being created.
+        automaticRestoreEnabled = false
+        stopTimerJob()
+
         viewModelScope.launch {
             transitionMutex.withLock {
                 if (transitionInProgress) return@withLock
@@ -591,14 +617,20 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         if (current.sessionError != null || current.isSessionCompleted || current.secondsRemaining <= 0) return
 
         timerJob?.cancel()
+        // Starting/resuming is always a fresh countdown from the state's
+        // current remaining seconds. Never reuse an old deadline here.
+        // Reusing a previous deadline was the source of stale values such as 00:02
+        // appearing immediately after a new session was opened.
         val previousEndElapsed = current.endAtElapsedRealtime
         val nowElapsed = SystemClock.elapsedRealtime()
         val nowWall = System.currentTimeMillis()
         val bootCount = currentBootCount()
-        val endElapsed = if (current.endAtElapsedRealtime > nowElapsed) current.endAtElapsedRealtime else nowElapsed + current.secondsRemaining * 1000L
-        val endWall = if (current.endAtWallClockMillis > nowWall) current.endAtWallClockMillis else nowWall + current.secondsRemaining * 1000L
+        val durationSec = current.secondsRemaining.coerceIn(1, current.totalBlockSeconds.coerceAtLeast(1))
+        val endElapsed = nowElapsed + durationSec * 1000L
+        val endWall = nowWall + durationSec * 1000L
         _focusState.value = current.copy(
             isRunning = true,
+            secondsRemaining = durationSec,
             endAtElapsedRealtime = endElapsed,
             endAtWallClockMillis = endWall
         )
@@ -631,16 +663,25 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             )
         }
 
+        val generation = ++timerGeneration
         timerJob = viewModelScope.launch {
-            while (isActive && _focusState.value.isRunning) {
+            while (isActive && generation == timerGeneration) {
                 val state = _focusState.value
+                if (!state.isRunning || state.planId == null || state.isSessionCompleted) break
+
                 val remaining = remainingFromState(state)
                 if (remaining <= 0) {
-                    _focusState.value = state.copy(secondsRemaining = 0)
+                    _focusState.value = state.copy(
+                        secondsRemaining = 0,
+                        isRunning = false
+                    )
                     onBlockFinished()
                     break
                 }
-                _focusState.value = state.copy(secondsRemaining = remaining)
+
+                if (state.secondsRemaining != remaining) {
+                    _focusState.value = state.copy(secondsRemaining = remaining)
+                }
                 delay(250)
             }
         }
@@ -947,6 +988,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     fun dismissSessionCompletion() {
+        // Keep automatic restore disabled for the lifetime of this ViewModel.
+        // A new session is created explicitly through startNewPlan().
+        automaticRestoreEnabled = false
         _focusState.value = FocusTimerState()
         currentPlanItems = emptyList()
     }
@@ -1009,6 +1053,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     private fun stopTimerJob() {
+        timerGeneration++
         timerJob?.cancel()
         timerJob = null
     }
