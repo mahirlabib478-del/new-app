@@ -279,7 +279,7 @@ fun StudyPlanBuilderScreen(
                         }
                     },
                     enabled = totalMinutes < 720,
-                    Modifier.fillMaxWidth().testTag("btn_add_study_topic"),
+                    modifier = Modifier.fillMaxWidth().testTag("btn_add_study_topic"),
                     shape = RoundedCornerShape(15.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
@@ -316,7 +316,7 @@ fun StudyPlanBuilderScreen(
 
             item {
                 Text("Quick total", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(7.dp), Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     listOf(60, 120, 180, 360, 720).forEach { mins ->
                         FilterChip(
                             selected = totalMinutes == mins,
@@ -354,7 +354,7 @@ fun StudyPlanBuilderScreen(
                         onStartFocus()
                     },
                     enabled = allValid,
-                    Modifier.fillMaxWidth().height(54.dp).testTag("btn_start_study_plan"),
+                    modifier = Modifier.fillMaxWidth().height(54.dp).testTag("btn_start_study_plan"),
                     shape = RoundedCornerShape(17.dp)
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
@@ -382,7 +382,7 @@ fun StudyPlanBuilderScreen(
                         onBack()
                     },
                     enabled = allValid,
-                    Modifier.fillMaxWidth().height(50.dp).testTag("btn_save_study_draft"),
+                    modifier = Modifier.fillMaxWidth().height(50.dp).testTag("btn_save_study_draft"),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Icon(Icons.Default.Bookmark, contentDescription = null)
