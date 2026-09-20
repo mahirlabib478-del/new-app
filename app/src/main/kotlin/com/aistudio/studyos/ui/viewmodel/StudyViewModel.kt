@@ -1131,6 +1131,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             nowWallClockMillis = nowWall,
             totalBlockSeconds = state.totalBlockSeconds
         )
+    }
 
     private fun currentBootCount(): Int =
         runCatching {
