@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.flow.Flow
 
 class StudyRepository(
     private val database: StudyDatabase,
@@ -41,7 +42,19 @@ class StudyRepository(
     // Logs & Stats
     fun getAllLogs(): Flow<List<SessionLogEntity>> = database.sessionLogDao().getAllLogs()
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
-    fun getTodayMinutes(): Flow<Int> = database.sessionLogDao().getTodayMinutes()
+    fun getTodayMinutes(): Flow<Int> {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startOfDayMillis = calendar.timeInMillis
+        val startOfNextDayMillis = Calendar.getInstance().apply {
+            timeInMillis = startOfDayMillis
+            add(Calendar.DAY_OF_YEAR, 1)
+        }.timeInMillis
+        return database.sessionLogDao().getTodayMinutes(startOfDayMillis, startOfNextDayMillis)
+    }
     fun getTotalMinutes(): Flow<Int?> = database.sessionLogDao().getTotalMinutes()
     suspend fun logSession(log: SessionLogEntity): Long = database.sessionLogDao().insertLog(log)
     suspend fun deleteSessionLog(log: SessionLogEntity) {
