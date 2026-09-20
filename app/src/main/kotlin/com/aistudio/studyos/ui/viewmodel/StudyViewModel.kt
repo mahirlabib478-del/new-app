@@ -189,82 +189,98 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         onReady: (() -> Unit)? = null
     ) {
         viewModelScope.launch {
-            val sourceItems = if (items.isNotEmpty()) {
-                items
-            } else {
-                List(totalBlocks.coerceIn(1, 720)) {
-                    StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 25))
+            transitionMutex.withLock {
+                if (transitionInProgress) return@withLock
+                transitionInProgress = true
+                try {
+                    val sourceItems = if (items.isNotEmpty()) {
+                        items
+                    } else {
+                        List(totalBlocks.coerceIn(1, 720)) {
+                            StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 25))
+                        }
+                    }
+
+                    val normalizedItems = normalizePlanItems(sourceItems)
+                    val allocatedMinutes = normalizedItems.sumOf { it.minutes }
+                    if (
+                        normalizedItems.isEmpty() ||
+                        normalizedItems.size > 720 ||
+                        allocatedMinutes <= 0 ||
+                        allocatedMinutes > 720 ||
+                        (expectedTotalMinutes != null && allocatedMinutes != expectedTotalMinutes)
+                    ) {
+                        return@withLock
+                    }
+
+                    stopTimerJob()
+                    StudyTimerForegroundService.stop(StudyApplication.instance)
+
+                    val first = normalizedItems.first()
+                    val studySec = (first.minutes * 60).coerceAtLeast(60)
+                    val breakMin = normalizeBreakMinutes(breakMinutes)
+                    val multiSubject = normalizedItems.map { it.subject }.distinct().size > 1
+                    val plan = StudyPlanEntity(
+                        title = if (multiSubject) {
+                            "Multiple Subjects • ${formatPlanDuration(allocatedMinutes)}"
+                        } else {
+                            title.ifBlank { "$subject - $chapter" }
+                        },
+                        subject = if (multiSubject) "Multiple Subjects" else first.subject,
+                        chapter = if (multiSubject) "Study Session" else first.topic,
+                        mode = mode,
+                        totalBlocks = normalizedItems.size,
+                        currentBlockIndex = 0,
+                        durationPerBlockMinutes = first.minutes,
+                        breakMinutes = breakMin,
+                        remainingSecondsInBlock = studySec,
+                        isBreakPhase = false,
+                        isCompleted = false,
+                        isDraft = false,
+                        isArchived = false,
+                        isTimerRunning = false,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L,
+                        planItems = StudyPlanItemCodec.encode(normalizedItems),
+                        totalDurationMinutes = allocatedMinutes
+                    )
+                    val planId = repository.savePlan(plan)
+                    repository.archiveOtherActivePlans(planId)
+                    currentPlanItems = normalizedItems
+
+                    // A newly created session always starts from the first block's
+                    // configured duration; never inherit seconds from an older plan.
+                    _focusState.value = FocusTimerState(
+                        isRunning = false,
+                        isBreak = false,
+                        secondsRemaining = studySec,
+                        totalBlockSeconds = studySec,
+                        studyBlockSeconds = studySec,
+                        breakBlockSeconds = breakMin * 60,
+                        currentBlockIndex = 0,
+                        totalBlocks = normalizedItems.size,
+                        currentSubject = first.subject,
+                        currentChapter = first.topic,
+                        planId = planId,
+                        mode = mode,
+                        isSessionCompleted = false,
+                        completedMinutes = 0,
+                        completedBlocks = 0,
+                        actualStudiedSeconds = 0,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L,
+                        sessionError = null
+                    )
+
+                    transitionInProgress = false
+                    onReady?.invoke()
+                    if (autoStart) startTimer()
+                } finally {
+                    transitionInProgress = false
                 }
             }
-
-            val normalizedItems = normalizePlanItems(sourceItems)
-            val allocatedMinutes = normalizedItems.sumOf { it.minutes }
-            if (
-                normalizedItems.isEmpty() ||
-                normalizedItems.size > 720 ||
-                allocatedMinutes <= 0 ||
-                allocatedMinutes > 720 ||
-                (expectedTotalMinutes != null && allocatedMinutes != expectedTotalMinutes)
-            ) {
-                return@launch
-            }
-
-            if (transitionInProgress) return@launch
-            stopTimerJob()
-            StudyTimerForegroundService.stop(StudyApplication.instance)
-
-            val first = normalizedItems.first()
-            val studySec = first.minutes * 60
-            val breakMin = normalizeBreakMinutes(breakMinutes)
-            val multiSubject = normalizedItems.map { it.subject }.distinct().size > 1
-            val plan = StudyPlanEntity(
-                title = if (multiSubject) {
-                    "Multiple Subjects • ${formatPlanDuration(allocatedMinutes)}"
-                } else {
-                    title.ifBlank { "$subject - $chapter" }
-                },
-                subject = if (multiSubject) "Multiple Subjects" else first.subject,
-                chapter = if (multiSubject) "Study Session" else first.topic,
-                mode = mode,
-                totalBlocks = normalizedItems.size,
-                currentBlockIndex = 0,
-                durationPerBlockMinutes = first.minutes,
-                breakMinutes = breakMin,
-                remainingSecondsInBlock = studySec,
-                isBreakPhase = false,
-                isCompleted = false,
-                isDraft = false,
-                isArchived = false,
-                isTimerRunning = false,
-                endAtElapsedRealtime = 0L,
-                endAtWallClockMillis = 0L,
-                planItems = StudyPlanItemCodec.encode(normalizedItems),
-                totalDurationMinutes = allocatedMinutes
-            )
-            val planId = repository.savePlan(plan)
-            repository.archiveOtherActivePlans(planId)
-            currentPlanItems = normalizedItems
-            _focusState.value = FocusTimerState(
-                secondsRemaining = studySec,
-                totalBlockSeconds = studySec,
-                studyBlockSeconds = studySec,
-                breakBlockSeconds = breakMin * 60,
-                currentBlockIndex = 0,
-                totalBlocks = normalizedItems.size,
-                currentSubject = first.subject,
-                currentChapter = first.topic,
-                planId = planId,
-                mode = mode,
-                isSessionCompleted = false,
-                completedMinutes = 0,
-                completedBlocks = 0,
-                actualStudiedSeconds = 0
-            )
-            onReady?.invoke()
-            if (autoStart) startTimer()
         }
     }
-
     fun saveDraftPlan(
         title: String,
         subject: String,
