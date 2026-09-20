@@ -22,7 +22,7 @@ import com.aistudio.studyos.data.local.entity.UserProfileEntity
         SessionLogEntity::class,
         UserProfileEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class StudyDatabase : RoomDatabase() {
@@ -34,6 +34,15 @@ abstract class StudyDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: StudyDatabase? = null
+
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN isTimerRunning INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN endAtElapsedRealtime INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN endAtWallClockMillis INTEGER NOT NULL DEFAULT 0")
+            }
+        }
 
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -53,7 +62,7 @@ abstract class StudyDatabase : RoomDatabase() {
                     StudyDatabase::class.java,
                     "study_os_database"
                 )
-                    .addMigrations(MIGRATION_3_4)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
