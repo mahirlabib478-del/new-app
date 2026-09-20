@@ -124,4 +124,34 @@ class UpdateAndReleaseTest {
         assertTrue(hasUpdate)
     }
 
+    @Test
+    fun testFutureBuildSequenceAlwaysDetectsNextBuild() {
+        for (currentBuild in 38L..99L) {
+            val remoteBuild = currentBuild + 1
+            assertTrue(
+                "Expected 0.3.0+$remoteBuild to be newer than build $currentBuild",
+                UpdateManager.isNewerVersion(
+                    currentVersionName = "0.3.0",
+                    currentVersionCode = currentBuild,
+                    remoteVersionString = "v0.3.0+$remoteBuild"
+                )
+            )
+            assertFalse(
+                "Current build must not be detected as its own update",
+                UpdateManager.isNewerVersion(
+                    currentVersionName = "0.3.0",
+                    currentVersionCode = remoteBuild,
+                    remoteVersionString = "0.3.0+$remoteBuild"
+                )
+            )
+        }
+    }
+
+    @Test
+    fun testFutureMajorBuildsStillUseSemVerCorrectly() {
+        assertTrue(UpdateManager.isNewerVersion("0.3.0", 40L, "0.3.1+1"))
+        assertTrue(UpdateManager.isNewerVersion("0.3.9", 999L, "0.4.0+1"))
+        assertFalse(UpdateManager.isNewerVersion("0.4.0", 100L, "0.3.9+999"))
+    }
+
 }
