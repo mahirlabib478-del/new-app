@@ -1,6 +1,7 @@
 package com.aistudio.studyos
 
 import com.aistudio.studyos.ui.viewmodel.FocusTimerState
+import com.aistudio.studyos.data.repository.TimerDeadlineCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -121,6 +122,76 @@ class SessionTimerAndSkipFeatureTest {
         assertEquals(committedStudiedSeconds, afterResetStudiedSeconds)
         assertEquals(committedMinutes, afterResetMinutes)
         assertFalse(afterResetStudiedSeconds >= committedStudiedSeconds + discardedPartialSeconds)
+    }
+
+
+    @Test
+    fun testProductionDeadlineMathCountsDownByClockNotLoopTicks() {
+        val endElapsed = TimerDeadlineCalculator.deadlineMillis(1_000L, 25 * 60)
+        val endWall = TimerDeadlineCalculator.deadlineMillis(10_000L, 25 * 60)
+
+        // A delayed coroutine/UI frame must not make the timer drift by one
+        // second per loop; remaining time is derived from the deadline.
+        assertEquals(
+            1_490,
+            TimerDeadlineCalculator.remainingSeconds(
+                endAtElapsedRealtime = endElapsed,
+                endAtWallClockMillis = endWall,
+                nowElapsedRealtime = 11_000L,
+                nowWallClockMillis = 10_000L,
+                totalBlockSeconds = 25 * 60
+            )
+        )
+    }
+
+    @Test
+    fun testProductionDeadlineMathCeilsPartialSecondAndClampsToBlock() {
+        assertEquals(
+            2,
+            TimerDeadlineCalculator.remainingSeconds(
+                endAtElapsedRealtime = 2_001L,
+                endAtWallClockMillis = 9_000L,
+                nowElapsedRealtime = 500L,
+                nowWallClockMillis = 8_000L,
+                totalBlockSeconds = 25 * 60
+            )
+        )
+
+        assertEquals(
+            0,
+            TimerDeadlineCalculator.remainingSeconds(
+                endAtElapsedRealtime = 1_000L,
+                endAtWallClockMillis = 2_000L,
+                nowElapsedRealtime = 2_000L,
+                nowWallClockMillis = 2_000L,
+                totalBlockSeconds = 25 * 60
+            )
+        )
+
+        assertEquals(
+            1,
+            TimerDeadlineCalculator.remainingSeconds(
+                endAtElapsedRealtime = 9_000L,
+                endAtWallClockMillis = 9_000L,
+                nowElapsedRealtime = 1_000L,
+                nowWallClockMillis = 1_000L,
+                totalBlockSeconds = 1
+            )
+        )
+    }
+
+    @Test
+    fun testProductionDeadlineMathFallsBackToWallClockWhenElapsedDeadlineIsExpired() {
+        assertEquals(
+            5,
+            TimerDeadlineCalculator.remainingSeconds(
+                endAtElapsedRealtime = 1_000L,
+                endAtWallClockMillis = 10_000L,
+                nowElapsedRealtime = 1_500L,
+                nowWallClockMillis = 5_000L,
+                totalBlockSeconds = 25 * 60
+            )
+        )
     }
 
 }
