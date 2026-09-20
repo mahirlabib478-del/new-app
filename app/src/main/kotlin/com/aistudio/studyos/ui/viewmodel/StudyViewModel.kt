@@ -209,10 +209,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 return@launch
             }
 
-            transitionMutex.withLock {
-                stopTimerJob()
-                transitionInProgress = false
-            }
+            if (transitionInProgress) return@launch
+            stopTimerJob()
+            StudyTimerForegroundService.stop(StudyApplication.instance)
 
             val first = normalizedItems.first()
             val studySec = first.minutes * 60
