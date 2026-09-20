@@ -658,6 +658,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             StudyTimerForegroundService.start(
                 StudyApplication.instance,
                 endAtWallClockMillis = endWall,
+                planId = planId ?: 0L,
                 isBreak = current.isBreak,
                 subject = current.currentSubject
             )
