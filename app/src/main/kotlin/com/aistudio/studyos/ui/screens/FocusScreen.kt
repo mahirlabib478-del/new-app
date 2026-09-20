@@ -40,6 +40,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,8 +72,13 @@ fun FocusScreen(
     var ambientVolume by remember { mutableStateOf(0.35f) }
     var ambientPlaying by remember { mutableStateOf(false) }
 
+    LaunchedEffect(state.isSessionCompleted) {
+        if (state.isSessionCompleted) {
+            AmbientSoundManager.stop()
+        }
+    }
+
     if (state.isSessionCompleted) {
-        AmbientSoundManager.stop()
         StudySessionCompleteScreen(
             completedMinutes = state.completedMinutes,
             completedBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks),
@@ -97,7 +103,6 @@ fun FocusScreen(
                         showEndDialog = false
                         viewModel.finishActiveSessionEarly()
                         AmbientSoundManager.stop()
-                        onBack()
                     }
                 ) {
                     Text("End Session", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
