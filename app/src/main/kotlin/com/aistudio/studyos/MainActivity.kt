@@ -207,16 +207,10 @@ fun MainApp(
                 fadeOut(animationSpec = tween(150))
             },
             popEnterTransition = {
-                scaleIn(
-                    initialScale = 0.985f,
-                    animationSpec = tween(150)
-                ) + fadeIn(animationSpec = tween(150))
+                fadeIn(animationSpec = tween(150))
             },
             popExitTransition = {
-                scaleOut(
-                    targetScale = 0.985f,
-                    animationSpec = tween(150)
-                ) + fadeOut(animationSpec = tween(150))
+                fadeOut(animationSpec = tween(150))
             }
         ) {
             composable(Screen.Home.route) {
