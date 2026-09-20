@@ -401,6 +401,30 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
         val priorCompletedMinutes = plan.accumulatedBillableMinutes.coerceAtLeast(0)
         val priorCompletedSeconds = plan.accumulatedStudiedSeconds.coerceAtLeast(0)
+        val plannedFocusSeconds = plan.totalDurationMinutes.coerceAtLeast(0) * 60
+
+        if (plannedFocusSeconds > 0 && priorCompletedSeconds >= plannedFocusSeconds) {
+            StudyTimerForegroundService.stop(StudyApplication.instance)
+            _focusState.value = FocusTimerState(
+                isRunning = false,
+                isBreak = false,
+                secondsRemaining = 0,
+                totalBlockSeconds = 0,
+                studyBlockSeconds = 0,
+                breakBlockSeconds = normalizeBreakMinutes(plan.breakMinutes) * 60,
+                currentBlockIndex = currentPlanItems.size,
+                totalBlocks = currentPlanItems.size,
+                currentSubject = currentPlanItems.lastOrNull()?.subject ?: plan.subject,
+                currentChapter = currentPlanItems.lastOrNull()?.topic ?: plan.chapter,
+                planId = null,
+                mode = plan.mode,
+                isSessionCompleted = true,
+                completedMinutes = priorCompletedMinutes,
+                completedBlocks = currentPlanItems.size,
+                actualStudiedSeconds = priorCompletedSeconds
+            )
+            return
+        }
 
         _focusState.value = FocusTimerState(
             isRunning = false,
@@ -623,8 +647,11 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private suspend fun finishFocusTransition(current: FocusTimerState) {
         val completedBlockMinutes = SessionResultCalculator.billableMinutes(current.totalBlockSeconds)
         val nextBlockIndex = current.currentBlockIndex + 1
-        val allCompleted = nextBlockIndex >= current.totalBlocks
         val newActualSeconds = current.actualStudiedSeconds + current.totalBlockSeconds
+        val plannedFocusSeconds = currentPlanItems.sumOf { it.minutes } * 60
+        val allCompleted =
+            nextBlockIndex >= current.totalBlocks ||
+                (plannedFocusSeconds > 0 && newActualSeconds >= plannedFocusSeconds)
         val newCompletedMinutes = current.completedMinutes + completedBlockMinutes
 
         if (allCompleted) {
@@ -715,7 +742,11 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     private suspend fun finishBreakTransition(current: FocusTimerState) {
-        if (current.currentBlockIndex >= current.totalBlocks) {
+        val plannedFocusSeconds = currentPlanItems.sumOf { it.minutes } * 60
+        if (
+            current.currentBlockIndex >= current.totalBlocks ||
+            (plannedFocusSeconds > 0 && current.actualStudiedSeconds >= plannedFocusSeconds)
+        ) {
             StudyTimerForegroundService.stop(StudyApplication.instance)
             _focusState.value = current.copy(
                 secondsRemaining = 0,
@@ -775,7 +806,10 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         val partialMinutes = SessionResultCalculator.billableMinutes(elapsedSeconds)
                         val newTotalStudiedSec = current.actualStudiedSeconds + elapsedSeconds
                         val newCompletedMinutes = current.completedMinutes + partialMinutes
-                        val isLastBlock = current.currentBlockIndex >= current.totalBlocks - 1
+                        val plannedFocusSeconds = currentPlanItems.sumOf { it.minutes } * 60
+                        val isLastBlock =
+                            current.currentBlockIndex >= current.totalBlocks - 1 ||
+                                (plannedFocusSeconds > 0 && newTotalStudiedSec >= plannedFocusSeconds)
                         val planId = current.planId
 
                         if (isLastBlock) {
