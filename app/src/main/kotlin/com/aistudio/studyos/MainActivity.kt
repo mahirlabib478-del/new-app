@@ -301,7 +301,7 @@ fun MainApp(
                     onBack = { navController.popBackStack() },
                     onStartStudySetup = { exam ->
                         navController.navigate(
-                            "study_setup/exam/" + Uri.encode(exam.subject) + "/" +
+                            "study_setup/study/" + Uri.encode(exam.subject) + "/" +
                                 Uri.encode(exam.syllabusTopics.ifBlank { "Core Exam Revision" })
                         )
                     }
