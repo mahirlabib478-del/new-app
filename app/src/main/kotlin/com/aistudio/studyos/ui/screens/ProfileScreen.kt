@@ -207,179 +207,38 @@ fun ProfileScreen(
             }
         }
 
-        // Daily Goal Setting
+        // Daily Study Target — intentionally simple: one manual value.
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("daily_goal_card"),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    val targetHours = dailyGoal / 60
-                    val targetMins = dailyGoal % 60
-                    val targetFormatted = when {
-                        targetHours > 0 && targetMins > 0 -> "${targetHours}h ${targetMins}m"
-                        targetHours > 0 -> "${targetHours}h (${dailyGoal}m)"
-                        else -> "${targetMins}m"
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Timer,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Daily Study Target",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Daily Study Target", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("Set the amount of study time you want to complete each day.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-
-                        // Target badge + Custom Edit button
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                modifier = Modifier.padding(end = 4.dp)
-                            ) {
-                                Text(
-                                    text = targetFormatted,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    customGoalInput = dailyGoal.toString()
-                                    showCustomGoalDialog = true
-                                },
-                                modifier = Modifier.size(32.dp).testTag("btn_edit_custom_goal")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Set Custom Target",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
+                        Text(
+                            text = formatDailyGoal(dailyGoal),
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Interactive Slider (15m to 720m / 12 hrs)
-                    Slider(
-                        value = dailyGoal.coerceIn(15, 720).toFloat(),
-                        onValueChange = { newValue ->
-                            val snapped = ((newValue / 15f).roundToInt() * 15).coerceIn(15, 720)
-                            viewModel.setDailyGoal(snapped)
+                    OutlinedButton(
+                        onClick = {
+                            customGoalInput = dailyGoal.toString()
+                            showCustomGoalDialog = true
                         },
-                        valueRange = 15f..720f,
-                        steps = 46,
-                        modifier = Modifier.fillMaxWidth().testTag("daily_goal_slider")
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier.fillMaxWidth().testTag("btn_edit_custom_goal"),
+                        shape = RoundedCornerShape(13.dp)
                     ) {
-                        Text(
-                            text = "15m",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "Slide to adjust (15m – 12h)",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "12h",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Stepper Micro-adjustment Buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf(
-                            "-1h" to { viewModel.setDailyGoal(maxOf(15, dailyGoal - 60)) },
-                            "-15m" to { viewModel.setDailyGoal(maxOf(15, dailyGoal - 15)) },
-                            "+15m" to { viewModel.setDailyGoal(minOf(1440, dailyGoal + 15)) },
-                            "+1h" to { viewModel.setDailyGoal(minOf(1440, dailyGoal + 60)) }
-                        ).forEach { (label, action) ->
-                            OutlinedButton(
-                                onClick = action,
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text(text = label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "Quick Presets",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-
-                    // Quick Presets
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(listOf(30, 45, 60, 90, 120, 180, 240, 300, 360, 480, 600)) { mins ->
-                            val isSelected = dailyGoal == mins
-                            val label = when {
-                                mins >= 60 && mins % 60 == 0 -> "${mins / 60}h"
-                                mins >= 60 -> "${mins / 60.0}h"
-                                else -> "${mins}m"
-                            }
-                            Card(
-                                modifier = Modifier.clickable { viewModel.setDailyGoal(mins) },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected)
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Box(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = label,
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                        }
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(7.dp))
+                        Text("Set Daily Target Manually")
                     }
                 }
             }
