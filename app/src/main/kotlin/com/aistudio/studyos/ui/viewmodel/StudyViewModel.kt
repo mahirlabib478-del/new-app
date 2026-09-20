@@ -382,7 +382,6 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val currentItem = currentPlanItems[safeIndex]
         val studySec = currentItem.minutes * 60
         val breakSec = normalizeBreakMinutes(plan.breakMinutes) * 60
-        val previousEndElapsed = current.endAtElapsedRealtime
         val nowElapsed = SystemClock.elapsedRealtime()
         val nowWall = System.currentTimeMillis()
         val bootCount = currentBootCount()
@@ -924,6 +923,43 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             }
         }
     }
+
+    private fun stopTimerJob() {
+        timerJob?.cancel()
+        timerJob = null
+    }
+
+    private fun currentElapsedSeconds(state: FocusTimerState): Int {
+        return if (!state.isRunning) {
+            (state.totalBlockSeconds - state.secondsRemaining).coerceIn(0, state.totalBlockSeconds)
+        } else {
+            (state.totalBlockSeconds - remainingFromState(state)).coerceIn(0, state.totalBlockSeconds)
+        }
+    }
+
+    private fun remainingFromState(state: FocusTimerState): Int {
+        if (!state.isRunning) return state.secondsRemaining.coerceIn(0, state.totalBlockSeconds)
+        val nowElapsed = SystemClock.elapsedRealtime()
+        val nowWall = System.currentTimeMillis()
+        val remainingMillis = when {
+            state.endAtElapsedRealtime > nowElapsed -> state.endAtElapsedRealtime - nowElapsed
+            state.endAtWallClockMillis > nowWall -> state.endAtWallClockMillis - nowWall
+            else -> 0L
+        }
+        return ceilSeconds(remainingMillis / 1000L).coerceIn(0, state.totalBlockSeconds)
+    }
+
+    private fun ceilSeconds(value: Long): Int =
+        value.coerceAtLeast(0L).let { ((it + 999L) / 1000L).toInt() }
+
+    private fun currentBootCount(): Int =
+        runCatching {
+            Settings.Global.getInt(
+                StudyApplication.instance.contentResolver,
+                Settings.Global.BOOT_COUNT,
+                -1
+            )
+        }.getOrDefault(-1)
 
     private fun normalizePlanItems(items: List<StudyPlanItem>): List<StudyPlanItem> {
         val normalized = items
