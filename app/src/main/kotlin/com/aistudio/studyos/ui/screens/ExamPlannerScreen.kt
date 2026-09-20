@@ -64,7 +64,7 @@ import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 fun ExamPlannerScreen(
     viewModel: StudyViewModel,
     onBack: () -> Unit,
-    onStartFocus: () -> Unit
+    onStartStudySetup: (com.aistudio.studyos.data.local.entity.ExamEntity) -> Unit
 ) {
     val exams by viewModel.exams.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -307,7 +307,7 @@ fun ExamPlannerScreen(
                                 ) {
                                     Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Start Prep (90m)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Customize Prep", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
