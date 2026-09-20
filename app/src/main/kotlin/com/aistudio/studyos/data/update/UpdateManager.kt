@@ -19,7 +19,7 @@ object UpdateManager {
     private const val PREFS_NAME = "studyos_update_prefs"
     private const val KEY_LAST_CHECK_TIME = "last_update_check_time"
     private const val CHECK_INTERVAL_MS = 2 * 60 * 60 * 1000L // 2 hours throttle for auto-check
-    private const val TIMEOUT_MS = 3500 // Fast 3.5s timeout for low-end networks
+    private const val TIMEOUT_MS = 8000 // Allow slower mobile networks while keeping update checks bounded
 
     fun getCurrentVersionInfo(context: Context): Pair<String, Long> {
         return try {
@@ -189,7 +189,7 @@ object UpdateManager {
     private fun fetchFromGitHubApi(): AppUpdateInfo? {
         var connection: HttpURLConnection? = null
         return try {
-            val url = URL(GITHUB_LATEST_RELEASE_API)
+            val url = URL("$GITHUB_LATEST_RELEASE_API?ts=${System.currentTimeMillis()}")
             connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 connectTimeout = TIMEOUT_MS
@@ -198,7 +198,7 @@ object UpdateManager {
                 setRequestProperty("Cache-Control", "no-cache, no-store")
                 setRequestProperty("Pragma", "no-cache")
                 setRequestProperty("User-Agent", "StudyOS-App")
-                setRequestProperty("Accept", "application/vnd.github.v3+json")
+                setRequestProperty("Accept", "application/vnd.github+json")
             }
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                 val response = connection.inputStream.bufferedReader().use { it.readText() }
@@ -221,7 +221,7 @@ object UpdateManager {
                 }
                 if (apkUrl.isBlank()) apkUrl = releaseUrl
 
-                if (tagName.isNotBlank()) {
+                if (tagName.isNotBlank() && releaseUrl.isNotBlank()) {
                     AppUpdateInfo(
                         latestVersion = tagName,
                         minimumSupportedVersion = "0.0.0",
