@@ -18,8 +18,8 @@ interface SessionLogDao {
     @Query("SELECT * FROM session_logs ORDER BY timestamp DESC LIMIT :limit")
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>>
 
-    @Query("SELECT COALESCE(SUM(durationMinutes), 0) FROM session_logs WHERE timestamp >= strftime('%s', 'now', 'localtime', 'start of day') * 1000")
-    fun getTodayMinutes(): Flow<Int>
+    @Query("SELECT COALESCE(SUM(durationMinutes), 0) FROM session_logs WHERE timestamp >= :startOfDayMillis AND timestamp < :startOfNextDayMillis")
+    fun getTodayMinutes(startOfDayMillis: Long, startOfNextDayMillis: Long): Flow<Int>
 
     @Query("SELECT SUM(durationMinutes) FROM session_logs")
     fun getTotalMinutes(): Flow<Int?>
