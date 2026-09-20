@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
@@ -36,11 +37,14 @@ import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
     val state by viewModel.focusState.collectAsState()
     var showEndDialog by remember { mutableStateOf(false) }
+    var showSkipDialog by remember { mutableStateOf(false) }
 
     if (state.isSessionCompleted) {
         SessionCompleteScreen(
             completedMinutes = state.completedMinutes,
             totalBlocks = state.totalBlocks,
+            completedBlocks = state.completedBlocks,
+            actualStudiedSeconds = state.actualStudiedSeconds,
             onDone = {
                 viewModel.dismissSessionCompletion()
                 onBack()
@@ -55,13 +59,12 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = { showEndDialog = false },
             title = { Text("End Study Session?", fontWeight = FontWeight.Bold) },
-            text = { Text("Your completed focus time will be saved to Progress & Analytics.") },
+            text = { Text("Your completed study time will be saved and recorded to your progress.") },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showEndDialog = false
                         viewModel.finishActiveSessionEarly()
-                        onBack()
                     }
                 ) {
                     Text("End Session", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
@@ -73,18 +76,52 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
         )
     }
 
+    if (showSkipDialog) {
+        AlertDialog(
+            onDismissRequest = { showSkipDialog = false },
+            title = { Text("Skip Options", fontWeight = FontWeight.Bold) },
+            text = { Text("You can skip to the next rest break or finish your entire study session right now.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSkipDialog = false
+                        viewModel.finishActiveSessionEarly()
+                    }
+                ) {
+                    Text("Finish Session", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { showSkipDialog = false }) {
+                        Text("Cancel")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        onClick = {
+                            showSkipDialog = false
+                            viewModel.skipCurrentBlock()
+                        }
+                    ) {
+                        Text("Next Block", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text(
-                            if (state.isBreak) "Recovery Break" else state.currentSubject,
+                            if (state.isBreak) "Break & Recovery" else state.currentSubject,
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp
                         )
                         Text(
-                            if (state.isBreak) "Rest before the next focus block" else state.currentChapter,
+                            if (state.isBreak) "Take a moment to rest" else state.currentChapter,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -177,7 +214,7 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             Spacer(Modifier.height(14.dp))
 
             if (state.isBreak) {
-                BreakWellnessCard(accent, state.isRunning)
+                BreakRechargeView(accent = accent, running = state.isRunning)
             } else {
                 FocusInfoCard(
                     subject = state.currentSubject,
@@ -198,7 +235,7 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             ) {
                 FilledIconButton(
                     onClick = { viewModel.resetBlockTimer() },
-                    modifier = Modifier.size(50.dp),
+                    modifier = Modifier.size(50.dp).testTag("btn_reset_focus_block"),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -222,8 +259,14 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 }
 
                 FilledIconButton(
-                    onClick = { viewModel.skipCurrentBlock() },
-                    modifier = Modifier.size(50.dp),
+                    onClick = {
+                        if (state.isBreak || state.currentBlockIndex >= state.totalBlocks - 1 || state.totalBlocks <= 1) {
+                            viewModel.skipCurrentBlock()
+                        } else {
+                            showSkipDialog = true
+                        }
+                    },
+                    modifier = Modifier.size(50.dp).testTag("btn_skip_focus_block"),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -243,11 +286,12 @@ private fun CircularTimerDisplay(
     running: Boolean,
     accent: Color
 ) {
+    val clampedSeconds = seconds.coerceIn(0, total.coerceAtLeast(1))
     val progress = if (total > 0) {
-        ((total - seconds).toFloat() / total).coerceIn(0f, 1f)
+        ((total - clampedSeconds).toFloat() / total).coerceIn(0f, 1f)
     } else 0f
-    val mins = seconds / 60
-    val secs = seconds % 60
+    val mins = clampedSeconds / 60
+    val secs = clampedSeconds % 60
     val text = "%02d:%02d".format(mins, secs)
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
 
@@ -323,76 +367,90 @@ private fun FocusInfoCard(
     }
 }
 
+/**
+ * Minimalist, elegant cardless break view.
+ * Strictly no cards or bordered containers. Clean typography and serene breathing layout.
+ */
 @Composable
-private fun BreakWellnessCard(accent: Color, running: Boolean) {
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .72f)
-        )
+private fun BreakRechargeView(accent: Color, running: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(
-            Modifier.padding(15.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Coffee, null, tint = accent)
-                Spacer(Modifier.width(8.dp))
-                Column {
-                    Text("Recovery time", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-                    Text(
-                        "Step away from the screen for a few minutes.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                WellnessTip(Modifier.weight(1f), Icons.Default.SelfImprovement, "Rest", "Look away")
-                WellnessTip(Modifier.weight(1f), Icons.Default.WaterDrop, "Hydrate", "Drink water")
-                WellnessTip(Modifier.weight(1f), Icons.Default.Timer, "Move", "Stretch")
-            }
-
+            Icon(
+                Icons.Default.SelfImprovement,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(8.dp))
             Text(
-                if (running) "Next focus block starts automatically when this break ends." else "Break timer is paused.",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = accent
+                text = "Mindful Rest & Recovery",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
+
+        Text(
+            text = "Step away from the screen • Rest your eyes • Drink water",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        Row(
+            modifier = Modifier.padding(top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            BreakActionPill(icon = Icons.Default.SelfImprovement, label = "Relax", tint = accent)
+            BreakActionPill(icon = Icons.Default.WaterDrop, label = "Hydrate", tint = accent)
+            BreakActionPill(icon = Icons.Default.Timer, label = "Stretch", tint = accent)
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = if (running) "Next focus block begins automatically when break ends" else "Break timer paused",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = accent.copy(alpha = 0.9f),
+            textAlign = TextAlign.Center
+        )
     }
 }
 
 @Composable
-private fun WellnessTip(
-    modifier: Modifier,
+private fun BreakActionPill(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String
+    label: String,
+    tint: Color
 ) {
-    Surface(
-        modifier,
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            Modifier.padding(vertical = 9.dp, horizontal = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(icon, null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.height(3.dp))
-            Text(title, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-            Text(
-                subtitle,
-                fontSize = 9.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(15.dp)
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -400,11 +458,25 @@ private fun WellnessTip(
 private fun SessionCompleteScreen(
     completedMinutes: Int,
     totalBlocks: Int,
+    completedBlocks: Int,
+    actualStudiedSeconds: Int,
     onDone: () -> Unit
 ) {
-    Scaffold {
+    val formattedTime = when {
+        actualStudiedSeconds <= 0 && completedMinutes <= 0 -> "0s"
+        actualStudiedSeconds in 1..59 -> "${actualStudiedSeconds}s"
+        actualStudiedSeconds % 60 == 0 -> "${actualStudiedSeconds / 60}m"
+        else -> "${actualStudiedSeconds / 60}m ${actualStudiedSeconds % 60}s"
+    }
+    val effectiveMinutes = if (actualStudiedSeconds >= 30) (actualStudiedSeconds + 29) / 60 else if (actualStudiedSeconds > 0) 1 else completedMinutes
+    val xpGained = maxOf(effectiveMinutes * 3, if (actualStudiedSeconds > 0) 3 else 0)
+
+    Scaffold { padding ->
         Box(
-            Modifier.fillMaxSize().padding(it).padding(24.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
             Card(
@@ -417,40 +489,62 @@ private fun SessionCompleteScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = .12f)) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = .15f)
+                    ) {
                         Icon(
                             Icons.Default.CheckCircle,
-                            null,
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(18.dp).size(58.dp)
+                            modifier = Modifier
+                                .padding(18.dp)
+                                .size(58.dp)
                         )
                     }
-                    Text("Study session complete!", fontSize = 25.sp, fontWeight = FontWeight.Black)
+
                     Text(
-                        "You finished the entire plan.",
+                        "🎉 Congratulations!",
+                        fontSize = 25.sp,
+                        fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+
+                    Text(
+                        text = if (actualStudiedSeconds > 0 || completedMinutes > 0)
+                            "Study session finished! Your time and progress have been recorded."
+                        else
+                            "Session finished! Ready for your next focus round.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.Center
                     )
 
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        CompletionMetric("${completedMinutes}m", "Focused")
-                        CompletionMetric(totalBlocks.toString(), "Blocks")
+                        CompletionMetric(formattedTime, "Time Studied")
+                        CompletionMetric("${completedBlocks.coerceAtMost(totalBlocks)}/$totalBlocks", "Blocks")
+                        CompletionMetric("+$xpGained", "XP Earned")
                     }
 
                     Text(
-                        "Great work. Take a moment before starting another session.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        "Great work! Every minute counts towards building your study habit.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
                     )
 
                     Button(
                         onClick = onDone,
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .testTag("btn_session_done"),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text("Done", fontWeight = FontWeight.Bold)
+                        Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
