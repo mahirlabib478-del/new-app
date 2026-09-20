@@ -394,8 +394,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         } else {
             plan.remainingSecondsInBlock.coerceIn(1, if (plan.isBreakPhase) breakSec else studySec)
         }
-        val priorCompletedMinutes = currentPlanItems.take(safeIndex).sumOf { it.minutes }
-        val priorCompletedSeconds = priorCompletedMinutes * 60
+        val priorCompletedMinutes = plan.accumulatedBillableMinutes.coerceAtLeast(0)
+        val priorCompletedSeconds = plan.accumulatedStudiedSeconds.coerceAtLeast(0)
 
         _focusState.value = FocusTimerState(
             isRunning = false,
@@ -451,6 +451,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         repository.completePlanEarly(
                             planId = planId,
                             minutesStudied = partialMinutes,
+                            studiedSeconds = elapsedInCurrentBlock,
                             subject = current.currentSubject,
                             chapter = current.currentChapter,
                             mode = current.mode
@@ -769,9 +770,11 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                                 repository.completePlanEarly(
                                     planId,
                                     partialMinutes,
+                                    elapsedSeconds,
                                     current.currentSubject,
                                     current.currentChapter,
-                                    current.mode
+                                    current.mode,
+                                    nextBlockIndex = current.totalBlocks
                                 )
                             } else if (partialMinutes > 0) {
                                 repository.recordCompletedSession(current.currentSubject, current.currentChapter, partialMinutes, current.mode)
@@ -792,16 +795,22 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         } else {
                             val breakSec = current.breakBlockSeconds.coerceAtLeast(1)
                             if (planId != null) {
-                                repository.updateSessionProgress(
-                                    planId = planId,
-                                    remainingSec = breakSec,
-                                    isBreak = true,
-                                    blockIndex = current.currentBlockIndex + 1,
-                                    isRunning = false,
-                                    endAtElapsedRealtime = 0L,
-                                    endAtWallClockMillis = 0L,
-                                    timerBootCount = currentBootCount()
-                                )
+                                val plan = repository.getPlanById(planId)
+                                if (plan != null) {
+                                    repository.updatePlan(
+                                        plan.copy(
+                                            currentBlockIndex = current.currentBlockIndex + 1,
+                                            remainingSecondsInBlock = breakSec,
+                                            isBreakPhase = true,
+                                            isTimerRunning = false,
+                                            endAtElapsedRealtime = 0L,
+                                            endAtWallClockMillis = 0L,
+                                            accumulatedStudiedSeconds = plan.accumulatedStudiedSeconds + elapsedSeconds,
+                                            accumulatedBillableMinutes = plan.accumulatedBillableMinutes + partialMinutes,
+                                            lastUpdated = System.currentTimeMillis()
+                                        )
+                                    )
+                                }
                             }
                             val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex + 1)
                             _focusState.value = current.copy(
