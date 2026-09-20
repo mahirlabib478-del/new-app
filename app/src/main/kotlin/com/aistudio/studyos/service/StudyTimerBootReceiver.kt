@@ -20,16 +20,16 @@ class StudyTimerBootReceiver : BroadcastReceiver() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val plan = StudyApplication.instance.repository.getActivePlan().firstOrNull()
-                if (
-                    StudyTimerBootRecovery.shouldResume(plan, System.currentTimeMillis())
-                ) {
-                    StudyTimerForegroundService.start(
-                        context = context,
-                        endAtWallClockMillis = plan.endAtWallClockMillis,
-                        planId = plan.id,
-                        isBreak = plan.isBreakPhase,
-                        subject = plan.subject
-                    )
+                if (StudyTimerBootRecovery.shouldResume(plan, System.currentTimeMillis())) {
+                    plan?.let { activePlan ->
+                        StudyTimerForegroundService.start(
+                            context = context,
+                            endAtWallClockMillis = activePlan.endAtWallClockMillis,
+                            planId = activePlan.id,
+                            isBreak = activePlan.isBreakPhase,
+                            subject = activePlan.subject
+                        )
+                    }
                 }
             } finally {
                 pendingResult.finish()
