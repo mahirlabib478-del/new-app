@@ -278,8 +278,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             breakBlockSeconds = breakSec,
             currentBlockIndex = plan.currentBlockIndex,
             totalBlocks = plan.totalBlocks,
-            currentSubject = plan.subject,
-            currentChapter = plan.chapter,
+            currentSubject = currentItem.subject,
+            currentChapter = currentItem.topic,
             planId = plan.id,
             mode = plan.mode
         )
@@ -400,13 +400,27 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             } else {
                 // Switch to break
                 val breakSec = current.breakBlockSeconds
-                _focusState.value = current.copy(
-                    isBreak = true,
-                    secondsRemaining = breakSec,
-                    totalBlockSeconds = breakSec,
-                    currentBlockIndex = nextBlockIndex
-                )
-                if (current.planId != null) {
+                if (breakSec <= 0) {
+                    val nextItem = currentPlanItems.getOrNull(nextBlockIndex)
+                    val nextSec = (nextItem?.minutes ?: 1) * 60
+                    _focusState.value = current.copy(
+                        isBreak = false,
+                        secondsRemaining = nextSec,
+                        totalBlockSeconds = nextSec,
+                        studyBlockSeconds = nextSec,
+                        currentBlockIndex = nextBlockIndex,
+                        currentSubject = nextItem?.subject ?: current.currentSubject,
+                        currentChapter = nextItem?.topic ?: current.currentChapter
+                    )
+                } else {
+                    _focusState.value = current.copy(
+                        isBreak = true,
+                        secondsRemaining = breakSec,
+                        totalBlockSeconds = breakSec,
+                        currentBlockIndex = nextBlockIndex
+                    )
+                }
+                if (current.planId != null && breakSec > 0) {
                     viewModelScope.launch {
                         repository.updateSessionProgress(
                             current.planId,
