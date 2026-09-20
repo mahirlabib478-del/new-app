@@ -194,7 +194,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 totalBlocks = boundedItems.size,
                 currentBlockIndex = 0,
                 durationPerBlockMinutes = first.minutes,
-                breakMinutes = breakMinutes.coerceIn(0, 720),
+                breakMinutes = normalizeBreakMinutes(breakMinutes),
                 remainingSecondsInBlock = studySec,
                 isBreakPhase = false,
                 isCompleted = false,
