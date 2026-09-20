@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aistudio.studyos.data.repository.TodayRecommendationCalculator
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
 private val THEME_PRESET_LIST = listOf(
@@ -86,6 +87,12 @@ fun HomeScreen(
 
     val todayMinutes by viewModel.todayMinutes.collectAsState()
     val progressFraction = if (dailyGoal > 0) todayMinutes.toFloat() / dailyGoal else 0f
+    val todayRecommendation = TodayRecommendationCalculator.calculate(
+        activePlan = activePlan,
+        upcomingExams = upcomingExams,
+        todayMinutes = todayMinutes,
+        dailyGoalMinutes = dailyGoal
+    )
 
     var showThemeDialog by remember { mutableStateOf(false) }
 
@@ -215,8 +222,7 @@ fun HomeScreen(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = activePlan?.let { "${it.subject} • ${it.chapter}" }
-                                        ?: "Ready for your next session",
+                                    text = todayRecommendation.title,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                                     maxLines = 1
@@ -240,6 +246,14 @@ fun HomeScreen(
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = todayRecommendation.detail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                        maxLines = 2
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -274,7 +288,7 @@ fun HomeScreen(
 
                     Button(
                         onClick = {
-                            if (activePlan != null) {
+                            if (todayRecommendation.shouldOpenFocus && activePlan != null) {
                                 viewModel.continueActiveSession(activePlan!!)
                                 onOpenFocus()
                             } else {
@@ -298,7 +312,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (activePlan != null) "Continue Active Session" else "Start Study Session",
+                            text = todayRecommendation.actionLabel,
                             fontWeight = FontWeight.Bold
                         )
                     }
