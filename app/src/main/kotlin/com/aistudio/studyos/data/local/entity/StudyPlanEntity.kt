@@ -23,6 +23,7 @@ data class StudyPlanEntity(
     val isTimerRunning: Boolean = false,
     val endAtElapsedRealtime: Long = 0L,
     val endAtWallClockMillis: Long = 0L,
+    val timerBootCount: Int = -1,
     val createdAt: Long = System.currentTimeMillis(),
     val lastUpdated: Long = System.currentTimeMillis(),
     val planItems: String = "",
