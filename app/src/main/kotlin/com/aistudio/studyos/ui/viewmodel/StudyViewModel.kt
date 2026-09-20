@@ -616,7 +616,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val current = _focusState.value
         if (current.sessionError != null || current.isSessionCompleted || current.secondsRemaining <= 0) return
 
-        timerJob?.cancel()
+        stopTimerJob()
         // Starting/resuming is always a fresh countdown from the state's
         // current remaining seconds. Never reuse an old deadline here.
         // Reusing a previous deadline was the source of stale values such as 00:02
