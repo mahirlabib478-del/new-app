@@ -5,6 +5,8 @@ import com.aistudio.studyos.data.local.ThemePreferences
 import com.aistudio.studyos.data.local.entity.ExamEntity
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
+import com.aistudio.studyos.data.local.entity.StudyPlanItemCodec
+import androidx.room.withTransaction
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import kotlinx.coroutines.flow.Flow
 import java.text.SimpleDateFormat
@@ -26,6 +28,7 @@ class StudyRepository(
     suspend fun updatePlan(plan: StudyPlanEntity) = database.studyPlanDao().updatePlan(plan)
     suspend fun deletePlan(plan: StudyPlanEntity) = database.studyPlanDao().deletePlan(plan)
     suspend fun deletePlanById(id: Long) = database.studyPlanDao().deletePlanById(id)
+    suspend fun archiveOtherActivePlans(exceptId: Long) = database.studyPlanDao().archiveOtherActivePlans(exceptId)
 
     // Exams
     fun getAllExams(): Flow<List<ExamEntity>> = database.examDao().getAllExams()
@@ -120,26 +123,82 @@ class StudyRepository(
 
     suspend fun updatePlanProgress(planId: Long, blockIndex: Int, isCompleted: Boolean) {
         val plan = database.studyPlanDao().getPlanById(planId) ?: return
-        val studySec = plan.durationPerBlockMinutes * 60
+        val decoded = StudyPlanItemCodec.decode(plan.planItems)
+        val items = decoded.flatMap { item ->
+            buildList {
+                var remaining = item.minutes.coerceIn(1, 720)
+                while (remaining > 25) {
+                    add(item.copy(minutes = 25))
+                    remaining -= 25
+                }
+                add(item.copy(minutes = remaining))
+            }
+        }
+        val nextItem = items.getOrNull(blockIndex)
+        val nextStudySec = (nextItem?.minutes ?: plan.durationPerBlockMinutes).coerceAtLeast(1) * 60
         database.studyPlanDao().updatePlan(
             plan.copy(
                 currentBlockIndex = blockIndex,
-                remainingSecondsInBlock = studySec,
+                durationPerBlockMinutes = nextItem?.minutes ?: plan.durationPerBlockMinutes,
+                remainingSecondsInBlock = nextStudySec,
                 isBreakPhase = false,
+                isTimerRunning = false,
+                endAtElapsedRealtime = 0L,
+                endAtWallClockMillis = 0L,
                 isCompleted = isCompleted,
                 lastUpdated = System.currentTimeMillis()
             )
         )
     }
 
-    suspend fun updateSessionProgress(planId: Long, remainingSec: Int, isBreak: Boolean, blockIndex: Int) {
-        database.studyPlanDao().updateSessionTimer(planId, remainingSec, isBreak, blockIndex)
+    suspend fun updateSessionProgress(
+        planId: Long,
+        remainingSec: Int,
+        isBreak: Boolean,
+        blockIndex: Int,
+        isRunning: Boolean,
+        endAtElapsedRealtime: Long,
+        endAtWallClockMillis: Long
+    ) {
+        database.studyPlanDao().updateSessionTimer(
+            planId,
+            remainingSec.coerceAtLeast(0),
+            isBreak,
+            blockIndex,
+            isRunning,
+            endAtElapsedRealtime,
+            endAtWallClockMillis
+        )
     }
 
-    suspend fun completePlanEarly(planId: Long, minutesStudied: Int, subject: String, chapter: String, mode: String = "early_finish") {
-        database.studyPlanDao().markPlanCompleted(planId)
-        if (minutesStudied > 0) {
-            recordCompletedSession(subject, chapter, minutesStudied, mode)
+    suspend fun completePlanEarly(
+        planId: Long,
+        minutesStudied: Int,
+        subject: String,
+        chapter: String,
+        mode: String = "early_finish"
+    ) {
+        database.withTransaction {
+            database.studyPlanDao().markPlanCompleted(planId)
+            if (minutesStudied > 0) {
+                recordCompletedSession(subject, chapter, minutesStudied, mode)
+            }
+        }
+    }
+
+    suspend fun commitFocusBlock(
+        planId: Long,
+        updatedPlan: StudyPlanEntity,
+        subject: String,
+        chapter: String,
+        minutesStudied: Int,
+        mode: String
+    ) {
+        database.withTransaction {
+            if (minutesStudied > 0) {
+                recordCompletedSession(subject, chapter, minutesStudied, mode)
+            }
+            database.studyPlanDao().updatePlan(updatedPlan)
         }
     }
 
