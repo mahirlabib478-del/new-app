@@ -915,6 +915,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
+    private fun normalizePlanItems(items: List<StudyPlanItem>): List<StudyPlanItem> {
+        val normalized = items
+            .filter { it.subject.isNotBlank() && it.topic.isNotBlank() && it.minutes in 1..720 }
+            .flatMap(::splitStudyItem)
+        return if (normalized.size <= 720) normalized else emptyList()
+    }
+
+    private fun formatPlanDuration(minutes: Int): String =
+        if (minutes >= 60) "${minutes / 60}h ${minutes % 60}m" else "${minutes}m"
+
     fun addExam(
         subject: String,
         examDate: String,
