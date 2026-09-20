@@ -24,6 +24,8 @@ data class StudyPlanEntity(
     val endAtElapsedRealtime: Long = 0L,
     val endAtWallClockMillis: Long = 0L,
     val timerBootCount: Int = -1,
+    val accumulatedStudiedSeconds: Int = 0,
+    val accumulatedBillableMinutes: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val lastUpdated: Long = System.currentTimeMillis(),
     val planItems: String = "",
