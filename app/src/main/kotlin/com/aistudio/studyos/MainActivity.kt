@@ -1,6 +1,7 @@
 package com.aistudio.studyos
 
 import android.os.Bundle
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,6 +40,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.ui.components.ActiveSessionMiniBar
 import com.aistudio.studyos.ui.components.UpdateDialog
@@ -47,7 +50,7 @@ import com.aistudio.studyos.ui.screens.FocusScreen
 import com.aistudio.studyos.ui.screens.HomeScreen
 import com.aistudio.studyos.ui.screens.ProfileScreen
 import com.aistudio.studyos.ui.screens.ProgressScreen
-import com.aistudio.studyos.ui.screens.RegularStudyScreen
+import com.aistudio.studyos.ui.screens.StudyPlanBuilderScreen
 import com.aistudio.studyos.ui.screens.SavedSessionsScreen
 import com.aistudio.studyos.ui.screens.StudyHubScreen
 import com.aistudio.studyos.ui.theme.StudyOSTheme
@@ -64,6 +67,7 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
     // Full screen sub-destinations
     object Focus : Screen("focus", "Focus Flow")
     object RegularStudy : Screen("regular_study", "Regular Study")
+    object StudySetup : Screen("study_setup/{mode}/{subject}/{topics}", "Study Plan Setup")
     object ExamPlanner : Screen("exam_planner", "Exam Planner")
     object SavedSessions : Screen("saved_sessions", "Saved Sessions")
 }
@@ -217,7 +221,7 @@ fun MainApp(
                 HomeScreen(
                     viewModel = viewModel,
                     onOpenFocus = { navController.navigate(Screen.Focus.route) },
-                    onOpenRegularStudy = { navController.navigate(Screen.RegularStudy.route) },
+                    onOpenRegularStudy = { navController.navigate("study_setup/regular/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
                     onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
                     onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) }
                 )
@@ -225,10 +229,13 @@ fun MainApp(
             composable(Screen.StudyHub.route) {
                 StudyHubScreen(
                     viewModel = viewModel,
-                    onOpenRegularStudy = { navController.navigate(Screen.RegularStudy.route) },
+                    onOpenRegularStudy = { navController.navigate("study_setup/regular/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
                     onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
                     onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) },
-                    onOpenFocus = { navController.navigate(Screen.Focus.route) }
+                    onOpenFocus = { navController.navigate(Screen.Focus.route) },
+                    onOpenCramSetup = { subject, topic ->
+                        navController.navigate("study_setup/cram/" + Uri.encode(subject) + "/" + Uri.encode(topic))
+                    }
                 )
             }
             composable(Screen.Progress.route) {
@@ -243,9 +250,19 @@ fun MainApp(
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(Screen.RegularStudy.route) {
-                RegularStudyScreen(
+            composable(
+                route = Screen.StudySetup.route,
+                arguments = listOf(
+                    navArgument("mode") { type = NavType.StringType },
+                    navArgument("subject") { type = NavType.StringType },
+                    navArgument("topics") { type = NavType.StringType }
+                )
+            ) { entry ->
+                StudyPlanBuilderScreen(
                     viewModel = viewModel,
+                    mode = entry.arguments?.getString("mode").orEmpty(),
+                    initialSubject = Uri.decode(entry.arguments?.getString("subject").orEmpty()),
+                    initialTopics = Uri.decode(entry.arguments?.getString("topics").orEmpty()),
                     onBack = { navController.popBackStack() },
                     onStartFocus = {
                         navController.navigate(Screen.Focus.route) {
@@ -258,10 +275,11 @@ fun MainApp(
                 ExamPlannerScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onStartFocus = {
-                        navController.navigate(Screen.Focus.route) {
-                            popUpTo(Screen.Home.route)
-                        }
+                    onStartStudySetup = { exam ->
+                        navController.navigate(
+                            "study_setup/exam/" + Uri.encode(exam.subject) + "/" +
+                                Uri.encode(exam.syllabusTopics.ifBlank { "Core Exam Revision" })
+                        )
                     }
                 )
             }
