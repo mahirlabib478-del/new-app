@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
@@ -63,6 +64,18 @@ fun FocusScreen(
     val state by viewModel.focusState.collectAsState()
     val primaryColor = if (state.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
     var showEndDialog by remember { mutableStateOf(false) }
+
+    if (state.isSessionCompleted) {
+        StudySessionCompleteScreen(
+            completedMinutes = state.completedMinutes,
+            completedBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks),
+            onDone = {
+                viewModel.dismissSessionCompletion()
+                onBack()
+            }
+        )
+        return
+    }
 
     if (showEndDialog) {
         AlertDialog(
@@ -519,6 +532,97 @@ private fun FocusTimerControls(
                 contentDescription = "Skip Block",
                 tint = MaterialTheme.colorScheme.onSurface
             )
+        }
+    }
+}
+
+
+@Composable
+private fun StudySessionCompleteScreen(
+    completedMinutes: Int,
+    completedBlocks: Int,
+    onDone: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(88.dp)
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            text = "Study session complete!",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "You finished the entire study plan.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(Modifier.height(28.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = completedMinutes.toString(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "minutes",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = completedBlocks.toString(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "blocks",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        androidx.compose.material3.Button(
+            onClick = onDone,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Done")
         }
     }
 }
