@@ -2,6 +2,7 @@ package com.aistudio.studyos
 
 import com.aistudio.studyos.ui.viewmodel.FocusTimerState
 import com.aistudio.studyos.data.repository.TimerDeadlineCalculator
+import com.aistudio.studyos.data.repository.SessionResultCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -94,6 +95,24 @@ class SessionTimerAndSkipFeatureTest {
 
         val recordedMinutes = totalActualStudiedSec / 60
         assertEquals(15, recordedMinutes)
+    }
+
+    @Test
+    fun testEarlyFinishDuringBreakRecordsZeroAdditionalStudyTime() {
+        assertEquals(
+            0,
+            SessionResultCalculator.studiedSecondsForEarlyFinish(
+                isBreak = true,
+                elapsedSeconds = 5 * 60
+            )
+        )
+        assertEquals(
+            5 * 60,
+            SessionResultCalculator.studiedSecondsForEarlyFinish(
+                isBreak = false,
+                elapsedSeconds = 5 * 60
+            )
+        )
     }
 
     @Test
