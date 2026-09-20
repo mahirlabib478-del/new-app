@@ -98,6 +98,12 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C))
 )
 
+private fun formatDailyGoal(minutes: Int): String = when {
+    minutes >= 60 && minutes % 60 == 0 -> "${minutes / 60}h"
+    minutes >= 60 -> "${minutes / 60}h ${minutes % 60}m"
+    else -> "${minutes}m"
+}
+
 @Composable
 fun ProfileScreen(
     viewModel: StudyViewModel
