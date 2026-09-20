@@ -46,6 +46,7 @@ import com.aistudio.studyos.ui.components.UpdateDialog
 import com.aistudio.studyos.ui.screens.ExamPlannerScreen
 import com.aistudio.studyos.ui.screens.FocusScreen
 import com.aistudio.studyos.ui.screens.HomeScreen
+import com.aistudio.studyos.ui.screens.HistoryScreen
 import com.aistudio.studyos.ui.screens.ProfileScreen
 import com.aistudio.studyos.ui.screens.ProgressScreen
 import com.aistudio.studyos.ui.screens.StudyPlanBuilderScreen
@@ -60,6 +61,7 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
     object Home : Screen("home", "Home", Icons.Default.Home)
     object StudyHub : Screen("study_hub", "Study", Icons.Default.School)
     object Progress : Screen("progress", "Progress", Icons.Default.BarChart)
+    object History : Screen("history", "Study History")
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 
     // Full screen sub-destinations
@@ -257,7 +259,10 @@ fun MainApp(
                 )
             }
             composable(Screen.Progress.route) {
-                ProgressScreen(viewModel = viewModel)
+                ProgressScreen(viewModel = viewModel, onOpenHistory = { navController.navigate(Screen.History.route) })
+            }
+            composable(Screen.History.route) {
+                HistoryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(Screen.Profile.route) {
                 ProfileScreen(viewModel = viewModel)
