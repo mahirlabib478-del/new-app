@@ -101,17 +101,17 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             Text("Take a real break", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
             Text("Use these few minutes to reset instead of starting another task.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WellnessTip(Icons.Default.Coffee, "Rest", "Look away")
-                WellnessTip(Icons.Default.Water, "Hydrate", "Drink water")
-                WellnessTip(Icons.Default.Timer, "Move", "Stretch")
+                WellnessTip(Modifier.weight(1f), Icons.Default.Coffee, "Rest", "Look away")
+                WellnessTip(Modifier.weight(1f), Icons.Default.Water, "Hydrate", "Drink water")
+                WellnessTip(Modifier.weight(1f), Icons.Default.Timer, "Move", "Stretch")
             }
             Text("Next: your next focus block starts automatically when the break ends.", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = accent)
         }
     }
 }
 
-@Composable private fun WellnessTip(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String) {
-    Surface(Modifier.weight(1f), shape = RoundedCornerShape(13.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)) {
+@Composable private fun WellnessTip(modifier: Modifier, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String) {
+    Surface(modifier, shape = RoundedCornerShape(13.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = .55f)) {
         Column(Modifier.padding(9.dp), horizontalAlignment = Alignment.CenterHorizontally) { Icon(icon, null, modifier = Modifier.size(19.dp)); Spacer(Modifier.height(4.dp)); Text(title, fontSize = 11.sp, fontWeight = FontWeight.Bold); Text(subtitle, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
