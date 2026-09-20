@@ -110,6 +110,32 @@ fun FocusScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
+            if (state.sessionError != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Study session needs attention",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            state.sessionError.orEmpty(),
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        TextButton(onClick = onBack) {
+                            Text("Back")
+                        }
+                    }
+                }
+            }
+
             // Mode & Block indicator (only updates when block/break changes)
             FocusBlockIndicator(
                 isBreak = state.isBreak,
