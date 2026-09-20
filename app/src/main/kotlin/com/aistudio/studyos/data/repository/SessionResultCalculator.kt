@@ -12,5 +12,8 @@ object SessionResultCalculator {
         return if (safeSeconds < 30) 0 else (safeSeconds + 59) / 60
     }
 
+    fun studiedSecondsForEarlyFinish(isBreak: Boolean, elapsedSeconds: Int): Int =
+        if (isBreak) 0 else elapsedSeconds.coerceAtLeast(0)
+
     fun xpForMinutes(minutes: Int): Int = minutes.coerceAtLeast(0) * 3
 }
