@@ -13,8 +13,18 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.aistudio.studyos.MainActivity
 import com.aistudio.studyos.R
+import com.aistudio.studyos.StudyApplication
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class StudyTimerForegroundService : Service() {
+
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var expiryJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -28,10 +38,11 @@ class StudyTimerForegroundService : Service() {
         }
 
         val endAtWallClockMillis = intent.getLongExtra(EXTRA_END_AT_WALL_CLOCK, 0L)
+        val planId = intent.getLongExtra(EXTRA_PLAN_ID, 0L)
         val isBreak = intent.getBooleanExtra(EXTRA_IS_BREAK, false)
         val subject = intent.getStringExtra(EXTRA_SUBJECT).orEmpty().ifBlank { "Study Session" }
 
-        if (endAtWallClockMillis <= System.currentTimeMillis()) {
+        if (endAtWallClockMillis <= System.currentTimeMillis() || planId <= 0L) {
             stopSelf()
             return START_NOT_STICKY
         }
@@ -52,12 +63,28 @@ class StudyTimerForegroundService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
 
+        scheduleExpiry(planId, endAtWallClockMillis)
         return START_REDELIVER_INTENT
+    }
+
+    private fun scheduleExpiry(planId: Long, endAtWallClockMillis: Long) {
+        expiryJob?.cancel()
+        expiryJob = serviceScope.launch {
+            val waitMillis = (endAtWallClockMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+            delay(waitMillis)
+            StudyApplication.instance.repository.expireRunningPlanIfNeeded(
+                planId = planId,
+                expectedEndAtWallClockMillis = endAtWallClockMillis
+            )
+            stopSelf()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        expiryJob?.cancel()
+        serviceScope.coroutineContext[Job]?.cancel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -117,17 +144,20 @@ class StudyTimerForegroundService : Service() {
         private const val CHANNEL_ID = "study_session_timer"
         private const val NOTIFICATION_ID = 4101
         private const val EXTRA_END_AT_WALL_CLOCK = "end_at_wall_clock"
+        private const val EXTRA_PLAN_ID = "plan_id"
         private const val EXTRA_IS_BREAK = "is_break"
         private const val EXTRA_SUBJECT = "subject"
 
         fun start(
             context: Context,
             endAtWallClockMillis: Long,
+            planId: Long,
             isBreak: Boolean,
             subject: String
         ) {
             val intent = Intent(context, StudyTimerForegroundService::class.java).apply {
                 putExtra(EXTRA_END_AT_WALL_CLOCK, endAtWallClockMillis)
+                putExtra(EXTRA_PLAN_ID, planId)
                 putExtra(EXTRA_IS_BREAK, isBreak)
                 putExtra(EXTRA_SUBJECT, subject)
             }
