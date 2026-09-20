@@ -40,7 +40,7 @@ private fun autoSplit(minutes: Int): List<Int> {
 }
 
 private fun parseSplit(text: String): List<Int> =
-    text.split(',', ' ', ';').mapNotNull { it.trim().toIntOrNull() }.filter { it > 0 }
+    text.split(',', ';', ' ').mapNotNull { it.trim().toIntOrNull() }.filter { it > 0 }
 
 private fun validSplit(item: EditableStudyItem): Boolean {
     val parts = if (item.manualSplit) parseSplit(item.splitText) else autoSplit(item.minutes)
