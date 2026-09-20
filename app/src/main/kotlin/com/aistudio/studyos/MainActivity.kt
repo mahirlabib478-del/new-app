@@ -247,9 +247,10 @@ fun MainApp(
                             blockMinutes = 25,
                             breakMinutes = 5,
                             autoStart = true,
-                            items = listOf(com.aistudio.studyos.data.local.entity.StudyPlanItem("Quick Focus", "Pomodoro", 25))
+                            items = listOf(com.aistudio.studyos.data.local.entity.StudyPlanItem("Quick Focus", "Pomodoro", 25)),
+                            expectedTotalMinutes = 25,
+                            onReady = { navController.navigate(Screen.Focus.route) }
                         )
-                        navController.navigate(Screen.Focus.route)
                     },
                     onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) },
                     onOpenFocus = { navController.navigate(Screen.Focus.route) }
