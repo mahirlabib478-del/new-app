@@ -505,6 +505,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         if (current.sessionError != null || current.isSessionCompleted || current.secondsRemaining <= 0) return
 
         timerJob?.cancel()
+        val previousEndElapsed = current.endAtElapsedRealtime
         val nowElapsed = SystemClock.elapsedRealtime()
         val nowWall = System.currentTimeMillis()
         val bootCount = currentBootCount()
