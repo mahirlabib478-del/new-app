@@ -236,7 +236,6 @@ fun MainApp(
                         )
                         navController.navigate(Screen.Focus.route)
                     },
-                    onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
                     onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) }
                 )
             }
