@@ -29,8 +29,8 @@ interface StudyPlanDao {
     @Delete
     suspend fun deletePlan(plan: StudyPlanEntity)
 
-    @Query("UPDATE study_plans SET remainingSecondsInBlock = :remainingSec, isBreakPhase = :isBreak, currentBlockIndex = :blockIndex, isTimerRunning = :isRunning, endAtElapsedRealtime = :endAtElapsedRealtime, endAtWallClockMillis = :endAtWallClockMillis, timerBootCount = :timerBootCount, lastUpdated = :timestamp WHERE id = :planId")
-    suspend fun updateSessionTimer(planId: Long, remainingSec: Int, isBreak: Boolean, blockIndex: Int, isRunning: Boolean, endAtElapsedRealtime: Long, endAtWallClockMillis: Long, timerBootCount: Int, timestamp: Long = System.currentTimeMillis())
+    @Query("UPDATE study_plans SET remainingSecondsInBlock = :remainingSec, isBreakPhase = :isBreak, currentBlockIndex = :blockIndex, isTimerRunning = :isRunning, endAtElapsedRealtime = :endAtElapsedRealtime, endAtWallClockMillis = :endAtWallClockMillis, timerBootCount = :timerBootCount, lastUpdated = :timestamp WHERE id = :planId AND isCompleted = 0 AND (endAtElapsedRealtime = :expectedEndAtElapsedRealtime OR (:expectedEndAtElapsedRealtime = 0 AND isTimerRunning = 0))")
+    suspend fun updateSessionTimer(planId: Long, remainingSec: Int, isBreak: Boolean, blockIndex: Int, isRunning: Boolean, endAtElapsedRealtime: Long, endAtWallClockMillis: Long, timerBootCount: Int, expectedEndAtElapsedRealtime: Long = 0L, timestamp: Long = System.currentTimeMillis())
 
     @Query("UPDATE study_plans SET isCompleted = 1, isTimerRunning = 0, endAtElapsedRealtime = 0, endAtWallClockMillis = 0, lastUpdated = :timestamp WHERE id = :planId")
     suspend fun markPlanCompleted(planId: Long, timestamp: Long = System.currentTimeMillis())
