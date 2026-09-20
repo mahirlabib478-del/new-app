@@ -349,8 +349,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private fun continueActiveSessionInternal(plan: StudyPlanEntity) {
         stopTimerJob()
 
-        val decodedItems = StudyPlanItemCodec.decode(plan.planItems)
-        if (decodedItems.isEmpty()) {
+        val decodedItems = StudyPlanItemCodec.decodeStrict(plan.planItems)
+        if (decodedItems == null || decodedItems.isEmpty()) {
             currentPlanItems = emptyList()
             _focusState.value = FocusTimerState(
                 currentSubject = plan.subject,
