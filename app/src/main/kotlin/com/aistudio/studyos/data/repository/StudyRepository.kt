@@ -43,16 +43,9 @@ class StudyRepository(
     fun getAllLogs(): Flow<List<SessionLogEntity>> = database.sessionLogDao().getAllLogs()
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
     fun getTodayMinutes(): Flow<Int> {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val startOfDayMillis = calendar.timeInMillis
-        val startOfNextDayMillis = Calendar.getInstance().apply {
-            timeInMillis = startOfDayMillis
-            add(Calendar.DAY_OF_YEAR, 1)
-        }.timeInMillis
+        val range = TodayMinutesCalculator.currentLocalDayRange()
+        val startOfDayMillis = range.startMillis
+        val startOfNextDayMillis = range.endMillis
         return database.sessionLogDao().getTodayMinutes(startOfDayMillis, startOfNextDayMillis)
     }
     fun getTotalMinutes(): Flow<Int?> = database.sessionLogDao().getTotalMinutes()
