@@ -205,37 +205,37 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
 
             // The middle area owns all flexible space, keeping the timer centered
             // instead of leaving a visible blank gap underneath it.
+            // Keep the timer in the flexible middle area, but anchor it to the
+            // bottom of that area so there is no large dead gap below the timer.
             Box(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.BottomCenter
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    CircularTimerDisplay(
-                        seconds = state.secondsRemaining,
-                        total = state.totalBlockSeconds,
-                        running = state.isRunning,
-                        accent = accent
-                    )
-
-                    if (state.isBreak) {
-                        BreakRechargeView(accent = accent, running = state.isRunning)
-                    } else {
-                        FocusInfoCard(
-                            subject = state.currentSubject,
-                            topic = state.currentChapter,
-                            minutes = state.totalBlockSeconds / 60,
-                            accent = accent
-                        )
-                    }
-                }
+                CircularTimerDisplay(
+                    seconds = state.secondsRemaining,
+                    total = state.totalBlockSeconds,
+                    running = state.isRunning,
+                    accent = accent
+                )
             }
 
-            // Controls are anchored to the bottom of the screen.
+            Spacer(Modifier.height(8.dp))
+
+            if (state.isBreak) {
+                BreakRechargeView(accent = accent, running = state.isRunning)
+            } else {
+                FocusInfoCard(
+                    subject = state.currentSubject,
+                    topic = state.currentChapter,
+                    minutes = state.totalBlockSeconds / 60,
+                    accent = accent
+                )
+            }
+
+            // Controls stay directly below the session information and remain
+            // anchored at the bottom of the screen.
             Row(
                 Modifier
                     .fillMaxWidth()
