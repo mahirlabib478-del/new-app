@@ -22,7 +22,7 @@ import com.aistudio.studyos.data.local.entity.UserProfileEntity
         SessionLogEntity::class,
         UserProfileEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class StudyDatabase : RoomDatabase() {
@@ -35,6 +35,13 @@ abstract class StudyDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: StudyDatabase? = null
 
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN accumulatedStudiedSeconds INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN accumulatedBillableMinutes INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE study_plans ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0")
@@ -42,6 +49,8 @@ abstract class StudyDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE study_plans ADD COLUMN endAtElapsedRealtime INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE study_plans ADD COLUMN endAtWallClockMillis INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE study_plans ADD COLUMN timerBootCount INTEGER NOT NULL DEFAULT -1")
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN accumulatedStudiedSeconds INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_plans ADD COLUMN accumulatedBillableMinutes INTEGER NOT NULL DEFAULT 0")
             }
         }
 
@@ -63,7 +72,7 @@ abstract class StudyDatabase : RoomDatabase() {
                     StudyDatabase::class.java,
                     "study_os_database"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
