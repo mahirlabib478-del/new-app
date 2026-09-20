@@ -72,6 +72,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private var timerJob: Job? = null
     private var updateCheckJob: Job? = null
     private var currentPlanItems: List<StudyPlanItem> = emptyList()
+    private val transitionMutex = Mutex()
+    @Volatile private var transitionInProgress = false
 
     private val _currentTheme = MutableStateFlow(repository.getInitialTheme())
     val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
