@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.aistudio.studyos.data.local.entity.ExamEntity
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
+import com.aistudio.studyos.data.local.entity.StudyPlanItem
+import com.aistudio.studyos.data.local.entity.StudyPlanItemCodec
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import com.aistudio.studyos.data.repository.StudyRepository
 import com.aistudio.studyos.data.update.AppUpdateInfo
@@ -42,6 +44,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     private var timerJob: Job? = null
     private var updateCheckJob: Job? = null
+    private var currentPlanItems: List<StudyPlanItem> = emptyList()
 
     private val _currentTheme = MutableStateFlow(repository.getInitialTheme())
     val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
@@ -151,27 +154,37 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         totalBlocks: Int = 4,
         blockMinutes: Int = 25,
         breakMinutes: Int = 5,
-        autoStart: Boolean = true
+        autoStart: Boolean = true,
+        items: List<StudyPlanItem> = emptyList()
     ) {
         viewModelScope.launch {
-            val studySec = blockMinutes * 60
-            val breakSec = breakMinutes * 60
+            val normalizedItems = items
+                .map { it.copy(minutes = it.minutes.coerceIn(1, 720)) }
+                .filter { it.subject.isNotBlank() && it.topic.isNotBlank() }
+                .let { if (it.isNotEmpty()) it else listOf(StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720))) }
+            val boundedItems = normalizedItems.take(720)
+            val first = boundedItems.first()
+            val studySec = first.minutes * 60
+            val breakSec = breakMinutes.coerceIn(0, 720) * 60
             val plan = StudyPlanEntity(
                 title = title.ifBlank { "$subject - $chapter" },
-                subject = subject,
-                chapter = chapter,
+                subject = first.subject,
+                chapter = first.topic,
                 mode = mode,
-                totalBlocks = totalBlocks,
+                totalBlocks = boundedItems.size,
                 currentBlockIndex = 0,
-                durationPerBlockMinutes = blockMinutes,
-                breakMinutes = breakMinutes,
+                durationPerBlockMinutes = first.minutes,
+                breakMinutes = breakMinutes.coerceIn(0, 720),
                 remainingSecondsInBlock = studySec,
                 isBreakPhase = false,
                 isCompleted = false,
-                isDraft = false
+                isDraft = false,
+                planItems = StudyPlanItemCodec.encode(boundedItems),
+                totalDurationMinutes = boundedItems.sumOf { it.minutes }
             )
             val planId = repository.savePlan(plan)
             pauseTimer()
+            currentPlanItems = boundedItems
             _focusState.value = FocusTimerState(
                 isRunning = false,
                 isBreak = false,
@@ -180,15 +193,13 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 studyBlockSeconds = studySec,
                 breakBlockSeconds = breakSec,
                 currentBlockIndex = 0,
-                totalBlocks = totalBlocks,
-                currentSubject = subject,
-                currentChapter = chapter,
+                totalBlocks = boundedItems.size,
+                currentSubject = first.subject,
+                currentChapter = first.topic,
                 planId = planId,
                 mode = mode
             )
-            if (autoStart) {
-                startTimer()
-            }
+            if (autoStart) startTimer()
         }
     }
 
@@ -199,23 +210,32 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         mode: String,
         totalBlocks: Int = 4,
         blockMinutes: Int = 25,
-        breakMinutes: Int = 5
+        breakMinutes: Int = 5,
+        items: List<StudyPlanItem> = emptyList()
     ) {
         viewModelScope.launch {
-            val studySec = blockMinutes * 60
+            val normalizedItems = items
+                .map { it.copy(minutes = it.minutes.coerceIn(1, 720)) }
+                .filter { it.subject.isNotBlank() && it.topic.isNotBlank() }
+                .let { if (it.isNotEmpty()) it else listOf(StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720))) }
+            val boundedItems = normalizedItems.take(720)
+            val first = boundedItems.first()
+            val studySec = first.minutes * 60
             val plan = StudyPlanEntity(
                 title = title.ifBlank { "$subject - $chapter" },
-                subject = subject,
-                chapter = chapter,
+                subject = first.subject,
+                chapter = first.topic,
                 mode = mode,
-                totalBlocks = totalBlocks,
+                totalBlocks = boundedItems.size,
                 currentBlockIndex = 0,
-                durationPerBlockMinutes = blockMinutes,
-                breakMinutes = breakMinutes,
+                durationPerBlockMinutes = first.minutes,
+                breakMinutes = breakMinutes.coerceIn(0, 720),
                 remainingSecondsInBlock = studySec,
                 isBreakPhase = false,
                 isCompleted = false,
-                isDraft = true
+                isDraft = true,
+                planItems = StudyPlanItemCodec.encode(boundedItems),
+                totalDurationMinutes = boundedItems.sumOf { it.minutes }
             )
             repository.savePlan(plan)
         }
@@ -236,8 +256,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             return
         }
         pauseTimer()
-        val studySec = plan.durationPerBlockMinutes * 60
-        val breakSec = plan.breakMinutes * 60
+        currentPlanItems = StudyPlanItemCodec.decode(plan.planItems).ifEmpty {
+            listOf(StudyPlanItem(plan.subject, plan.chapter, plan.durationPerBlockMinutes))
+        }
+        val currentItem = currentPlanItems.getOrElse(plan.currentBlockIndex) { currentPlanItems.last() }
+        val studySec = currentItem.minutes * 60
+        val breakSec = plan.breakMinutes.coerceIn(0, 720) * 60
         val totalBlockSec = if (plan.isBreakPhase) breakSec else studySec
         val remainingSec = if (plan.remainingSecondsInBlock in 1..totalBlockSec) {
             plan.remainingSecondsInBlock
@@ -394,12 +418,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 }
             }
         } else {
-            // Break finished, ready for next study block
-            val blockSec = current.studyBlockSeconds
+            // Break finished, ready for the next topic's duration.
+            val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex)
+            val blockSec = (nextItem?.minutes ?: (current.studyBlockSeconds / 60).coerceAtLeast(1)) * 60
             _focusState.value = current.copy(
                 isBreak = false,
                 secondsRemaining = blockSec,
-                totalBlockSeconds = blockSec
+                totalBlockSeconds = blockSec,
+                studyBlockSeconds = blockSec,
+                currentSubject = nextItem?.subject ?: current.currentSubject,
+                currentChapter = nextItem?.topic ?: current.currentChapter
             )
             if (current.planId != null) {
                 viewModelScope.launch {
@@ -427,12 +455,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 currentBlockIndex = current.currentBlockIndex + 1
             )
         } else {
-            // Switch to next focus block
-            val blockSec = current.studyBlockSeconds
+            // Switch to the next focus block and load its topic/duration.
+            val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex)
+            val blockSec = (nextItem?.minutes ?: (current.studyBlockSeconds / 60).coerceAtLeast(1)) * 60
             _focusState.value = current.copy(
                 isBreak = false,
                 secondsRemaining = blockSec,
-                totalBlockSeconds = blockSec
+                totalBlockSeconds = blockSec,
+                studyBlockSeconds = blockSec,
+                currentSubject = nextItem?.subject ?: current.currentSubject,
+                currentChapter = nextItem?.topic ?: current.currentChapter
             )
         }
     }
