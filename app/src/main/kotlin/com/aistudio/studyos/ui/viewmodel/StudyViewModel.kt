@@ -376,6 +376,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val currentItem = currentPlanItems[safeIndex]
         val studySec = currentItem.minutes * 60
         val breakSec = normalizeBreakMinutes(plan.breakMinutes) * 60
+        val previousEndElapsed = current.endAtElapsedRealtime
         val nowElapsed = SystemClock.elapsedRealtime()
         val nowWall = System.currentTimeMillis()
         val bootCount = currentBootCount()
@@ -527,7 +528,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         isRunning = true,
                         endAtElapsedRealtime = endElapsed,
                         endAtWallClockMillis = endWall,
-                        timerBootCount = bootCount
+                        timerBootCount = bootCount,
+                        expectedEndAtElapsedRealtime = previousEndElapsed
                     )
                 }
             }
@@ -561,6 +563,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         if (transitionInProgress) return
         stopTimerJob()
         val current = _focusState.value
+        val previousEndElapsed = current.endAtElapsedRealtime
         val remaining = remainingFromState(current)
         _focusState.value = current.copy(
             isRunning = false,
@@ -581,7 +584,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         isRunning = false,
                         endAtElapsedRealtime = 0L,
                         endAtWallClockMillis = 0L,
-                        timerBootCount = currentBootCount()
+                        timerBootCount = currentBootCount(),
+                        expectedEndAtElapsedRealtime = previousEndElapsed
                     )
                 }
             }
