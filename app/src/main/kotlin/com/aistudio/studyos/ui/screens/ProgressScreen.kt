@@ -178,7 +178,6 @@ fun ProgressScreen(
     val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
     val activePlan by viewModel.activePlan.collectAsState()
     val analytics = remember(allLogs, activePlan) { ProgressAnalyticsCalculator.calculate(allLogs, activePlan) }
-    val achievements = remember(totalMins, streak, allLogs.size) { GamificationCalculator.achievements(totalMins, streak, allLogs.size) }
 
     var showAllLogs by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
@@ -203,6 +202,7 @@ fun ProgressScreen(
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val todayDateStr = remember { sdf.format(Date()) }
     val isStreakDoneToday = profile?.lastActiveDate == todayDateStr && streak > 0
+    val achievements = remember(totalMins, streak, allLogs.size) { GamificationCalculator.achievements(totalMins, streak, allLogs.size) }
 
     val displayedLogs = if (showAllLogs) allLogs else recentLogs
 
