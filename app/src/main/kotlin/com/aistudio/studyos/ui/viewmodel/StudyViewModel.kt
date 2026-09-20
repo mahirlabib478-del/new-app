@@ -416,7 +416,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             actualStudiedSeconds = priorCompletedSeconds
         )
 
-        if (isRunning) startTimer()
+        if (isRunning) startTimerInternal()
     }
 
     fun setupFocusSession(plan: StudyPlanEntity) = continueActiveSession(plan)
@@ -484,6 +484,10 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     fun startTimer() {
         if (transitionInProgress) return
+        startTimerInternal()
+    }
+
+    private fun startTimerInternal() {
         val current = _focusState.value
         if (current.sessionError != null || current.isSessionCompleted || current.secondsRemaining <= 0) return
 
@@ -681,7 +685,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             endAtElapsedRealtime = 0L,
             endAtWallClockMillis = 0L
         )
-        startTimer()
+        startTimerInternal()
     }
 
     private suspend fun finishBreakTransition(current: FocusTimerState) {
@@ -727,7 +731,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             endAtElapsedRealtime = 0L,
             endAtWallClockMillis = 0L
         )
-        startTimer()
+        startTimerInternal()
     }
 
     fun skipCurrentBlock() {
@@ -801,7 +805,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                                 endAtElapsedRealtime = 0L,
                                 endAtWallClockMillis = 0L
                             )
-                            startTimer()
+                            startTimerInternal()
                         }
                     }
                 } catch (_: Exception) {
