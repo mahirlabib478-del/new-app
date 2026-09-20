@@ -346,7 +346,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
-    private fun continueActiveSessionInternal(plan: StudyPlanEntity) {
+    private suspend fun continueActiveSessionInternal(plan: StudyPlanEntity) {
         stopTimerJob()
 
         val decodedItems = if (plan.planItems.isBlank()) {
