@@ -13,6 +13,7 @@ import com.aistudio.studyos.data.local.entity.StudyPlanItem
 import com.aistudio.studyos.data.local.entity.StudyPlanItemCodec
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import com.aistudio.studyos.data.repository.SessionResultCalculator
+import com.aistudio.studyos.data.repository.TimerDeadlineCalculator
 import com.aistudio.studyos.StudyApplication
 import com.aistudio.studyos.service.StudyTimerForegroundService
 import com.aistudio.studyos.data.repository.StudyRepository
@@ -626,8 +627,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val nowWall = System.currentTimeMillis()
         val bootCount = currentBootCount()
         val durationSec = current.secondsRemaining.coerceIn(1, current.totalBlockSeconds.coerceAtLeast(1))
-        val endElapsed = nowElapsed + durationSec * 1000L
-        val endWall = nowWall + durationSec * 1000L
+        val endElapsed = TimerDeadlineCalculator.deadlineMillis(nowElapsed, durationSec)
+        val endWall = TimerDeadlineCalculator.deadlineMillis(nowWall, durationSec)
         _focusState.value = current.copy(
             isRunning = true,
             secondsRemaining = durationSec,
@@ -1123,16 +1124,13 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         if (!state.isRunning) return state.secondsRemaining.coerceIn(0, state.totalBlockSeconds)
         val nowElapsed = SystemClock.elapsedRealtime()
         val nowWall = System.currentTimeMillis()
-        val remainingMillis = when {
-            state.endAtElapsedRealtime > nowElapsed -> state.endAtElapsedRealtime - nowElapsed
-            state.endAtWallClockMillis > nowWall -> state.endAtWallClockMillis - nowWall
-            else -> 0L
-        }
-        return ceilSeconds(remainingMillis / 1000L).coerceIn(0, state.totalBlockSeconds)
-    }
-
-    private fun ceilSeconds(value: Long): Int =
-        value.coerceAtLeast(0L).let { ((it + 999L) / 1000L).toInt() }
+        return TimerDeadlineCalculator.remainingSeconds(
+            endAtElapsedRealtime = state.endAtElapsedRealtime,
+            endAtWallClockMillis = state.endAtWallClockMillis,
+            nowElapsedRealtime = nowElapsed,
+            nowWallClockMillis = nowWall,
+            totalBlockSeconds = state.totalBlockSeconds
+        )
 
     private fun currentBootCount(): Int =
         runCatching {
