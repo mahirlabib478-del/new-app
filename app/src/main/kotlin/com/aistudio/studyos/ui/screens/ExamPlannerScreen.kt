@@ -287,18 +287,8 @@ fun ExamPlannerScreen(
                                 )
 
                                 Button(
-                                    onClick = {
-                                        viewModel.startNewPlan(
-                                            title = "Exam Prep: ${exam.subject}",
-                                            subject = exam.subject,
-                                            chapter = exam.syllabusTopics.ifBlank { "Core Exam Revision" },
-                                            mode = "exam",
-                                            totalBlocks = 3,
-                                            blockMinutes = 30,
-                                            breakMinutes = 5
-                                        )
-                                        onStartFocus()
-                                    },
+                                    onClick = { onStartStudySetup(exam) },
+,
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary
