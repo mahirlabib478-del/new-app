@@ -10,7 +10,7 @@ data class StudyPlanEntity(
     val title: String,
     val subject: String,
     val chapter: String,
-    val mode: String, // "regular", "exam", "cram"
+    val mode: String,
     val totalBlocks: Int,
     val currentBlockIndex: Int = 0,
     val durationPerBlockMinutes: Int = 25,
@@ -20,5 +20,7 @@ data class StudyPlanEntity(
     val isCompleted: Boolean = false,
     val isDraft: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
-    val lastUpdated: Long = System.currentTimeMillis()
+    val lastUpdated: Long = System.currentTimeMillis(),
+    val planItems: String = "",
+    val totalDurationMinutes: Int = durationPerBlockMinutes * totalBlocks
 )
