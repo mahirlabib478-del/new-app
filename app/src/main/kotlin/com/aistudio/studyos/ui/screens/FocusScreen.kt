@@ -147,50 +147,49 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 .padding(horizontal = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Compact header/progress area. The timer gets the full remaining viewport.
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
 
             Surface(
                 shape = RoundedCornerShape(50.dp),
-                color = accent.copy(alpha = .12f)
+                color = accent.copy(alpha = .10f)
             ) {
                 Row(
-                    Modifier.padding(horizontal = 15.dp, vertical = 8.dp),
+                    Modifier.padding(horizontal = 13.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         if (state.isBreak) Icons.Default.Coffee else Icons.Default.Timer,
-                        null,
+                        contentDescription = null,
                         tint = accent,
-                        modifier = Modifier.size(17.dp)
+                        modifier = Modifier.size(15.dp)
                     )
-                    Spacer(Modifier.width(7.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        if (state.isBreak) "BREAK • ${state.breakBlockSeconds / 60} MIN" else "FOCUS • MAX 25 MIN",
+                        if (state.isBreak) "BREAK • ${state.breakBlockSeconds / 60} MIN" else "FOCUS • 25 MIN MAX",
                         color = accent,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 11.sp,
-                        letterSpacing = 1.sp
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        letterSpacing = .7.sp
                     )
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(5.dp))
 
             Text(
                 "Block ${minOf(state.currentBlockIndex + 1, state.totalBlocks)} of ${state.totalBlocks}",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(Modifier.height(5.dp))
+            Spacer(Modifier.height(4.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 repeat(state.totalBlocks.coerceAtMost(12)) { index ->
                     Box(
                         Modifier
-                            .height(5.dp)
-                            .width(if (index == state.currentBlockIndex) 27.dp else 11.dp)
+                            .height(4.dp)
+                            .width(if (index == state.currentBlockIndex) 24.dp else 9.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(
                                 when {
@@ -203,15 +202,12 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 }
             }
 
-            // The middle area owns all flexible space, keeping the timer centered
-            // instead of leaving a visible blank gap underneath it.
-            // Keep the timer in the flexible middle area, but anchor it to the
-            // bottom of that area so there is no large dead gap below the timer.
-            Box(
+            Column(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentAlignment = Alignment.BottomCenter
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 CircularTimerDisplay(
                     seconds = state.secondsRemaining,
@@ -219,34 +215,32 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                     running = state.isRunning,
                     accent = accent
                 )
+
+                Spacer(Modifier.height(10.dp))
+
+                if (state.isBreak) {
+                    BreakRechargeView(accent = accent, running = state.isRunning)
+                } else {
+                    FocusInfoCard(
+                        subject = state.currentSubject,
+                        topic = state.currentChapter,
+                        minutes = state.totalBlockSeconds / 60,
+                        accent = accent
+                    )
+                }
             }
 
-            Spacer(Modifier.height(8.dp))
-
-            if (state.isBreak) {
-                BreakRechargeView(accent = accent, running = state.isRunning)
-            } else {
-                FocusInfoCard(
-                    subject = state.currentSubject,
-                    topic = state.currentChapter,
-                    minutes = state.totalBlockSeconds / 60,
-                    accent = accent
-                )
-            }
-
-            // Controls stay directly below the session information and remain
-            // anchored at the bottom of the screen.
             Row(
                 Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(top = 6.dp, bottom = 10.dp),
+                    .padding(top = 4.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 FilledIconButton(
                     onClick = { viewModel.resetBlockTimer() },
-                    modifier = Modifier.size(50.dp).testTag("btn_reset_focus_block"),
+                    modifier = Modifier.size(48.dp).testTag("btn_reset_focus_block"),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -257,14 +251,14 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
 
                 FilledIconButton(
                     onClick = { viewModel.toggleTimer() },
-                    modifier = Modifier.size(76.dp).testTag("btn_toggle_focus_timer"),
+                    modifier = Modifier.size(74.dp).testTag("btn_toggle_focus_timer"),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = accent)
                 ) {
                     Icon(
                         if (state.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                         if (state.isRunning) "Pause" else "Start",
-                        Modifier.size(35.dp),
+                        Modifier.size(33.dp),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -277,7 +271,7 @@ fun FocusScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                             showSkipDialog = true
                         }
                     },
-                    modifier = Modifier.size(50.dp).testTag("btn_skip_focus_block"),
+                    modifier = Modifier.size(48.dp).testTag("btn_skip_focus_block"),
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -307,7 +301,7 @@ private fun CircularTimerDisplay(
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
 
     Box(
-        Modifier.size(230.dp).testTag("focus_timer_circle"),
+        Modifier.size(212.dp).testTag("focus_timer_circle"),
         contentAlignment = Alignment.Center
     ) {
         Canvas(
@@ -325,12 +319,12 @@ private fun CircularTimerDisplay(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text,
-                fontSize = 50.sp,
+                fontSize = 46.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-1).sp
             )
             Text(
-                if (running) "In progress" else "Paused",
+                if (running) "Stay focused" else "Paused",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -353,7 +347,7 @@ private fun FocusInfoCard(
         )
     ) {
         Row(
-            Modifier.padding(14.dp),
+            Modifier.padding(horizontal = 13.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(shape = CircleShape, color = accent.copy(alpha = .12f)) {
