@@ -42,7 +42,7 @@ class StudyTimerForegroundService : Service() {
             subject = subject
         )
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= 34) {
             startForeground(
                 NOTIFICATION_ID,
                 notification,
