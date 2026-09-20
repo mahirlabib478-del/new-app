@@ -221,7 +221,21 @@ fun MainApp(
                 HomeScreen(
                     viewModel = viewModel,
                     onOpenFocus = { navController.navigate(Screen.Focus.route) },
-                    onOpenRegularStudy = { navController.navigate("study_setup/regular/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
+                    onOpenStudy = { navController.navigate("study_setup/study/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
+                    onOpenQuickFocus = {
+                        viewModel.startNewPlan(
+                            title = "Quick Focus",
+                            subject = "Quick Focus",
+                            chapter = "Pomodoro",
+                            mode = "quick",
+                            totalBlocks = 1,
+                            blockMinutes = 25,
+                            breakMinutes = 5,
+                            autoStart = true,
+                            items = listOf(com.aistudio.studyos.data.local.entity.StudyPlanItem("Quick Focus", "Pomodoro", 25))
+                        )
+                        navController.navigate(Screen.Focus.route)
+                    },
                     onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
                     onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) }
                 )
@@ -229,13 +243,23 @@ fun MainApp(
             composable(Screen.StudyHub.route) {
                 StudyHubScreen(
                     viewModel = viewModel,
-                    onOpenRegularStudy = { navController.navigate("study_setup/regular/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
-                    onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
+                    onOpenStudy = { navController.navigate("study_setup/study/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
+                    onOpenQuickFocus = {
+                        viewModel.startNewPlan(
+                            title = "Quick Focus",
+                            subject = "Quick Focus",
+                            chapter = "Pomodoro",
+                            mode = "quick",
+                            totalBlocks = 1,
+                            blockMinutes = 25,
+                            breakMinutes = 5,
+                            autoStart = true,
+                            items = listOf(com.aistudio.studyos.data.local.entity.StudyPlanItem("Quick Focus", "Pomodoro", 25))
+                        )
+                        navController.navigate(Screen.Focus.route)
+                    },
                     onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) },
-                    onOpenFocus = { navController.navigate(Screen.Focus.route) },
-                    onOpenCramSetup = { subject, topic ->
-                        navController.navigate("study_setup/cram/" + Uri.encode(subject) + "/" + Uri.encode(topic))
-                    }
+                    onOpenFocus = { navController.navigate(Screen.Focus.route) }
                 )
             }
             composable(Screen.Progress.route) {
