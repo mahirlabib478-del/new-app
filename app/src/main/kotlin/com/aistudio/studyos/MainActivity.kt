@@ -9,10 +9,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -200,31 +200,32 @@ fun MainApp(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding),
-            // Subtle slide + fade keeps navigation from feeling like a hard "dhup"
-            // screen swap while staying fast enough for low-end devices.
+            // Keep navigation visually smooth without animating the whole layout.
+            // A tiny scale + fade uses draw transforms instead of horizontal layout
+            // movement, which avoids the "dhup-dhap" snap on lower-end devices.
             enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it / 12 },
+                scaleIn(
+                    initialScale = 0.985f,
                     animationSpec = tween(150)
                 ) + fadeIn(animationSpec = tween(150))
             },
             exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { -it / 12 },
-                    animationSpec = tween(100)
+                scaleOut(
+                    targetScale = 0.985f,
+                    animationSpec = tween(150)
                 ) + fadeOut(animationSpec = tween(150))
             },
             popEnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { -it / 12 },
-                    animationSpec = tween(100)
-                ) + fadeIn(animationSpec = tween(100))
+                scaleIn(
+                    initialScale = 0.985f,
+                    animationSpec = tween(150)
+                ) + fadeIn(animationSpec = tween(150))
             },
             popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it / 12 },
-                    animationSpec = tween(100)
-                ) + fadeOut(animationSpec = tween(80))
+                scaleOut(
+                    targetScale = 0.985f,
+                    animationSpec = tween(150)
+                ) + fadeOut(animationSpec = tween(150))
             }
         ) {
             composable(Screen.Home.route) {
