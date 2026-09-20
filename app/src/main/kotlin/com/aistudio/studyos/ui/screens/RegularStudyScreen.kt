@@ -265,9 +265,10 @@ fun RegularStudyScreen(
                             mode = "regular",
                             totalBlocks = totalBlocks,
                             blockMinutes = selectedDuration,
-                            breakMinutes = selectedBreak
+                            breakMinutes = selectedBreak,
+                            expectedTotalMinutes = selectedDuration * totalBlocks,
+                            onReady = onStartFocus
                         )
-                        onStartFocus()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
