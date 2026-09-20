@@ -59,7 +59,8 @@ fun StudyHubScreen(
     onOpenRegularStudy: () -> Unit,
     onOpenExamPlanner: () -> Unit,
     onOpenSavedSessions: () -> Unit,
-    onOpenFocus: () -> Unit
+    onOpenFocus: () -> Unit,
+    onOpenCramSetup: (String, String) -> Unit
 ) {
     val savedPlans by viewModel.savedPlans.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
