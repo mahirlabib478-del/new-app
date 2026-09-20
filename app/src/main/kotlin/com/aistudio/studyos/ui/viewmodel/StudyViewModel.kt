@@ -40,6 +40,17 @@ data class FocusTimerState(
     val mode: String = "regular"
 )
 
+private fun splitStudyItem(item: StudyPlanItem): List<StudyPlanItem> {
+    var remaining = item.minutes.coerceIn(1, 720)
+    val result = mutableListOf<StudyPlanItem>()
+    while (remaining > 25) {
+        result += item.copy(minutes = 25)
+        remaining -= 25
+    }
+    result += item.copy(minutes = remaining)
+    return result
+}
+
 class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     private var timerJob: Job? = null
@@ -158,10 +169,15 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         items: List<StudyPlanItem> = emptyList()
     ) {
         viewModelScope.launch {
-            val normalizedItems = items
+            val sourceItems = if (items.isNotEmpty()) {
+                items
+            } else {
+                listOf(StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720)))
+            }
+            val normalizedItems = sourceItems
                 .map { it.copy(minutes = it.minutes.coerceIn(1, 720)) }
                 .filter { it.subject.isNotBlank() && it.topic.isNotBlank() }
-                .let { if (it.isNotEmpty()) it else listOf(StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720))) }
+                .flatMap(::splitStudyItem)
             val boundedItems = normalizedItems.take(720)
             val first = boundedItems.first()
             val studySec = first.minutes * 60
@@ -214,10 +230,15 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         items: List<StudyPlanItem> = emptyList()
     ) {
         viewModelScope.launch {
-            val normalizedItems = items
+            val sourceItems = if (items.isNotEmpty()) {
+                items
+            } else {
+                listOf(StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720)))
+            }
+            val normalizedItems = sourceItems
                 .map { it.copy(minutes = it.minutes.coerceIn(1, 720)) }
                 .filter { it.subject.isNotBlank() && it.topic.isNotBlank() }
-                .let { if (it.isNotEmpty()) it else listOf(StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 720))) }
+                .flatMap(::splitStudyItem)
             val boundedItems = normalizedItems.take(720)
             val first = boundedItems.first()
             val studySec = first.minutes * 60
@@ -256,9 +277,10 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             return
         }
         pauseTimer()
-        currentPlanItems = StudyPlanItemCodec.decode(plan.planItems).ifEmpty {
+        val decodedItems = StudyPlanItemCodec.decode(plan.planItems).ifEmpty {
             listOf(StudyPlanItem(plan.subject, plan.chapter, plan.durationPerBlockMinutes))
         }
+        currentPlanItems = decodedItems.flatMap(::splitStudyItem).take(720)
         val currentItem = currentPlanItems.getOrElse(plan.currentBlockIndex) { currentPlanItems.last() }
         val studySec = currentItem.minutes * 60
         val breakSec = plan.breakMinutes.coerceIn(0, 720) * 60
@@ -277,7 +299,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             studyBlockSeconds = studySec,
             breakBlockSeconds = breakSec,
             currentBlockIndex = plan.currentBlockIndex,
-            totalBlocks = plan.totalBlocks,
+            totalBlocks = currentPlanItems.size,
             currentSubject = currentItem.subject,
             currentChapter = currentItem.topic,
             planId = plan.id,
