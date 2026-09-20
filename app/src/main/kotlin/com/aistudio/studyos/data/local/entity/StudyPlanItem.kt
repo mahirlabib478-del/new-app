@@ -29,4 +29,11 @@ object StudyPlanItemCodec {
                 )
             }.getOrNull()
         }.toList()
+
+    fun decodeStrict(raw: String): List<StudyPlanItem>? {
+        if (raw.isBlank()) return emptyList()
+        val nonBlankLines = raw.lineSequence().filter { it.isNotBlank() }.toList()
+        val decoded = decode(raw)
+        return if (decoded.size == nonBlankLines.size) decoded else null
+    }
 }
