@@ -48,9 +48,9 @@ import com.aistudio.studyos.data.local.entity.StudyPlanItem
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
 private data class EditableStudyItem(
-    var subject: String,
-    var topic: String,
-    var minutes: Int
+    val subject: String,
+    val topic: String,
+    val minutes: Int
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -143,14 +143,14 @@ fun StudyPlanBuilderScreen(
                         }
                         OutlinedTextField(
                             value = item.subject,
-                            onValueChange = { item.subject = it },
+                            onValueChange = { value -> items[index] = item.copy(subject = value) },
                             label = { Text("Subject") },
                             modifier = Modifier.fillMaxWidth().testTag("study_subject_$index"),
                             singleLine = true
                         )
                         OutlinedTextField(
                             value = item.topic,
-                            onValueChange = { item.topic = it },
+                            onValueChange = { value -> items[index] = item.copy(topic = value) },
                             label = { Text("Topic / Chapter") },
                             modifier = Modifier.fillMaxWidth().testTag("study_topic_$index"),
                             singleLine = true
@@ -158,7 +158,7 @@ fun StudyPlanBuilderScreen(
                         OutlinedTextField(
                             value = item.minutes.toString(),
                             onValueChange = { value ->
-                                item.minutes = value.filter(Char::isDigit).toIntOrNull()?.coerceIn(1, 720) ?: 1
+                                items[index] = item.copy(minutes = value.filter(Char::isDigit).toIntOrNull()?.coerceIn(1, 720) ?: 1)
                             },
                             label = { Text("Duration (1–720 min)") },
                             modifier = Modifier.fillMaxWidth().testTag("study_duration_$index"),
@@ -207,8 +207,8 @@ fun StudyPlanBuilderScreen(
                             selected = totalMinutes == mins,
                             onClick = {
                                 if (items.isNotEmpty()) {
-                                    items[0].minutes = mins
-                                    for (i in 1 until items.size) items[i].minutes = 1
+                                    items[0] = items[0].copy(minutes = mins)
+                                    for (i in 1 until items.size) items[i] = items[i].copy(minutes = 1)
                                 }
                             },
                             label = { Text(if (mins < 60) "${mins}m" else "${mins / 60}h", fontSize = 11.sp) },
