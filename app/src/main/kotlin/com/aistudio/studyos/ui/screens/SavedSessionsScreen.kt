@@ -279,8 +279,7 @@ fun SavedSessionsScreen(
 
                                 Button(
                                     onClick = {
-                                        viewModel.resumeSavedPlan(plan)
-                                        onResumeSession()
+                                        viewModel.resumeSavedPlan(plan, onReady = onResumeSession)
                                     },
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
