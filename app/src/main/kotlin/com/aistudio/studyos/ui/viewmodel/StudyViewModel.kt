@@ -51,6 +51,8 @@ private fun splitStudyItem(item: StudyPlanItem): List<StudyPlanItem> {
     return result
 }
 
+private fun normalizeBreakMinutes(value: Int): Int = if (value >= 8) 10 else 5
+
 class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     private var timerJob: Job? = null
@@ -181,7 +183,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             val boundedItems = normalizedItems.take(720)
             val first = boundedItems.first()
             val studySec = first.minutes * 60
-            val breakSec = breakMinutes.coerceIn(0, 720) * 60
+            val breakSec = normalizeBreakMinutes(breakMinutes) * 60
             val plan = StudyPlanEntity(
                 title = title.ifBlank { "$subject - $chapter" },
                 subject = first.subject,
@@ -283,7 +285,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         currentPlanItems = decodedItems.flatMap(::splitStudyItem).take(720)
         val currentItem = currentPlanItems.getOrElse(plan.currentBlockIndex) { currentPlanItems.last() }
         val studySec = currentItem.minutes * 60
-        val breakSec = plan.breakMinutes.coerceIn(0, 720) * 60
+        val breakSec = normalizeBreakMinutes(plan.breakMinutes) * 60
         val totalBlockSec = if (plan.isBreakPhase) breakSec else studySec
         val remainingSec = if (plan.remainingSecondsInBlock in 1..totalBlockSec) {
             plan.remainingSecondsInBlock
