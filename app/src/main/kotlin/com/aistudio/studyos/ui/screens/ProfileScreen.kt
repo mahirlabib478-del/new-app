@@ -618,8 +618,11 @@ fun ProfileScreen(
     }
 
     if (showReminderTimeDialog) {
-        var tempHour by remember { mutableStateOf(reminderHour) }
-        var tempMinute by remember { mutableStateOf(reminderMinute) }
+        val timePickerState = androidx.compose.material3.rememberTimePickerState(
+            initialHour = reminderHour,
+            initialMinute = reminderMinute,
+            is24Hour = true
+        )
 
         AlertDialog(
             onDismissRequest = { showReminderTimeDialog = false },
@@ -632,76 +635,28 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Choose when your daily study reminder should appear.",
+                        "Choose your daily reminder time.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.height(18.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("HOUR", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            TextButton(onClick = { tempHour = (tempHour + 1) % 24 }) {
-                                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Text(
-                                    String.format(java.util.Locale.getDefault(), "%02d", tempHour),
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                                    fontSize = 28.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                            TextButton(onClick = { tempHour = (tempHour + 23) % 24 }) {
-                                Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        Text(
-                            ":",
-                            modifier = Modifier.padding(horizontal = 10.dp),
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("MINUTE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            TextButton(onClick = { tempMinute = (tempMinute + 1) % 60 }) {
-                                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Text(
-                                    String.format(java.util.Locale.getDefault(), "%02d", tempMinute),
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                                    fontSize = 28.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                            TextButton(onClick = { tempMinute = (tempMinute + 59) % 60 }) {
-                                Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
+                    Spacer(Modifier.height(8.dp))
+                    androidx.compose.material3.TimePicker(
+                        state = timePickerState,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        reminderHour = tempHour
-                        reminderMinute = tempMinute
-                        StudyReminderScheduler.setReminder(context, true, tempHour, tempMinute)
+                        reminderHour = timePickerState.hour
+                        reminderMinute = timePickerState.minute
+                        StudyReminderScheduler.setReminder(
+                            context,
+                            true,
+                            timePickerState.hour,
+                            timePickerState.minute
+                        )
                         showReminderTimeDialog = false
                     },
                     shape = RoundedCornerShape(10.dp)
