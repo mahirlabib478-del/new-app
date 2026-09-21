@@ -24,6 +24,7 @@ class StudyRepository(
     // Study Plan
     fun getActivePlan(): Flow<StudyPlanEntity?> = database.studyPlanDao().getActivePlan()
     fun getSavedPlans(): Flow<List<StudyPlanEntity>> = database.studyPlanDao().getSavedPlans()
+    fun getLatestCompletedPlan(): Flow<StudyPlanEntity?> = database.studyPlanDao().getLatestCompletedPlan()
     suspend fun savePlan(plan: StudyPlanEntity): Long = database.studyPlanDao().insertPlan(plan)
     suspend fun updatePlan(plan: StudyPlanEntity) = database.studyPlanDao().updatePlan(plan)
     suspend fun getPlanById(id: Long): StudyPlanEntity? = database.studyPlanDao().getPlanById(id)
