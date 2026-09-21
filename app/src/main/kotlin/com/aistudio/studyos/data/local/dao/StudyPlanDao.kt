@@ -17,6 +17,9 @@ interface StudyPlanDao {
     @Query("SELECT * FROM study_plans WHERE isArchived = 0 AND (isDraft = 1 OR isCompleted = 0) ORDER BY lastUpdated DESC")
     fun getSavedPlans(): Flow<List<StudyPlanEntity>>
 
+    @Query("SELECT * FROM study_plans WHERE isCompleted = 1 AND isDraft = 0 AND isArchived = 0 ORDER BY lastUpdated DESC LIMIT 1")
+    fun getLatestCompletedPlan(): Flow<StudyPlanEntity?>
+
     @Query("SELECT * FROM study_plans WHERE id = :id LIMIT 1")
     suspend fun getPlanById(id: Long): StudyPlanEntity?
 
