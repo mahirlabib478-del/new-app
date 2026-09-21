@@ -19,11 +19,15 @@ object ProgressAnalyticsCalculator {
     fun calculate(
         logs: List<SessionLogEntity>,
         activePlan: StudyPlanEntity?,
-        nowMillis: Long = System.currentTimeMillis()
+        nowMillis: Long = System.currentTimeMillis(),
+        latestCompletedPlan: StudyPlanEntity? = null
     ): ProgressAnalyticsSummary {
+        // Prefer the currently active plan. Once it is completed, fall back to
+        // the latest completed plan so Progress does not lose the finished plan.
+        val progressPlan = activePlan ?: latestCompletedPlan
         val actual = logs.sumOf { it.durationMinutes.coerceAtLeast(0) }
-        val planned = activePlan?.totalDurationMinutes?.coerceAtLeast(0) ?: 0
-        val planCompleted = activePlan?.accumulatedBillableMinutes?.coerceAtLeast(0) ?: 0
+        val planned = progressPlan?.totalDurationMinutes?.coerceAtLeast(0) ?: 0
+        val planCompleted = progressPlan?.accumulatedBillableMinutes?.coerceAtLeast(0) ?: 0
         val planPercent = if (planned > 0) ((planCompleted * 100L) / planned).toInt().coerceIn(0, 100) else 0
 
         val cal = Calendar.getInstance().apply { timeInMillis = nowMillis }
@@ -46,7 +50,7 @@ object ProgressAnalyticsCalculator {
             plannedMinutes = planned,
             actualMinutes = planCompleted,
             planCompletionPercent = planPercent,
-            activePlanTitle = activePlan?.title,
+            activePlanTitle = progressPlan?.title,
             activePlanRemainingMinutes = (planned - planCompleted).coerceAtLeast(0),
             consistencyDays = studyDays,
             averageMinutesOnStudyDays = avg
