@@ -41,6 +41,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.aistudio.studyos.data.update.UpdateManager
+import com.aistudio.studyos.service.StudyReminderScheduler
 import com.aistudio.studyos.ui.components.ActiveSessionMiniBar
 import com.aistudio.studyos.ui.components.UpdateDialog
 import com.aistudio.studyos.ui.screens.ExamPlannerScreen
@@ -75,6 +76,11 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
 class MainActivity : ComponentActivity() {
     private val viewModel: StudyViewModel by viewModels {
         StudyViewModelFactory((application as StudyApplication).repository)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        StudyReminderScheduler.rescheduleAfterPermissionGrant(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
