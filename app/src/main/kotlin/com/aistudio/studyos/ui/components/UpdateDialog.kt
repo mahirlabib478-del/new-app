@@ -30,6 +30,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.aistudio.studyos.data.update.AppUpdateInfo
+import com.aistudio.studyos.data.update.UpdateDownloadState
+import com.aistudio.studyos.data.update.UpdateManager
 
 @Composable
 fun UpdateDialog(
@@ -47,6 +51,7 @@ fun UpdateDialog(
     onUpdateClick: (url: String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val downloadState by UpdateManager.downloadState.collectAsState()
     AlertDialog(
         onDismissRequest = {
             if (!updateInfo.isMandatory) {
@@ -175,8 +180,10 @@ fun UpdateDialog(
                 // Primary Update Button
                 Button(
                     onClick = {
-                        val targetUrl = updateInfo.apkUrl.ifBlank { updateInfo.releaseUrl }
-                        onUpdateClick(targetUrl)
+                        if (downloadState !is UpdateDownloadState.Downloading) {
+                            val targetUrl = updateInfo.apkUrl.ifBlank { updateInfo.releaseUrl }
+                            onUpdateClick(targetUrl)
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -194,7 +201,15 @@ fun UpdateDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Download APK / Update Now",
+                        text = when (downloadState) {
+                            is UpdateDownloadState.Downloading -> {
+                                val p = (downloadState as UpdateDownloadState.Downloading).progressPercent
+                                if (p >= 0) "Downloading update... $p%" else "Downloading update..."
+                            }
+                            UpdateDownloadState.ReadyToInstall -> "Opening installer..."
+                            is UpdateDownloadState.Error -> "Retry Download"
+                            else -> "Download APK / Update Now"
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
