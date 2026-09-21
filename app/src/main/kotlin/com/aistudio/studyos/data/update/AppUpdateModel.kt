@@ -9,6 +9,13 @@ data class AppUpdateInfo(
     val isMandatory: Boolean = false
 )
 
+sealed class UpdateDownloadState {
+    object Idle : UpdateDownloadState()
+    data class Downloading(val progressPercent: Int, val downloadedBytes: Long, val totalBytes: Long) : UpdateDownloadState()
+    object ReadyToInstall : UpdateDownloadState()
+    data class Error(val message: String) : UpdateDownloadState()
+}
+
 sealed class UpdateCheckState {
     object Idle : UpdateCheckState()
     object Checking : UpdateCheckState()
