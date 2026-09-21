@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.LockOutline
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material3.AlertDialog
@@ -452,18 +453,122 @@ fun ProgressScreen(
             }
         }
         item {
-            Card(modifier = Modifier.fillMaxWidth().testTag("achievement_milestones_card"), shape = RoundedCornerShape(20.dp)) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Study Milestones", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("achievement_milestones_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Study Milestones",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                "Keep studying to unlock new achievements",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                "${achievements.count { it.unlocked }}/${achievements.size}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+
                     achievements.forEach { achievement ->
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text(if (achievement.unlocked) "✓" else "○", fontWeight = FontWeight.Bold, color = if (achievement.unlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.width(10.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(achievement.title, fontWeight = FontWeight.SemiBold)
-                                Text(achievement.description, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (achievement.unlocked) {
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (achievement.unlocked) {
+                                        Icons.Default.CheckCircle
+                                    } else {
+                                        Icons.Default.LockOutline
+                                    },
+                                    contentDescription = null,
+                                    tint = if (achievement.unlocked) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                                    },
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
-                            Text(if (achievement.unlocked) "Unlocked" else "Locked", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                            Spacer(Modifier.width(12.dp))
+
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    achievement.title,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    achievement.description,
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(7.dp),
+                                color = if (achievement.unlocked) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+                                }
+                            ) {
+                                Text(
+                                    if (achievement.unlocked) "Unlocked" else "Locked",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (achievement.unlocked) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
