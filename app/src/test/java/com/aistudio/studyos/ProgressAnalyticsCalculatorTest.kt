@@ -21,6 +21,31 @@ class ProgressAnalyticsCalculatorTest {
         assertEquals(100, s.plannedMinutes); assertEquals(40, s.actualMinutes); assertEquals(40, s.planCompletionPercent); assertEquals(60, s.activePlanRemainingMinutes)
     }
 
+    @Test fun completedPlanRemainsVisibleWhenThereIsNoActivePlan() {
+        val completed = StudyPlanEntity(
+            id = 2,
+            title = "Completed Plan",
+            subject = "English",
+            chapter = "Grammar",
+            mode = "regular",
+            totalBlocks = 3,
+            totalDurationMinutes = 60,
+            accumulatedBillableMinutes = 60,
+            isCompleted = true
+        )
+        val s = ProgressAnalyticsCalculator.calculate(
+            emptyList(),
+            null,
+            7 * 86_400_000L,
+            latestCompletedPlan = completed
+        )
+        assertEquals(60, s.plannedMinutes)
+        assertEquals(60, s.actualMinutes)
+        assertEquals(100, s.planCompletionPercent)
+        assertEquals("Completed Plan", s.activePlanTitle)
+        assertEquals(0, s.activePlanRemainingMinutes)
+    }
+
     @Test fun consistencyCountsDistinctStudyDaysAndAveragesOnlyActiveDays() {
         val day=86_400_000L
         val now=7*day
