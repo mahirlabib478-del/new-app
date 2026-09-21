@@ -1,13 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Use the supplied StudyOS logo artwork without redrawing it. -->
-    <item
-        android:left="22dp"
-        android:top="22dp"
-        android:right="22dp"
-        android:bottom="22dp">
-        <bitmap
-            android:src="@drawable/study_os_logo"
-            android:gravity="fill" />
-    </item>
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- StudyOS logo: clock + growth leaves + open book. Kept inside the adaptive-icon safe zone. -->
+    <path android:fillColor="#061735" android:pathData="M14,4 L94,4 A10,10 0,0 1,104 14 L104,94 A10,10 0,0 1,94 104 L14,104 A10,10 0,0 1,4 94 L4,14 A10,10 0,0 1,14 4 Z"/>
+    <path android:fillColor="#08B8FF" android:pathData="M54,18 A36,36 0,1 0,54 90 A36,36 0,1 0,54 18 Z M54,25 A29,29 0,1 1,54 83 A29,29 0,1 1,54 25 Z"/>
+    <path android:fillColor="#16D8D2" android:pathData="M54,18 A36,36 0,0 1,87,39 L81,43 A29,29 0,0 0,54,25 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M51.5,28 L56.5,28 L56.5,36 L51.5,36 Z M51.5,72 L56.5,72 L56.5,80 L51.5,80 Z M28,51.5 L36,51.5 L36,56.5 L28,56.5 Z M72,51.5 L80,51.5 L80,56.5 L72,56.5 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M54,51 L71,38 Q73,36.5 75,39 Q76.5,41 74,43 L57,55 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M54,51 L40,40 Q38,38.5 36.5,41 Q35,43 37.5,45 L51,55 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M54,48 A6,6 0,1 0,54 60 A6,6 0,1 0,54 48 Z"/>
+    <path android:fillColor="#42E78C" android:pathData="M81,51 Q87,31 101,27 Q101,43 90,52 Q86,56 81,57 Z"/>
+    <path android:fillColor="#18DFAE" android:pathData="M82,60 Q91,50 99,50 Q98,63 84,66 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M10,64 Q26,60 43,69 L54,84 L54,96 Q35,82 13,85 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M98,64 Q82,60 65,69 L54,84 L54,96 Q73,82 95,85 Z"/>
+    <path android:fillColor="#EAF4FF" android:pathData="M10,73 Q28,69 43,77 L54,90 L54,96 Q35,83 13,86 Z"/>
+    <path android:fillColor="#EAF4FF" android:pathData="M98,73 Q80,69 65,77 L54,90 L54,96 Q73,83 95,86 Z"/>
+    <path android:fillColor="#168BFF" android:pathData="M10,82 Q31,77 54,92 L54,98 Q31,83 11,88 Z"/>
+    <path android:fillColor="#168BFF" android:pathData="M98,82 Q77,77 54,92 L54,98 Q77,83 97,88 Z"/>
+    <path android:fillColor="#0A78D8" android:pathData="M51,82 L57,82 L57,99 L54,102 L51,99 Z"/>
+</vector>
