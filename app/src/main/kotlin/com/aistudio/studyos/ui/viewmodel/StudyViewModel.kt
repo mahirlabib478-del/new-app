@@ -1027,8 +1027,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                             if (planId != null) {
                                 val plan = repository.getPlanById(planId)
                                 if (plan != null) {
-                                    repository.updatePlan(
-                                        plan.copy(
+                                    repository.commitFocusBlock(
+                                        planId = planId,
+                                        updatedPlan = plan.copy(
                                             currentBlockIndex = current.currentBlockIndex + 1,
                                             remainingSecondsInBlock = breakSec,
                                             isBreakPhase = true,
@@ -1038,7 +1039,11 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                                             accumulatedStudiedSeconds = plan.accumulatedStudiedSeconds + elapsedSeconds,
                                             accumulatedBillableMinutes = plan.accumulatedBillableMinutes + partialMinutes,
                                             lastUpdated = System.currentTimeMillis()
-                                        )
+                                        ),
+                                        subject = current.currentSubject,
+                                        chapter = current.currentChapter,
+                                        minutesStudied = partialMinutes,
+                                        mode = current.mode
                                     )
                                 }
                             }

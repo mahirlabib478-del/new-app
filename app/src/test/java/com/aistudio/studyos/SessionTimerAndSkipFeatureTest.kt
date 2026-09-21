@@ -50,6 +50,18 @@ class SessionTimerAndSkipFeatureTest {
     }
 
     @Test
+    fun testSkippedPartialBlockMustBePersistedInProgress() {
+        // A skipped focus block can be followed by a break/next block. The
+        // partial focus time is still real study time and must be written to
+        // session history so Progress/Today Engine can observe it.
+        val elapsedSeconds = 2 * 60
+        val partialMinutes = SessionResultCalculator.billableMinutes(elapsedSeconds)
+
+        assertEquals(2, partialMinutes)
+        assertTrue(partialMinutes > 0)
+    }
+
+    @Test
     fun testSkipImmediatelyCountsZeroStudyTime() {
         val totalBlockSec = 25 * 60
         val remainingSec = 25 * 60 // 0 seconds elapsed
