@@ -72,7 +72,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import android.Manifest
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -129,6 +128,7 @@ fun ProfileScreen(
     var reminderEnabled by remember { mutableStateOf(StudyReminderScheduler.isEnabled(context)) }
     var reminderHour by remember { mutableStateOf(StudyReminderScheduler.getHour(context)) }
     var reminderMinute by remember { mutableStateOf(StudyReminderScheduler.getMinute(context)) }
+    var showReminderTimeDialog by remember { mutableStateOf(false) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
@@ -317,23 +317,20 @@ fun ProfileScreen(
 
                     OutlinedButton(
                         enabled = reminderEnabled,
-                        onClick = {
-                            TimePickerDialog(
-                                context,
-                                { _, hour, minute ->
-                                    reminderHour = hour
-                                    reminderMinute = minute
-                                    StudyReminderScheduler.setReminder(context, true, hour, minute)
-                                },
-                                reminderHour,
-                                reminderMinute,
-                                android.text.format.DateFormat.is24HourFormat(context)
-                            ).show()
-                        },
+                        onClick = { showReminderTimeDialog = true },
                         modifier = Modifier.fillMaxWidth().testTag("study_reminder_time"),
                         shape = RoundedCornerShape(13.dp)
                     ) {
-                        Text(String.format(java.util.Locale.getDefault(), "Every day at %02d:%02d", reminderHour, reminderMinute))
+                        Icon(Icons.Default.Timer, contentDescription = null, modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(7.dp))
+                        Text(
+                            String.format(
+                                java.util.Locale.getDefault(),
+                                "Every day at %02d:%02d",
+                                reminderHour,
+                                reminderMinute
+                            )
+                        )
                     }
                 }
             }
@@ -618,6 +615,106 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+
+    if (showReminderTimeDialog) {
+        var tempHour by remember { mutableStateOf(reminderHour) }
+        var tempMinute by remember { mutableStateOf(reminderMinute) }
+
+        AlertDialog(
+            onDismissRequest = { showReminderTimeDialog = false },
+            title = {
+                Text("Study Reminder Time", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Choose when your daily study reminder should appear.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(18.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("HOUR", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            TextButton(onClick = { tempHour = (tempHour + 1) % 24 }) {
+                                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Text(
+                                    String.format(java.util.Locale.getDefault(), "%02d", tempHour),
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                            TextButton(onClick = { tempHour = (tempHour + 23) % 24 }) {
+                                Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Text(
+                            ":",
+                            modifier = Modifier.padding(horizontal = 10.dp),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("MINUTE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            TextButton(onClick = { tempMinute = (tempMinute + 1) % 60 }) {
+                                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Text(
+                                    String.format(java.util.Locale.getDefault(), "%02d", tempMinute),
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                            TextButton(onClick = { tempMinute = (tempMinute + 59) % 60 }) {
+                                Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        reminderHour = tempHour
+                        reminderMinute = tempMinute
+                        StudyReminderScheduler.setReminder(context, true, tempHour, tempMinute)
+                        showReminderTimeDialog = false
+                    },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReminderTimeDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     if (showResetDialog) {
