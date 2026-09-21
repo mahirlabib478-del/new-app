@@ -41,20 +41,6 @@ private val PitchBlackColorScheme = darkColorScheme(
     onSurfaceVariant = Color(0xFFA0A0A0)
 )
 
-private val EspressoColorScheme = darkColorScheme(
-    primary = EspressoAccent,
-    onPrimary = Color.Black,
-    primaryContainer = Color(0xFF2A201A),
-    onPrimaryContainer = EspressoAccent,
-    secondary = Color(0xFFE0A96D),
-    background = EspressoBg,
-    onBackground = Color(0xFFF5EBE0),
-    surface = EspressoSurface,
-    onSurface = Color(0xFFF5EBE0),
-    surfaceVariant = Color(0xFF2A201A),
-    onSurfaceVariant = Color(0xFFD6C7B2)
-)
-
 private val OceanColorScheme = darkColorScheme(
     primary = OceanAccent,
     onPrimary = Color.White,
@@ -67,20 +53,6 @@ private val OceanColorScheme = darkColorScheme(
     onSurface = Color(0xFFE0F2FE),
     surfaceVariant = Color(0xFF13283E),
     onSurfaceVariant = Color(0xFF94A3B8)
-)
-
-private val ForestColorScheme = darkColorScheme(
-    primary = ForestAccent,
-    onPrimary = Color.Black,
-    primaryContainer = Color(0xFF132E1B),
-    onPrimaryContainer = Color(0xFF6EE7B7),
-    secondary = Color(0xFF34D399),
-    background = ForestBg,
-    onBackground = Color(0xFFECFDF5),
-    surface = ForestSurface,
-    onSurface = Color(0xFFECFDF5),
-    surfaceVariant = Color(0xFF132E1B),
-    onSurfaceVariant = Color(0xFFA7F3D0)
 )
 
 private val PaperColorScheme = lightColorScheme(
