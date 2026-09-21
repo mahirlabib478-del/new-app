@@ -59,9 +59,9 @@ import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 private val THEME_PRESET_LIST = listOf(
     Triple("midnight", "Midnight Indigo", Color(0xFF6366F1)),
     Triple("pitch_black", "Pitch Black", Color(0xFF00E5FF)),
-    Triple("espresso", "Espresso Warm", Color(0xFFD4A373)),
+    Triple("dark", "Dark", Color(0xFF64748B)),
+    Triple("light", "Light", Color(0xFF2563EB)),
     Triple("ocean", "Ocean Deep", Color(0xFF0284C7)),
-    Triple("forest", "Forest Green", Color(0xFF10B981)),
     Triple("paper", "Paper Sepia", Color(0xFF8B5A2B)),
     Triple("mint", "Mint Fresh", Color(0xFF0D9488)),
     Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C))
