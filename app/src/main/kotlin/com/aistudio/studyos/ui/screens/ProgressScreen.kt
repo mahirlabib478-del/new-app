@@ -177,7 +177,10 @@ fun ProgressScreen(
     val weeklyData = remember(allLogs) { calculateWeeklyActivity(allLogs) }
     val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
     val activePlan by viewModel.activePlan.collectAsState()
-    val analytics = remember(allLogs, activePlan) { ProgressAnalyticsCalculator.calculate(allLogs, activePlan) }
+    val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()
+    val analytics = remember(allLogs, activePlan, latestCompletedPlan) {
+        ProgressAnalyticsCalculator.calculate(allLogs, activePlan, latestCompletedPlan = latestCompletedPlan)
+    }
 
     var showAllLogs by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
