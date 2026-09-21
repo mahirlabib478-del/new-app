@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.LockOutline
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material3.AlertDialog
@@ -519,7 +518,7 @@ fun ProgressScreen(
                                     imageVector = if (achievement.unlocked) {
                                         Icons.Default.CheckCircle
                                     } else {
-                                        Icons.Default.LockOutline
+                                        Icons.Default.Schedule
                                     },
                                     contentDescription = null,
                                     tint = if (achievement.unlocked) {
