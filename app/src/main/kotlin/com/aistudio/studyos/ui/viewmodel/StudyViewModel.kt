@@ -92,6 +92,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     val activePlan: StateFlow<StudyPlanEntity?> = repository.getActivePlan()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    val latestCompletedPlan: StateFlow<StudyPlanEntity?> = repository.getLatestCompletedPlan()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     val savedPlans: StateFlow<List<StudyPlanEntity>> = repository.getSavedPlans()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
