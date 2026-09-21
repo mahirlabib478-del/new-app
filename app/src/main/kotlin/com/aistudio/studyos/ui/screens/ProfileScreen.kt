@@ -57,6 +57,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -70,6 +71,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import android.Manifest
+import android.app.TimePickerDialog
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import com.aistudio.studyos.service.StudyReminderScheduler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -116,6 +126,9 @@ fun ProfileScreen(
     var showResetDialog by remember { mutableStateOf(false) }
     var showCustomGoalDialog by remember { mutableStateOf(false) }
     var customGoalInput by remember { mutableStateOf("") }
+    var reminderEnabled by remember { mutableStateOf(StudyReminderScheduler.isEnabled(context)) }
+    var reminderHour by remember { mutableStateOf(StudyReminderScheduler.getHour(context)) }
+    var reminderMinute by remember { mutableStateOf(StudyReminderScheduler.getMinute(context)) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
@@ -245,6 +258,82 @@ fun ProfileScreen(
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(17.dp))
                         Spacer(Modifier.width(7.dp))
                         Text("Set Daily Target Manually")
+                    }
+                }
+            }
+        }
+
+        // Daily study reminder
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("study_reminder_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Study Reminder", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(
+                                "Get a daily reminder even when the app is closed.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = reminderEnabled,
+                            onCheckedChange = { enabled ->
+                                reminderEnabled = enabled
+                                StudyReminderScheduler.setReminder(context, enabled, reminderHour, reminderMinute)
+                                if (enabled) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                        context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        ActivityCompat.requestPermissions(
+                                            context as android.app.Activity,
+                                            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                            5204
+                                        )
+                                    }
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                                        !context.getSystemService(android.app.AlarmManager::class.java).canScheduleExactAlarms()
+                                    ) {
+                                        runCatching {
+                                            context.startActivity(
+                                                Intent(
+                                                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                                                    Uri.parse("package:" + context.packageName)
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier.testTag("study_reminder_switch")
+                        )
+                    }
+
+                    OutlinedButton(
+                        enabled = reminderEnabled,
+                        onClick = {
+                            TimePickerDialog(
+                                context,
+                                { _, hour, minute ->
+                                    reminderHour = hour
+                                    reminderMinute = minute
+                                    StudyReminderScheduler.setReminder(context, true, hour, minute)
+                                },
+                                reminderHour,
+                                reminderMinute,
+                                android.text.format.DateFormat.is24HourFormat(context)
+                            ).show()
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("study_reminder_time"),
+                        shape = RoundedCornerShape(13.dp)
+                    ) {
+                        Text(String.format(java.util.Locale.getDefault(), "Every day at %02d:%02d", reminderHour, reminderMinute))
                     }
                 }
             }
