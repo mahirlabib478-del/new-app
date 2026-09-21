@@ -125,6 +125,34 @@ private val SunriseColorScheme = lightColorScheme(
     onSurfaceVariant = Color(0xFF78716C)
 )
 
+private val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFF94A3B8),
+    onPrimary = Color(0xFF0F172A),
+    primaryContainer = Color(0xFF273449),
+    onPrimaryContainer = Color(0xFFE2E8F0),
+    secondary = Color(0xFF60A5FA),
+    background = Color(0xFF111827),
+    onBackground = Color(0xFFF9FAFB),
+    surface = Color(0xFF1F2937),
+    onSurface = Color(0xFFF9FAFB),
+    surfaceVariant = Color(0xFF273449),
+    onSurfaceVariant = Color(0xFFCBD5E1)
+)
+
+private val LightColorScheme = lightColorScheme(
+    primary = Color(0xFF2563EB),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFDCEAFE),
+    onPrimaryContainer = Color(0xFF0B2E6F),
+    secondary = Color(0xFF475569),
+    background = Color(0xFFF8FAFC),
+    onBackground = Color(0xFF0F172A),
+    surface = Color.White,
+    onSurface = Color(0xFF0F172A),
+    surfaceVariant = Color(0xFFEFF3F8),
+    onSurfaceVariant = Color(0xFF475569)
+)
+
 @Composable
 fun StudyOSTheme(
     preset: String = "midnight",
@@ -132,9 +160,9 @@ fun StudyOSTheme(
 ) {
     val colorScheme = when (preset) {
         "pitch_black" -> PitchBlackColorScheme
-        "espresso" -> EspressoColorScheme
+        "dark" -> DarkColorScheme
+        "light" -> LightColorScheme
         "ocean" -> OceanColorScheme
-        "forest" -> ForestColorScheme
         "paper" -> PaperColorScheme
         "mint" -> MintColorScheme
         "sunrise" -> SunriseColorScheme
@@ -142,7 +170,7 @@ fun StudyOSTheme(
     }
 
     val isDark = when (preset) {
-        "paper", "mint", "sunrise" -> false
+        "paper", "mint", "sunrise", "light" -> false
         else -> true
     }
 
