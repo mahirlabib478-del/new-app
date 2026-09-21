@@ -282,7 +282,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         totalDurationMinutes = allocatedMinutes
                     )
                     val planId = repository.savePlan(plan)
-                    repository.archiveOtherActivePlans(planId)
+                    // Keep older unfinished plans available in Saved Sessions.
+                    // getActivePlan() will still expose only the most recently updated plan.
                     currentPlanItems = normalizedItems
 
                     // A newly created session always starts from the first block's
@@ -379,7 +380,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         isArchived = false,
                         lastUpdated = System.currentTimeMillis()
                     )
-                    repository.archiveOtherActivePlans(updated.id)
+                    // Resuming a saved plan must not archive the other unfinished plans.
+                    // The resumed plan becomes active because its lastUpdated is refreshed.
                     repository.updatePlan(updated)
                     continueActiveSessionInternal(updated)
                     onReady?.invoke()
