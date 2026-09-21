@@ -109,9 +109,9 @@ class ProfileScreenFeatureTest {
         val themeKeys = listOf(
             "midnight",
             "pitch_black",
-            "espresso",
+            "dark",
+            "light",
             "ocean",
-            "forest",
             "paper",
             "mint",
             "sunrise"
