@@ -1254,6 +1254,14 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     fun deleteSavedPlan(id: Long) {
         viewModelScope.launch {
+            // Deleting the plan currently loaded in the timer must also clear
+            // the in-memory focus state. Otherwise the bottom ActiveSessionMiniBar
+            // can remain visible with a deleted session.
+            if (_focusState.value.planId == id) {
+                stopTimerJob()
+                StudyTimerForegroundService.stop(StudyApplication.instance)
+                _focusState.value = FocusTimerState()
+            }
             repository.deletePlanById(id)
         }
     }
