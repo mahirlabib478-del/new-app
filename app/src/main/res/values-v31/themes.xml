@@ -4,7 +4,7 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowSplashScreenBackground">#061735</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/study_time_growth_logo</item>
         <item name="android:windowSplashScreenIconBackgroundColor">#061735</item>
     </style>
 </resources>
