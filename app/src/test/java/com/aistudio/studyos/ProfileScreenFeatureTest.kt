@@ -119,7 +119,8 @@ class ProfileScreenFeatureTest {
 
         assertEquals(8, themeKeys.size)
         assertTrue(themeKeys.contains("midnight"))
-        assertTrue(themeKeys.contains("forest"))
+        assertTrue(themeKeys.contains("dark"))
+        assertTrue(themeKeys.contains("light"))
         assertTrue(themeKeys.contains("pitch_black"))
     }
 
@@ -152,7 +153,7 @@ class ProfileScreenFeatureTest {
             totalXP = 3200,
             currentLevel = 17,
             dailyGoalMinutes = 90,
-            themePreset = "espresso"
+            themePreset = "midnight"
         )
 
         // Reset operation preserves theme and daily goal preference while resetting progress
@@ -168,6 +169,6 @@ class ProfileScreenFeatureTest {
         assertEquals(0, resetProfile.totalXP)
         assertEquals(1, resetProfile.currentLevel)
         assertEquals(90, resetProfile.dailyGoalMinutes)
-        assertEquals("espresso", resetProfile.themePreset)
+        assertEquals("midnight", resetProfile.themePreset)
     }
 }
