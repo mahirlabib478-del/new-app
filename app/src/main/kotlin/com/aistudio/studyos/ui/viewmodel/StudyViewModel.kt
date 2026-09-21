@@ -104,8 +104,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     val recentLogs: StateFlow<List<SessionLogEntity>> = repository.getRecentLogs(15)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val todayMinutes: StateFlow<Int> = repository.getTodayMinutes()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+    private val _todayMinutes = MutableStateFlow(0)
+    val todayMinutes: StateFlow<Int> = _todayMinutes.asStateFlow()
 
     val allLogs: StateFlow<List<SessionLogEntity>> = repository.getAllLogs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -125,6 +125,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private var hasDismissedUpdateDialog: Boolean = false
 
     init {
+        viewModelScope.launch {
+            repository.getTodayMinutes().collect { minutes ->
+                _todayMinutes.value = minutes
+            }
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             repository.ensureCleanInitialData()
             userProfile.collect { profile ->
@@ -558,6 +564,10 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
+    private suspend fun refreshTodayMinutes() {
+        _todayMinutes.value = repository.getTodayMinutesNow()
+    }
+
     fun setupFocusSession(plan: StudyPlanEntity) = continueActiveSession(plan)
 
     fun finishActiveSessionEarly(): Boolean {
@@ -596,6 +606,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     }
 
                     StudyTimerForegroundService.stop(StudyApplication.instance)
+                    refreshTodayMinutes()
                     _focusState.value = current.copy(
                         secondsRemaining = 0,
                         isRunning = false,
@@ -998,6 +1009,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                                 repository.recordCompletedSession(current.currentSubject, current.currentChapter, partialMinutes, current.mode)
                             }
                             StudyTimerForegroundService.stop(StudyApplication.instance)
+                            refreshTodayMinutes()
                             _focusState.value = current.copy(
                                 secondsRemaining = 0,
                                 currentBlockIndex = current.totalBlocks,

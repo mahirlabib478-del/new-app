@@ -47,6 +47,11 @@ class StudyRepository(
         val startOfNextDayMillis = range.endMillis
         return database.sessionLogDao().getTodayMinutes(startOfDayMillis, startOfNextDayMillis)
     }
+
+    suspend fun getTodayMinutesNow(): Int {
+        val range = TodayMinutesCalculator.currentLocalDayRange()
+        return database.sessionLogDao().getTodayMinutesOnce(range.startMillis, range.endMillis)
+    }
     fun getTotalMinutes(): Flow<Int?> = database.sessionLogDao().getTotalMinutes()
     suspend fun logSession(log: SessionLogEntity): Long = database.sessionLogDao().insertLog(log)
     suspend fun deleteSessionLog(log: SessionLogEntity) {

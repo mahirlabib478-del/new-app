@@ -21,6 +21,9 @@ interface SessionLogDao {
     @Query("SELECT COALESCE(SUM(durationMinutes), 0) FROM session_logs WHERE timestamp >= :startOfDayMillis AND timestamp < :startOfNextDayMillis")
     fun getTodayMinutes(startOfDayMillis: Long, startOfNextDayMillis: Long): Flow<Int>
 
+    @Query("SELECT COALESCE(SUM(durationMinutes), 0) FROM session_logs WHERE timestamp >= :startOfDayMillis AND timestamp < :startOfNextDayMillis")
+    suspend fun getTodayMinutesOnce(startOfDayMillis: Long, startOfNextDayMillis: Long): Int
+
     @Query("SELECT SUM(durationMinutes) FROM session_logs")
     fun getTotalMinutes(): Flow<Int?>
 
