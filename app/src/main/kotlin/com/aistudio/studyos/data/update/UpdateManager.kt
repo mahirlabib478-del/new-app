@@ -3,10 +3,20 @@ package com.aistudio.studyos.data.update
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.core.content.FileProvider
 import androidx.core.content.pm.PackageInfoCompat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -20,6 +30,10 @@ object UpdateManager {
     private const val KEY_LAST_CHECK_TIME = "last_update_check_time"
     private const val CHECK_INTERVAL_MS = 2 * 60 * 60 * 1000L // 2 hours throttle for auto-check
     private const val TIMEOUT_MS = 8000 // Allow slower mobile networks while keeping update checks bounded
+
+    private val downloadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val _downloadState = MutableStateFlow<UpdateDownloadState>(UpdateDownloadState.Idle)
+    val downloadState: StateFlow<UpdateDownloadState> = _downloadState.asStateFlow()
 
     fun getCurrentVersionInfo(context: Context): Pair<String, Long> {
         return try {
@@ -244,6 +258,11 @@ object UpdateManager {
     }
 
     fun openUpdateLink(context: Context, url: String) {
+        if (url.isBlank()) return
+        if (url.substringBefore("?").lowercase().endsWith(".apk") || url.contains("/releases/download/")) {
+            startDownloadAndInstall(context, url)
+            return
+        }
         try {
             val targetUrl = if (url.startsWith("http://") || url.startsWith("https://")) {
                 url
@@ -258,4 +277,100 @@ object UpdateManager {
             // Ignore if no browser available
         }
     }
+    fun startDownloadAndInstall(context: Context, apkUrl: String) {
+        if (_downloadState.value is UpdateDownloadState.Downloading) return
+        downloadScope.launch {
+            val appContext = context.applicationContext
+            val dir = File(appContext.cacheDir, "updates").apply { mkdirs() }
+            val temp = File(dir, "studyos-update.apk.part")
+            val apk = File(dir, "studyos-update.apk")
+            try {
+                _downloadState.value = UpdateDownloadState.Downloading(0, 0L, 0L)
+                temp.delete()
+                var connection: HttpURLConnection? = null
+                try {
+                    connection = (URL(apkUrl).openConnection() as HttpURLConnection).apply {
+                        requestMethod = "GET"
+                        connectTimeout = 15000
+                        readTimeout = 30000
+                        useCaches = false
+                        instanceFollowRedirects = true
+                        setRequestProperty("User-Agent", "StudyOS-App")
+                        setRequestProperty("Accept", "application/vnd.android.package-archive")
+                    }
+                    if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+                        throw IllegalStateException("Download failed (HTTP " + connection.responseCode + ").")
+                    }
+                    val total = connection.contentLengthLong
+                    var downloaded = 0L
+                    connection.inputStream.use { input ->
+                        temp.outputStream().use { output ->
+                            val buffer = ByteArray(64 * 1024)
+                            while (true) {
+                                val count = input.read(buffer)
+                                if (count <= 0) break
+                                output.write(buffer, 0, count)
+                                downloaded += count
+                                val percent = if (total > 0) {
+                                    ((downloaded * 100) / total).toInt().coerceIn(0, 100)
+                                } else -1
+                                _downloadState.value = UpdateDownloadState.Downloading(percent, downloaded, total)
+                            }
+                        }
+                    }
+                } finally {
+                    connection?.disconnect()
+                }
+                if (!temp.exists() || temp.length() == 0L) {
+                    throw IllegalStateException("Downloaded APK is empty.")
+                }
+                apk.delete()
+                if (!temp.renameTo(apk)) {
+                    temp.copyTo(apk, overwrite = true)
+                    temp.delete()
+                }
+                _downloadState.value = UpdateDownloadState.ReadyToInstall
+                installApk(appContext, apk)
+            } catch (e: Exception) {
+                temp.delete()
+                _downloadState.value = UpdateDownloadState.Error(
+                    e.message?.takeIf { it.isNotBlank() } ?: "Could not download the update."
+                )
+            }
+        }
+    }
+
+    private fun installApk(context: Context, apk: File) {
+        runCatching {
+            val uri = FileProvider.getUriForFile(
+                context,
+                context.packageName + ".fileprovider",
+                apk
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(intent)
+        }.onFailure {
+            _downloadState.value = UpdateDownloadState.Error(
+                "APK downloaded. Allow this app to install unknown apps, then tap Download Update again."
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                runCatching {
+                    context.startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                            Uri.parse("package:" + context.packageName)
+                        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            }
+        }
+    }
+
+    fun clearDownloadState() {
+        _downloadState.value = UpdateDownloadState.Idle
+    }
+
 }
