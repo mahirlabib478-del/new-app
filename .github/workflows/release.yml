@@ -179,17 +179,45 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          python3 .github/scripts/update_release_policy.py
-
-          git fetch origin main || true
-          git checkout main || true
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add update.json
-          if git diff --cached --quiet; then
+
+          # The release job starts from the immutable release tag. Generate the
+          # policy from the latest main branch instead of trying to checkout main
+          # after modifying update.json on the tag checkout.
+          git fetch origin main
+          git checkout -B release-policy-main origin/main
+          python3 .github/scripts/update_release_policy.py
+
+          if git diff --quiet -- update.json; then
             echo "Release policy already current."
-          else
-            git commit -m "update release policy for $RELEASE_TAG"
-            git push origin HEAD:main
+            exit 0
           fi
+
+          git add update.json
+          git commit -m "update release policy for $RELEASE_TAG"
+
+          # main can move while a release is running. Refresh and retry instead
+          # of failing on a non-fast-forward push.
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Release policy updated on main."
+              exit 0
+            fi
+
+            echo "main moved during release; refreshing before retry $attempt..."
+            git fetch origin main
+            git reset --hard origin/main
+            python3 .github/scripts/update_release_policy.py
+            git add update.json
+
+            if git diff --cached --quiet; then
+              echo "Release policy already current after refresh."
+              exit 0
+            fi
+
+            git commit -m "update release policy for $RELEASE_TAG"
+          done
+
+          echo "ERROR: Could not update main after 3 attempts."
+          exit 1
