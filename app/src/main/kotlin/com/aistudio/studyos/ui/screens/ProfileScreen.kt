@@ -621,7 +621,7 @@ fun ProfileScreen(
         val timePickerState = androidx.compose.material3.rememberTimePickerState(
             initialHour = reminderHour,
             initialMinute = reminderMinute,
-            is24Hour = true
+            is24Hour = false
         )
 
         AlertDialog(
