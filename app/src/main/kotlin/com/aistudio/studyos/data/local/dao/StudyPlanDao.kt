@@ -43,4 +43,7 @@ interface StudyPlanDao {
 
     @Query("DELETE FROM study_plans WHERE id = :id")
     suspend fun deletePlanById(id: Long)
+
+    @Query("DELETE FROM study_plans")
+    suspend fun clearAll()
 }
