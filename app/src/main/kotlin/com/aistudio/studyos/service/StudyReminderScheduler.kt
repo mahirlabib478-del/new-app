@@ -40,10 +40,20 @@ object StudyReminderScheduler {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             !alarmManager.canScheduleExactAlarms()
         ) {
+            // Keep the reminder alive even before exact-alarm access is granted.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+            } else {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+            }
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // User-visible alarm; reliable while the device is idle/dozing.
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(trigger, pendingIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
         } else {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
