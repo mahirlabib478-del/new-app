@@ -23,7 +23,7 @@ class StudyReminderReceiver : BroadcastReceiver() {
                 NotificationChannel(
                     CHANNEL_ID,
                     "Study reminders",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = "Daily reminders to start studying"
                 }
@@ -49,7 +49,8 @@ class StudyReminderReceiver : BroadcastReceiver() {
                     .setContentTitle("Study reminder")
                     .setContentText("It's time to focus. Start your next study session.")
                     .setCategory(NotificationCompat.CATEGORY_REMINDER)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setDefaults(android.app.Notification.DEFAULT_ALL)
                     .setAutoCancel(true)
                     .setContentIntent(openIntent)
                     .build()
