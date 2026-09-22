@@ -185,7 +185,10 @@ fun ProgressScreen(
     var showAllLogs by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
 
-    val totalMins = profile?.totalStudyMinutes ?: 0
+    // Total Time uses the same session-log source as Today/Consistency.
+    // This keeps partial/skip time visible everywhere instead of depending on a
+    // separately maintained profile counter.
+    val totalMins = allLogs.sumOf { it.durationMinutes.coerceAtLeast(0) }
     val totalHours = totalMins / 60
     val remainingMins = totalMins % 60
     val totalXP = profile?.totalXP ?: 0
