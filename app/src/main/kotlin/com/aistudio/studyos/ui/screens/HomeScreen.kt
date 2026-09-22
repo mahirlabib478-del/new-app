@@ -51,10 +51,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.repository.TodayRecommendationCalculator
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 private val THEME_PRESET_LIST = listOf(
     Triple("midnight", "Midnight Indigo", Color(0xFF6366F1)),
@@ -67,6 +73,50 @@ private val THEME_PRESET_LIST = listOf(
     Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C))
 )
 
+private fun formatRelativeTime(timestamp: Long): String {
+    val now = System.currentTimeMillis()
+    val diff = (now - timestamp).coerceAtLeast(0)
+    val minutes = diff / (60 * 1000)
+    val hours = minutes / 60
+    val days = hours / 24
+
+    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
+
+    val nowCal = Calendar.getInstance().apply { timeInMillis = now }
+    val logCal = Calendar.getInstance().apply { timeInMillis = timestamp }
+
+    val isToday = nowCal.get(Calendar.YEAR) == logCal.get(Calendar.YEAR) &&
+            nowCal.get(Calendar.DAY_OF_YEAR) == logCal.get(Calendar.DAY_OF_YEAR)
+
+    val yesterdayCal = Calendar.getInstance().apply {
+        timeInMillis = now
+        add(Calendar.DAY_OF_YEAR, -1)
+    }
+    val isYesterday = yesterdayCal.get(Calendar.YEAR) == logCal.get(Calendar.YEAR) &&
+            yesterdayCal.get(Calendar.DAY_OF_YEAR) == logCal.get(Calendar.DAY_OF_YEAR)
+
+    return when {
+        minutes < 1 -> "Just now"
+        minutes < 60 -> "${minutes}m ago"
+        isToday -> "Today, ${timeFormat.format(Date(timestamp))}"
+        isYesterday -> "Yesterday, ${timeFormat.format(Date(timestamp))}"
+        days < 7 -> "${days}d ago"
+        else -> dateFormat.format(Date(timestamp))
+    }
+}
+
+private fun getSessionModeInfo(mode: String): Pair<String, Color> {
+    return when (mode.lowercase()) {
+        "focus", "quick" -> Pair("🎯 25m Focus", Color(0xFF6366F1))
+        "exam" -> Pair("📝 Exam", Color(0xFFEC4899))
+        "cram" -> Pair("⚡ Cram", Color(0xFFF59E0B))
+        "early_finish" -> Pair("⏱️ Quick Session", Color(0xFF10B981))
+        "regular" -> Pair("📖 Regular", Color(0xFF3B82F6))
+        else -> Pair("📚 Study", Color(0xFF8B5CF6))
+    }
+}
+
 @Composable
 fun HomeScreen(
     viewModel: StudyViewModel,
@@ -74,7 +124,8 @@ fun HomeScreen(
     onOpenStudy: () -> Unit,
     onOpenQuickFocus: () -> Unit,
     onOpenExamPlanner: () -> Unit,
-    onOpenSavedSessions: () -> Unit
+    onOpenSavedSessions: () -> Unit,
+    onOpenHistory: () -> Unit = {}
 ) {
     val profile by viewModel.userProfile.collectAsState()
     val upcomingExams by viewModel.upcomingExams.collectAsState()
@@ -462,11 +513,26 @@ fun HomeScreen(
 
         // Recent Completed Sessions
         item {
-            Text(
-                text = "Recent Sessions",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Recent Sessions",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (recentLogs.isNotEmpty()) {
+                    TextButton(
+                        onClick = onOpenHistory,
+                        modifier = Modifier.testTag("btn_view_all_history")
+                    ) {
+                        Text("View All", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
+            }
         }
 
         if (recentLogs.isEmpty()) {
@@ -494,13 +560,27 @@ fun HomeScreen(
                         Text(
                             text = "No study logs yet",
                             style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Complete your first focus block to earn XP and streaks!",
+                            text = "Complete your first focus block to earn XP and build streaks!",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
                         )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Button(
+                            onClick = onOpenQuickFocus,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Start First Focus Session", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
                     }
                 }
             }
@@ -509,8 +589,14 @@ fun HomeScreen(
                 items = recentLogs.take(3),
                 key = { it.id }
             ) { log ->
+                val (modeLabel, modeColor) = getSessionModeInfo(log.mode)
+                val relativeTime = formatRelativeTime(log.timestamp)
+
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenHistory() }
+                        .testTag("recent_session_${log.id}"),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -523,28 +609,55 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = modeColor,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = log.subject,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(modeColor.copy(alpha = 0.15f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = modeLabel,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = modeColor
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = log.subject,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "${log.chapter} • ${log.durationMinutes} mins",
+                                    text = "${log.chapter} • ${log.durationMinutes}m • $relativeTime",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "+${log.xpEarned} XP",
                             fontWeight = FontWeight.ExtraBold,

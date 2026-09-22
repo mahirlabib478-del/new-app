@@ -238,7 +238,8 @@ fun MainApp(
                         )
                     },
                     onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
-                    onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) }
+                    onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) },
+                    onOpenHistory = { navController.navigate(Screen.History.route) }
                 )
             }
             composable(Screen.StudyHub.route) {
