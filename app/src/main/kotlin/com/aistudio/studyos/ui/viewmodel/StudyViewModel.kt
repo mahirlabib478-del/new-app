@@ -1241,6 +1241,11 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     fun resetAllStats() {
+        automaticRestoreEnabled = false
+        stopTimerJob()
+        StudyTimerForegroundService.stop(StudyApplication.instance)
+        _focusState.value = FocusTimerState()
+        currentPlanItems = emptyList()
         viewModelScope.launch {
             repository.resetStats()
         }
