@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (vMAJOR.MINOR.PATCH+VERSION_CODE)'
+        description: 'Release tag (vMAJOR.MINOR[.PATCH]+VERSION_CODE)'
         required: true
         type: string
 
@@ -65,8 +65,8 @@ jobs:
           REF_NAME: ${{ steps.release.outputs.tag }}
         run: |
           VERSION="${REF_NAME#v}"
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
-            echo "Release tag must use vMAJOR.MINOR.PATCH+VERSION_CODE, e.g. v0.3.0+3"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?\+[0-9]+$ ]]; then
+            echo "Release tag must use vMAJOR.MINOR+VERSION_CODE or vMAJOR.MINOR.PATCH+VERSION_CODE, e.g. v1.0+56 or v1.0.0+56"
             exit 1
           fi
 
