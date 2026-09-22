@@ -454,7 +454,10 @@ class StudyRepository(
     }
 
     suspend fun resetStats() {
-        database.sessionLogDao().clearAll()
+        database.withTransaction {
+            database.sessionLogDao().clearAll()
+            database.studyPlanDao().clearAll()
+        }
         val currentProfile = database.userProfileDao().getProfileSync()
         val currentTheme = currentProfile?.themePreset ?: "midnight"
         val currentGoal = currentProfile?.dailyGoalMinutes ?: 60
