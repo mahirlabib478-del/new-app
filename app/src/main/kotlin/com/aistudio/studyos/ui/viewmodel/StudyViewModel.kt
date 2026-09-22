@@ -927,7 +927,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         startTimerInternal()
     }
 
-    private suspend fun finishBreakTransition(current: FocusTimerState) {
+    private suspend fun finishBreakTransition(current: FocusTimerState, playChime: Boolean = true) {
         val plannedFocusSeconds = currentPlanItems.sumOf { it.minutes } * 60
         if (
             current.currentBlockIndex >= current.totalBlocks ||
@@ -974,7 +974,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             endAtElapsedRealtime = 0L,
             endAtWallClockMillis = 0L
         )
-        ClockChimeManager.playBreakToFocus()
+        if (playChime) {
+            ClockChimeManager.playBreakToFocus()
+        }
         startTimerInternal()
     }
 
@@ -987,7 +989,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             transitionMutex.withLock {
                 try {
                     if (current.isBreak) {
-                        finishBreakTransition(current)
+                        finishBreakTransition(current, playChime = false)
                     } else {
                         val elapsedSeconds = currentElapsedSeconds(current)
                         val partialMinutes = SessionResultCalculator.billableMinutes(elapsedSeconds)
