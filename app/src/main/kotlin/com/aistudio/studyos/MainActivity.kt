@@ -6,10 +6,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -151,7 +155,17 @@ fun MainApp(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            if (showBottomBar) {
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(200)),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(180))
+            ) {
                 val focusState by viewModel.focusState.collectAsState()
                 Column {
                     AnimatedVisibility(
@@ -201,20 +215,48 @@ fun MainApp(
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding),
-            // Keep navigation visually smooth and consistent across devices.
-            // Fade-only avoids scale/layout movement that can feel like a snap on 60Hz devices.
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding()),
             enterTransition = {
-                fadeIn(animationSpec = tween(180))
+                if (targetState.destination.route in BOTTOM_NAV_ROUTES && initialState.destination.route in BOTTOM_NAV_ROUTES) {
+                    fadeIn(animationSpec = tween(180))
+                } else {
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(180))
+                }
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(180))
+                if (targetState.destination.route in BOTTOM_NAV_ROUTES && initialState.destination.route in BOTTOM_NAV_ROUTES) {
+                    fadeOut(animationSpec = tween(160))
+                } else {
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(180))
+                }
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(150))
+                if (targetState.destination.route in BOTTOM_NAV_ROUTES && initialState.destination.route in BOTTOM_NAV_ROUTES) {
+                    fadeIn(animationSpec = tween(180))
+                } else {
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(180))
+                }
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(150))
+                if (targetState.destination.route in BOTTOM_NAV_ROUTES && initialState.destination.route in BOTTOM_NAV_ROUTES) {
+                    fadeOut(animationSpec = tween(160))
+                } else {
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(180))
+                }
             }
         ) {
             composable(Screen.Home.route) {

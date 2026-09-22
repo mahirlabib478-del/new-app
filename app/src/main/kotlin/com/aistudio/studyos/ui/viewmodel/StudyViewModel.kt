@@ -16,7 +16,6 @@ import com.aistudio.studyos.data.repository.SessionResultCalculator
 import com.aistudio.studyos.data.repository.TimerDeadlineCalculator
 import com.aistudio.studyos.StudyApplication
 import com.aistudio.studyos.service.StudyTimerForegroundService
-import com.aistudio.studyos.service.ClockChimeManager
 import com.aistudio.studyos.data.repository.StudyRepository
 import com.aistudio.studyos.data.update.AppUpdateInfo
 import com.aistudio.studyos.data.update.UpdateCheckState
@@ -923,7 +922,6 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             endAtElapsedRealtime = 0L,
             endAtWallClockMillis = 0L
         )
-        ClockChimeManager.playFocusToBreak()
         startTimerInternal()
     }
 
@@ -974,9 +972,6 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             endAtElapsedRealtime = 0L,
             endAtWallClockMillis = 0L
         )
-        if (playChime) {
-            ClockChimeManager.playBreakToFocus()
-        }
         startTimerInternal()
     }
 

@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
@@ -40,13 +39,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -76,7 +75,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.service.AmbientSoundManager
-import com.aistudio.studyos.service.ClockChimeManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,13 +114,25 @@ fun FocusScreen(
         }
     }
 
-    if (state.isSessionCompleted) {
+    var isDismissingAfterCompletion by remember { mutableStateOf(false) }
+
+    val cachedMinutes = remember(state.completedMinutes) {
+        if (state.completedMinutes > 0) state.completedMinutes else null
+    }
+    val cachedBlocks = remember(state.completedBlocks) {
+        if (state.completedBlocks > 0) state.completedBlocks else null
+    }
+
+    if (state.isSessionCompleted || isDismissingAfterCompletion) {
         StudySessionCompleteScreen(
-            completedMinutes = state.completedMinutes,
-            completedBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks),
+            completedMinutes = cachedMinutes ?: state.completedMinutes,
+            completedBlocks = (cachedBlocks ?: state.completedBlocks).coerceAtMost(state.totalBlocks.coerceAtLeast(1)),
             onDone = {
-                viewModel.dismissSessionCompletion()
-                onBack()
+                if (!isDismissingAfterCompletion) {
+                    isDismissingAfterCompletion = true
+                    viewModel.dismissSessionCompletion()
+                    onBack()
+                }
             }
         )
         return
@@ -698,44 +708,6 @@ private fun AmbientSoundConfigDialog(
                         .fillMaxWidth()
                         .testTag("ambient_volume_slider")
                 )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.NotificationsActive,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Column {
-                            Text(
-                                "Transition Bell (ঘণ্টা)",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                "Resonant gong at focus & break",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    TextButton(
-                        onClick = { ClockChimeManager.playTestChime() }
-                    ) {
-                        Text("Test Bell", fontWeight = FontWeight.Bold)
-                    }
-                }
             }
         },
         confirmButton = {
@@ -849,13 +821,17 @@ private fun StudySessionCompleteScreen(
         (completedMinutes * 3).coerceAtLeast(15)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 28.dp, vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
         // Celebratory animated trophy / checkmark badge
         Box(
             modifier = Modifier
@@ -996,4 +972,5 @@ private fun StudySessionCompleteScreen(
             Text("Done", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
+}
 }
