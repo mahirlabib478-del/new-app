@@ -16,6 +16,7 @@ import com.aistudio.studyos.ui.theme.isLightPreset
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,6 +57,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.provider.OpenableColumns
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,6 +73,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -80,6 +84,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -413,7 +418,7 @@ fun FocusScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // 🎵 Compact Ambient Sound Bar (Sleek, uncluttered, easily reachable)
+            // 🎵 Compact Ambient Sound Bar (Original single-row layout and positioning)
             CompactAmbientSoundBar(
                 preset = ambientPreset,
                 isAmbientPlaying = isAmbientPlaying,
@@ -422,26 +427,19 @@ fun FocusScreen(
                 isWallpaperActive = showWallpaper,
                 isLight = isLight,
                 onClick = { showAmbientDialog = true },
-                onToggleAmbient = {
-                    if (isAmbientPlaying) {
-                        AmbientSoundManager.stopAmbient()
+                onToggle = {
+                    val isAnyPlaying = isAmbientPlaying || isCustomAudioPlaying
+                    if (isAnyPlaying) {
+                        AmbientSoundManager.stopAll()
                         isAmbientPlaying = false
-                    } else {
-                        AmbientSoundManager.playAmbient(ambientPreset, ambientVolume)
-                        isAmbientPlaying = true
-                    }
-                },
-                onToggleCustomAudio = {
-                    if (isCustomAudioPlaying) {
-                        AmbientSoundManager.stopCustomAudio()
                         isCustomAudioPlaying = false
                     } else {
-                        val uri = savedCustomAudioUri
-                        if (!uri.isNullOrBlank()) {
-                            AmbientSoundManager.playCustomAudio(context, uri, savedCustomAudioName, customVolume)
+                        if (!savedCustomAudioUri.isNullOrBlank()) {
+                            AmbientSoundManager.playCustomAudio(context, savedCustomAudioUri!!, savedCustomAudioName, customVolume)
                             isCustomAudioPlaying = true
                         } else {
-                            showAmbientDialog = true
+                            AmbientSoundManager.playAmbient(ambientPreset, ambientVolume)
+                            isAmbientPlaying = true
                         }
                     }
                 }
@@ -773,7 +771,7 @@ private fun CircularTimerDisplay(
 
 /**
  * 🎵 Compact Ambient Sound & Audio Bar
- * Provides independent quick controls for both Ambient Noise and Uploaded Audio.
+ * Sleek, single-row layout keeping the focus timer and controls at their exact original positions.
  */
 @Composable
 private fun CompactAmbientSoundBar(
@@ -784,9 +782,9 @@ private fun CompactAmbientSoundBar(
     isWallpaperActive: Boolean = false,
     isLight: Boolean = false,
     onClick: () -> Unit,
-    onToggleAmbient: () -> Unit,
-    onToggleCustomAudio: () -> Unit
+    onToggle: () -> Unit
 ) {
+    val isAnyPlaying = isAmbientPlaying || isCustomAudioPlaying
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -807,158 +805,78 @@ private fun CompactAmbientSoundBar(
             }
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Channel 1: 🌧️ Ambient Noise
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isAmbientPlaying) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                else MaterialTheme.colorScheme.surface
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            if (isAmbientPlaying) Icons.Default.GraphicEq else Icons.Default.Water,
-                            contentDescription = null,
-                            tint = if (isAmbientPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Ambient Noise",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = if (isAmbientPlaying) "${preset.label} (Playing)" else preset.label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                TextButton(
-                    onClick = onToggleAmbient,
-                    modifier = Modifier.testTag("btn_toggle_ambient")
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isAnyPlaying) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            else MaterialTheme.colorScheme.surface
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        if (isAmbientPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isAmbientPlaying) "Stop Ambient" else "Play Ambient",
-                        modifier = Modifier.size(16.dp),
-                        tint = if (isAmbientPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                        if (isAnyPlaying) Icons.Default.GraphicEq else Icons.Default.VolumeUp,
+                        contentDescription = null,
+                        tint = if (isAnyPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (isAmbientPlaying) "Stop" else "Play",
-                        fontWeight = FontWeight.Bold,
-                        color = if (isAmbientPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                        text = "Ambient Sound & Audio",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    val statusText = when {
+                        isAmbientPlaying && isCustomAudioPlaying -> "${preset.label} + ${customAudioName ?: "Custom Audio"}"
+                        isAmbientPlaying -> "${preset.label} (Playing)"
+                        isCustomAudioPlaying -> "${customAudioName ?: "Custom Audio"} (Playing)"
+                        customAudioName != null -> "${preset.label} / $customAudioName"
+                        else -> preset.label
+                    }
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                thickness = 0.8.dp
-            )
-
-            // Channel 2: 🎧 Uploaded Audio
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            TextButton(
+                onClick = onToggle,
+                modifier = Modifier.testTag("btn_toggle_ambient")
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isCustomAudioPlaying) MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                                else MaterialTheme.colorScheme.surface
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            if (isCustomAudioPlaying) Icons.Default.GraphicEq else Icons.Default.AudioFile,
-                            contentDescription = null,
-                            tint = if (isCustomAudioPlaying) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Audiobook / Podcast / Music",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = when {
-                                isCustomAudioPlaying -> "${customAudioName ?: "Custom Audio"} (Playing)"
-                                customAudioName != null -> customAudioName
-                                else -> "None (Tap to select or upload)"
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                TextButton(
-                    onClick = onToggleCustomAudio,
-                    modifier = Modifier.testTag("btn_toggle_custom_audio")
-                ) {
-                    Icon(
-                        if (isCustomAudioPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isCustomAudioPlaying) "Stop Audio" else "Play Audio",
-                        modifier = Modifier.size(16.dp),
-                        tint = if (isCustomAudioPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (isCustomAudioPlaying) "Stop" else "Play",
-                        fontWeight = FontWeight.Bold,
-                        color = if (isCustomAudioPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
-                    )
-                }
+                Text(
+                    text = if (isAnyPlaying) "Stop" else "Play",
+                    fontWeight = FontWeight.Bold,
+                    color = if (isAnyPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
 }
 
 /**
- * 🎛️ Dual-Channel Focus Sound & Audio Mixer Dialog
- * Allows independent Play/Pause and Volume controls for both Ambient Noise and Uploaded Audio.
- * Both can be played simultaneously!
+ * 🎛️ Focus Sound & Audio Dialog with Tabs
+ * Tab 0: Ambient Sound (with presets, volume control, and properly sized upload button)
+ * Tab 1: Uploaded Audio (with full library, volume control, and upload button)
  */
 @Composable
 private fun AmbientSoundConfigDialog(
@@ -982,6 +900,8 @@ private fun AmbientSoundConfigDialog(
     onStopAll: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -1000,7 +920,7 @@ private fun AmbientSoundConfigDialog(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
-                    Text("Sound & Audio Mixer", fontWeight = FontWeight.Bold)
+                    Text("Sound & Audio", fontWeight = FontWeight.Bold)
                 }
                 IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
                     Icon(Icons.Default.Close, contentDescription = "Close")
@@ -1012,373 +932,440 @@ private fun AmbientSoundConfigDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Info Banner
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                    modifier = Modifier.fillMaxWidth()
+                // Tab Selection Row
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp))
                 ) {
-                    Text(
-                        text = "Ambient noise and your uploaded audio can play simultaneously in the background!",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(10.dp)
+                    Tab(
+                        selected = selectedTabIndex == 0,
+                        onClick = { selectedTabIndex = 0 },
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    "Ambient Sound",
+                                    fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 13.sp
+                                )
+                                if (isAmbientPlaying) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary)
+                                    )
+                                }
+                            }
+                        }
+                    )
+                    Tab(
+                        selected = selectedTabIndex == 1,
+                        onClick = { selectedTabIndex = 1 },
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    "Uploaded Audio",
+                                    fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 13.sp
+                                )
+                                if (isCustomAudioPlaying) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.secondary)
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
 
                 // ==========================================
-                // 🌧️ CHANNEL 1: Procedural Ambient Sound
+                // TAB 0: 🌧️ Ambient Sound
                 // ==========================================
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                if (selectedTabIndex == 0) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
-                            text = "🌧️ Ambient Background",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            text = "Select relaxing ambient sound for deep focus:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isAmbientPlaying) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Text(
-                                text = if (isAmbientPlaying) "Playing" else "Stopped",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (isAmbientPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
 
-                    // Ambient Presets Grid
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        listOf(
-                            AmbientSoundManager.Preset.RAIN,
-                            AmbientSoundManager.Preset.WHITE_NOISE,
-                            AmbientSoundManager.Preset.DEEP_FOCUS,
-                            AmbientSoundManager.Preset.FOREST_STREAM
-                        ).forEach { option ->
-                            val isSelected = option == preset
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(
-                                        if (isSelected) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.surfaceVariant
+                        // Ambient Presets Grid
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            listOf(
+                                AmbientSoundManager.Preset.RAIN,
+                                AmbientSoundManager.Preset.WHITE_NOISE,
+                                AmbientSoundManager.Preset.DEEP_FOCUS,
+                                AmbientSoundManager.Preset.FOREST_STREAM
+                            ).forEach { option ->
+                                val isSelected = option == preset
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            if (isSelected) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.surfaceVariant
+                                        )
+                                        .clickable { onAmbientPresetChange(option) }
+                                        .padding(vertical = 10.dp, horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = when (option) {
+                                            AmbientSoundManager.Preset.RAIN -> "Rain"
+                                            AmbientSoundManager.Preset.WHITE_NOISE -> "White"
+                                            AmbientSoundManager.Preset.DEEP_FOCUS -> "Focus"
+                                            AmbientSoundManager.Preset.FOREST_STREAM -> "Stream"
+                                            else -> option.label
+                                        },
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    .clickable { onAmbientPresetChange(option) }
-                                    .padding(vertical = 10.dp, horizontal = 4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = when (option) {
-                                        AmbientSoundManager.Preset.RAIN -> "Rain"
-                                        AmbientSoundManager.Preset.WHITE_NOISE -> "White"
-                                        AmbientSoundManager.Preset.DEEP_FOCUS -> "Focus"
-                                        AmbientSoundManager.Preset.FOREST_STREAM -> "Stream"
-                                        else -> option.label
-                                    },
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                }
                             }
                         }
-                    }
 
-                    // Ambient Controls (Play/Stop Button + Volume Level)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FilledTonalButton(
-                            onClick = onToggleAmbient,
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = if (isAmbientPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = if (isAmbientPlaying) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            modifier = Modifier.testTag("dialog_btn_ambient_toggle")
+                        // Ambient Controls (Play/Stop Button + Volume Level)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                if (isAmbientPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                            FilledTonalButton(
+                                onClick = onToggleAmbient,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = if (isAmbientPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = if (isAmbientPlaying) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                modifier = Modifier.testTag("dialog_btn_ambient_toggle")
+                            ) {
+                                Icon(
+                                    if (isAmbientPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(if (isAmbientPlaying) "Stop Ambient" else "Play Ambient")
+                            }
+
+                            Text(
+                                text = "Volume: ${(ambientVolume * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(if (isAmbientPlaying) "Stop Ambient" else "Play Ambient")
                         }
 
-                        Text(
-                            text = "Volume: ${(ambientVolume * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.VolumeDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Slider(
+                                value = ambientVolume,
+                                onValueChange = onAmbientVolumeChange,
+                                valueRange = 0f..1f,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("ambient_volume_slider")
+                            )
+                            Icon(
+                                Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.VolumeDown,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                            thickness = 0.8.dp
                         )
-                        Slider(
-                            value = ambientVolume,
-                            onValueChange = onAmbientVolumeChange,
-                            valueRange = 0f..1f,
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("ambient_volume_slider")
-                        )
-                        Icon(
-                            Icons.Default.VolumeUp,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+
+                        // 📁 Upload Audio Section inside Ambient Sound tab (with properly sized button)
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.AudioFile,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = selectedAudioName ?: "Upload Audio / Story",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = if (selectedAudioName != null) {
+                                                if (isCustomAudioPlaying) "Playing simultaneously" else "Selected track"
+                                            } else {
+                                                "MP3, M4A, 2-3h audiobooks"
+                                            },
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                // ✨ Properly sized Upload Audio button (height 38dp, not oversized or tiny)
+                                Button(
+                                    onClick = onPickCustomAudio,
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                    modifier = Modifier
+                                        .height(38.dp)
+                                        .testTag("btn_upload_audio_ambient_tab")
+                                ) {
+                                    Icon(
+                                        Icons.Default.UploadFile,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Upload Audio", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
                     }
                 }
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
                 // ==========================================
-                // 🎧 CHANNEL 2: Uploaded Custom Audio
+                // TAB 1: 🎧 Uploaded Audio Library
                 // ==========================================
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "🎧 Uploaded Audio",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isCustomAudioPlaying) MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Text(
-                                text = if (isCustomAudioPlaying) "Playing" else "Stopped",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (isCustomAudioPlaying) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-
-                    // Custom Audio Controls (Play/Stop Button + Volume Level)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FilledTonalButton(
-                            onClick = onToggleCustomAudio,
-                            enabled = !selectedAudioUri.isNullOrBlank() || customAudioList.isNotEmpty(),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            modifier = Modifier.testTag("dialog_btn_custom_toggle")
-                        ) {
-                            Icon(
-                                if (isCustomAudioPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(if (isCustomAudioPlaying) "Stop Audio" else "Play Audio")
-                        }
-
-                        Text(
-                            text = "Volume: ${(customAudioVolume * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.VolumeDown,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Slider(
-                            value = customAudioVolume,
-                            onValueChange = onCustomAudioVolumeChange,
-                            valueRange = 0f..1f,
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("custom_audio_volume_slider")
-                        )
-                        Icon(
-                            Icons.Default.VolumeUp,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    // Upload Button & Audio Library
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Your Audio Library (${customAudioList.size})",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        OutlinedButton(
-                            onClick = onPickCustomAudio,
-                            modifier = Modifier.testTag("btn_upload_audio")
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Upload Audio", style = MaterialTheme.typography.labelMedium)
-                        }
-                    }
-
-                    if (customAudioList.isEmpty()) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                if (selectedTabIndex == 1) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Play/Stop and Volume for uploaded audio
+                        if (!selectedAudioUri.isNullOrBlank() || customAudioList.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    Icons.Default.AudioFile,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(32.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                FilledTonalButton(
+                                    onClick = onToggleCustomAudio,
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    modifier = Modifier.testTag("dialog_btn_custom_toggle")
+                                ) {
+                                    Icon(
+                                        if (isCustomAudioPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(if (isCustomAudioPlaying) "Stop Audio" else "Play Audio")
+                                }
+
                                 Text(
-                                    text = "No custom audio uploaded yet",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = "Volume: ${(customAudioVolume * 100).toInt()}%",
+                                    style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                Text(
-                                    text = "Tap 'Upload Audio' to add long audiobooks, lectures, stories, or study playlists.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.VolumeDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Slider(
+                                    value = customAudioVolume,
+                                    onValueChange = onCustomAudioVolumeChange,
+                                    valueRange = 0f..1f,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("custom_audio_volume_slider")
+                                )
+                                Icon(
+                                    Icons.Default.VolumeUp,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            customAudioList.forEach { audio ->
-                                val isSelected = audio.id == selectedAudioId || audio.uri == selectedAudioUri
-                                val isThisPlaying = isSelected && isCustomAudioPlaying
 
-                                Surface(
+                        // Properly sized upload button in library tab
+                        Button(
+                            onClick = onPickCustomAudio,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .testTag("btn_upload_audio_library"),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Upload New Audio (MP3, M4A)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        // Library list
+                        if (customAudioList.isEmpty()) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            ) {
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .clickable { onSelectAudio(audio) },
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
-                                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                    border = BorderStroke(
-                                        width = if (isSelected) 1.5.dp else 1.dp,
-                                        color = if (isSelected) MaterialTheme.colorScheme.secondary
-                                                else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                                    )
+                                        .padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Row(
+                                    Icon(
+                                        Icons.Default.AudioFile,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(30.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "No custom audio uploaded yet",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = "Upload audiobooks, podcasts, or music to play while studying.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                customAudioList.forEach { audio ->
+                                    val isSelected = audio.id == selectedAudioId || audio.uri == selectedAudioUri
+                                    val isThisPlaying = isSelected && isCustomAudioPlaying
+
+                                    Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Icon(
-                                            if (isThisPlaying) Icons.Default.GraphicEq else Icons.Default.MusicNote,
-                                            contentDescription = null,
-                                            tint = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(20.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .clickable { onSelectAudio(audio) },
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
+                                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                        border = BorderStroke(
+                                            width = if (isSelected) 1.5.dp else 1.dp,
+                                            color = if (isSelected) MaterialTheme.colorScheme.secondary
+                                                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                                         )
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = audio.name,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            if (isSelected) {
-                                                Text(
-                                                    text = if (isThisPlaying) "Playing now" else "Selected track",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.secondary
-                                                )
-                                            }
-                                        }
-
-                                        // Play / Stop Icon for this item
-                                        IconButton(
-                                            onClick = {
-                                                if (isThisPlaying) {
-                                                    onToggleCustomAudio()
-                                                } else {
-                                                    onSelectAudio(audio)
-                                                }
-                                            },
-                                            modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             Icon(
-                                                if (isThisPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                                contentDescription = if (isThisPlaying) "Pause" else "Play",
-                                                tint = if (isThisPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                                if (isThisPlaying) Icons.Default.GraphicEq else Icons.Default.MusicNote,
+                                                contentDescription = null,
+                                                tint = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.size(20.dp)
                                             )
-                                        }
 
-                                        // Delete Icon
-                                        IconButton(
-                                            onClick = { onDeleteAudio(audio) },
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.DeleteOutline,
-                                                contentDescription = "Delete audio",
-                                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = audio.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                if (isSelected) {
+                                                    Text(
+                                                        text = if (isThisPlaying) "Playing now" else "Selected track",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.secondary
+                                                    )
+                                                }
+                                            }
+
+                                            // Play / Stop Icon for this item
+                                            IconButton(
+                                                onClick = {
+                                                    if (isThisPlaying) {
+                                                        onToggleCustomAudio()
+                                                    } else {
+                                                        onSelectAudio(audio)
+                                                    }
+                                                },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    if (isThisPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                    contentDescription = if (isThisPlaying) "Pause" else "Play",
+                                                    tint = if (isThisPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+
+                                            // Delete Icon
+                                            IconButton(
+                                                onClick = { onDeleteAudio(audio) },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.DeleteOutline,
+                                                    contentDescription = "Delete audio",
+                                                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
