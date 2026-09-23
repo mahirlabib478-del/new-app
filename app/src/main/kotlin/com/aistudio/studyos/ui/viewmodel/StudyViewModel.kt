@@ -264,6 +264,38 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         // session is being created.
         automaticRestoreEnabled = false
         stopTimerJob()
+        StudyTimerForegroundService.stop(StudyApplication.instance)
+
+        val preliminaryItems = if (items.isNotEmpty()) {
+            items
+        } else {
+            List(totalBlocks.coerceIn(1, 720)) {
+                StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 25))
+            }
+        }
+        val firstPreliminary = preliminaryItems.firstOrNull() ?: StudyPlanItem(subject, chapter, blockMinutes)
+        val initialSec = (firstPreliminary.minutes * 60).coerceAtLeast(60)
+        _focusState.value = FocusTimerState(
+            isRunning = false,
+            isBreak = false,
+            secondsRemaining = initialSec,
+            totalBlockSeconds = initialSec,
+            studyBlockSeconds = initialSec,
+            breakBlockSeconds = breakMinutes * 60,
+            currentBlockIndex = 0,
+            totalBlocks = preliminaryItems.size,
+            currentSubject = firstPreliminary.subject,
+            currentChapter = firstPreliminary.topic,
+            planId = null,
+            mode = mode,
+            isSessionCompleted = false,
+            completedMinutes = 0,
+            completedBlocks = 0,
+            actualStudiedSeconds = 0,
+            endAtElapsedRealtime = 0L,
+            endAtWallClockMillis = 0L,
+            sessionError = null
+        )
 
         viewModelScope.launch {
             transitionMutex.withLock {

@@ -36,10 +36,13 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -158,7 +161,18 @@ fun MainApp(
         )
     }
 
-    val showBottomBar = currentRoute == null || currentRoute in BOTTOM_NAV_ROUTES
+    var isNavigatingToFocus by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute in BOTTOM_NAV_ROUTES) {
+            isNavigatingToFocus = false
+        }
+    }
+
+    val isAtBottomNav = currentRoute in BOTTOM_NAV_ROUTES
+    val showBottomBar = !isNavigatingToFocus && (currentRoute == null || isAtBottomNav)
+    val focusState by viewModel.focusState.collectAsState()
+    val showMiniBar = !isNavigatingToFocus && isAtBottomNav && currentRoute != Screen.Focus.route && focusState.planId != null
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -169,12 +183,14 @@ fun MainApp(
                 enter = fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing)),
                 exit = fadeOut(animationSpec = tween(140, easing = FastOutSlowInEasing))
             ) {
-                val focusState by viewModel.focusState.collectAsState()
                 Column {
-                    if (focusState.planId != null) {
+                    if (showMiniBar) {
                         ActiveSessionMiniBar(
                             focusState = focusState,
-                            onOpenFocus = { navController.navigate(Screen.Focus.route) },
+                            onOpenFocus = {
+                                isNavigatingToFocus = true
+                                navController.navigate(Screen.Focus.route)
+                            },
                             onToggleTimer = { viewModel.toggleTimer() }
                         )
                     }
@@ -233,9 +249,16 @@ fun MainApp(
             composable(Screen.Home.route) {
                 HomeScreen(
                     viewModel = viewModel,
-                    onOpenFocus = { navController.navigate(Screen.Focus.route) },
+                    onOpenFocus = {
+                        isNavigatingToFocus = true
+                        navController.navigate(Screen.Focus.route)
+                    },
                     onOpenStudy = { navController.navigate("study_setup/study/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
                     onOpenQuickFocus = {
+                        isNavigatingToFocus = true
+                        navController.navigate(Screen.Focus.route) {
+                            launchSingleTop = true
+                        }
                         viewModel.startNewPlan(
                             title = "Quick Focus",
                             subject = "Quick Focus",
@@ -246,8 +269,7 @@ fun MainApp(
                             breakMinutes = 5,
                             autoStart = true,
                             items = listOf(com.aistudio.studyos.data.local.entity.StudyPlanItem("Quick Focus", "Pomodoro", 25)),
-                            expectedTotalMinutes = 25,
-                            onReady = { navController.navigate(Screen.Focus.route) }
+                            expectedTotalMinutes = 25
                         )
                     },
                     onOpenExamPlanner = { navController.navigate(Screen.ExamPlanner.route) },
@@ -260,6 +282,10 @@ fun MainApp(
                     viewModel = viewModel,
                     onOpenStudy = { navController.navigate("study_setup/study/" + Uri.encode("Mathematics") + "/" + Uri.encode("New Topic")) },
                     onOpenQuickFocus = {
+                        isNavigatingToFocus = true
+                        navController.navigate(Screen.Focus.route) {
+                            launchSingleTop = true
+                        }
                         viewModel.startNewPlan(
                             title = "Quick Focus",
                             subject = "Quick Focus",
@@ -270,12 +296,14 @@ fun MainApp(
                             breakMinutes = 5,
                             autoStart = true,
                             items = listOf(com.aistudio.studyos.data.local.entity.StudyPlanItem("Quick Focus", "Pomodoro", 25)),
-                            expectedTotalMinutes = 25,
-                            onReady = { navController.navigate(Screen.Focus.route) }
+                            expectedTotalMinutes = 25
                         )
                     },
                     onOpenSavedSessions = { navController.navigate(Screen.SavedSessions.route) },
-                    onOpenFocus = { navController.navigate(Screen.Focus.route) }
+                    onOpenFocus = {
+                        isNavigatingToFocus = true
+                        navController.navigate(Screen.Focus.route)
+                    }
                 )
             }
             composable(Screen.Progress.route) {
@@ -316,9 +344,17 @@ fun MainApp(
                     fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 }
             ) {
+                DisposableEffect(Unit) {
+                    onDispose {
+                        isNavigatingToFocus = false
+                    }
+                }
                 FocusScreen(
                     viewModel = viewModel,
-                    onBack = { navController.popBackStack() }
+                    onBack = {
+                        isNavigatingToFocus = false
+                        navController.popBackStack()
+                    }
                 )
             }
             composable(
@@ -348,6 +384,7 @@ fun MainApp(
                     initialTopics = Uri.decode(entry.arguments?.getString("topics").orEmpty()),
                     onBack = { navController.popBackStack() },
                     onStartFocus = {
+                        isNavigatingToFocus = true
                         navController.navigate(Screen.Focus.route) {
                             popUpTo(Screen.Home.route)
                         }
@@ -399,6 +436,7 @@ fun MainApp(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
                     onResumeSession = {
+                        isNavigatingToFocus = true
                         navController.navigate(Screen.Focus.route) {
                             popUpTo(Screen.Home.route)
                         }

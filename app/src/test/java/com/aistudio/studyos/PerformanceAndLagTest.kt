@@ -26,6 +26,11 @@ class PerformanceAndLagTest {
             )
         }
 
+        // Warm up JIT to avoid classloading spikes in container environments
+        repeat(5) {
+            sampleLogs.sumOf { it.durationMinutes }
+        }
+
         val elapsedNanos = measureNanoTime {
             val cal = java.util.Calendar.getInstance().apply {
                 firstDayOfWeek = java.util.Calendar.MONDAY
