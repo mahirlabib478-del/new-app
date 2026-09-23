@@ -111,15 +111,30 @@ fun DynamicStudyWallpaper(
             }
         }
 
-        // Soft dark veil overlay ensuring all study elements, timers, tasks & charts remain crisp & readable
-        val overlayAlpha = (dimOverlay + (1f - opacity) * 0.28f).coerceIn(0f, 0.85f)
-        if (overlayAlpha > 0f) {
+        // Theme-adaptive protective overlay ensuring timers, indicators, and text remain crystal clear
+        val baseOverlayAlpha = if (isLight) {
+            // In light themes, blend with light background color to keep dark text completely legible
+            (dimOverlay + 0.15f + (1f - opacity) * 0.35f).coerceIn(0.12f, 0.88f)
+        } else {
+            // In dark themes, ensure deep dark backing so bright/white text never gets washed out
+            (dimOverlay + 0.25f + (1f - opacity) * 0.30f).coerceIn(0.20f, 0.90f)
+        }
+
+        val overlayColor = when (themePreset) {
+            "pitch_black" -> Color.Black
+            "ocean" -> Color(0xFF060E18)
+            "paper" -> Color(0xFFF7F4EB)
+            "mint" -> Color(0xFFF0FDF4)
+            "sunrise" -> Color(0xFFFFF7ED)
+            "light" -> Color(0xFFF8FAFC)
+            else -> Color(0xFF0C0E17) // midnight & default
+        }
+
+        if (baseOverlayAlpha > 0f) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        (if (isLight) Color(0xFF0F172A) else Color(0xFF020617)).copy(alpha = overlayAlpha)
-                    )
+                    .background(overlayColor.copy(alpha = baseOverlayAlpha))
             )
         }
     }

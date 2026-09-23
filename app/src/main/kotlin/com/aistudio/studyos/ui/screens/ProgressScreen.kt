@@ -194,6 +194,8 @@ fun ProgressScreen(
 
     var showAllLogs by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
+    val focusState by viewModel.focusState.collectAsState()
+    val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
 
     // Total Time uses the same session-log source as Today/Consistency.
     // This keeps partial/skip time visible everywhere instead of depending on a
@@ -264,7 +266,7 @@ fun ProgressScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 140.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {

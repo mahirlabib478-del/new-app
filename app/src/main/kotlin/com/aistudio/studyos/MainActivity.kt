@@ -7,16 +7,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.graphics.Color
-import com.aistudio.studyos.ui.components.DynamicStudyWallpaper
-import com.aistudio.studyos.ui.components.WallpaperStyle
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
@@ -153,48 +155,27 @@ fun MainApp(
 
     val showBottomBar = currentRoute in BOTTOM_NAV_ROUTES
 
-    val isWallpaperEnabled by viewModel.isWallpaperEnabled.collectAsState()
-    val isFocusWallpaperEnabled by viewModel.isFocusWallpaperEnabled.collectAsState()
-    val wallpaperOpacity by viewModel.wallpaperOpacity.collectAsState()
-    val wallpaperStyleId by viewModel.wallpaperStyle.collectAsState()
-    val customWallpaperUri by viewModel.customWallpaperUri.collectAsState()
-    val currentTheme by viewModel.currentTheme.collectAsState()
-
-    val isFocusRoute = currentRoute == Screen.Focus.route
-    // Render wallpaper on all main screens and focus screen if enabled
-    val shouldRenderMainWallpaper = isWallpaperEnabled && (showBottomBar || (isFocusRoute && isFocusWallpaperEnabled))
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (shouldRenderMainWallpaper) {
-            val style = remember(wallpaperStyleId) {
-                WallpaperStyle.entries.find { it.id == wallpaperStyleId } ?: WallpaperStyle.CAFE_BOKEH
-            }
-            val effectiveOpacity = if (isFocusRoute) wallpaperOpacity else wallpaperOpacity * 0.70f
-            val effectiveDim = if (isFocusRoute) 0.22f else 0.08f
-            DynamicStudyWallpaper(
-                style = style,
-                themePreset = currentTheme,
-                opacity = effectiveOpacity,
-                dimOverlay = effectiveDim,
-                customUri = customWallpaperUri
-            )
-        }
-
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = if (shouldRenderMainWallpaper) Color.Transparent else MaterialTheme.colorScheme.background,
-            bottomBar = {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
             AnimatedVisibility(
                 visible = showBottomBar,
-                enter = fadeIn(animationSpec = tween(140)),
-                exit = fadeOut(animationSpec = tween(140))
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(240, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(180)),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(200, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(140))
             ) {
                 val focusState by viewModel.focusState.collectAsState()
                 Column {
                     AnimatedVisibility(
                         visible = focusState.planId != null,
-                        enter = fadeIn(animationSpec = tween(140)),
-                        exit = fadeOut(animationSpec = tween(140))
+                        enter = fadeIn(animationSpec = tween(220)) + expandVertically(animationSpec = tween(220)),
+                        exit = fadeOut(animationSpec = tween(160)) + shrinkVertically(animationSpec = tween(180))
                     ) {
                         ActiveSessionMiniBar(
                             focusState = focusState,
@@ -242,16 +223,16 @@ fun MainApp(
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding()),
             enterTransition = {
-                fadeIn(animationSpec = tween(140))
+                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(140))
+                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(140))
+                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(140))
+                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
             }
         ) {
             composable(Screen.Home.route) {
@@ -311,7 +292,30 @@ fun MainApp(
             composable(Screen.Profile.route) {
                 ProfileScreen(viewModel = viewModel)
             }
-            composable(Screen.Focus.route) {
+            composable(
+                route = Screen.Focus.route,
+                enterTransition = {
+                    slideInVertically(
+                        initialOffsetY = { (it * 0.10f).toInt() },
+                        animationSpec = tween(260, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+                },
+                exitTransition = {
+                    slideOutVertically(
+                        targetOffsetY = { (it * 0.10f).toInt() },
+                        animationSpec = tween(220, easing = FastOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+                },
+                popExitTransition = {
+                    slideOutVertically(
+                        targetOffsetY = { (it * 0.10f).toInt() },
+                        animationSpec = tween(220, easing = FastOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                }
+            ) {
                 FocusScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() }
@@ -362,6 +366,5 @@ fun MainApp(
                 )
             }
         }
-    }
     }
 }

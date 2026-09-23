@@ -56,45 +56,60 @@ private val OceanColorScheme = darkColorScheme(
 )
 
 private val PaperColorScheme = lightColorScheme(
-    primary = Color(0xFF8B5A2B),
+    primary = Color(0xFF78350F),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE8DFC8),
-    onPrimaryContainer = Color(0xFF3D250C),
+    primaryContainer = Color(0xFFFDE68A),
+    onPrimaryContainer = Color(0xFF451A03),
     secondary = Color(0xFFB45309),
-    background = PaperBg,
-    onBackground = Color(0xFF292524),
-    surface = PaperSurface,
-    onSurface = Color(0xFF292524),
-    surfaceVariant = Color(0xFFE5DDD0),
-    onSurfaceVariant = Color(0xFF57534E)
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFEF3C7),
+    onSecondaryContainer = Color(0xFF78350F),
+    background = Color(0xFFFBF8F1),
+    onBackground = Color(0xFF1C1917),
+    surface = Color(0xFFFFFDF8),
+    onSurface = Color(0xFF1C1917),
+    surfaceVariant = Color(0xFFF2ECE1),
+    onSurfaceVariant = Color(0xFF44403C),
+    outline = Color(0xFFD6C7B2),
+    outlineVariant = Color(0xFFE5DDD0)
 )
 
 private val MintColorScheme = lightColorScheme(
-    primary = Color(0xFF0D9488),
+    primary = Color(0xFF047857),
     onPrimary = Color.White,
-    primaryContainer = MintSurface,
-    onPrimaryContainer = Color(0xFF134E4A),
-    secondary = Color(0xFF14B8A6),
-    background = MintBg,
-    onBackground = Color(0xFF14532D),
+    primaryContainer = Color(0xFFA7F3D0),
+    onPrimaryContainer = Color(0xFF064E3B),
+    secondary = Color(0xFF0D9488),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFCCFBF1),
+    onSecondaryContainer = Color(0xFF134E4A),
+    background = Color(0xFFF2FBF6),
+    onBackground = Color(0xFF064E3B),
     surface = Color.White,
-    onSurface = Color(0xFF1F2937),
-    surfaceVariant = Color(0xFFE0F2FE),
-    onSurfaceVariant = Color(0xFF4B5563)
+    onSurface = Color(0xFF064E3B),
+    surfaceVariant = Color(0xFFE2F7EB),
+    onSurfaceVariant = Color(0xFF065F46),
+    outline = Color(0xFFA7F3D0),
+    outlineVariant = Color(0xFFD1FAE5)
 )
 
 private val SunriseColorScheme = lightColorScheme(
-    primary = SunriseAccent,
+    primary = Color(0xFFC2410C),
     onPrimary = Color.White,
-    primaryContainer = SunriseSurface,
+    primaryContainer = Color(0xFFFED7AA),
     onPrimaryContainer = Color(0xFF7C2D12),
-    secondary = Color(0xFFF97316),
-    background = SunriseBg,
-    onBackground = Color(0xFF1C1917),
+    secondary = Color(0xFFEA580C),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFFEDD5),
+    onSecondaryContainer = Color(0xFF9A3412),
+    background = Color(0xFFFFF9F5),
+    onBackground = Color(0xFF292524),
     surface = Color.White,
-    onSurface = Color(0xFF1C1917),
-    surfaceVariant = Color(0xFFFFEDD5),
-    onSurfaceVariant = Color(0xFF78716C)
+    onSurface = Color(0xFF292524),
+    surfaceVariant = Color(0xFFFFEDE0),
+    onSurfaceVariant = Color(0xFF57534E),
+    outline = Color(0xFFFDBA74),
+    outlineVariant = Color(0xFFFFEDD5)
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -112,18 +127,25 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF2563EB),
+    primary = Color(0xFF1D4ED8),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFDCEAFE),
-    onPrimaryContainer = Color(0xFF0B2E6F),
-    secondary = Color(0xFF475569),
+    primaryContainer = Color(0xFFDBEAFE),
+    onPrimaryContainer = Color(0xFF1E3A8A),
+    secondary = Color(0xFF3B82F6),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFE0E7FF),
+    onSecondaryContainer = Color(0xFF1E1B4B),
     background = Color(0xFFF8FAFC),
     onBackground = Color(0xFF0F172A),
     surface = Color.White,
     onSurface = Color(0xFF0F172A),
-    surfaceVariant = Color(0xFFEFF3F8),
-    onSurfaceVariant = Color(0xFF475569)
+    surfaceVariant = Color(0xFFF1F5F9),
+    onSurfaceVariant = Color(0xFF334155),
+    outline = Color(0xFFCBD5E1),
+    outlineVariant = Color(0xFFE2E8F0)
 )
+
+fun isLightPreset(preset: String): Boolean = preset in setOf("paper", "mint", "sunrise", "light")
 
 @Composable
 fun StudyOSTheme(

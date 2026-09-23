@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.OpenInNew
@@ -139,11 +140,13 @@ fun ProfileScreen(
     var showReminderTimeDialog by remember { mutableStateOf(false) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
+    val focusState by viewModel.focusState.collectAsState()
+    val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 140.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -237,7 +240,6 @@ fun ProfileScreen(
         // 🌧️ Theme Dynamic Wallpaper & Ambience Settings
         item {
             val isWallpaperEnabled by viewModel.isWallpaperEnabled.collectAsState()
-            val isFocusWallpaperEnabled by viewModel.isFocusWallpaperEnabled.collectAsState()
             val wallpaperOpacity by viewModel.wallpaperOpacity.collectAsState()
             val currentStyleId by viewModel.wallpaperStyle.collectAsState()
             val customWallpaperUri by viewModel.customWallpaperUri.collectAsState()
@@ -263,6 +265,8 @@ fun ProfileScreen(
                 }
             }
 
+            val isLight = remember(currentTheme) { com.aistudio.studyos.ui.theme.isLightPreset(currentTheme) }
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -282,7 +286,10 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Palette,
                                 contentDescription = null,
@@ -292,26 +299,54 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    text = "Study Wallpaper & Ambience",
+                                    text = "Focus Session Wallpaper",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 15.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Real rain photography & atmospheric art",
+                                    text = if (isLight) "Disabled in Light themes for optimal clarity" else "Atmospheric background exclusively during focus sessions",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                         Switch(
-                            checked = isWallpaperEnabled,
+                            checked = isWallpaperEnabled && !isLight,
+                            enabled = !isLight,
                             onCheckedChange = { viewModel.toggleWallpaperEnabled() },
                             modifier = Modifier.testTag("wallpaper_master_switch")
                         )
                     }
 
-                    if (isWallpaperEnabled) {
+                    if (isLight) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = "Wallpapers are disabled in Light themes to ensure maximum text sharpness and timer visibility. Switch to a Dark theme (Midnight, Pitch Black, Dark, Ocean) to use wallpapers.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    if (isWallpaperEnabled && !isLight) {
                         // Live Miniature Wallpaper Preview Box
                         Box(
                             modifier = Modifier
@@ -477,32 +512,6 @@ fun ProfileScreen(
                                 onValueChange = { viewModel.setWallpaperOpacity(it) },
                                 valueRange = 0.1f..1.0f,
                                 modifier = Modifier.testTag("wallpaper_opacity_slider")
-                            )
-                        }
-
-                        // Focus Session Wallpaper Toggle
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    text = "Show in Focus Timer",
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Display rain background while studying",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Switch(
-                                checked = isFocusWallpaperEnabled,
-                                onCheckedChange = { viewModel.toggleFocusWallpaperEnabled() },
-                                modifier = Modifier.testTag("focus_wallpaper_switch")
                             )
                         }
                     }

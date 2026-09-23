@@ -1288,6 +1288,8 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         val next = !_isWallpaperEnabled.value
         _isWallpaperEnabled.value = next
         repository.setWallpaperEnabled(next)
+        _isFocusWallpaperEnabled.value = next
+        repository.setFocusWallpaperEnabled(next)
     }
 
     fun toggleFocusWallpaperEnabled() {

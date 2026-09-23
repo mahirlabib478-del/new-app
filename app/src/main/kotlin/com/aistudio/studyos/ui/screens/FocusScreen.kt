@@ -7,9 +7,12 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import com.aistudio.studyos.ui.theme.isLightPreset
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -268,9 +271,22 @@ fun FocusScreen(
         )
     }
 
-    val showWallpaper = isWallpaperMasterEnabled && isFocusWallpaperEnabled
+    val isLight = remember(currentTheme) { isLightPreset(currentTheme) }
+    val showWallpaper = !isLight && isWallpaperMasterEnabled && isFocusWallpaperEnabled
 
     Box(modifier = Modifier.fillMaxSize()) {
+        if (showWallpaper) {
+            val style = remember(wallpaperStyleId) {
+                WallpaperStyle.entries.find { it.id == wallpaperStyleId } ?: WallpaperStyle.CAFE_BOKEH
+            }
+            DynamicStudyWallpaper(
+                style = style,
+                themePreset = currentTheme,
+                opacity = wallpaperOpacity,
+                customUri = customWallpaperUri
+            )
+        }
+
         Scaffold(
             containerColor = if (showWallpaper) Color.Transparent else MaterialTheme.colorScheme.background,
             topBar = {
@@ -278,6 +294,7 @@ fun FocusScreen(
                     isRunning = state.isRunning,
                     isWallpaperActive = showWallpaper,
                     isWallpaperMasterEnabled = isWallpaperMasterEnabled,
+                    isLight = isLight,
                     onToggleWallpaper = { viewModel.toggleFocusWallpaperEnabled() },
                     onBack = {
                         AmbientSoundManager.stop()
@@ -330,7 +347,9 @@ fun FocusScreen(
                 isBreak = state.isBreak,
                 currentBlockIndex = state.currentBlockIndex,
                 totalBlocks = state.totalBlocks,
-                primaryColor = primaryColor
+                primaryColor = primaryColor,
+                isWallpaperActive = showWallpaper,
+                isLight = isLight
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -340,7 +359,9 @@ fun FocusScreen(
                 secondsRemaining = state.secondsRemaining,
                 totalBlockSeconds = state.totalBlockSeconds,
                 isRunning = state.isRunning,
-                primaryColor = primaryColor
+                primaryColor = primaryColor,
+                isWallpaperActive = showWallpaper,
+                isLight = isLight
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -350,6 +371,8 @@ fun FocusScreen(
                 preset = ambientPreset,
                 customAudioName = savedCustomAudioName,
                 isPlaying = ambientPlaying,
+                isWallpaperActive = showWallpaper,
+                isLight = isLight,
                 onClick = { showAmbientDialog = true },
                 onToggle = {
                     if (ambientPlaying) {
@@ -368,6 +391,8 @@ fun FocusScreen(
             FocusTimerControls(
                 isRunning = state.isRunning,
                 primaryColor = primaryColor,
+                isWallpaperActive = showWallpaper,
+                isLight = isLight,
                 onReset = { viewModel.resetBlockTimer() },
                 onToggle = { viewModel.toggleTimer() },
                 onSkip = { viewModel.skipCurrentBlock() }
@@ -385,6 +410,7 @@ private fun FocusTopBar(
     isRunning: Boolean,
     isWallpaperActive: Boolean,
     isWallpaperMasterEnabled: Boolean,
+    isLight: Boolean,
     onToggleWallpaper: () -> Unit,
     onBack: () -> Unit,
     onEndSession: () -> Unit
@@ -415,7 +441,7 @@ private fun FocusTopBar(
             }
         },
         actions = {
-            if (isWallpaperMasterEnabled) {
+            if (isWallpaperMasterEnabled && !isLight) {
                 IconButton(
                     onClick = onToggleWallpaper,
                     modifier = Modifier.testTag("focus_wallpaper_toggle_button")
@@ -452,7 +478,9 @@ private fun CurrentTopicIndicator(
     isBreak: Boolean,
     currentBlockIndex: Int,
     totalBlocks: Int,
-    primaryColor: Color
+    primaryColor: Color,
+    isWallpaperActive: Boolean = false,
+    isLight: Boolean = false
 ) {
     val topicDisplay = remember(subject, topic) {
         val cleanSubject = subject.trim()
@@ -471,18 +499,31 @@ private fun CurrentTopicIndicator(
         modifier = Modifier.fillMaxWidth()
     ) {
         // Phase Pill
+        val pillBgColor = if (isWallpaperActive) {
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
+        } else if (isBreak) {
+            Color(0xFF10B981).copy(alpha = 0.12f)
+        } else {
+            primaryColor.copy(alpha = 0.10f)
+        }
+        val pillTextColor = if (isBreak) {
+            if (isLight) Color(0xFF047857) else Color(0xFF34D399)
+        } else {
+            primaryColor
+        }
+
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .background(primaryColor.copy(alpha = 0.12f))
-                .padding(horizontal = 14.dp, vertical = 5.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(pillBgColor)
+                .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
             Text(
                 text = if (isBreak) "☕ BREAK TIME" else "🎯 FOCUS INTERVAL",
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 11.sp,
-                letterSpacing = 1.sp,
-                color = primaryColor
+                letterSpacing = 0.8.sp,
+                color = pillTextColor
             )
         }
 
@@ -505,6 +546,7 @@ private fun CurrentTopicIndicator(
         Text(
             text = "Topic ${currentBlockIndex + 1} of $totalBlocks",
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -526,7 +568,9 @@ private fun CurrentTopicIndicator(
                             when {
                                 isCompleted -> primaryColor
                                 isCurrent -> primaryColor.copy(alpha = 0.9f)
-                                else -> MaterialTheme.colorScheme.surfaceVariant
+                                else -> if (isWallpaperActive) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)
+                                        else if (isLight) MaterialTheme.colorScheme.outlineVariant
+                                        else MaterialTheme.colorScheme.surfaceVariant
                             }
                         )
                 )
@@ -545,6 +589,8 @@ private fun CircularTimerDisplay(
     totalBlockSeconds: Int,
     isRunning: Boolean,
     primaryColor: Color,
+    isWallpaperActive: Boolean = false,
+    isLight: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val mins = secondsRemaining / 60
@@ -572,7 +618,11 @@ private fun CircularTimerDisplay(
         (targetProgress * 100).toInt().coerceIn(0, 100)
     }
 
-    val trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+    val trackColor = when {
+        isWallpaperActive -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
+        isLight -> MaterialTheme.colorScheme.outlineVariant
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+    }
 
     Box(
         modifier = modifier
@@ -621,10 +671,16 @@ private fun CircularTimerDisplay(
             Spacer(modifier = Modifier.height(4.dp))
 
             // 📊 42% completed indicator
+            val progressBadgeBg = if (isWallpaperActive) {
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)
+            } else {
+                primaryColor.copy(alpha = 0.10f)
+            }
+
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .background(primaryColor.copy(alpha = 0.12f))
+                    .background(progressBadgeBg)
                     .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
@@ -640,6 +696,7 @@ private fun CircularTimerDisplay(
             Text(
                 text = if (isRunning) "Focusing" else "Paused",
                 style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -655,6 +712,8 @@ private fun CompactAmbientSoundBar(
     preset: AmbientSoundManager.Preset,
     customAudioName: String?,
     isPlaying: Boolean,
+    isWallpaperActive: Boolean = false,
+    isLight: Boolean = false,
     onClick: () -> Unit,
     onToggle: () -> Unit
 ) {
@@ -665,29 +724,38 @@ private fun CompactAmbientSoundBar(
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(
+            1.dp,
+            if (isWallpaperActive) Color.Transparent
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = if (isWallpaperActive) {
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isPlaying) MaterialTheme.colorScheme.primaryContainer
-                            else MaterialTheme.colorScheme.surfaceVariant
+                            if (isPlaying) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            else MaterialTheme.colorScheme.surface
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -695,7 +763,7 @@ private fun CompactAmbientSoundBar(
                         if (isPlaying) Icons.Default.GraphicEq else Icons.Default.VolumeUp,
                         contentDescription = null,
                         tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
@@ -933,10 +1001,18 @@ private fun AmbientSoundConfigDialog(
 private fun FocusTimerControls(
     isRunning: Boolean,
     primaryColor: Color,
+    isWallpaperActive: Boolean = false,
+    isLight: Boolean = false,
     onReset: () -> Unit,
     onToggle: () -> Unit,
     onSkip: () -> Unit
 ) {
+    val secondaryBtnColor = if (isWallpaperActive) {
+        MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -947,7 +1023,7 @@ private fun FocusTimerControls(
             modifier = Modifier.size(52.dp),
             shape = CircleShape,
             colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = secondaryBtnColor
             )
         ) {
             Icon(
@@ -980,7 +1056,7 @@ private fun FocusTimerControls(
             modifier = Modifier.size(52.dp),
             shape = CircleShape,
             colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = secondaryBtnColor
             )
         ) {
             Icon(

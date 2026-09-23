@@ -146,10 +146,12 @@ fun HomeScreen(
     )
 
     var showThemeDialog by remember { mutableStateOf(false) }
+    val focusState by viewModel.focusState.collectAsState()
+    val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 140.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
