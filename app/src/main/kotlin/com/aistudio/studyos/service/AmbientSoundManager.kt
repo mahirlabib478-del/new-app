@@ -163,6 +163,8 @@ object AmbientSoundManager {
     private var customVolume = 0.80f
     @Volatile
     private var isCustomAudioPlaying = false
+    @Volatile
+    private var savedAudioPositionMs = 0
 
     @Synchronized
     fun isCustomAudioPlaying(): Boolean = isCustomAudioPlaying && mediaPlayer?.isPlaying == true
@@ -178,8 +180,67 @@ object AmbientSoundManager {
 
     @Synchronized
     fun setCustomAudioMetadata(uri: String?, displayName: String?) {
+        if (customAudioUri != uri) {
+            savedAudioPositionMs = 0
+        }
         customAudioUri = uri
         customAudioName = displayName
+    }
+
+    @Synchronized
+    fun getCustomAudioCurrentPosition(): Int {
+        val mp = mediaPlayer
+        if (mp != null) {
+            return runCatching { mp.currentPosition }.getOrDefault(savedAudioPositionMs)
+        }
+        return savedAudioPositionMs
+    }
+
+    @Synchronized
+    fun getCustomAudioDuration(): Int {
+        val mp = mediaPlayer
+        if (mp != null) {
+            return runCatching { mp.duration }.getOrDefault(0).coerceAtLeast(0)
+        }
+        return 0
+    }
+
+    @Synchronized
+    fun seekCustomAudioTo(positionMs: Int) {
+        val targetPos = positionMs.coerceAtLeast(0)
+        savedAudioPositionMs = targetPos
+        val mp = mediaPlayer
+        if (mp != null) {
+            runCatching {
+                val dur = mp.duration
+                val safePos = if (dur > 0) targetPos.coerceIn(0, dur) else targetPos
+                mp.seekTo(safePos)
+            }
+        }
+    }
+
+    @Synchronized
+    fun seekCustomAudioBy(deltaMs: Int) {
+        val current = getCustomAudioCurrentPosition()
+        val duration = getCustomAudioDuration()
+        val target = if (duration > 0) {
+            (current + deltaMs).coerceIn(0, duration)
+        } else {
+            (current + deltaMs).coerceAtLeast(0)
+        }
+        seekCustomAudioTo(target)
+    }
+
+    @Synchronized
+    fun pauseCustomAudio() {
+        val mp = mediaPlayer
+        if (mp != null && isCustomAudioPlaying) {
+            runCatching {
+                savedAudioPositionMs = mp.currentPosition
+                mp.pause()
+            }
+        }
+        isCustomAudioPlaying = false
     }
 
     @Synchronized
@@ -195,13 +256,33 @@ object AmbientSoundManager {
         if (displayName != null) customAudioName = displayName
         customVolume = volume.coerceIn(0f, 1f)
 
+        if (uriChanged) {
+            savedAudioPositionMs = 0
+        }
+
         // If already playing the same URI, just adjust volume and return
         if (!uriChanged && mediaPlayer != null && isCustomAudioPlaying) {
             mediaPlayer?.setVolume(customVolume, customVolume)
             return
         }
 
-        stopCustomAudio()
+        // If paused with existing prepared MediaPlayer on same URI, resume smoothly
+        val existingMp = mediaPlayer
+        if (!uriChanged && existingMp != null) {
+            try {
+                existingMp.setVolume(customVolume, customVolume)
+                if (savedAudioPositionMs > 0) {
+                    runCatching { existingMp.seekTo(savedAudioPositionMs) }
+                }
+                existingMp.start()
+                isCustomAudioPlaying = true
+                return
+            } catch (_: Exception) {
+                // If resume fails, fall through to re-init
+            }
+        }
+
+        stopCustomAudio(resetPosition = false)
 
         var candidateMp: MediaPlayer? = null
         try {
@@ -232,6 +313,9 @@ object AmbientSoundManager {
                     true
                 }
                 prepare()
+                if (savedAudioPositionMs > 0) {
+                    seekTo(savedAudioPositionMs)
+                }
                 start()
             }
             candidateMp = mp
@@ -247,16 +331,25 @@ object AmbientSoundManager {
     }
 
     @Synchronized
-    fun stopCustomAudio() {
-        isCustomAudioPlaying = false
+    fun stopCustomAudio(resetPosition: Boolean = true) {
         val mp = mediaPlayer
-        mediaPlayer = null
-        runCatching {
-            if (mp?.isPlaying == true) {
-                mp.stop()
+        if (mp != null) {
+            if (!resetPosition) {
+                runCatching { savedAudioPositionMs = mp.currentPosition }
+            } else {
+                savedAudioPositionMs = 0
             }
-            mp?.release()
+            runCatching {
+                if (mp.isPlaying) {
+                    mp.stop()
+                }
+                mp.release()
+            }
+        } else if (resetPosition) {
+            savedAudioPositionMs = 0
         }
+        mediaPlayer = null
+        isCustomAudioPlaying = false
     }
 
     @Synchronized

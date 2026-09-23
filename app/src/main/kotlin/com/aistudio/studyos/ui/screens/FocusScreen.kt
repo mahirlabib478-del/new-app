@@ -43,6 +43,8 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Replay10
+import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.VolumeDown
@@ -85,6 +87,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -302,7 +305,7 @@ fun FocusScreen(
             },
             onToggleCustomAudio = {
                 if (isCustomAudioPlaying) {
-                    AmbientSoundManager.stopCustomAudio()
+                    AmbientSoundManager.pauseCustomAudio()
                     isCustomAudioPlaying = false
                 } else {
                     val uri = savedCustomAudioUri
@@ -1194,37 +1197,176 @@ private fun AmbientSoundConfigDialog(
                 // ==========================================
                 if (selectedTabIndex == 1) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        // Play/Stop and Volume for uploaded audio
+                        // Play/Pause, Seek controls, and Volume for uploaded audio
                         if (!selectedAudioUri.isNullOrBlank() || customAudioList.isNotEmpty()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                FilledTonalButton(
-                                    onClick = onToggleCustomAudio,
-                                    colors = ButtonDefaults.filledTonalButtonColors(
-                                        containerColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer
-                                    ),
-                                    modifier = Modifier.testTag("dialog_btn_custom_toggle")
-                                ) {
-                                    Icon(
-                                        if (isCustomAudioPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(if (isCustomAudioPlaying) "Stop Audio" else "Play Audio")
-                                }
+                            var currentPosMs by remember { mutableIntStateOf(AmbientSoundManager.getCustomAudioCurrentPosition()) }
+                            var totalDurationMs by remember { mutableIntStateOf(AmbientSoundManager.getCustomAudioDuration()) }
+                            var isDraggingSlider by remember { mutableStateOf(false) }
+                            var sliderTempPositionMs by remember { mutableFloatStateOf(0f) }
 
-                                Text(
-                                    text = "Volume: ${(customAudioVolume * 100).toInt()}%",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                            LaunchedEffect(isCustomAudioPlaying) {
+                                while (true) {
+                                    if (!isDraggingSlider) {
+                                        currentPosMs = AmbientSoundManager.getCustomAudioCurrentPosition()
+                                        totalDurationMs = AmbientSoundManager.getCustomAudioDuration()
+                                    }
+                                    kotlinx.coroutines.delay(500L)
+                                }
                             }
 
+                            // 🎵 Mini Scrubber & Audio Transport Controls Card
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    // Row 1: Track Title & Volume %
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = selectedAudioName ?: "Selected Audio",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "Vol: ${(customAudioVolume * 100).toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    // Row 2: Interactive Seekbar (Slider)
+                                    val safeTotal = totalDurationMs.toFloat().coerceAtLeast(1000f)
+                                    val currentDisplayPos = if (isDraggingSlider) sliderTempPositionMs else currentPosMs.toFloat().coerceIn(0f, safeTotal)
+
+                                    Slider(
+                                        value = currentDisplayPos.coerceIn(0f, safeTotal),
+                                        onValueChange = {
+                                            isDraggingSlider = true
+                                            sliderTempPositionMs = it
+                                        },
+                                        onValueChangeFinished = {
+                                            AmbientSoundManager.seekCustomAudioTo(sliderTempPositionMs.toInt())
+                                            currentPosMs = sliderTempPositionMs.toInt()
+                                            isDraggingSlider = false
+                                        },
+                                        valueRange = 0f..safeTotal,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("audio_playback_slider")
+                                    )
+
+                                    // Row 3: Time Elapsed / Total Duration Text
+                                    fun formatTimeMs(millis: Int): String {
+                                        val totalSeconds = (millis / 1000).coerceAtLeast(0)
+                                        val hours = totalSeconds / 3600
+                                        val minutes = (totalSeconds % 3600) / 60
+                                        val seconds = totalSeconds % 60
+                                        return if (hours > 0) {
+                                            String.format(java.util.Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+                                        } else {
+                                            String.format(java.util.Locale.US, "%02d:%02d", minutes, seconds)
+                                        }
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = formatTimeMs(currentDisplayPos.toInt()),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = if (totalDurationMs > 0) formatTimeMs(totalDurationMs) else "--:--",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    // Row 4: Controls (Rewind 10s, Play/Pause, Forward 10s)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        // -10s button
+                                        IconButton(
+                                            onClick = {
+                                                AmbientSoundManager.seekCustomAudioBy(-10_000)
+                                                currentPosMs = AmbientSoundManager.getCustomAudioCurrentPosition()
+                                            },
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .testTag("btn_audio_rewind_10s")
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Replay10,
+                                                contentDescription = "Rewind 10 seconds",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        // Play / Pause main button
+                                        FilledTonalButton(
+                                            onClick = onToggleCustomAudio,
+                                            colors = ButtonDefaults.filledTonalButtonColors(
+                                                containerColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = if (isCustomAudioPlaying) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                                            ),
+                                            shape = RoundedCornerShape(14.dp),
+                                            modifier = Modifier.testTag("dialog_btn_custom_toggle")
+                                        ) {
+                                            Icon(
+                                                if (isCustomAudioPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(if (isCustomAudioPlaying) "Pause" else "Play")
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        // +10s button
+                                        IconButton(
+                                            onClick = {
+                                                AmbientSoundManager.seekCustomAudioBy(10_000)
+                                                currentPosMs = AmbientSoundManager.getCustomAudioCurrentPosition()
+                                            },
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .testTag("btn_audio_forward_10s")
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Forward10,
+                                                contentDescription = "Fast forward 10 seconds",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Volume Slider Row
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
