@@ -160,7 +160,7 @@ object AmbientSoundManager {
     @Volatile
     private var customAudioName: String? = null
     @Volatile
-    private var customVolume = 0.70f
+    private var customVolume = 0.80f
     @Volatile
     private var isCustomAudioPlaying = false
 
