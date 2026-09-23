@@ -21,7 +21,8 @@ object AmbientSoundManager {
         RAIN("Gentle Rain"),
         WHITE_NOISE("White Noise"),
         DEEP_FOCUS("Deep Focus 196Hz"),
-        FOREST_STREAM("Forest Stream")
+        FOREST_STREAM("Forest Stream"),
+        CUSTOM_AUDIO("Custom Audio")
     }
 
     // ==========================================
@@ -116,6 +117,7 @@ object AmbientSoundManager {
                             rainState = rainState * 0.985 + random.nextDouble(-0.25, 0.25)
                             (rainState * 0.65 + random.nextDouble(-0.08, 0.08)).coerceIn(-1.0, 1.0)
                         }
+                        Preset.CUSTOM_AUDIO -> 0.0
                     }
                     samples[i] = (value * ambientVolume * Short.MAX_VALUE).toInt().coerceIn(
                         Short.MIN_VALUE.toInt(),
@@ -248,6 +250,37 @@ object AmbientSoundManager {
     fun setCustomAudioVolume(volume: Float) {
         customVolume = volume.coerceIn(0f, 1f)
         mediaPlayer?.setVolume(customVolume, customVolume)
+    }
+
+    @Synchronized
+    fun setCustomAudio(uri: String?, displayName: String?) {
+        setCustomAudioMetadata(uri, displayName)
+    }
+
+    @Synchronized
+    fun setVolume(volume: Float) {
+        setAmbientVolume(volume)
+        setCustomAudioVolume(volume)
+    }
+
+    @Synchronized
+    fun play(
+        context: Context,
+        preset: Preset = currentPreset,
+        volume: Float = ambientVolume,
+        customUri: String? = customAudioUri
+    ) {
+        currentPreset = preset
+        if (preset == Preset.CUSTOM_AUDIO) {
+            stopAmbient()
+            val uriToUse = customUri ?: customAudioUri ?: ""
+            if (uriToUse.isNotBlank()) {
+                playCustomAudio(context, uriToUse, customAudioName, volume)
+            }
+        } else {
+            stopCustomAudio()
+            playAmbient(preset, volume)
+        }
     }
 
     // ==========================================
