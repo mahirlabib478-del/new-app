@@ -92,6 +92,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         StudyReminderScheduler.rescheduleAfterPermissionGrant(this)
+        viewModel.refreshTodayStats()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

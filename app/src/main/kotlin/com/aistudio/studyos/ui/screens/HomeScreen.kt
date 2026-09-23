@@ -538,93 +538,53 @@ fun HomeScreen(
             }
         }
 
-        if (!isRecentLogsLoaded) {
-            items(2) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+        if (recentLogs.isEmpty()) {
+            if (isRecentLogsLoaded) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.55f)
-                                    .height(14.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bookmark,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(32.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.35f)
-                                    .height(10.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                            Text(
+                                text = "No study logs yet",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                        }
-                    }
-                }
-            }
-        } else if (recentLogs.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Bookmark,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "No study logs yet",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Complete your first focus block to earn XP and build streaks!",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Button(
-                            onClick = onOpenQuickFocus,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
+                            Text(
+                                text = "Complete your first focus block to earn XP and build streaks!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
-                        ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Start First Focus Session", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Button(
+                                onClick = onOpenQuickFocus,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Start First Focus Session", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
                         }
                     }
                 }

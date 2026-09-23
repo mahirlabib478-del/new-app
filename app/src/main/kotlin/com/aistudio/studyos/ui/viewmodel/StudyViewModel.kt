@@ -608,6 +608,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         _todayMinutes.value = repository.getTodayMinutesNow()
     }
 
+    fun refreshTodayStats() {
+        viewModelScope.launch {
+            refreshTodayMinutes()
+        }
+    }
+
     fun setupFocusSession(plan: StudyPlanEntity) = continueActiveSession(plan)
 
     fun finishActiveSessionEarly(): Boolean {
@@ -901,6 +907,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                 repository.recordCompletedSession(current.currentSubject, current.currentChapter, completedBlockMinutes, current.mode)
             }
             StudyTimerForegroundService.stop(StudyApplication.instance)
+            refreshTodayMinutes()
             _focusState.value = current.copy(
                 secondsRemaining = 0,
                 currentBlockIndex = nextBlockIndex,
@@ -943,6 +950,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         } else if (completedBlockMinutes > 0) {
             repository.recordCompletedSession(current.currentSubject, current.currentChapter, completedBlockMinutes, current.mode)
         }
+        refreshTodayMinutes()
 
         val nextItem = currentPlanItems.getOrNull(nextBlockIndex)
         _focusState.value = current.copy(
@@ -1116,6 +1124,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                                     )
                                 }
                             }
+                            refreshTodayMinutes()
                             val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex + 1)
                             _focusState.value = current.copy(
                                 isBreak = true,

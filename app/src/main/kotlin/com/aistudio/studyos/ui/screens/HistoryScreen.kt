@@ -50,20 +50,14 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             }
             Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(28.dp))
         }
-        if (!isAllLogsLoaded) {
-            Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                repeat(3) {
-                    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                        Box(Modifier.fillMaxWidth().height(90.dp))
-                    }
+        if (days.isEmpty()) {
+            if (isAllLogsLoaded) {
+                Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(52.dp))
+                    Spacer(Modifier.height(12.dp))
+                    Text("Your study timeline is empty", fontWeight = FontWeight.Bold)
+                    Text("Complete a study session and it will appear here grouped by day.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
                 }
-            }
-        } else if (days.isEmpty()) {
-            Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(52.dp))
-                Spacer(Modifier.height(12.dp))
-                Text("Your study timeline is empty", fontWeight = FontWeight.Bold)
-                Text("Complete a study session and it will appear here grouped by day.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
             }
         } else {
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

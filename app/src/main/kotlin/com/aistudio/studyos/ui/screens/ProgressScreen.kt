@@ -1137,53 +1137,43 @@ fun ProgressScreen(
                 }
             }
 
-        if (!isAllLogsLoaded) {
-            items(2) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth().height(68.dp))
-                }
-            }
-        } else if (displayedLogs.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+        if (displayedLogs.isEmpty()) {
+            if (isAllLogsLoaded) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                            modifier = Modifier.size(36.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "No study sessions recorded yet",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Complete a study session or focus block to start building your knowledge log.",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                modifier = Modifier.size(36.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "No study sessions recorded yet",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Complete a study session or focus block to start building your knowledge log.",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
                     }
                 }
             }
