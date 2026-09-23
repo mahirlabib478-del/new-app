@@ -10,6 +10,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Color
+import com.aistudio.studyos.ui.components.DynamicStudyWallpaper
+import com.aistudio.studyos.ui.components.WallpaperStyle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,6 +24,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
@@ -148,9 +153,37 @@ fun MainApp(
 
     val showBottomBar = currentRoute in BOTTOM_NAV_ROUTES
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
+    val isWallpaperEnabled by viewModel.isWallpaperEnabled.collectAsState()
+    val isFocusWallpaperEnabled by viewModel.isFocusWallpaperEnabled.collectAsState()
+    val wallpaperOpacity by viewModel.wallpaperOpacity.collectAsState()
+    val wallpaperStyleId by viewModel.wallpaperStyle.collectAsState()
+    val customWallpaperUri by viewModel.customWallpaperUri.collectAsState()
+    val currentTheme by viewModel.currentTheme.collectAsState()
+
+    val isFocusRoute = currentRoute == Screen.Focus.route
+    // Render wallpaper on all main screens and focus screen if enabled
+    val shouldRenderMainWallpaper = isWallpaperEnabled && (showBottomBar || (isFocusRoute && isFocusWallpaperEnabled))
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (shouldRenderMainWallpaper) {
+            val style = remember(wallpaperStyleId) {
+                WallpaperStyle.entries.find { it.id == wallpaperStyleId } ?: WallpaperStyle.CAFE_BOKEH
+            }
+            val effectiveOpacity = if (isFocusRoute) wallpaperOpacity else wallpaperOpacity * 0.70f
+            val effectiveDim = if (isFocusRoute) 0.22f else 0.08f
+            DynamicStudyWallpaper(
+                style = style,
+                themePreset = currentTheme,
+                opacity = effectiveOpacity,
+                dimOverlay = effectiveDim,
+                customUri = customWallpaperUri
+            )
+        }
+
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = if (shouldRenderMainWallpaper) Color.Transparent else MaterialTheme.colorScheme.background,
+            bottomBar = {
             AnimatedVisibility(
                 visible = showBottomBar,
                 enter = fadeIn(animationSpec = tween(140)),
@@ -329,5 +362,6 @@ fun MainApp(
                 )
             }
         }
+    }
     }
 }

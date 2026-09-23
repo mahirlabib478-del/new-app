@@ -88,6 +88,27 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val _currentTheme = MutableStateFlow(repository.getInitialTheme())
     val currentTheme: StateFlow<String> = _currentTheme.asStateFlow()
 
+    private val _isWallpaperEnabled = MutableStateFlow(repository.isWallpaperEnabled())
+    val isWallpaperEnabled: StateFlow<Boolean> = _isWallpaperEnabled.asStateFlow()
+
+    private val _isFocusWallpaperEnabled = MutableStateFlow(repository.isFocusWallpaperEnabled())
+    val isFocusWallpaperEnabled: StateFlow<Boolean> = _isFocusWallpaperEnabled.asStateFlow()
+
+    private val _wallpaperOpacity = MutableStateFlow(repository.getWallpaperOpacity())
+    val wallpaperOpacity: StateFlow<Float> = _wallpaperOpacity.asStateFlow()
+
+    private val _wallpaperStyle = MutableStateFlow(repository.getThemeWallpaperStyle(repository.getInitialTheme()))
+    val wallpaperStyle: StateFlow<String> = _wallpaperStyle.asStateFlow()
+
+    private val _customWallpaperUri = MutableStateFlow(repository.getCustomWallpaperUri())
+    val customWallpaperUri: StateFlow<String?> = _customWallpaperUri.asStateFlow()
+
+    private val _customAudioUri = MutableStateFlow(repository.getCustomAudioUri())
+    val customAudioUri: StateFlow<String?> = _customAudioUri.asStateFlow()
+
+    private val _customAudioName = MutableStateFlow(repository.getCustomAudioName())
+    val customAudioName: StateFlow<String?> = _customAudioName.asStateFlow()
+
     val activePlan: StateFlow<StudyPlanEntity?> = repository.getActivePlan()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -946,7 +967,38 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
 
         val nextItem = currentPlanItems.getOrNull(current.currentBlockIndex)
-            ?: throw IllegalStateException("Missing next study block")
+        if (nextItem == null) {
+            StudyTimerForegroundService.stop(StudyApplication.instance)
+            val planId = current.planId
+            val updatedPlan = planId?.let { repository.getPlanById(it) }
+            if (planId != null && updatedPlan != null) {
+                repository.commitFocusBlock(
+                    planId = planId,
+                    updatedPlan = updatedPlan.copy(
+                        isCompleted = true,
+                        isTimerRunning = false,
+                        endAtElapsedRealtime = 0L,
+                        endAtWallClockMillis = 0L,
+                        lastUpdated = System.currentTimeMillis()
+                    ),
+                    subject = current.currentSubject,
+                    chapter = current.currentChapter,
+                    minutesStudied = 0,
+                    mode = current.mode
+                )
+            }
+            _focusState.value = current.copy(
+                secondsRemaining = 0,
+                isRunning = false,
+                isSessionCompleted = true,
+                completedMinutes = current.completedMinutes,
+                completedBlocks = current.totalBlocks,
+                planId = null,
+                endAtElapsedRealtime = 0L,
+                endAtWallClockMillis = 0L
+            )
+            return
+        }
         val blockSec = nextItem.minutes * 60
         val planId = current.planId
         if (planId != null) {
@@ -1226,9 +1278,50 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     fun setTheme(themeKey: String) {
         _currentTheme.value = themeKey
+        _wallpaperStyle.value = repository.getThemeWallpaperStyle(themeKey)
         viewModelScope.launch {
             repository.updateTheme(themeKey)
         }
+    }
+
+    fun toggleWallpaperEnabled() {
+        val next = !_isWallpaperEnabled.value
+        _isWallpaperEnabled.value = next
+        repository.setWallpaperEnabled(next)
+    }
+
+    fun toggleFocusWallpaperEnabled() {
+        val next = !_isFocusWallpaperEnabled.value
+        _isFocusWallpaperEnabled.value = next
+        repository.setFocusWallpaperEnabled(next)
+    }
+
+    fun setWallpaperOpacity(opacity: Float) {
+        val clamped = opacity.coerceIn(0.1f, 1.0f)
+        _wallpaperOpacity.value = clamped
+        repository.setWallpaperOpacity(clamped)
+    }
+
+    fun setThemeWallpaperStyle(themeKey: String, styleId: String) {
+        repository.setThemeWallpaperStyle(themeKey, styleId)
+        if (_currentTheme.value == themeKey) {
+            _wallpaperStyle.value = styleId
+        }
+    }
+
+    fun setCustomWallpaperUri(uri: String?) {
+        _customWallpaperUri.value = uri
+        repository.setCustomWallpaperUri(uri)
+        if (uri != null) {
+            // Automatically switch style to custom
+            setThemeWallpaperStyle(_currentTheme.value, "custom")
+        }
+    }
+
+    fun setCustomAudio(uri: String?, displayName: String?) {
+        _customAudioUri.value = uri
+        _customAudioName.value = displayName
+        repository.setCustomAudio(uri, displayName)
     }
 
     fun setDailyGoal(minutes: Int) {

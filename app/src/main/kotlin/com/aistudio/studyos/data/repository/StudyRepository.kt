@@ -21,6 +21,25 @@ class StudyRepository(
 
     fun getInitialTheme(): String = themePreferences.getThemePreset()
 
+    fun isWallpaperEnabled(): Boolean = themePreferences.isWallpaperEnabled()
+    fun setWallpaperEnabled(enabled: Boolean) = themePreferences.setWallpaperEnabled(enabled)
+
+    fun isFocusWallpaperEnabled(): Boolean = themePreferences.isFocusWallpaperEnabled()
+    fun setFocusWallpaperEnabled(enabled: Boolean) = themePreferences.setFocusWallpaperEnabled(enabled)
+
+    fun getWallpaperOpacity(): Float = themePreferences.getWallpaperOpacity()
+    fun setWallpaperOpacity(opacity: Float) = themePreferences.setWallpaperOpacity(opacity)
+
+    fun getThemeWallpaperStyle(themeKey: String): String = themePreferences.getThemeWallpaperStyle(themeKey)
+    fun setThemeWallpaperStyle(themeKey: String, styleId: String) = themePreferences.setThemeWallpaperStyle(themeKey, styleId)
+
+    fun getCustomWallpaperUri(): String? = themePreferences.getCustomWallpaperUri()
+    fun setCustomWallpaperUri(uri: String?) = themePreferences.setCustomWallpaperUri(uri)
+
+    fun getCustomAudioUri(): String? = themePreferences.getCustomAudioUri()
+    fun getCustomAudioName(): String? = themePreferences.getCustomAudioName()
+    fun setCustomAudio(uri: String?, displayName: String?) = themePreferences.setCustomAudio(uri, displayName)
+
     // Study Plan
     fun getActivePlan(): Flow<StudyPlanEntity?> = database.studyPlanDao().getActivePlan()
     fun getSavedPlans(): Flow<List<StudyPlanEntity>> = database.studyPlanDao().getSavedPlans()

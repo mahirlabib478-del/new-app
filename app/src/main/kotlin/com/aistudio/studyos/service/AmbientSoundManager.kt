@@ -1,22 +1,30 @@
 package com.aistudio.studyos.service
 
+import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.media.MediaPlayer
+import android.net.Uri
+import java.io.File
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * Generates ambient audio locally; no audio assets or network are required.
- * The worker thread owns the AudioTrack so playback is not tied to Compose.
+ * Enhanced Ambient Sound & Long Audio Manager.
+ * Supports:
+ * 1. Procedural generative ambient sound presets (Rain, White Noise, Deep Focus, Forest Stream).
+ * 2. Custom local audio playback: 2-3+ hour audiobooks, long lecture recordings, study podcasts, or music
+ *    streamed efficiently without memory issues using Android's native MediaPlayer.
  */
 object AmbientSoundManager {
     enum class Preset(val label: String) {
-        WHITE_NOISE("White Noise"),
         RAIN("Gentle Rain"),
+        WHITE_NOISE("White Noise"),
         DEEP_FOCUS("Deep Focus 196Hz"),
-        FOREST_STREAM("Forest Stream")
+        FOREST_STREAM("Forest Stream"),
+        CUSTOM_AUDIO("Custom Audio File")
     }
 
     @Volatile
@@ -26,15 +34,88 @@ object AmbientSoundManager {
     @Volatile
     private var running = false
     @Volatile
-    private var currentVolume = 0.35f
+    private var currentVolume = 0.50f
     @Volatile
     private var currentPreset = Preset.RAIN
 
+    // Native MediaPlayer for long custom audio tracks (2-3 hours audiobooks / study podcasts)
+    @Volatile
+    private var mediaPlayer: MediaPlayer? = null
+    @Volatile
+    private var customAudioUri: String? = null
+    @Volatile
+    private var customAudioName: String? = null
+
     @Synchronized
-    fun play(preset: Preset = currentPreset, volume: Float = currentVolume) {
+    fun getCustomAudioName(): String? = customAudioName
+
+    @Synchronized
+    fun getCustomAudioUri(): String? = customAudioUri
+
+    @Synchronized
+    fun setCustomAudio(uri: String?, displayName: String?) {
+        customAudioUri = uri
+        customAudioName = displayName
+    }
+
+    @Synchronized
+    fun play(
+        context: Context? = null,
+        preset: Preset = currentPreset,
+        volume: Float = currentVolume,
+        uriString: String? = customAudioUri
+    ) {
         currentPreset = preset
         currentVolume = volume.coerceIn(0f, 1f)
         stop()
+
+        if (preset == Preset.CUSTOM_AUDIO) {
+            val targetUri = uriString ?: customAudioUri
+            if (targetUri != null && context != null) {
+                playCustomAudio(context, targetUri, currentVolume)
+            }
+            return
+        }
+
+        // Procedural generator for built-in ambient white-noise & rain sounds
+        playProcedural(preset, currentVolume)
+    }
+
+    private fun playCustomAudio(context: Context, uriString: String, volume: Float) {
+        var candidateMp: MediaPlayer? = null
+        try {
+            val mp = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                // Set data source from URI or file path
+                if (uriString.startsWith("content://") || uriString.startsWith("file://")) {
+                    setDataSource(context, Uri.parse(uriString))
+                } else {
+                    setDataSource(uriString)
+                }
+                isLooping = true // Loop continuous long audio / study soundtrack
+                setVolume(volume, volume)
+                prepare()
+                start()
+            }
+            candidateMp = mp
+            mediaPlayer = mp
+            running = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            runCatching {
+                candidateMp?.release()
+            }
+            // Fallback to gentle rain if custom audio fails to load
+            playProcedural(Preset.RAIN, volume)
+        }
+    }
+
+    private fun playProcedural(preset: Preset, volume: Float) {
         val sampleRate = 44_100
         val minBuffer = AudioTrack.getMinBufferSize(
             sampleRate,
@@ -78,7 +159,7 @@ object AmbientSoundManager {
             var rainState = 0.0
             while (running && track === audioTrack) {
                 for (i in samples.indices) {
-                    val value = when (currentPreset) {
+                    val value = when (preset) {
                         Preset.WHITE_NOISE -> random.nextDouble(-1.0, 1.0)
                         Preset.RAIN -> {
                             val impulse = if (random.nextFloat() < 0.018f) random.nextDouble(-1.0, 1.0) else 0.0
@@ -93,8 +174,9 @@ object AmbientSoundManager {
                             rainState = rainState * 0.985 + random.nextDouble(-0.25, 0.25)
                             (rainState * 0.65 + random.nextDouble(-0.08, 0.08)).coerceIn(-1.0, 1.0)
                         }
+                        Preset.CUSTOM_AUDIO -> 0.0
                     }
-                    samples[i] = (value * currentVolume * Short.MAX_VALUE).toInt().coerceIn(
+                    samples[i] = (value * volume * Short.MAX_VALUE).toInt().coerceIn(
                         Short.MIN_VALUE.toInt(),
                         Short.MAX_VALUE.toInt()
                     ).toShort()
@@ -109,6 +191,7 @@ object AmbientSoundManager {
     fun setVolume(volume: Float) {
         currentVolume = volume.coerceIn(0f, 1f)
         track?.setVolume(currentVolume)
+        mediaPlayer?.setVolume(currentVolume, currentVolume)
     }
 
     @Synchronized
@@ -123,7 +206,18 @@ object AmbientSoundManager {
             oldTrack?.flush()
             oldTrack?.release()
         }
+
+        val mp = mediaPlayer
+        mediaPlayer = null
+        runCatching {
+            if (mp?.isPlaying == true) {
+                mp.stop()
+            }
+            mp?.release()
+        }
     }
 
-    fun isPlaying(): Boolean = running
+    fun isPlaying(): Boolean = running || (mediaPlayer?.isPlaying == true)
+
+    fun getCurrentPreset(): Preset = currentPreset
 }

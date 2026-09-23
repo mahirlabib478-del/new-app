@@ -5,6 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +43,12 @@ import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Water
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -220,6 +228,282 @@ fun ProfileScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 🌧️ Theme Dynamic Wallpaper & Ambience Settings
+        item {
+            val isWallpaperEnabled by viewModel.isWallpaperEnabled.collectAsState()
+            val isFocusWallpaperEnabled by viewModel.isFocusWallpaperEnabled.collectAsState()
+            val wallpaperOpacity by viewModel.wallpaperOpacity.collectAsState()
+            val currentStyleId by viewModel.wallpaperStyle.collectAsState()
+            val customWallpaperUri by viewModel.customWallpaperUri.collectAsState()
+
+            // Photo picker launcher (complies with Google Play permissions policy)
+            val photoPickerLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickVisualMedia()
+            ) { uri ->
+                if (uri != null) {
+                    try {
+                        val targetFile = java.io.File(context.filesDir, "custom_study_wallpaper.jpg")
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            targetFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        val localUriString = android.net.Uri.fromFile(targetFile).toString()
+                        viewModel.setCustomWallpaperUri(localUriString)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        viewModel.setCustomWallpaperUri(uri.toString())
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("wallpaper_settings_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Header
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Study Wallpaper & Ambience",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Real rain photography & atmospheric art",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = isWallpaperEnabled,
+                            onCheckedChange = { viewModel.toggleWallpaperEnabled() },
+                            modifier = Modifier.testTag("wallpaper_master_switch")
+                        )
+                    }
+
+                    if (isWallpaperEnabled) {
+                        // Live Miniature Wallpaper Preview Box
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(125.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                        ) {
+                            val style = remember(currentStyleId) {
+                                com.aistudio.studyos.ui.components.WallpaperStyle.entries.find { it.id == currentStyleId }
+                                    ?: com.aistudio.studyos.ui.components.WallpaperStyle.CAFE_BOKEH
+                            }
+                            com.aistudio.studyos.ui.components.DynamicStudyWallpaper(
+                                style = style,
+                                themePreset = currentTheme,
+                                opacity = wallpaperOpacity,
+                                dimOverlay = 0f,
+                                customUri = customWallpaperUri
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Current: ${style.title}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        // Style selector chips with descriptions
+                        Text(
+                            text = "Rain Ambience Styles",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(
+                                items = com.aistudio.studyos.ui.components.WallpaperStyle.entries.filter { it != com.aistudio.studyos.ui.components.WallpaperStyle.CUSTOM },
+                                key = { it.id }
+                            ) { style ->
+                                val isSelected = currentStyleId == style.id
+                                Card(
+                                    modifier = Modifier
+                                        .width(130.dp)
+                                        .clickable { viewModel.setThemeWallpaperStyle(currentTheme, style.id) }
+                                        .testTag("wallpaper_style_${style.id}"),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected)
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                                    ),
+                                    border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(10.dp),
+                                        horizontalAlignment = Alignment.Start
+                                    ) {
+                                        Text(
+                                            text = style.title,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = style.description,
+                                            fontSize = 10.sp,
+                                            maxLines = 2,
+                                            lineHeight = 13.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Custom Picture from Gallery Option
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    photoPickerLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("pick_wallpaper_from_gallery_button"),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AddPhotoAlternate,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (customWallpaperUri != null) "Change Photo" else "Pick from Gallery",
+                                    fontSize = 12.sp
+                                )
+                            }
+
+                            if (customWallpaperUri != null) {
+                                OutlinedButton(
+                                    onClick = {
+                                        runCatching {
+                                            val targetFile = java.io.File(context.filesDir, "custom_study_wallpaper.jpg")
+                                            if (targetFile.exists()) targetFile.delete()
+                                        }
+                                        viewModel.setCustomWallpaperUri(null)
+                                        viewModel.setThemeWallpaperStyle(currentTheme, "cafe_bokeh")
+                                    },
+                                    modifier = Modifier.testTag("clear_custom_wallpaper_button"),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Clear custom wallpaper",
+                                        modifier = Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
+
+                        // Opacity Adjustment Slider
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Visibility & Contrast",
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${(wallpaperOpacity * 100).roundToInt()}%",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Slider(
+                                value = wallpaperOpacity,
+                                onValueChange = { viewModel.setWallpaperOpacity(it) },
+                                valueRange = 0.1f..1.0f,
+                                modifier = Modifier.testTag("wallpaper_opacity_slider")
+                            )
+                        }
+
+                        // Focus Session Wallpaper Toggle
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    text = "Show in Focus Timer",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Display rain background while studying",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = isFocusWallpaperEnabled,
+                                onCheckedChange = { viewModel.toggleFocusWallpaperEnabled() },
+                                modifier = Modifier.testTag("focus_wallpaper_switch")
+                            )
                         }
                     }
                 }

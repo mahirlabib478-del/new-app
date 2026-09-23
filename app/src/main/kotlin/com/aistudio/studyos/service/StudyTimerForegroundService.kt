@@ -32,20 +32,10 @@ class StudyTimerForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent == null) {
-            stopSelf()
-            return START_NOT_STICKY
-        }
-
-        val endAtWallClockMillis = intent.getLongExtra(EXTRA_END_AT_WALL_CLOCK, 0L)
-        val planId = intent.getLongExtra(EXTRA_PLAN_ID, 0L)
-        val isBreak = intent.getBooleanExtra(EXTRA_IS_BREAK, false)
-        val subject = intent.getStringExtra(EXTRA_SUBJECT).orEmpty().ifBlank { "Study Session" }
-
-        if (endAtWallClockMillis <= System.currentTimeMillis() || planId <= 0L) {
-            stopSelf()
-            return START_NOT_STICKY
-        }
+        val endAtWallClockMillis = intent?.getLongExtra(EXTRA_END_AT_WALL_CLOCK, 0L) ?: 0L
+        val planId = intent?.getLongExtra(EXTRA_PLAN_ID, 0L) ?: 0L
+        val isBreak = intent?.getBooleanExtra(EXTRA_IS_BREAK, false) ?: false
+        val subject = intent?.getStringExtra(EXTRA_SUBJECT).orEmpty().ifBlank { "Study Session" }
 
         val notification = buildNotification(
             endAtWallClockMillis = endAtWallClockMillis,
@@ -53,6 +43,7 @@ class StudyTimerForegroundService : Service() {
             subject = subject
         )
 
+        // Always satisfy the startForeground contract first to prevent ForegroundServiceDidNotStartInTimeException
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(
                 NOTIFICATION_ID,
@@ -61,6 +52,17 @@ class StudyTimerForegroundService : Service() {
             )
         } else {
             startForeground(NOTIFICATION_ID, notification)
+        }
+
+        if (intent == null || endAtWallClockMillis <= System.currentTimeMillis()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+            stopSelf()
+            return START_NOT_STICKY
         }
 
         scheduleExpiry(planId, endAtWallClockMillis)
@@ -72,10 +74,12 @@ class StudyTimerForegroundService : Service() {
         expiryJob = serviceScope.launch {
             val waitMillis = (endAtWallClockMillis - System.currentTimeMillis()).coerceAtLeast(0L)
             delay(waitMillis)
-            StudyApplication.instance.repository.expireRunningPlanIfNeeded(
-                planId = planId,
-                expectedEndAtWallClockMillis = endAtWallClockMillis
-            )
+            if (planId > 0L) {
+                StudyApplication.instance.repository.expireRunningPlanIfNeeded(
+                    planId = planId,
+                    expectedEndAtWallClockMillis = endAtWallClockMillis
+                )
+            }
             stopSelf()
         }
     }
