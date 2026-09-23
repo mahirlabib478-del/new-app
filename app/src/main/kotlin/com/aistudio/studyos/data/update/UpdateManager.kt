@@ -373,4 +373,18 @@ object UpdateManager {
         _downloadState.value = UpdateDownloadState.Idle
     }
 
+    /**
+     * Cleans up any cached APK files or temporary parts from previous downloads.
+     */
+    fun cleanOldUpdates(context: Context) {
+        runCatching {
+            val dir = File(context.applicationContext.cacheDir, "updates")
+            if (dir.exists() && dir.isDirectory) {
+                dir.listFiles()?.forEach { file ->
+                    file.delete()
+                }
+            }
+        }
+    }
+
 }

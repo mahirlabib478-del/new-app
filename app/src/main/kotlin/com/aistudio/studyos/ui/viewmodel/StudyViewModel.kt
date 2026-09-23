@@ -23,6 +23,7 @@ import com.aistudio.studyos.data.update.UpdateManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -181,6 +182,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     _currentTheme.value = profile.themePreset
                 }
             }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            // Clean old APK update caches and prune any orphaned audio files on startup
+            UpdateManager.cleanOldUpdates(StudyApplication.instance)
+            val activeAudioUris = repository.getCustomAudioList().map { it.uri }.toSet()
+            com.aistudio.studyos.service.AudioFileManager.pruneOrphanedAudioFiles(StudyApplication.instance, activeAudioUris)
         }
         viewModelScope.launch {
             activePlan.collect { plan ->
@@ -1407,6 +1414,21 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         _selectedAudioId.value = repository.getSelectedCustomAudioId()
         _customAudioUri.value = repository.getCustomAudioUri()
         _customAudioName.value = repository.getCustomAudioName()
+    }
+
+    fun cleanAppCache(onCleared: () -> Unit = {}) {
+        viewModelScope.launch(Dispatchers.IO) {
+            UpdateManager.cleanOldUpdates(StudyApplication.instance)
+            val activeAudioUris = repository.getCustomAudioList().map { it.uri }.toSet()
+            com.aistudio.studyos.service.AudioFileManager.pruneOrphanedAudioFiles(StudyApplication.instance, activeAudioUris)
+            runCatching {
+                StudyApplication.instance.cacheDir.deleteRecursively()
+                StudyApplication.instance.cacheDir.mkdirs()
+            }
+            withContext(Dispatchers.Main) {
+                onCleared()
+            }
+        }
     }
 
     fun selectCustomAudio(id: String) {

@@ -9,8 +9,11 @@ import java.io.File
 import java.util.UUID
 
 /**
- * Robust helper for copying user-uploaded audio files to app-internal storage.
- * This guarantees audio files remain playable across app restarts, reboots, and permission revocations.
+ * Robust helper for managing user-uploaded audio files in app-internal storage.
+ * - Prevents duplicate file copies by matching sanitized filenames.
+ * - Guarantees 100% durable, offline playback across app restarts.
+ * - Safely deletes internal audio files when removed from library.
+ * - Automatically cleans orphaned internal audio files not present in the user's library.
  */
 object AudioFileManager {
 
@@ -31,14 +34,23 @@ object AudioFileManager {
             }
         } catch (_: Exception) {}
 
-        // 2. Try copying to app internal storage for 100% durable, offline playback
+        // 2. Try saving to app internal storage for 100% durable, offline playback
         try {
             val audioDir = File(context.filesDir, "study_audios")
             if (!audioDir.exists()) {
                 audioDir.mkdirs()
             }
-            val sanitized = displayName.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-            val targetFile = File(audioDir, "${System.currentTimeMillis()}_$sanitized")
+            val sanitized = displayName.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(60)
+            val targetFile = File(audioDir, "track_$sanitized")
+
+            // Re-use existing file if already copied and valid (prevents duplicate megabytes)
+            if (targetFile.exists() && targetFile.length() > 0L) {
+                return UploadedAudio(
+                    id = UUID.randomUUID().toString(),
+                    name = displayName,
+                    uri = Uri.fromFile(targetFile).toString()
+                )
+            }
 
             contentResolver.openInputStream(sourceUri)?.use { input ->
                 targetFile.outputStream().use { output ->
@@ -79,6 +91,26 @@ object AudioFileManager {
                 val file = File(parsedPath)
                 if (file.exists() && file.absolutePath.startsWith(context.filesDir.absolutePath)) {
                     file.delete()
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    /**
+     * Cleans orphaned audio files in the internal directory that are no longer referenced
+     * in the active audio library.
+     */
+    fun pruneOrphanedAudioFiles(context: Context, activeUris: Set<String>) {
+        try {
+            val audioDir = File(context.filesDir, "study_audios")
+            if (audioDir.exists() && audioDir.isDirectory) {
+                val files = audioDir.listFiles() ?: return
+                for (file in files) {
+                    val fileUri = Uri.fromFile(file).toString()
+                    val filePathUri = "file://${file.absolutePath}"
+                    if (!activeUris.contains(fileUri) && !activeUris.contains(filePathUri)) {
+                        file.delete()
+                    }
                 }
             }
         } catch (_: Exception) {}

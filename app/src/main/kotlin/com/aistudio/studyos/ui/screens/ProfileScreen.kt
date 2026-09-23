@@ -138,6 +138,8 @@ fun ProfileScreen(
     var reminderHour by remember { mutableStateOf(StudyReminderScheduler.getHour(context)) }
     var reminderMinute by remember { mutableStateOf(StudyReminderScheduler.getMinute(context)) }
     var showReminderTimeDialog by remember { mutableStateOf(false) }
+    var isCleaningCache by remember { mutableStateOf(false) }
+    var cacheCleanedSuccess by remember { mutableStateOf(false) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
@@ -877,6 +879,74 @@ fun ProfileScreen(
                             }
                         }
                     }
+                    }
+                }
+            }
+        }
+
+        // Storage & Cache Management
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("storage_cache_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Storage & Cache Clean", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(
+                                "Removes old update APKs and temporary audio cache without affecting your study records.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            if (!isCleaningCache) {
+                                isCleaningCache = true
+                                cacheCleanedSuccess = false
+                                viewModel.cleanAppCache {
+                                    isCleaningCache = false
+                                    cacheCleanedSuccess = true
+                                }
+                            }
+                        },
+                        enabled = !isCleaningCache,
+                        modifier = Modifier.fillMaxWidth().testTag("btn_clean_cache"),
+                        shape = RoundedCornerShape(13.dp)
+                    ) {
+                        if (isCleaningCache) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Cleaning...")
+                        } else if (cacheCleanedSuccess) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Cache Cleaned Successfully!", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                        } else {
+                            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(17.dp))
+                            Spacer(Modifier.width(7.dp))
+                            Text("Clear Temporary Cache & Free Storage")
+                        }
                     }
                 }
             }
