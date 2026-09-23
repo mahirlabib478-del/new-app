@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.media.MediaPlayer
+import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
 import kotlin.math.PI
 import kotlin.math.sin
@@ -156,6 +157,8 @@ object AmbientSoundManager {
     @Volatile
     private var mediaPlayer: MediaPlayer? = null
     @Volatile
+    private var loudnessEnhancer: LoudnessEnhancer? = null
+    @Volatile
     private var customAudioUri: String? = null
     @Volatile
     private var customAudioName: String? = null
@@ -243,6 +246,26 @@ object AmbientSoundManager {
         isCustomAudioPlaying = false
     }
 
+    private fun applyCustomVolumeAndGain(mp: MediaPlayer?, enhancer: LoudnessEnhancer?, vol: Float) {
+        if (mp == null) return
+        val clampedVol = vol.coerceIn(0f, 2.0f)
+        val playerVol = clampedVol.coerceIn(0f, 1.0f)
+        runCatching { mp.setVolume(playerVol, playerVol) }
+
+        if (enhancer != null) {
+            runCatching {
+                if (clampedVol > 1.0f) {
+                    val boostGainMb = ((clampedVol - 1.0f) * 1200f).toInt()
+                    enhancer.setTargetGain(boostGainMb)
+                    enhancer.enabled = true
+                } else {
+                    enhancer.setTargetGain(0)
+                    enhancer.enabled = false
+                }
+            }
+        }
+    }
+
     @Synchronized
     fun playCustomAudio(
         context: Context,
@@ -254,7 +277,7 @@ object AmbientSoundManager {
         val uriChanged = (customAudioUri != uriString)
         customAudioUri = uriString
         if (displayName != null) customAudioName = displayName
-        customVolume = volume.coerceIn(0f, 1f)
+        customVolume = volume.coerceIn(0f, 2.0f)
 
         if (uriChanged) {
             savedAudioPositionMs = 0
@@ -262,7 +285,7 @@ object AmbientSoundManager {
 
         // If already playing the same URI, just adjust volume and return
         if (!uriChanged && mediaPlayer != null && isCustomAudioPlaying) {
-            mediaPlayer?.setVolume(customVolume, customVolume)
+            applyCustomVolumeAndGain(mediaPlayer, loudnessEnhancer, customVolume)
             return
         }
 
@@ -270,7 +293,7 @@ object AmbientSoundManager {
         val existingMp = mediaPlayer
         if (!uriChanged && existingMp != null) {
             try {
-                existingMp.setVolume(customVolume, customVolume)
+                applyCustomVolumeAndGain(existingMp, loudnessEnhancer, customVolume)
                 if (savedAudioPositionMs > 0) {
                     runCatching { existingMp.seekTo(savedAudioPositionMs) }
                 }
@@ -285,6 +308,7 @@ object AmbientSoundManager {
         stopCustomAudio(resetPosition = false)
 
         var candidateMp: MediaPlayer? = null
+        var candidateEnhancer: LoudnessEnhancer? = null
         try {
             val mp = MediaPlayer().apply {
                 setAudioAttributes(
@@ -302,9 +326,12 @@ object AmbientSoundManager {
                     setDataSource(uriString)
                 }
                 isLooping = true
-                setVolume(customVolume, customVolume)
                 setOnErrorListener { _, _, _ ->
                     isCustomAudioPlaying = false
+                    runCatching {
+                        loudnessEnhancer?.release()
+                    }
+                    loudnessEnhancer = null
                     runCatching {
                         mediaPlayer?.reset()
                         mediaPlayer?.release()
@@ -316,22 +343,37 @@ object AmbientSoundManager {
                 if (savedAudioPositionMs > 0) {
                     seekTo(savedAudioPositionMs)
                 }
-                start()
             }
+
+            val enhancer = runCatching {
+                LoudnessEnhancer(mp.audioSessionId)
+            }.getOrNull()
+
+            applyCustomVolumeAndGain(mp, enhancer, customVolume)
+            mp.start()
+
             candidateMp = mp
+            candidateEnhancer = enhancer
             mediaPlayer = mp
+            loudnessEnhancer = enhancer
             isCustomAudioPlaying = true
         } catch (e: Exception) {
             e.printStackTrace()
             isCustomAudioPlaying = false
-            runCatching {
-                candidateMp?.release()
-            }
+            runCatching { candidateEnhancer?.release() }
+            runCatching { candidateMp?.release() }
         }
     }
 
     @Synchronized
     fun stopCustomAudio(resetPosition: Boolean = true) {
+        val le = loudnessEnhancer
+        loudnessEnhancer = null
+        runCatching {
+            le?.enabled = false
+            le?.release()
+        }
+
         val mp = mediaPlayer
         if (mp != null) {
             if (!resetPosition) {
@@ -354,8 +396,8 @@ object AmbientSoundManager {
 
     @Synchronized
     fun setCustomAudioVolume(volume: Float) {
-        customVolume = volume.coerceIn(0f, 1f)
-        mediaPlayer?.setVolume(customVolume, customVolume)
+        customVolume = volume.coerceIn(0f, 2.0f)
+        applyCustomVolumeAndGain(mediaPlayer, loudnessEnhancer, customVolume)
     }
 
     @Synchronized

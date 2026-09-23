@@ -1242,9 +1242,14 @@ private fun AmbientSoundConfigDialog(
                                             modifier = Modifier.weight(1f)
                                         )
                                         Text(
-                                            text = "Vol: ${(customAudioVolume * 100).toInt()}%",
+                                            text = if (customAudioVolume > 1.0f) {
+                                                "Vol: ${(customAudioVolume * 100).toInt()}% ⚡ Boosted"
+                                            } else {
+                                                "Vol: ${(customAudioVolume * 100).toInt()}%"
+                                            },
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            fontWeight = if (customAudioVolume > 1.0f) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (customAudioVolume > 1.0f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
 
@@ -1381,7 +1386,7 @@ private fun AmbientSoundConfigDialog(
                                 Slider(
                                     value = customAudioVolume,
                                     onValueChange = onCustomAudioVolumeChange,
-                                    valueRange = 0f..1f,
+                                    valueRange = 0f..2f,
                                     modifier = Modifier
                                         .weight(1f)
                                         .testTag("custom_audio_volume_slider")
