@@ -660,12 +660,18 @@ private fun CircularTimerDisplay(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            val timerColor = if (isLight) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f)
+            }
+
             Text(
                 text = timeFormatted,
-                fontSize = 58.sp,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface,
-                letterSpacing = (-1.5).sp
+                fontSize = 54.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = timerColor,
+                letterSpacing = 0.5.sp
             )
 
             Spacer(modifier = Modifier.height(4.dp))
