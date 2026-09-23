@@ -190,12 +190,13 @@ object AmbientSoundManager {
         volume: Float = customVolume
     ) {
         if (uriString.isBlank()) return
+        val uriChanged = (customAudioUri != uriString)
         customAudioUri = uriString
         if (displayName != null) customAudioName = displayName
         customVolume = volume.coerceIn(0f, 1f)
 
-        // If already playing the same URI, just resume or adjust volume
-        if (mediaPlayer != null && isCustomAudioPlaying) {
+        // If already playing the same URI, just adjust volume and return
+        if (!uriChanged && mediaPlayer != null && isCustomAudioPlaying) {
             mediaPlayer?.setVolume(customVolume, customVolume)
             return
         }
@@ -211,13 +212,25 @@ object AmbientSoundManager {
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
-                if (uriString.startsWith("content://") || uriString.startsWith("file://")) {
+                if (uriString.startsWith("content://")) {
                     setDataSource(context, Uri.parse(uriString))
+                } else if (uriString.startsWith("file://")) {
+                    val path = Uri.parse(uriString).path ?: uriString.removePrefix("file://")
+                    setDataSource(path)
                 } else {
                     setDataSource(uriString)
                 }
                 isLooping = true
                 setVolume(customVolume, customVolume)
+                setOnErrorListener { _, _, _ ->
+                    isCustomAudioPlaying = false
+                    runCatching {
+                        mediaPlayer?.reset()
+                        mediaPlayer?.release()
+                    }
+                    mediaPlayer = null
+                    true
+                }
                 prepare()
                 start()
             }
@@ -270,15 +283,12 @@ object AmbientSoundManager {
         volume: Float = ambientVolume,
         customUri: String? = customAudioUri
     ) {
-        currentPreset = preset
         if (preset == Preset.CUSTOM_AUDIO) {
-            stopAmbient()
             val uriToUse = customUri ?: customAudioUri ?: ""
             if (uriToUse.isNotBlank()) {
-                playCustomAudio(context, uriToUse, customAudioName, volume)
+                playCustomAudio(context, uriToUse, customAudioName, customVolume)
             }
         } else {
-            stopCustomAudio()
             playAmbient(preset, volume)
         }
     }

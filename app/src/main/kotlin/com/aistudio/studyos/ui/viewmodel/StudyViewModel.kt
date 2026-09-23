@@ -1352,6 +1352,10 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     fun removeCustomAudio(id: String) {
+        val itemToRemove = _customAudioList.value.find { it.id == id }
+        if (itemToRemove != null) {
+            com.aistudio.studyos.service.AudioFileManager.deleteAudioFile(StudyApplication.instance, itemToRemove.uri)
+        }
         repository.removeCustomAudio(id)
         _customAudioList.value = repository.getCustomAudioList()
         _selectedAudioId.value = repository.getSelectedCustomAudioId()
