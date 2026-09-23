@@ -143,11 +143,13 @@ fun FocusScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    // Synchronize saved audio into AmbientSoundManager on first load
+    // Synchronize saved audio into AmbientSoundManager and sync playing states on entry
     LaunchedEffect(savedCustomAudioUri, savedCustomAudioName) {
         if (savedCustomAudioUri != null && AmbientSoundManager.getCustomAudioUri() == null) {
             AmbientSoundManager.setCustomAudio(savedCustomAudioUri, savedCustomAudioName)
         }
+        isAmbientPlaying = AmbientSoundManager.isAmbientPlaying()
+        isCustomAudioPlaying = AmbientSoundManager.isCustomAudioPlaying()
     }
 
     val audioPickerLauncher = rememberLauncherForActivityResult(
@@ -368,7 +370,7 @@ fun FocusScreen(
                     isLight = isLight,
                     onToggleWallpaper = { viewModel.toggleFocusWallpaperEnabled() },
                     onBack = {
-                        AmbientSoundManager.stop()
+                        // Allow continuous audio playback (lectures / audiobooks / ambient) in background when minimizing
                         onBack()
                     },
                     onEndSession = { showEndDialog = true }
