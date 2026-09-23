@@ -67,11 +67,129 @@ class ThemePreferences(context: Context) {
         }
     }
 
+    fun getCustomAudioList(): List<UploadedAudio> {
+        val raw = prefs.getString(KEY_CUSTOM_AUDIO_LIST, null)
+        if (raw != null) {
+            try {
+                val array = org.json.JSONArray(raw)
+                val list = mutableListOf<UploadedAudio>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    list.add(
+                        UploadedAudio(
+                            id = obj.getString("id"),
+                            name = obj.getString("name"),
+                            uri = obj.getString("uri")
+                        )
+                    )
+                }
+                return list
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        // Fallback / migrate legacy single audio if present
+        val legacyUri = prefs.getString(KEY_CUSTOM_AUDIO_URI, null)
+        if (legacyUri != null) {
+            val legacyName = prefs.getString(KEY_CUSTOM_AUDIO_NAME, "Custom Audio") ?: "Custom Audio"
+            val single = listOf(UploadedAudio("legacy_1", legacyName, legacyUri))
+            saveCustomAudioList(single)
+            setSelectedCustomAudioId("legacy_1")
+            return single
+        }
+        return emptyList()
+    }
+
+    fun saveCustomAudioList(list: List<UploadedAudio>) {
+        val array = org.json.JSONArray()
+        for (item in list) {
+            val obj = org.json.JSONObject()
+            obj.put("id", item.id)
+            obj.put("name", item.name)
+            obj.put("uri", item.uri)
+            array.put(obj)
+        }
+        prefs.edit().putString(KEY_CUSTOM_AUDIO_LIST, array.toString()).apply()
+    }
+
+    fun addCustomAudio(name: String, uri: String): UploadedAudio {
+        val current = getCustomAudioList().toMutableList()
+        val existing = current.find { it.uri == uri }
+        if (existing != null) {
+            setSelectedCustomAudioId(existing.id)
+            return existing
+        }
+        val item = UploadedAudio(
+            id = java.util.UUID.randomUUID().toString(),
+            name = name,
+            uri = uri
+        )
+        current.add(0, item)
+        saveCustomAudioList(current)
+        setSelectedCustomAudioId(item.id)
+        // Keep legacy keys updated as well
+        prefs.edit()
+            .putString(KEY_CUSTOM_AUDIO_URI, uri)
+            .putString(KEY_CUSTOM_AUDIO_NAME, name)
+            .apply()
+        return item
+    }
+
+    fun removeCustomAudio(id: String) {
+        val current = getCustomAudioList().toMutableList()
+        current.removeAll { it.id == id }
+        saveCustomAudioList(current)
+        if (getSelectedCustomAudioId() == id) {
+            val nextSelected = current.firstOrNull()
+            setSelectedCustomAudioId(nextSelected?.id)
+            if (nextSelected != null) {
+                prefs.edit()
+                    .putString(KEY_CUSTOM_AUDIO_URI, nextSelected.uri)
+                    .putString(KEY_CUSTOM_AUDIO_NAME, nextSelected.name)
+                    .apply()
+            } else {
+                prefs.edit()
+                    .remove(KEY_CUSTOM_AUDIO_URI)
+                    .remove(KEY_CUSTOM_AUDIO_NAME)
+                    .apply()
+            }
+        }
+    }
+
+    fun getSelectedCustomAudioId(): String? {
+        return prefs.getString(KEY_SELECTED_AUDIO_ID, null)
+    }
+
+    fun setSelectedCustomAudioId(id: String?) {
+        if (id == null) {
+            prefs.edit().remove(KEY_SELECTED_AUDIO_ID).apply()
+        } else {
+            prefs.edit().putString(KEY_SELECTED_AUDIO_ID, id).apply()
+            val item = getCustomAudioList().find { it.id == id }
+            if (item != null) {
+                prefs.edit()
+                    .putString(KEY_CUSTOM_AUDIO_URI, item.uri)
+                    .putString(KEY_CUSTOM_AUDIO_NAME, item.name)
+                    .apply()
+            }
+        }
+    }
+
     fun getCustomAudioUri(): String? {
+        val selectedId = getSelectedCustomAudioId()
+        if (selectedId != null) {
+            val item = getCustomAudioList().find { it.id == selectedId }
+            if (item != null) return item.uri
+        }
         return prefs.getString(KEY_CUSTOM_AUDIO_URI, null)
     }
 
     fun getCustomAudioName(): String? {
+        val selectedId = getSelectedCustomAudioId()
+        if (selectedId != null) {
+            val item = getCustomAudioList().find { it.id == selectedId }
+            if (item != null) return item.name
+        }
         return prefs.getString(KEY_CUSTOM_AUDIO_NAME, null)
     }
 
@@ -82,10 +200,7 @@ class ThemePreferences(context: Context) {
                 .remove(KEY_CUSTOM_AUDIO_NAME)
                 .apply()
         } else {
-            prefs.edit()
-                .putString(KEY_CUSTOM_AUDIO_URI, uriString)
-                .putString(KEY_CUSTOM_AUDIO_NAME, displayName ?: "Custom Audio")
-                .apply()
+            addCustomAudio(displayName ?: "Custom Audio", uriString)
         }
     }
 
@@ -98,5 +213,7 @@ class ThemePreferences(context: Context) {
         private const val KEY_CUSTOM_WALLPAPER_URI = "wallpaper_custom_user_uri"
         private const val KEY_CUSTOM_AUDIO_URI = "ambient_custom_audio_uri"
         private const val KEY_CUSTOM_AUDIO_NAME = "ambient_custom_audio_name"
+        private const val KEY_CUSTOM_AUDIO_LIST = "ambient_custom_audio_list"
+        private const val KEY_SELECTED_AUDIO_ID = "ambient_selected_audio_id"
     }
 }

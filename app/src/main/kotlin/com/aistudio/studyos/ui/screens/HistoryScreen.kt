@@ -38,6 +38,7 @@ fun buildHistoryDays(logs: List<SessionLogEntity>, locale: Locale = Locale.getDe
 @Composable
 fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
     val allLogs by viewModel.allLogs.collectAsState()
+    val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val days = buildHistoryDays(allLogs)
     val totalMinutes = allLogs.sumOf { it.durationMinutes }
     Column(Modifier.fillMaxSize()) {
@@ -45,11 +46,19 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             IconButton(onClick = onBack, modifier = Modifier.testTag("history_back")) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
             Column(Modifier.weight(1f)) {
                 Text("Study History", fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                Text(if (days.isEmpty()) "No sessions yet" else "${days.size} days • $totalMinutes min total", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text(if (!isAllLogsLoaded) "Loading history..." else if (days.isEmpty()) "No sessions yet" else "${days.size} days • $totalMinutes min total", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(28.dp))
         }
-        if (days.isEmpty()) {
+        if (!isAllLogsLoaded) {
+            Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                repeat(3) {
+                    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Box(Modifier.fillMaxWidth().height(90.dp))
+                    }
+                }
+            }
+        } else if (days.isEmpty()) {
             Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(52.dp))
                 Spacer(Modifier.height(12.dp))

@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
@@ -109,32 +110,46 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val _customAudioName = MutableStateFlow(repository.getCustomAudioName())
     val customAudioName: StateFlow<String?> = _customAudioName.asStateFlow()
 
+    private val _customAudioList = MutableStateFlow<List<com.aistudio.studyos.data.local.UploadedAudio>>(repository.getCustomAudioList())
+    val customAudioList: StateFlow<List<com.aistudio.studyos.data.local.UploadedAudio>> = _customAudioList.asStateFlow()
+
+    private val _selectedAudioId = MutableStateFlow<String?>(repository.getSelectedCustomAudioId())
+    val selectedAudioId: StateFlow<String?> = _selectedAudioId.asStateFlow()
+
+    private val _isRecentLogsLoaded = MutableStateFlow(false)
+    val isRecentLogsLoaded: StateFlow<Boolean> = _isRecentLogsLoaded.asStateFlow()
+
+    private val _isAllLogsLoaded = MutableStateFlow(false)
+    val isAllLogsLoaded: StateFlow<Boolean> = _isAllLogsLoaded.asStateFlow()
+
     val activePlan: StateFlow<StudyPlanEntity?> = repository.getActivePlan()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val latestCompletedPlan: StateFlow<StudyPlanEntity?> = repository.getLatestCompletedPlan()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val savedPlans: StateFlow<List<StudyPlanEntity>> = repository.getSavedPlans()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val exams: StateFlow<List<ExamEntity>> = repository.getAllExams()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val upcomingExams: StateFlow<List<ExamEntity>> = repository.getUpcomingExams()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val recentLogs: StateFlow<List<SessionLogEntity>> = repository.getRecentLogs(15)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .onEach { _isRecentLogsLoaded.value = true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _todayMinutes = MutableStateFlow(0)
     val todayMinutes: StateFlow<Int> = _todayMinutes.asStateFlow()
 
     val allLogs: StateFlow<List<SessionLogEntity>> = repository.getAllLogs()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .onEach { _isAllLogsLoaded.value = true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val userProfile: StateFlow<UserProfileEntity?> = repository.getUserProfile()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _focusState = MutableStateFlow(FocusTimerState())
     val focusState: StateFlow<FocusTimerState> = _focusState.asStateFlow()
@@ -1324,6 +1339,31 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         _customAudioUri.value = uri
         _customAudioName.value = displayName
         repository.setCustomAudio(uri, displayName)
+        _customAudioList.value = repository.getCustomAudioList()
+        _selectedAudioId.value = repository.getSelectedCustomAudioId()
+    }
+
+    fun addCustomAudio(name: String, uri: String) {
+        val added = repository.addCustomAudio(name, uri)
+        _customAudioList.value = repository.getCustomAudioList()
+        _selectedAudioId.value = added.id
+        _customAudioUri.value = added.uri
+        _customAudioName.value = added.name
+    }
+
+    fun removeCustomAudio(id: String) {
+        repository.removeCustomAudio(id)
+        _customAudioList.value = repository.getCustomAudioList()
+        _selectedAudioId.value = repository.getSelectedCustomAudioId()
+        _customAudioUri.value = repository.getCustomAudioUri()
+        _customAudioName.value = repository.getCustomAudioName()
+    }
+
+    fun selectCustomAudio(id: String) {
+        repository.setSelectedCustomAudioId(id)
+        _selectedAudioId.value = id
+        _customAudioUri.value = repository.getCustomAudioUri()
+        _customAudioName.value = repository.getCustomAudioName()
     }
 
     fun setDailyGoal(minutes: Int) {

@@ -183,6 +183,7 @@ fun ProgressScreen(
     val profile by viewModel.userProfile.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
     val allLogs by viewModel.allLogs.collectAsState()
+    val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val todayMinutes by viewModel.todayMinutes.collectAsState()
     val weeklyData = remember(allLogs) { calculateWeeklyActivity(allLogs) }
     val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
@@ -1136,7 +1137,19 @@ fun ProgressScreen(
                 }
             }
 
-        if (displayedLogs.isEmpty()) {
+        if (!isAllLogsLoaded) {
+            items(2) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth().height(68.dp))
+                }
+            }
+        } else if (displayedLogs.isEmpty()) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

@@ -39,6 +39,11 @@ class StudyRepository(
     fun getCustomAudioUri(): String? = themePreferences.getCustomAudioUri()
     fun getCustomAudioName(): String? = themePreferences.getCustomAudioName()
     fun setCustomAudio(uri: String?, displayName: String?) = themePreferences.setCustomAudio(uri, displayName)
+    fun getCustomAudioList(): List<com.aistudio.studyos.data.local.UploadedAudio> = themePreferences.getCustomAudioList()
+    fun addCustomAudio(name: String, uri: String): com.aistudio.studyos.data.local.UploadedAudio = themePreferences.addCustomAudio(name, uri)
+    fun removeCustomAudio(id: String) = themePreferences.removeCustomAudio(id)
+    fun getSelectedCustomAudioId(): String? = themePreferences.getSelectedCustomAudioId()
+    fun setSelectedCustomAudioId(id: String?) = themePreferences.setSelectedCustomAudioId(id)
 
     // Study Plan
     fun getActivePlan(): Flow<StudyPlanEntity?> = database.studyPlanDao().getActivePlan()

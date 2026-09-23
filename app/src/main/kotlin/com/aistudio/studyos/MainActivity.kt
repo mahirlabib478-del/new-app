@@ -163,14 +163,14 @@ fun MainApp(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (showBottomBar) {
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing)),
+                exit = fadeOut(animationSpec = tween(140, easing = FastOutSlowInEasing))
+            ) {
                 val focusState by viewModel.focusState.collectAsState()
                 Column {
-                    AnimatedVisibility(
-                        visible = focusState.planId != null,
-                        enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(200)),
-                        exit = fadeOut(animationSpec = tween(140)) + shrinkVertically(animationSpec = tween(160))
-                    ) {
+                    if (focusState.planId != null) {
                         ActiveSessionMiniBar(
                             focusState = focusState,
                             onOpenFocus = { navController.navigate(Screen.Focus.route) },
@@ -217,16 +217,16 @@ fun MainApp(
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding()),
             enterTransition = {
-                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+                fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing))
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                fadeOut(animationSpec = tween(160, easing = FastOutSlowInEasing))
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+                fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing))
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                fadeOut(animationSpec = tween(160, easing = FastOutSlowInEasing))
             }
         ) {
             composable(Screen.Home.route) {
@@ -283,25 +283,16 @@ fun MainApp(
             composable(
                 route = Screen.History.route,
                 enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(220, easing = FastOutSlowInEasing)
-                    ) + fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -(it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 }
             ) {
                 HistoryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
@@ -312,25 +303,16 @@ fun MainApp(
             composable(
                 route = Screen.Focus.route,
                 enterTransition = {
-                    slideInVertically(
-                        initialOffsetY = { (it * 0.10f).toInt() },
-                        animationSpec = tween(260, easing = FastOutSlowInEasing)
-                    ) + fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 exitTransition = {
-                    slideOutVertically(
-                        targetOffsetY = { (it * 0.10f).toInt() },
-                        animationSpec = tween(220, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 popExitTransition = {
-                    slideOutVertically(
-                        targetOffsetY = { (it * 0.10f).toInt() },
-                        animationSpec = tween(220, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 }
             ) {
                 FocusScreen(
@@ -346,25 +328,16 @@ fun MainApp(
                     navArgument("topics") { type = NavType.StringType }
                 ),
                 enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(220, easing = FastOutSlowInEasing)
-                    ) + fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -(it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 }
             ) { entry ->
                 StudyPlanBuilderScreen(
@@ -383,25 +356,16 @@ fun MainApp(
             composable(
                 route = Screen.ExamPlanner.route,
                 enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(220, easing = FastOutSlowInEasing)
-                    ) + fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -(it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 }
             ) {
                 ExamPlannerScreen(
@@ -418,25 +382,16 @@ fun MainApp(
             composable(
                 route = Screen.SavedSessions.route,
                 enterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(220, easing = FastOutSlowInEasing)
-                    ) + fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 exitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { -(it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(180))
+                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
                 },
                 popExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { (it * 0.15f).toInt() },
-                        animationSpec = tween(200, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
                 }
             ) {
                 SavedSessionsScreen(

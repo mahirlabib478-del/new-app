@@ -130,6 +130,7 @@ fun HomeScreen(
     val profile by viewModel.userProfile.collectAsState()
     val upcomingExams by viewModel.upcomingExams.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
+    val isRecentLogsLoaded by viewModel.isRecentLogsLoaded.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
 
     val streak = profile?.streakDays ?: 0
@@ -537,7 +538,49 @@ fun HomeScreen(
             }
         }
 
-        if (recentLogs.isEmpty()) {
+        if (!isRecentLogsLoaded) {
+            items(2) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                        )
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.55f)
+                                    .height(14.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.35f)
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                            )
+                        }
+                    }
+                }
+            }
+        } else if (recentLogs.isEmpty()) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
