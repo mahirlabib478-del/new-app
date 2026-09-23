@@ -216,10 +216,18 @@ fun MainApp(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding()),
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
+            enterTransition = {
+                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing))
+            }
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
