@@ -3,6 +3,8 @@ package com.aistudio.studyos.data.local
 import android.content.Context
 import android.content.SharedPreferences
 
+import com.aistudio.studyos.data.local.entity.SessionLogEntity
+
 class ThemePreferences(context: Context) {
     private val prefs: SharedPreferences =
         context.applicationContext.getSharedPreferences("study_os_theme_prefs", Context.MODE_PRIVATE)
@@ -204,7 +206,52 @@ class ThemePreferences(context: Context) {
         }
     }
 
+    fun getCachedRecentSessions(): List<SessionLogEntity> {
+        val raw = prefs.getString(KEY_CACHED_RECENT_SESSIONS, null) ?: return emptyList()
+        return try {
+            val array = org.json.JSONArray(raw)
+            val list = mutableListOf<SessionLogEntity>()
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                list.add(
+                    SessionLogEntity(
+                        id = obj.optLong("id", 0L),
+                        subject = obj.optString("subject", ""),
+                        chapter = obj.optString("chapter", ""),
+                        durationMinutes = obj.optInt("durationMinutes", 0),
+                        mode = obj.optString("mode", "pomodoro"),
+                        xpEarned = obj.optInt("xpEarned", 0),
+                        timestamp = obj.optLong("timestamp", System.currentTimeMillis())
+                    )
+                )
+            }
+            list
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun setCachedRecentSessions(logs: List<SessionLogEntity>) {
+        try {
+            val array = org.json.JSONArray()
+            for (log in logs.take(10)) {
+                val obj = org.json.JSONObject()
+                obj.put("id", log.id)
+                obj.put("subject", log.subject)
+                obj.put("chapter", log.chapter)
+                obj.put("durationMinutes", log.durationMinutes)
+                obj.put("mode", log.mode)
+                obj.put("xpEarned", log.xpEarned)
+                obj.put("timestamp", log.timestamp)
+                array.put(obj)
+            }
+            prefs.edit().putString(KEY_CACHED_RECENT_SESSIONS, array.toString()).apply()
+        } catch (_: Exception) {
+        }
+    }
+
     companion object {
+        private const val KEY_CACHED_RECENT_SESSIONS = "cached_recent_sessions_list"
         private const val KEY_THEME = "selected_theme_preset"
         private const val KEY_WALLPAPER_ENABLED = "wallpaper_master_enabled"
         private const val KEY_FOCUS_WALLPAPER_ENABLED = "wallpaper_focus_enabled"

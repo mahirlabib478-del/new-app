@@ -116,10 +116,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val _selectedAudioId = MutableStateFlow<String?>(repository.getSelectedCustomAudioId())
     val selectedAudioId: StateFlow<String?> = _selectedAudioId.asStateFlow()
 
-    private val _isRecentLogsLoaded = MutableStateFlow(false)
+    private val cachedRecentSessions = repository.getCachedRecentLogs()
+
+    private val _isRecentLogsLoaded = MutableStateFlow(cachedRecentSessions.isNotEmpty())
     val isRecentLogsLoaded: StateFlow<Boolean> = _isRecentLogsLoaded.asStateFlow()
 
-    private val _isAllLogsLoaded = MutableStateFlow(false)
+    private val _isAllLogsLoaded = MutableStateFlow(cachedRecentSessions.isNotEmpty())
     val isAllLogsLoaded: StateFlow<Boolean> = _isAllLogsLoaded.asStateFlow()
 
     val activePlan: StateFlow<StudyPlanEntity?> = repository.getActivePlan()
@@ -138,15 +140,18 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val recentLogs: StateFlow<List<SessionLogEntity>> = repository.getRecentLogs(15)
-        .onEach { _isRecentLogsLoaded.value = true }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .onEach { logs ->
+            _isRecentLogsLoaded.value = true
+            repository.cacheRecentLogs(logs)
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, cachedRecentSessions)
 
     private val _todayMinutes = MutableStateFlow(0)
     val todayMinutes: StateFlow<Int> = _todayMinutes.asStateFlow()
 
     val allLogs: StateFlow<List<SessionLogEntity>> = repository.getAllLogs()
         .onEach { _isAllLogsLoaded.value = true }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, cachedRecentSessions)
 
     val userProfile: StateFlow<UserProfileEntity?> = repository.getUserProfile()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)

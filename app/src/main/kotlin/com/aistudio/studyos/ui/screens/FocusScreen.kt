@@ -198,23 +198,39 @@ fun FocusScreen(
     }
 
     var isDismissingAfterCompletion by remember { mutableStateOf(false) }
+    var frozenCompletedMinutes by remember { mutableIntStateOf(0) }
+    var frozenCompletedBlocks by remember { mutableIntStateOf(0) }
 
-    val cachedMinutes = remember(state.completedMinutes) {
-        if (state.completedMinutes > 0) state.completedMinutes else null
-    }
-    val cachedBlocks = remember(state.completedBlocks) {
-        if (state.completedBlocks > 0) state.completedBlocks else null
+    // Lock in completion stats when the session completes so they NEVER flash to 0 upon clicking Done or during transition
+    if (state.isSessionCompleted && !isDismissingAfterCompletion) {
+        if (state.completedMinutes > 0 || frozenCompletedMinutes == 0) {
+            frozenCompletedMinutes = state.completedMinutes
+        }
+        val safeBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks.coerceAtLeast(1))
+        if (safeBlocks > 0 || frozenCompletedBlocks == 0) {
+            frozenCompletedBlocks = safeBlocks
+        }
     }
 
     if (state.isSessionCompleted || isDismissingAfterCompletion) {
+        val displayMinutes = if (frozenCompletedMinutes > 0) frozenCompletedMinutes else state.completedMinutes
+        val displayBlocks = if (frozenCompletedBlocks > 0) {
+            frozenCompletedBlocks
+        } else {
+            state.completedBlocks.coerceAtMost(state.totalBlocks.coerceAtLeast(1))
+        }
+
         StudySessionCompleteScreen(
-            completedMinutes = cachedMinutes ?: state.completedMinutes,
-            completedBlocks = (cachedBlocks ?: state.completedBlocks).coerceAtMost(state.totalBlocks.coerceAtLeast(1)),
+            completedMinutes = displayMinutes,
+            completedBlocks = displayBlocks,
             onDone = {
                 if (!isDismissingAfterCompletion) {
                     isDismissingAfterCompletion = true
-                    viewModel.dismissSessionCompletion()
+                    if (state.completedMinutes > 0) frozenCompletedMinutes = state.completedMinutes
+                    val safeBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks.coerceAtLeast(1))
+                    if (safeBlocks > 0) frozenCompletedBlocks = safeBlocks
                     onBack()
+                    viewModel.dismissSessionCompletion()
                 }
             }
         )

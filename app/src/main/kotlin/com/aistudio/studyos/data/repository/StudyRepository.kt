@@ -66,6 +66,9 @@ class StudyRepository(
     // Logs & Stats
     fun getAllLogs(): Flow<List<SessionLogEntity>> = database.sessionLogDao().getAllLogs()
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
+    fun getCachedRecentLogs(): List<SessionLogEntity> = themePreferences.getCachedRecentSessions()
+    fun cacheRecentLogs(logs: List<SessionLogEntity>) = themePreferences.setCachedRecentSessions(logs)
+
     fun getTodayMinutes(): Flow<Int> {
         val range = TodayMinutesCalculator.currentLocalDayRange()
         val startOfDayMillis = range.startMillis
@@ -78,9 +81,18 @@ class StudyRepository(
         return database.sessionLogDao().getTodayMinutesOnce(range.startMillis, range.endMillis)
     }
     fun getTotalMinutes(): Flow<Int?> = database.sessionLogDao().getTotalMinutes()
-    suspend fun logSession(log: SessionLogEntity): Long = database.sessionLogDao().insertLog(log)
+    suspend fun logSession(log: SessionLogEntity): Long {
+        val id = database.sessionLogDao().insertLog(log)
+        val currentCached = themePreferences.getCachedRecentSessions().toMutableList()
+        currentCached.add(0, log.copy(id = id))
+        themePreferences.setCachedRecentSessions(currentCached.take(10))
+        return id
+    }
     suspend fun deleteSessionLog(log: SessionLogEntity) {
         database.sessionLogDao().deleteLog(log)
+        val currentCached = themePreferences.getCachedRecentSessions().toMutableList()
+        currentCached.removeAll { it.id == log.id }
+        themePreferences.setCachedRecentSessions(currentCached)
         val profile = database.userProfileDao().getProfileSync()
         if (profile != null) {
             val updatedMinutes = (profile.totalStudyMinutes - log.durationMinutes).coerceAtLeast(0)
@@ -95,7 +107,10 @@ class StudyRepository(
             )
         }
     }
-    suspend fun clearHistory() = database.sessionLogDao().clearAll()
+    suspend fun clearHistory() {
+        database.sessionLogDao().clearAll()
+        themePreferences.setCachedRecentSessions(emptyList())
+    }
 
     // Profile & Gamification
     fun getUserProfile(): Flow<UserProfileEntity?> = database.userProfileDao().getProfile()
@@ -395,15 +410,17 @@ class StudyRepository(
         mode: String
     ) {
         val xpGained = durationMinutes * 3
-        database.sessionLogDao().insertLog(
-            SessionLogEntity(
-                subject = subject,
-                chapter = chapter,
-                durationMinutes = durationMinutes,
-                mode = mode,
-                xpEarned = xpGained
-            )
+        val log = SessionLogEntity(
+            subject = subject,
+            chapter = chapter,
+            durationMinutes = durationMinutes,
+            mode = mode,
+            xpEarned = xpGained
         )
+        val insertedId = database.sessionLogDao().insertLog(log)
+        val currentCached = themePreferences.getCachedRecentSessions().toMutableList()
+        currentCached.add(0, log.copy(id = insertedId))
+        themePreferences.setCachedRecentSessions(currentCached.take(10))
 
         val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
             id = 1,
@@ -482,6 +499,7 @@ class StudyRepository(
             database.sessionLogDao().clearAll()
             database.studyPlanDao().clearAll()
         }
+        themePreferences.setCachedRecentSessions(emptyList())
         val currentProfile = database.userProfileDao().getProfileSync()
         val currentTheme = currentProfile?.themePreset ?: "midnight"
         val currentGoal = currentProfile?.dailyGoalMinutes ?: 60
