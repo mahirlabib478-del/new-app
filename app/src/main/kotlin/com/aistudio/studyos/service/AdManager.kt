@@ -1,89 +1,78 @@
 package com.aistudio.studyos.service
 
-import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
-import com.aistudio.studyos.BuildConfig
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import androidx.browser.customtabs.CustomTabsIntent
 
 /**
- * Manages Google AdMob Interstitial Ad loading and presentation safely.
- *
- * In DEBUG builds, it uses Google's official test interstitial ad unit ID
- * to guarantee compliance with AdMob policies and prevent account penalties.
- * In RELEASE builds, it uses the production ad unit ID configured by the owner.
+ * Manages Adsterra Direct Link sponsor ads safely.
+ * Uses Chrome Custom Tabs for highest fill rate and proper browser headers.
  */
 object AdManager {
     private const val TAG = "AdManager"
 
-    // Official Google sample/test interstitial ad unit ID
-    private const val TEST_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
-    // Production interstitial ad unit ID created in AdMob console
-    private const val PROD_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-6286643676497425/2777765557"
-
-    private var interstitialAd: InterstitialAd? = null
-    private var isLoading = false
-
-    private val adUnitId: String
-        get() = if (BuildConfig.DEBUG) TEST_INTERSTITIAL_AD_UNIT_ID else PROD_INTERSTITIAL_AD_UNIT_ID
-
-    fun loadInterstitial(context: Context) {
-        if (interstitialAd != null || isLoading) return
-
-        isLoading = true
-        val adRequest = AdRequest.Builder().build()
-
-        InterstitialAd.load(
-            context.applicationContext,
-            adUnitId,
-            adRequest,
-            object : InterstitialAdLoadCallback() {
-                override fun onAdLoaded(ad: InterstitialAd) {
-                    interstitialAd = ad
-                    isLoading = false
-                    Log.d(TAG, "Interstitial ad successfully loaded")
-                }
-
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    interstitialAd = null
-                    isLoading = false
-                    Log.w(TAG, "Interstitial ad failed to load: ${loadAdError.message}")
-                }
-            }
-        )
-    }
+    // Adsterra Direct Link URL
+    const val ADSTERRA_DIRECT_LINK_URL = "https://www.profitableratecpmnetwork.com/e8vebdqa?key=daa23000512567adaa7bbb3efc276252"
 
     /**
-     * Shows the interstitial ad if loaded.
-     * Always invokes [onDismissOrUnavailable] so the UI flow and user journey
-     * are never blocked or broken, whether an ad is ready or not.
+     * Safely opens the Adsterra Direct Link using Chrome Custom Tabs or Chrome Browser.
+     * Ad networks prefer Custom Tabs over standard raw Intents because it carries full
+     * browser cookies, user agent, and JavaScript capabilities without bot-filtering.
      */
-    fun showInterstitial(activity: Activity, onDismissOrUnavailable: () -> Unit) {
-        val currentAd = interstitialAd
-        if (currentAd != null) {
-            currentAd.fullScreenContentCallback = object : FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    interstitialAd = null
-                    loadInterstitial(activity)
-                    onDismissOrUnavailable()
-                }
+    fun openDirectLink(context: Context, url: String = ADSTERRA_DIRECT_LINK_URL) {
+        val uri = Uri.parse(url)
+        
+        // 1. Try launching with Chrome Custom Tabs (Industry Best Practice)
+        try {
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setUrlBarHidingEnabled(false)
+                .build()
+            
+            // Set referrer to Google or web so Adsterra treats it as legitimate web traffic
+            customTabsIntent.intent.putExtra(
+                Intent.EXTRA_REFERRER,
+                Uri.parse("https://www.google.com")
+            )
+            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                    interstitialAd = null
-                    loadInterstitial(activity)
-                    onDismissOrUnavailable()
-                }
+            // Prefer Chrome package if available
+            customTabsIntent.intent.setPackage("com.android.chrome")
+            customTabsIntent.launchUrl(context, uri)
+            return
+        } catch (e: Exception) {
+            Log.d(TAG, "Chrome Custom Tabs with Chrome package not available: ${e.message}")
+        }
+
+        // 2. Fallback to generic Custom Tabs (any browser supporting Custom Tabs)
+        try {
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .build()
+            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            customTabsIntent.intent.putExtra(
+                Intent.EXTRA_REFERRER,
+                Uri.parse("https://www.google.com")
+            )
+            customTabsIntent.launchUrl(context, uri)
+            return
+        } catch (e: Exception) {
+            Log.d(TAG, "Generic Custom Tabs failed: ${e.message}")
+        }
+
+        // 3. Fallback to standard ACTION_VIEW Browser Intent
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra(Intent.EXTRA_REFERRER, Uri.parse("https://www.google.com"))
             }
-            currentAd.show(activity)
-        } else {
-            // No ad available at this moment; continue without interruption
-            loadInterstitial(activity)
-            onDismissOrUnavailable()
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch direct link: ${e.message}", e)
         }
     }
 }
+
+

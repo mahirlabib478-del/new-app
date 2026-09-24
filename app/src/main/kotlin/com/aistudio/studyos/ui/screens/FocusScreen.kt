@@ -234,16 +234,8 @@ fun FocusScreen(
                     if (state.completedMinutes > 0) frozenCompletedMinutes = state.completedMinutes
                     val safeBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks.coerceAtLeast(1))
                     if (safeBlocks > 0) frozenCompletedBlocks = safeBlocks
-                    val currentActivity = activity
-                    if (currentActivity != null) {
-                        com.aistudio.studyos.service.AdManager.showInterstitial(currentActivity) {
-                            onBack()
-                            viewModel.dismissSessionCompletion()
-                        }
-                    } else {
-                        onBack()
-                        viewModel.dismissSessionCompletion()
-                    }
+                    onBack()
+                    viewModel.dismissSessionCompletion()
                 }
             }
         )
@@ -1804,7 +1796,78 @@ private fun StudySessionCompleteScreen(
             }
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(18.dp))
+
+        // 🎁 Adsterra Double XP Sponsor Reward Card
+        val context = LocalContext.current
+        var bonusClaimed by remember { mutableStateOf(false) }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (bonusClaimed)
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                else
+                    Color(0xFFFEF3C7).copy(alpha = 0.9f)
+            ),
+            border = BorderStroke(
+                1.dp,
+                if (bonusClaimed) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                else Color(0xFFF59E0B).copy(alpha = 0.6f)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (bonusClaimed) "🎉 Bonus Claimed!" else "🎁 Double XP Bonus (+${earnedXP} XP)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = if (bonusClaimed) MaterialTheme.colorScheme.onSurface else Color(0xFF92400E)
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        text = if (bonusClaimed)
+                            "You doubled your earned XP for this study session!"
+                        else
+                            "Visit sponsor during your break to double XP & support Study OS!",
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        color = if (bonusClaimed) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFFB45309)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                androidx.compose.material3.Button(
+                    onClick = {
+                        if (!bonusClaimed) {
+                            bonusClaimed = true
+                            com.aistudio.studyos.service.AdManager.openDirectLink(context)
+                        }
+                    },
+                    enabled = !bonusClaimed,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF59E0B),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        if (bonusClaimed) "Done" else "Claim 2x",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
 
         androidx.compose.material3.Button(
             onClick = onDone,
