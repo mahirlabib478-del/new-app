@@ -1802,21 +1802,22 @@ private fun StudySessionCompleteScreen(
 
         Spacer(Modifier.height(18.dp))
 
-        // 🎁 Adsterra Double XP In-App Sponsor Reward Card
+        // 🎁 Adsterra Double XP Blogspot Sponsor Reward Card with Secret Code
         val context = LocalContext.current
         var bonusClaimed by remember { mutableStateOf(false) }
-        var showAdRewardDialog by remember { mutableStateOf(false) }
+        var showSecretRewardDialog by remember { mutableStateOf(false) }
 
-        if (showAdRewardDialog) {
-            com.aistudio.studyos.ui.components.InAppRewardedAdDialog(
+        if (showSecretRewardDialog) {
+            com.aistudio.studyos.ui.components.SecretCodeRewardDialog(
                 bonusXP = earnedXP,
-                onDismiss = { showAdRewardDialog = false },
+                onDismiss = { showSecretRewardDialog = false },
                 onClaimReward = {
                     bonusClaimed = true
+                    showSecretRewardDialog = false
                     onClaimBonusXP(earnedXP)
                     android.widget.Toast.makeText(
                         context,
-                        "🎉 +$earnedXP Bonus XP added to your total!",
+                        "🎉 +$earnedXP Bonus XP verified and claimed!",
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -1867,7 +1868,7 @@ private fun StudySessionCompleteScreen(
                 androidx.compose.material3.Button(
                     onClick = {
                         if (!bonusClaimed) {
-                            showAdRewardDialog = true
+                            showSecretRewardDialog = true
                         }
                     },
                     enabled = !bonusClaimed,

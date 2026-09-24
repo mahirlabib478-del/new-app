@@ -20,7 +20,52 @@ object AdManager {
     const val ADSTERRA_DIRECT_LINK_URL = "https://studyosblog.blogspot.com/2026/09/study-os-2x-xp-reward-margin-0-padding.html"
 
     /**
+     * Generates a unique 5-digit numeric session token.
+     */
+    fun generateSessionToken(): String {
+        return (10000..99999).random().toString()
+    }
+
+    /**
+     * Calculates the deterministic secret code for a given session token.
+     * Uses the exact mathematical algorithm shared with the Blogspot reward page.
+     */
+    fun calculateSecretCode(sessionToken: String): String {
+        val cleanDigits = sessionToken.filter { it.isDigit() }
+        val num = cleanDigits.toLongOrNull() ?: 54321L
+        val codeNum = ((num * 379L + 128471L) % 900000L) + 100000L
+        return "XP-$codeNum"
+    }
+
+    /**
+     * Verifies if the user-entered secret code matches the session token.
+     * Tolerant to optional 'XP-' prefix, spacing, and case.
+     */
+    fun verifySecretCode(sessionToken: String, inputCode: String): Boolean {
+        val expected = calculateSecretCode(sessionToken)
+        val cleanExpected = expected.replace("XP-", "").trim()
+        val cleanInput = inputCode.uppercase()
+            .replace("XP-", "")
+            .replace("XP", "")
+            .trim()
+        return cleanInput.isNotEmpty() && cleanInput == cleanExpected
+    }
+
+    /**
+     * Opens the Blogspot verification page in the device browser with the unique session parameter.
+     */
+    fun openBlogRewardSession(context: Context, sessionToken: String, baseUrl: String = ADSTERRA_DIRECT_LINK_URL) {
+        val urlWithSession = if (baseUrl.contains("?")) {
+            "$baseUrl&sid=$sessionToken"
+        } else {
+            "$baseUrl?sid=$sessionToken"
+        }
+        openDirectLink(context, urlWithSession)
+    }
+
+    /**
      * Generates a pristine, responsive HTML page embedding the Adsterra 300x250 iframe banner.
+     * Includes a sleek fallback creative if the ad network has a temporary fill shortage.
      */
     fun getBanner300x250Html(
         key: String = ADSTERRA_BANNER_KEY,
@@ -36,10 +81,10 @@ object AdManager {
                     * {
                         box-sizing: border-box;
                         -webkit-tap-highlight-color: transparent;
-                    }
-                    html, body {
                         margin: 0;
                         padding: 0;
+                    }
+                    html, body {
                         width: 100%;
                         height: 100%;
                         background-color: transparent;
@@ -49,18 +94,89 @@ object AdManager {
                         overflow: hidden;
                     }
                     .ad-frame-wrapper {
+                        position: relative;
                         width: 300px;
                         height: 250px;
+                        border-radius: 12px;
+                        overflow: hidden;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         margin: 0 auto;
-                        overflow: hidden;
+                        background: #0f172a;
+                    }
+                    .ad-frame-wrapper iframe {
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 300px !important;
+                        height: 250px !important;
+                        z-index: 10 !important;
+                        border: none !important;
+                    }
+                    .fallback-sponsor {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        text-align: center;
+                        padding: 20px;
+                        background: linear-gradient(145deg, #1e293b, #0f172a);
+                        color: #ffffff;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        cursor: pointer;
+                        z-index: 1;
+                    }
+                    .fallback-icon {
+                        width: 48px;
+                        height: 48px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, #f59e0b, #d97706);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 24px;
+                        margin-bottom: 12px;
+                        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+                    }
+                    .fallback-title {
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #ffffff;
+                        margin-bottom: 4px;
+                    }
+                    .fallback-desc {
+                        font-size: 12px;
+                        color: #94a3b8;
+                        margin-bottom: 16px;
+                        max-width: 220px;
+                        line-height: 1.4;
+                    }
+                    .fallback-btn {
+                        background: #f59e0b;
+                        color: #ffffff;
+                        padding: 8px 18px;
+                        border-radius: 10px;
+                        font-size: 12px;
+                        font-weight: 700;
+                        letter-spacing: 0.5px;
+                        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
                     }
                 </style>
             </head>
             <body>
                 <div class="ad-frame-wrapper">
+                    <div class="fallback-sponsor" onclick="window.location.href='${ADSTERRA_DIRECT_LINK_URL}'">
+                        <div class="fallback-icon">⚡</div>
+                        <div class="fallback-title">Study OS Sponsor</div>
+                        <div class="fallback-desc">Support Study OS and double your XP bonus for this session!</div>
+                        <div class="fallback-btn">Visit Sponsor ↗</div>
+                    </div>
                     <script type="text/javascript">
                         atOptions = {
                             'key' : '$key',

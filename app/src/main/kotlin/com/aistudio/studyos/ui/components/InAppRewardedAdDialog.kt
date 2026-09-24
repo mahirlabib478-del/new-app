@@ -235,14 +235,24 @@ fun InAppRewardedAdDialog(
                                     )
                                     setBackgroundColor(0) // Transparent background
 
+                                    try {
+                                        val cookieManager = android.webkit.CookieManager.getInstance()
+                                        cookieManager.setAcceptCookie(true)
+                                        cookieManager.setAcceptThirdPartyCookies(this, true)
+                                    } catch (ignored: Exception) {}
+
                                     settings.apply {
                                         javaScriptEnabled = true
                                         domStorageEnabled = true
+                                        databaseEnabled = true
+                                        javaScriptCanOpenWindowsAutomatically = true
+                                        mediaPlaybackRequiresUserGesture = false
                                         loadsImagesAutomatically = true
                                         mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                                         allowFileAccess = false
                                         loadWithOverviewMode = true
                                         useWideViewPort = true
+                                        cacheMode = WebSettings.LOAD_DEFAULT
                                         userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                                     }
 
