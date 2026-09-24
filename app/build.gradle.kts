@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
+    implementation(libs.play.services.ads)
 
     // Room local persistence
     implementation(libs.androidx.room.runtime)

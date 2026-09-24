@@ -234,8 +234,16 @@ fun FocusScreen(
                     if (state.completedMinutes > 0) frozenCompletedMinutes = state.completedMinutes
                     val safeBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks.coerceAtLeast(1))
                     if (safeBlocks > 0) frozenCompletedBlocks = safeBlocks
-                    onBack()
-                    viewModel.dismissSessionCompletion()
+                    val currentActivity = activity
+                    if (currentActivity != null) {
+                        com.aistudio.studyos.service.AdManager.showInterstitial(currentActivity) {
+                            onBack()
+                            viewModel.dismissSessionCompletion()
+                        }
+                    } else {
+                        onBack()
+                        viewModel.dismissSessionCompletion()
+                    }
                 }
             }
         )

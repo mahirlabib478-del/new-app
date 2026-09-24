@@ -4,6 +4,8 @@ import android.app.Application
 import com.aistudio.studyos.data.local.StudyDatabase
 import com.aistudio.studyos.data.local.ThemePreferences
 import com.aistudio.studyos.data.repository.StudyRepository
+import com.aistudio.studyos.service.AdManager
+import com.google.android.gms.ads.MobileAds
 
 class StudyApplication : Application() {
     companion object {
@@ -18,5 +20,10 @@ class StudyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+
+        // Initialize Google Mobile Ads SDK on a background thread
+        MobileAds.initialize(this) {
+            AdManager.loadInterstitial(this)
+        }
     }
 }
