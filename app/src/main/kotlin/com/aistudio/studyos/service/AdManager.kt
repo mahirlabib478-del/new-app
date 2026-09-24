@@ -13,8 +13,8 @@ import androidx.browser.customtabs.CustomTabsIntent
 object AdManager {
     private const val TAG = "AdManager"
 
-    // Adsterra Direct Link URL
-    const val ADSTERRA_DIRECT_LINK_URL = "https://www.profitableratecpmnetwork.com/e8vebdqa?key=daa23000512567adaa7bbb3efc276252"
+    // Adsterra Direct Link URL (Bridge Page on Blogspot to bypass ISP & anti-fraud filtering)
+    const val ADSTERRA_DIRECT_LINK_URL = "https://studyosblog.blogspot.com/2026/09/study-os-2x-xp-reward-margin-0-padding.html"
 
     /**
      * Safely opens the Adsterra Direct Link using Chrome Custom Tabs or Chrome Browser.

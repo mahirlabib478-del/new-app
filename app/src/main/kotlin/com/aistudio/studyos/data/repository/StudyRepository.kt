@@ -63,11 +63,27 @@ class StudyRepository(
     suspend fun updateExam(exam: ExamEntity) = database.examDao().updateExam(exam)
     suspend fun deleteExam(exam: ExamEntity) = database.examDao().deleteExam(exam)
 
+    // In-memory cache for ultra-fast instant startup without waiting for Room SQLite
+    @Volatile
+    private var inMemoryCachedLogs: List<SessionLogEntity>? = null
+
     // Logs & Stats
     fun getAllLogs(): Flow<List<SessionLogEntity>> = database.sessionLogDao().getAllLogs()
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
-    fun getCachedRecentLogs(): List<SessionLogEntity> = themePreferences.getCachedRecentSessions()
-    fun cacheRecentLogs(logs: List<SessionLogEntity>) = themePreferences.setCachedRecentSessions(logs)
+    
+    fun getCachedRecentLogs(): List<SessionLogEntity> {
+        inMemoryCachedLogs?.let { if (it.isNotEmpty()) return it }
+        val loaded = themePreferences.getCachedRecentSessions()
+        if (loaded.isNotEmpty()) {
+            inMemoryCachedLogs = loaded
+        }
+        return loaded
+    }
+    
+    fun cacheRecentLogs(logs: List<SessionLogEntity>) {
+        inMemoryCachedLogs = logs
+        themePreferences.setCachedRecentSessions(logs)
+    }
 
     fun getTodayMinutes(): Flow<Int> {
         val range = TodayMinutesCalculator.currentLocalDayRange()
@@ -83,15 +99,18 @@ class StudyRepository(
     fun getTotalMinutes(): Flow<Int?> = database.sessionLogDao().getTotalMinutes()
     suspend fun logSession(log: SessionLogEntity): Long {
         val id = database.sessionLogDao().insertLog(log)
-        val currentCached = themePreferences.getCachedRecentSessions().toMutableList()
+        val currentCached = (inMemoryCachedLogs ?: themePreferences.getCachedRecentSessions()).toMutableList()
         currentCached.add(0, log.copy(id = id))
-        themePreferences.setCachedRecentSessions(currentCached.take(10))
+        val trimmed = currentCached.take(15)
+        inMemoryCachedLogs = trimmed
+        themePreferences.setCachedRecentSessions(trimmed)
         return id
     }
     suspend fun deleteSessionLog(log: SessionLogEntity) {
         database.sessionLogDao().deleteLog(log)
-        val currentCached = themePreferences.getCachedRecentSessions().toMutableList()
+        val currentCached = (inMemoryCachedLogs ?: themePreferences.getCachedRecentSessions()).toMutableList()
         currentCached.removeAll { it.id == log.id }
+        inMemoryCachedLogs = currentCached
         themePreferences.setCachedRecentSessions(currentCached)
         val profile = database.userProfileDao().getProfileSync()
         if (profile != null) {
@@ -109,6 +128,7 @@ class StudyRepository(
     }
     suspend fun clearHistory() {
         database.sessionLogDao().clearAll()
+        inMemoryCachedLogs = emptyList()
         themePreferences.setCachedRecentSessions(emptyList())
     }
 
