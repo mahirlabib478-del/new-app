@@ -228,6 +228,9 @@ fun FocusScreen(
         StudySessionCompleteScreen(
             completedMinutes = displayMinutes,
             completedBlocks = displayBlocks,
+            onClaimBonusXP = { bonusXP ->
+                viewModel.claimBonusXP(bonusXP)
+            },
             onDone = {
                 if (!isDismissingAfterCompletion) {
                     isDismissingAfterCompletion = true
@@ -1637,6 +1640,7 @@ private fun FocusTimerControls(
 private fun StudySessionCompleteScreen(
     completedMinutes: Int,
     completedBlocks: Int,
+    onClaimBonusXP: (Int) -> Unit = {},
     onDone: () -> Unit
 ) {
     var animationTriggered by remember { mutableStateOf(false) }
@@ -1798,9 +1802,26 @@ private fun StudySessionCompleteScreen(
 
         Spacer(Modifier.height(18.dp))
 
-        // 🎁 Adsterra Double XP Sponsor Reward Card
+        // 🎁 Adsterra Double XP In-App Sponsor Reward Card
         val context = LocalContext.current
         var bonusClaimed by remember { mutableStateOf(false) }
+        var showAdRewardDialog by remember { mutableStateOf(false) }
+
+        if (showAdRewardDialog) {
+            com.aistudio.studyos.ui.components.InAppRewardedAdDialog(
+                bonusXP = earnedXP,
+                onDismiss = { showAdRewardDialog = false },
+                onClaimReward = {
+                    bonusClaimed = true
+                    onClaimBonusXP(earnedXP)
+                    android.widget.Toast.makeText(
+                        context,
+                        "🎉 +$earnedXP Bonus XP added to your total!",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -1836,7 +1857,7 @@ private fun StudySessionCompleteScreen(
                         text = if (bonusClaimed)
                             "You doubled your earned XP for this study session!"
                         else
-                            "Visit sponsor during your break to double XP & support Study OS!",
+                            "Watch sponsor ad during break to double XP & support Study OS!",
                         fontSize = 12.sp,
                         lineHeight = 16.sp,
                         color = if (bonusClaimed) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFFB45309)
@@ -1846,8 +1867,7 @@ private fun StudySessionCompleteScreen(
                 androidx.compose.material3.Button(
                     onClick = {
                         if (!bonusClaimed) {
-                            bonusClaimed = true
-                            com.aistudio.studyos.service.AdManager.openDirectLink(context)
+                            showAdRewardDialog = true
                         }
                     },
                     enabled = !bonusClaimed,

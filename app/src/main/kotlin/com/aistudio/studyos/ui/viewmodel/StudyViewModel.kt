@@ -1444,6 +1444,13 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
+    fun claimBonusXP(amount: Int) {
+        viewModelScope.launch {
+            repository.addBonusXP(amount)
+            refreshTodayStats()
+        }
+    }
+
     fun resetAllStats() {
         automaticRestoreEnabled = false
         stopTimerJob()

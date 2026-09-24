@@ -19,6 +19,7 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/study_time_growth_logo"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.StudyOS">
         <service
             android:name=".service.StudyTimerForegroundService"

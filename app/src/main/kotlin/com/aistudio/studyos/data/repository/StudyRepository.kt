@@ -514,6 +514,27 @@ class StudyRepository(
         database.userProfileDao().insertOrUpdate(currentProfile.copy(dailyGoalMinutes = minutes))
     }
 
+    suspend fun addBonusXP(amount: Int) {
+        if (amount <= 0) return
+        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
+            id = 1,
+            streakDays = 0,
+            totalStudyMinutes = 0,
+            totalXP = 0,
+            currentLevel = 1,
+            dailyGoalMinutes = 60,
+            themePreset = "midnight"
+        )
+        val newTotalXP = currentProfile.totalXP + amount
+        val newLevel = (newTotalXP / 200) + 1
+        database.userProfileDao().insertOrUpdate(
+            currentProfile.copy(
+                totalXP = newTotalXP,
+                currentLevel = newLevel
+            )
+        )
+    }
+
     suspend fun resetStats() {
         database.withTransaction {
             database.sessionLogDao().clearAll()
