@@ -15,9 +15,9 @@
         android:name=".StudyApplication"
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"
-        android:icon="@drawable/study_time_growth_logo"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/study_time_growth_logo"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.StudyOS">
         <service

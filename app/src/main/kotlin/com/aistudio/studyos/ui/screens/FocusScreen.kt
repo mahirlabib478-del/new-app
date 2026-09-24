@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Water
 import com.aistudio.studyos.ui.components.DynamicStudyWallpaper
 import com.aistudio.studyos.ui.components.WallpaperStyle
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.aistudio.studyos.adsterra.AdsterraManager
 import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -234,6 +235,7 @@ fun FocusScreen(
                     if (state.completedMinutes > 0) frozenCompletedMinutes = state.completedMinutes
                     val safeBlocks = state.completedBlocks.coerceAtMost(state.totalBlocks.coerceAtLeast(1))
                     if (safeBlocks > 0) frozenCompletedBlocks = safeBlocks
+                    AdsterraManager.onSessionDoneClicked()
                     onBack()
                     viewModel.dismissSessionCompletion()
                 }

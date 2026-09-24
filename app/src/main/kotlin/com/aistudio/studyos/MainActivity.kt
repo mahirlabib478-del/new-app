@@ -21,6 +21,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
@@ -54,6 +55,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.aistudio.studyos.adsterra.AdsterraManager
+import com.aistudio.studyos.adsterra.PostSessionAdDialog
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.service.StudyReminderScheduler
 import com.aistudio.studyos.ui.components.ActiveSessionMiniBar
@@ -443,6 +446,13 @@ fun MainApp(
                     }
                 )
             }
+        }
+
+        val isPostSessionAdVisible by AdsterraManager.isAdVisible.collectAsState()
+        if (isPostSessionAdVisible) {
+            PostSessionAdDialog(
+                onDismiss = { AdsterraManager.dismissAd() }
+            )
         }
     }
 }
