@@ -70,8 +70,9 @@ abstract class StudyDatabase : RoomDatabase() {
                     StudyDatabase::class.java,
                     "study_os_database"
                 )
+                    // Never silently destroy user data when a future migration is missing.
+                    // A missing migration must fail loudly so it can be implemented and verified.
                     .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
