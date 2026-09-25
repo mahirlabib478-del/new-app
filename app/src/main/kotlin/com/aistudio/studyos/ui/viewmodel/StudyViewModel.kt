@@ -1567,18 +1567,18 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
-    fun buyCustomWallpaperPass(hours: Int = 24, onResult: (Boolean, String) -> Unit) {
+    fun buyCustomWallpaperPass(days: Int = 1, xpCost: Int = 250, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            val (success, msg) = repository.buyCustomWallpaperPass(hours)
+            val (success, msg) = repository.buyCustomWallpaperPass(days, xpCost)
             refreshPerksState()
             refreshTodayStats()
             onResult(success, msg)
         }
     }
 
-    fun buyCustomAudioPass(hours: Int = 24, onResult: (Boolean, String) -> Unit) {
+    fun buyCustomAudioPass(days: Int = 1, xpCost: Int = 300, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            val (success, msg) = repository.buyCustomAudioPass(hours)
+            val (success, msg) = repository.buyCustomAudioPass(days, xpCost)
             refreshPerksState()
             refreshTodayStats()
             onResult(success, msg)

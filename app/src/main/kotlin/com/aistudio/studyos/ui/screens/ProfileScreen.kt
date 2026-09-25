@@ -229,7 +229,7 @@ fun ProfileScreen(
                 Button(
                     onClick = {
                         showWallpaperPassPrompt = false
-                        viewModel.buyCustomWallpaperPass(24) { success, msg ->
+                        viewModel.buyCustomWallpaperPass(days = 1, xpCost = 250) { success, msg ->
                             android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
                             if (success) {
                                 photoPickerLauncher.launch(

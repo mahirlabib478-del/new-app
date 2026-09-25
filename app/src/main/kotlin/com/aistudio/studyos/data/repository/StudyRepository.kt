@@ -544,14 +544,13 @@ class StudyRepository(
         return Pair(true, "🛡️ Streak Shield equipped! (Total: ${currentShields + 1}/2)")
     }
 
-    suspend fun buyCustomWallpaperPass(hours: Int = 24): Pair<Boolean, String> {
+    suspend fun buyCustomWallpaperPass(days: Int = 1, xpCost: Int = 250): Pair<Boolean, String> {
         val profile = database.userProfileDao().getProfileSync() ?: return Pair(false, "Profile not found")
-        val cost = 250
-        if (profile.totalXP < cost) {
-            return Pair(false, "Need ${cost - profile.totalXP} more XP to unlock the Custom Wallpaper Pass!")
+        if (profile.totalXP < xpCost) {
+            return Pair(false, "Need ${xpCost - profile.totalXP} more XP to unlock the Custom Wallpaper Pass!")
         }
 
-        val updatedXP = profile.totalXP - cost
+        val updatedXP = profile.totalXP - xpCost
         val updatedLevel = (updatedXP / 200) + 1
         database.userProfileDao().insertOrUpdate(
             profile.copy(
@@ -563,20 +562,20 @@ class StudyRepository(
         val currentExpires = themePreferences.getCustomWallpaperPassExpiresAt()
         val now = System.currentTimeMillis()
         val baseTime = if (currentExpires > now) currentExpires else now
-        val newExpires = baseTime + (hours * 3600 * 1000L)
+        val newExpires = baseTime + (days * 24L * 3600 * 1000L)
         themePreferences.setCustomWallpaperPassExpiresAt(newExpires)
 
-        return Pair(true, "🖼️ Custom Wallpaper Pass activated for 24 hours!")
+        val durationLabel = if (days == 1) "24 hours" else "$days days"
+        return Pair(true, "🖼️ Custom Wallpaper Pass activated for $durationLabel!")
     }
 
-    suspend fun buyCustomAudioPass(hours: Int = 24): Pair<Boolean, String> {
+    suspend fun buyCustomAudioPass(days: Int = 1, xpCost: Int = 300): Pair<Boolean, String> {
         val profile = database.userProfileDao().getProfileSync() ?: return Pair(false, "Profile not found")
-        val cost = 300
-        if (profile.totalXP < cost) {
-            return Pair(false, "Need ${cost - profile.totalXP} more XP to unlock the Custom Audio Pass!")
+        if (profile.totalXP < xpCost) {
+            return Pair(false, "Need ${xpCost - profile.totalXP} more XP to unlock the Custom Audio Pass!")
         }
 
-        val updatedXP = profile.totalXP - cost
+        val updatedXP = profile.totalXP - xpCost
         val updatedLevel = (updatedXP / 200) + 1
         database.userProfileDao().insertOrUpdate(
             profile.copy(
@@ -588,10 +587,11 @@ class StudyRepository(
         val currentExpires = themePreferences.getCustomAudioPassExpiresAt()
         val now = System.currentTimeMillis()
         val baseTime = if (currentExpires > now) currentExpires else now
-        val newExpires = baseTime + (hours * 3600 * 1000L)
+        val newExpires = baseTime + (days * 24L * 3600 * 1000L)
         themePreferences.setCustomAudioPassExpiresAt(newExpires)
 
-        return Pair(true, "🎵 Custom Audio Pass activated for 24 hours!")
+        val durationLabel = if (days == 1) "24 hours" else "$days days"
+        return Pair(true, "🎵 Custom Audio Pass activated for $durationLabel!")
     }
 
     fun activateDoubleXpBooster(minutes: Int = 60, multiplier: Int = 2) {

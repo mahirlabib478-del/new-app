@@ -1977,6 +1977,7 @@ private fun StudySessionCompleteScreen(
 
         // 🎁 Adsterra XP Sponsor Reward Card (70% 2X, 30% 3X; 70% direct link, 30% secret code)
         val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
         var bonusClaimed by remember { mutableStateOf(false) }
         var showSecretRewardDialog by remember { mutableStateOf(false) }
 
@@ -2048,14 +2049,17 @@ private fun StudySessionCompleteScreen(
                         if (!bonusClaimed) {
                             // 70% direct link, 30% secret code ad dialog
                             if (kotlin.random.Random.nextFloat() < 0.70f) {
-                                com.aistudio.studyos.service.AdManager.openDirectSponsorLink(context)
                                 bonusClaimed = true
-                                onClaimBonusXP(calculatedBonusXP)
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
+                                com.aistudio.studyos.service.AdManager.openDirectSponsorLink(context)
+                                coroutineScope.launch {
+                                    kotlinx.coroutines.delay(5000L)
+                                    onClaimBonusXP(calculatedBonusXP)
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             } else {
                                 showSecretRewardDialog = true
                             }
