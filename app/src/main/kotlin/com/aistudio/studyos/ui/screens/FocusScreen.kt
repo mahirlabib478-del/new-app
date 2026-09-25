@@ -1975,109 +1975,113 @@ private fun StudySessionCompleteScreen(
 
         Spacer(Modifier.height(18.dp))
 
-        // 🎁 Adsterra XP Sponsor Reward Card (70% 2X, 30% 3X; 70% direct link, 30% secret code)
+        // 🎁 Adsterra XP Sponsor Reward Card (Limited to max 3 times per hour)
         val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
+        val canShowBonus = remember { com.aistudio.studyos.service.AdManager.canShowFocusClaimBonus(context) }
         var bonusClaimed by remember { mutableStateOf(false) }
         var showSecretRewardDialog by remember { mutableStateOf(false) }
 
-        // 70% chance 2X multiplier, 30% chance 3X multiplier
-        val bonusMultiplier = remember { if (kotlin.random.Random.nextFloat() < 0.30f) 3 else 2 }
-        val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
+        if (canShowBonus) {
+            LaunchedEffect(Unit) {
+                com.aistudio.studyos.service.AdManager.recordFocusClaimAppearance(context)
+            }
 
-        if (showSecretRewardDialog) {
-            com.aistudio.studyos.ui.components.SecretCodeRewardDialog(
-                bonusXP = calculatedBonusXP,
-                multiplier = bonusMultiplier,
-                onDismiss = { showSecretRewardDialog = false },
-                onClaimReward = {
-                    bonusClaimed = true
-                    showSecretRewardDialog = false
-                    onClaimBonusXP(calculatedBonusXP)
-                    android.widget.Toast.makeText(
-                        context,
-                        "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                }
-            )
-        }
+            // 70% chance 2X multiplier, 30% chance 3X multiplier
+            val bonusMultiplier = remember { if (kotlin.random.Random.nextFloat() < 0.30f) 3 else 2 }
+            val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (bonusClaimed)
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                else
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-            ),
-            border = BorderStroke(
-                1.dp,
-                if (bonusClaimed) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            if (showSecretRewardDialog) {
+                com.aistudio.studyos.ui.components.SecretCodeRewardDialog(
+                    bonusXP = calculatedBonusXP,
+                    multiplier = bonusMultiplier,
+                    onDismiss = { showSecretRewardDialog = false },
+                    onClaimReward = {
+                        bonusClaimed = true
+                        showSecretRewardDialog = false
+                        onClaimBonusXP(calculatedBonusXP)
+                        android.widget.Toast.makeText(
+                            context,
+                            "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                )
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (bonusClaimed)
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    else
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    if (bonusClaimed) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                    else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (bonusClaimed) "🎉 Bonus Claimed!" else if (bonusMultiplier == 3) "🎁 Triple XP Bonus (+${calculatedBonusXP} XP)" else "🎁 Double XP Bonus (+${calculatedBonusXP} XP)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = if (bonusClaimed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        text = if (bonusClaimed)
-                            "You multiplied your earned XP for this study session!"
-                        else
-                            "Support Study OS sponsor to unlock ${bonusMultiplier}X XP bonus!",
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                androidx.compose.material3.Button(
-                    onClick = {
-                        if (!bonusClaimed) {
-                            // 70% direct link, 30% secret code ad dialog
-                            if (kotlin.random.Random.nextFloat() < 0.70f) {
-                                bonusClaimed = true
-                                com.aistudio.studyos.service.AdManager.openDirectSponsorLink(context)
-                                coroutineScope.launch {
-                                    kotlinx.coroutines.delay(7000L)
-                                    onClaimBonusXP(calculatedBonusXP)
-                                    com.aistudio.studyos.service.AdManager.notifyRewardAdded(
-                                        context,
-                                        calculatedBonusXP,
-                                        "${bonusMultiplier}X session reward credited! Tap to return."
-                                    )
-                                }
-                            } else {
-                                showSecretRewardDialog = true
-                            }
-                        }
-                    },
-                    enabled = !bonusClaimed,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        if (bonusClaimed) "Done" else "Claim ${bonusMultiplier}x",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (bonusClaimed) "🎉 Bonus Claimed!" else if (bonusMultiplier == 3) "🎁 Triple XP Bonus (+${calculatedBonusXP} XP)" else "🎁 Double XP Bonus (+${calculatedBonusXP} XP)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = if (bonusClaimed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.height(3.dp))
+                        Text(
+                            text = if (bonusClaimed)
+                                "You multiplied your earned XP for this study session!"
+                            else
+                                "Support Study OS sponsor to unlock ${bonusMultiplier}X XP bonus!",
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            if (!bonusClaimed) {
+                                // 70% direct link, 30% secret code ad dialog
+                                if (kotlin.random.Random.nextFloat() < 0.70f) {
+                                    bonusClaimed = true
+                                    com.aistudio.studyos.service.AdManager.launchDirectSponsorFlow(
+                                        context = context,
+                                        rewardXp = calculatedBonusXP,
+                                        rewardMessage = "${bonusMultiplier}X session reward credited! Tap to return.",
+                                        onRewardEarned = {
+                                            onClaimBonusXP(calculatedBonusXP)
+                                        }
+                                    )
+                                } else {
+                                    showSecretRewardDialog = true
+                                }
+                            }
+                        },
+                        enabled = !bonusClaimed,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            if (bonusClaimed) "Done" else "Claim ${bonusMultiplier}x",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

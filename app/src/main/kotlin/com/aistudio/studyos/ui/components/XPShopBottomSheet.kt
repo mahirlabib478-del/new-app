@@ -330,16 +330,14 @@ fun XPShopBottomSheet(
                     }
                     // 70% direct link, 30% secret code ad dialog
                     if (Random.nextFloat() < 0.70f) {
-                        AdManager.openDirectSponsorLink(context)
-                        coroutineScope.launch {
-                            delay(7000L)
-                            viewModel.claimFreeXpDrop(offerBonusXP)
-                            AdManager.notifyRewardAdded(
-                                context,
-                                offerBonusXP,
-                                "+$offerBonusXP Free Drop XP added! Tap to return."
-                            )
-                        }
+                        AdManager.launchDirectSponsorFlow(
+                            context = context,
+                            rewardXp = offerBonusXP,
+                            rewardMessage = "+$offerBonusXP Free Drop XP added! Tap to return.",
+                            onRewardEarned = {
+                                viewModel.claimFreeXpDrop(offerBonusXP)
+                            }
+                        )
                     } else {
                         showBoosterDialog = true
                     }
