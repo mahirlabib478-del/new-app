@@ -57,6 +57,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Tune
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Headphones
+import com.aistudio.studyos.ui.components.XPShopBottomSheet
 import android.provider.OpenableColumns
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -140,6 +142,13 @@ fun FocusScreen(
 
     var customVolume by remember { mutableStateOf(AmbientSoundManager.getCustomAudioVolume()) }
     var isCustomAudioPlaying by remember { mutableStateOf(AmbientSoundManager.isCustomAudioPlaying()) }
+
+    val profile by viewModel.userProfile.collectAsState()
+    val totalXP = profile?.totalXP ?: 0
+    val isAudioPassActive by viewModel.isCustomAudioPassActive.collectAsState()
+    val audioPassRemaining by viewModel.audioPassRemainingFormatted.collectAsState()
+    var showAudioPassPrompt by remember { mutableStateOf(false) }
+    var showXPShopFromFocus by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -231,6 +240,9 @@ fun FocusScreen(
             onClaimBonusXP = { bonusXP ->
                 viewModel.claimBonusXP(bonusXP)
             },
+            onActivateBooster = {
+                viewModel.activateDoubleXpBooster(60)
+            },
             onDone = {
                 if (!isDismissingAfterCompletion) {
                     isDismissingAfterCompletion = true
@@ -273,6 +285,76 @@ fun FocusScreen(
         )
     }
 
+    if (showXPShopFromFocus) {
+        XPShopBottomSheet(
+            viewModel = viewModel,
+            onDismiss = { showXPShopFromFocus = false }
+        )
+    }
+
+    if (showAudioPassPrompt) {
+        AlertDialog(
+            onDismissRequest = { showAudioPassPrompt = false },
+            icon = { Icon(Icons.Default.Headphones, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Unlock 24h Audio Pass", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Playing or uploading custom playlists, lofi beats, or lecture audiobooks requires an active 24-Hour Custom Audio Pass.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Pass Cost:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text("300 XP (24 Hours)", fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B), fontSize = 14.sp)
+                        }
+                    }
+                    Text(
+                        "Your balance: $totalXP XP",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showAudioPassPrompt = false
+                        viewModel.buyCustomAudioPass(24) { success, msg ->
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            if (success) {
+                                audioPickerLauncher.launch(arrayOf("audio/*"))
+                            }
+                        }
+                    },
+                    enabled = totalXP >= 300,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(if (totalXP >= 300) "Unlock Now (300 XP)" else "Need ${300 - totalXP} More XP")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showAudioPassPrompt = false
+                        showXPShopFromFocus = true
+                    },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Open XP Shop")
+                }
+            }
+        )
+    }
+
     if (showAmbientDialog) {
         AmbientSoundConfigDialog(
             preset = ambientPreset,
@@ -304,6 +386,9 @@ fun FocusScreen(
             selectedAudioName = savedCustomAudioName,
             customAudioVolume = customVolume,
             isCustomAudioPlaying = isCustomAudioPlaying,
+            isAudioPassActive = isAudioPassActive,
+            audioPassRemaining = audioPassRemaining,
+            onOpenAudioShop = { showXPShopFromFocus = true },
             onCustomAudioVolumeChange = {
                 customVolume = it
                 AmbientSoundManager.setCustomAudioVolume(it)
@@ -313,23 +398,35 @@ fun FocusScreen(
                     AmbientSoundManager.pauseCustomAudio()
                     isCustomAudioPlaying = false
                 } else {
-                    val uri = savedCustomAudioUri
-                    if (!uri.isNullOrBlank()) {
-                        AmbientSoundManager.playCustomAudio(context, uri, savedCustomAudioName, customVolume)
-                        isCustomAudioPlaying = true
+                    if (!isAudioPassActive) {
+                        showAudioPassPrompt = true
                     } else {
-                        audioPickerLauncher.launch(arrayOf("audio/*"))
+                        val uri = savedCustomAudioUri
+                        if (!uri.isNullOrBlank()) {
+                            AmbientSoundManager.playCustomAudio(context, uri, savedCustomAudioName, customVolume)
+                            isCustomAudioPlaying = true
+                        } else {
+                            audioPickerLauncher.launch(arrayOf("audio/*"))
+                        }
                     }
                 }
             },
             onSelectAudio = { audio ->
-                viewModel.selectCustomAudio(audio.id)
-                AmbientSoundManager.setCustomAudio(audio.uri, audio.name)
-                AmbientSoundManager.playCustomAudio(context, audio.uri, audio.name, customVolume)
-                isCustomAudioPlaying = true
+                if (!isAudioPassActive) {
+                    showAudioPassPrompt = true
+                } else {
+                    viewModel.selectCustomAudio(audio.id)
+                    AmbientSoundManager.setCustomAudio(audio.uri, audio.name)
+                    AmbientSoundManager.playCustomAudio(context, audio.uri, audio.name, customVolume)
+                    isCustomAudioPlaying = true
+                }
             },
             onPickCustomAudio = {
-                audioPickerLauncher.launch(arrayOf("audio/*"))
+                if (!isAudioPassActive) {
+                    showAudioPassPrompt = true
+                } else {
+                    audioPickerLauncher.launch(arrayOf("audio/*"))
+                }
             },
             onDeleteAudio = { audio ->
                 if (audio.uri == savedCustomAudioUri && isCustomAudioPlaying) {
@@ -916,6 +1013,9 @@ private fun AmbientSoundConfigDialog(
     selectedAudioName: String?,
     customAudioVolume: Float,
     isCustomAudioPlaying: Boolean,
+    isAudioPassActive: Boolean = false,
+    audioPassRemaining: String = "Expired",
+    onOpenAudioShop: () -> Unit = {},
     onCustomAudioVolumeChange: (Float) -> Unit,
     onToggleCustomAudio: () -> Unit,
     onSelectAudio: (UploadedAudio) -> Unit,
@@ -1128,69 +1228,102 @@ private fun AmbientSoundConfigDialog(
                             thickness = 0.8.dp
                         )
 
-                        // 📁 Upload Audio Section inside Ambient Sound tab (with properly sized button)
+                        // 📁 Upload Audio Section inside Ambient Sound tab (with 24h Audio Pass status)
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Row(
-                                    modifier = Modifier.weight(1f),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        Icons.Default.AudioFile,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(22.dp)
+                                    Text(
+                                        text = "Custom Background Audio",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold
                                     )
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFFF59E0B).copy(alpha = 0.15f),
+                                        border = BorderStroke(1.dp, if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.3f) else Color(0xFFF59E0B).copy(alpha = 0.3f))
+                                    ) {
                                         Text(
-                                            text = selectedAudioName ?: "Upload Audio / Story",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = if (selectedAudioName != null) {
-                                                if (isCustomAudioPlaying) "Playing simultaneously" else "Selected track"
-                                            } else {
-                                                "MP3, M4A, 2-3h audiobooks"
-                                            },
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = if (isAudioPassActive) "✨ Pass Active • $audioPassRemaining" else "🔒 24h Pass (300 XP)",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isAudioPassActive) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                // ✨ Properly sized Upload Audio button (height 38dp, not oversized or tiny)
-                                Button(
-                                    onClick = onPickCustomAudio,
-                                    shape = RoundedCornerShape(10.dp),
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                                    modifier = Modifier
-                                        .height(38.dp)
-                                        .testTag("btn_upload_audio_ambient_tab")
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Icon(
-                                        Icons.Default.UploadFile,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Upload Audio", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.AudioFile,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = selectedAudioName ?: "Upload Audio / Story",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = if (selectedAudioName != null) {
+                                                    if (isCustomAudioPlaying) "Playing simultaneously" else "Selected track"
+                                                } else {
+                                                    "MP3, M4A, 2-3h audiobooks"
+                                                },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Button(
+                                        onClick = onPickCustomAudio,
+                                        shape = RoundedCornerShape(10.dp),
+                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                        modifier = Modifier
+                                            .height(38.dp)
+                                            .testTag("btn_upload_audio_ambient_tab")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.UploadFile,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isAudioPassActive) "Upload Audio" else "Unlock Pass",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1202,6 +1335,38 @@ private fun AmbientSoundConfigDialog(
                 // ==========================================
                 if (selectedTabIndex == 1) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Pass banner in library
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.12f) else Color(0xFFF59E0B).copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.3f) else Color(0xFFF59E0B).copy(alpha = 0.3f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isAudioPassActive) "✨ 24h Audio Pass: $audioPassRemaining" else "🔒 24h Pass Required (300 XP)",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isAudioPassActive) Color(0xFF10B981) else Color(0xFFF59E0B)
+                                )
+                                TextButton(
+                                    onClick = onOpenAudioShop,
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        if (isAudioPassActive) "Extend" else "Get Pass",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
                         // Play/Pause, Seek controls, and Volume for uploaded audio
                         if (!selectedAudioUri.isNullOrBlank() || customAudioList.isNotEmpty()) {
                             var currentPosMs by remember { mutableIntStateOf(AmbientSoundManager.getCustomAudioCurrentPosition()) }
@@ -1641,6 +1806,7 @@ private fun StudySessionCompleteScreen(
     completedMinutes: Int,
     completedBlocks: Int,
     onClaimBonusXP: (Int) -> Unit = {},
+    onActivateBooster: () -> Unit = {},
     onDone: () -> Unit
 ) {
     var animationTriggered by remember { mutableStateOf(false) }
@@ -1815,9 +1981,10 @@ private fun StudySessionCompleteScreen(
                     bonusClaimed = true
                     showSecretRewardDialog = false
                     onClaimBonusXP(earnedXP)
+                    onActivateBooster()
                     android.widget.Toast.makeText(
                         context,
-                        "🎉 +$earnedXP Bonus XP verified and claimed!",
+                        "🎉 +$earnedXP Bonus XP & 1-Hour 2X XP Booster Activated!",
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                 }

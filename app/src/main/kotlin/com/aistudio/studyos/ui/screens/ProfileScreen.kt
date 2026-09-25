@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,16 +24,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NightsStay
@@ -40,6 +48,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Timer
@@ -47,7 +56,7 @@ import androidx.compose.material.icons.filled.Water
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.AddPhotoAlternate
+import com.aistudio.studyos.ui.components.XPShopBottomSheet
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.filled.WbSunny
@@ -140,11 +149,113 @@ fun ProfileScreen(
     var showReminderTimeDialog by remember { mutableStateOf(false) }
     var isCleaningCache by remember { mutableStateOf(false) }
     var cacheCleanedSuccess by remember { mutableStateOf(false) }
+    var showXPShop by remember { mutableStateOf(false) }
+    var showWallpaperPassPrompt by remember { mutableStateOf(false) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
     val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
+
+    val totalXP = profile?.totalXP ?: 0
+    val streakShieldCount by viewModel.streakShieldCount.collectAsState()
+    val isWallpaperPassActive by viewModel.isCustomWallpaperPassActive.collectAsState()
+    val wallpaperPassRemaining by viewModel.wallpaperPassRemainingFormatted.collectAsState()
+    val isAudioPassActive by viewModel.isCustomAudioPassActive.collectAsState()
+    val isBoosterActive by viewModel.isDoubleXpBoosterActive.collectAsState()
+
+    // Photo picker launcher (complies with Google Play permissions policy)
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val targetFile = java.io.File(context.filesDir, "custom_study_wallpaper.jpg")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    targetFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                val localUriString = android.net.Uri.fromFile(targetFile).toString()
+                viewModel.setCustomWallpaperUri(localUriString)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                viewModel.setCustomWallpaperUri(uri.toString())
+            }
+        }
+    }
+
+    if (showXPShop) {
+        XPShopBottomSheet(
+            viewModel = viewModel,
+            onDismiss = { showXPShop = false }
+        )
+    }
+
+    if (showWallpaperPassPrompt) {
+        AlertDialog(
+            onDismissRequest = { showWallpaperPassPrompt = false },
+            icon = { Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Unlock Custom Wallpaper Pass", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Setting your own aesthetic photo from your phone gallery requires a 24-Hour Custom Wallpaper Pass.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Pass Cost:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text("250 XP (24 Hours)", fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B), fontSize = 14.sp)
+                        }
+                    }
+                    Text(
+                        "Your balance: $totalXP XP",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showWallpaperPassPrompt = false
+                        viewModel.buyCustomWallpaperPass(24) { success, msg ->
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            if (success) {
+                                photoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        }
+                    },
+                    enabled = totalXP >= 250,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(if (totalXP >= 250) "Unlock Now (250 XP)" else "Need ${250 - totalXP} More XP")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showWallpaperPassPrompt = false
+                        showXPShop = true
+                    },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Open XP Shop")
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -163,6 +274,129 @@ fun ProfileScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+
+        // XP Perks & Power-ups Shop Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showXPShop = true }
+                    .testTag("profile_xp_perks_shop_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.4f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF59E0B).copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = Color(0xFFF59E0B),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "XP Perks & Power-ups Shop",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Streak shields, aesthetic passes & 2X boost",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = { showXPShop = true },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            modifier = Modifier.testTag("btn_open_shop_from_profile")
+                        ) {
+                            Text("Open Shop", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    // Inventory summary chips
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Shield,
+                                    contentDescription = null,
+                                    tint = Color(0xFF3B82F6),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Shields: $streakShieldCount/2",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Bolt,
+                                    contentDescription = null,
+                                    tint = if (isBoosterActive) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = if (isBoosterActive) "2X Active" else "2X Booster",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isBoosterActive) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Theme Palette Selector
@@ -245,27 +479,6 @@ fun ProfileScreen(
             val wallpaperOpacity by viewModel.wallpaperOpacity.collectAsState()
             val currentStyleId by viewModel.wallpaperStyle.collectAsState()
             val customWallpaperUri by viewModel.customWallpaperUri.collectAsState()
-
-            // Photo picker launcher (complies with Google Play permissions policy)
-            val photoPickerLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.PickVisualMedia()
-            ) { uri ->
-                if (uri != null) {
-                    try {
-                        val targetFile = java.io.File(context.filesDir, "custom_study_wallpaper.jpg")
-                        context.contentResolver.openInputStream(uri)?.use { input ->
-                            targetFile.outputStream().use { output ->
-                                input.copyTo(output)
-                            }
-                        }
-                        val localUriString = android.net.Uri.fromFile(targetFile).toString()
-                        viewModel.setCustomWallpaperUri(localUriString)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        viewModel.setCustomWallpaperUri(uri.toString())
-                    }
-                }
-            }
 
             val isLight = remember(currentTheme) { com.aistudio.studyos.ui.theme.isLightPreset(currentTheme) }
 
@@ -438,54 +651,91 @@ fun ProfileScreen(
                             }
                         }
 
-                        // Custom Picture from Gallery Option
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedButton(
-                                onClick = {
-                                    photoPickerLauncher.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .testTag("pick_wallpaper_from_gallery_button"),
-                                shape = RoundedCornerShape(12.dp)
+                        // Custom Picture from Gallery Option (24-Hour Pass)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.AddPhotoAlternate,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (customWallpaperUri != null) "Change Photo" else "Pick from Gallery",
-                                    fontSize = 12.sp
+                                    text = "Custom Gallery Photo",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (isWallpaperPassActive) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFFF59E0B).copy(alpha = 0.15f),
+                                    border = BorderStroke(1.dp, if (isWallpaperPassActive) Color(0xFF10B981).copy(alpha = 0.3f) else Color(0xFFF59E0B).copy(alpha = 0.3f))
+                                ) {
+                                    Text(
+                                        text = if (isWallpaperPassActive) "✨ Pass Active • $wallpaperPassRemaining" else "🔒 24h Pass (250 XP)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isWallpaperPassActive) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
                             }
 
-                            if (customWallpaperUri != null) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 OutlinedButton(
                                     onClick = {
-                                        runCatching {
-                                            val targetFile = java.io.File(context.filesDir, "custom_study_wallpaper.jpg")
-                                            if (targetFile.exists()) targetFile.delete()
+                                        if (isWallpaperPassActive) {
+                                            photoPickerLauncher.launch(
+                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                            )
+                                        } else {
+                                            showWallpaperPassPrompt = true
                                         }
-                                        viewModel.setCustomWallpaperUri(null)
-                                        viewModel.setThemeWallpaperStyle(currentTheme, "cafe_bokeh")
                                     },
-                                    modifier = Modifier.testTag("clear_custom_wallpaper_button"),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("pick_wallpaper_from_gallery_button"),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Clear custom wallpaper",
-                                        modifier = Modifier.size(18.dp),
-                                        tint = MaterialTheme.colorScheme.error
+                                        imageVector = Icons.Default.AddPhotoAlternate,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
                                     )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = when {
+                                            !isWallpaperPassActive -> "Unlock 24h Pass (250 XP)"
+                                            customWallpaperUri != null -> "Change Photo"
+                                            else -> "Pick from Gallery"
+                                        },
+                                        fontSize = 12.sp
+                                    )
+                                }
+
+                                if (customWallpaperUri != null) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            runCatching {
+                                                val targetFile = java.io.File(context.filesDir, "custom_study_wallpaper.jpg")
+                                                if (targetFile.exists()) targetFile.delete()
+                                            }
+                                            viewModel.setCustomWallpaperUri(null)
+                                            viewModel.setThemeWallpaperStyle(currentTheme, "cafe_bokeh")
+                                        },
+                                        modifier = Modifier.testTag("clear_custom_wallpaper_button"),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Clear custom wallpaper",
+                                            modifier = Modifier.size(18.dp),
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }

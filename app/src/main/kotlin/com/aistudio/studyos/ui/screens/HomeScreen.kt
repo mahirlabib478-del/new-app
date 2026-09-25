@@ -1,5 +1,6 @@
 package com.aistudio.studyos.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,10 +24,12 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -56,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.repository.TodayRecommendationCalculator
+import com.aistudio.studyos.ui.components.XPShopBottomSheet
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -147,8 +151,20 @@ fun HomeScreen(
     )
 
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showXPShop by remember { mutableStateOf(false) }
+    val streakShieldCount by viewModel.streakShieldCount.collectAsState()
+    val shieldSavedNotice by viewModel.shieldSavedNotice.collectAsState()
+    val isBoosterActive by viewModel.isDoubleXpBoosterActive.collectAsState()
+
     val focusState by viewModel.focusState.collectAsState()
     val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
+
+    if (showXPShop) {
+        XPShopBottomSheet(
+            viewModel = viewModel,
+            onDismiss = { showXPShop = false }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -193,11 +209,57 @@ fun HomeScreen(
                     }
                     Spacer(modifier = Modifier.width(6.dp))
 
+                    // XP Perks / Shop Button
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                if (isBoosterActive) Color(0xFFF59E0B).copy(alpha = 0.2f)
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                            .clickable { showXPShop = true }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .testTag("btn_open_xp_shop"),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (streakShieldCount > 0) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = "Shields",
+                                tint = Color(0xFF3B82F6),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "$streakShieldCount",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Icon(
+                            imageVector = Icons.Default.Bolt,
+                            contentDescription = "Shop",
+                            tint = if (isBoosterActive) Color(0xFFF59E0B) else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            text = if (isBoosterActive) "2X XP" else "Shop",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = if (isBoosterActive) Color(0xFFF59E0B) else MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+
                     // Streak & Level Pill
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { showXPShop = true }
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -228,6 +290,46 @@ fun HomeScreen(
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
+                    }
+                }
+            }
+
+            if (shieldSavedNotice != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("shield_saved_streak_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
+                    border = BorderStroke(1.dp, Color(0xFF60A5FA).copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text("🛡️", fontSize = 24.sp)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Streak Shield Activated!",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                "You missed studying yesterday, but your Streak Shield saved your $streak-day streak! Study today to keep it burning.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFDBEAFE),
+                                lineHeight = 16.sp
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.dismissShieldNotice() },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Color.White)
+                        }
                     }
                 }
             }

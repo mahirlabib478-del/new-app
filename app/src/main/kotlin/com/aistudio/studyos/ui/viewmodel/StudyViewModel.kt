@@ -70,6 +70,14 @@ private fun splitStudyItem(item: StudyPlanItem): List<StudyPlanItem> {
 
 private fun normalizeBreakMinutes(value: Int): Int = if (value >= 8) 10 else 5
 
+private fun formatPassDuration(expiresAt: Long): String {
+    val remainingMs = expiresAt - System.currentTimeMillis()
+    if (remainingMs <= 0) return "Expired"
+    val hours = remainingMs / (1000 * 60 * 60)
+    val minutes = (remainingMs / (1000 * 60)) % 60
+    return if (hours > 0) "${hours}h ${minutes}m left" else "${minutes}m left"
+}
+
 class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     private var timerJob: Job? = null
@@ -102,8 +110,46 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val _wallpaperStyle = MutableStateFlow(repository.getThemeWallpaperStyle(repository.getInitialTheme()))
     val wallpaperStyle: StateFlow<String> = _wallpaperStyle.asStateFlow()
 
-    private val _customWallpaperUri = MutableStateFlow(repository.getCustomWallpaperUri())
+    private val _customWallpaperUri = MutableStateFlow(
+        if (repository.isCustomWallpaperPassActive()) repository.getCustomWallpaperUri() else null
+    )
     val customWallpaperUri: StateFlow<String?> = _customWallpaperUri.asStateFlow()
+
+    // ==========================================
+    // 🛡️ Streak Shield & Temporary Passes States
+    // ==========================================
+    private val _streakShieldCount = MutableStateFlow(repository.getStreakShieldCount())
+    val streakShieldCount: StateFlow<Int> = _streakShieldCount.asStateFlow()
+
+    private val _isCustomWallpaperPassActive = MutableStateFlow(repository.isCustomWallpaperPassActive())
+    val isCustomWallpaperPassActive: StateFlow<Boolean> = _isCustomWallpaperPassActive.asStateFlow()
+
+    private val _wallpaperPassRemainingFormatted = MutableStateFlow(
+        formatPassDuration(repository.getCustomWallpaperPassExpiresAt())
+    )
+    val wallpaperPassRemainingFormatted: StateFlow<String> = _wallpaperPassRemainingFormatted.asStateFlow()
+
+    private val _isCustomAudioPassActive = MutableStateFlow(repository.isCustomAudioPassActive())
+    val isCustomAudioPassActive: StateFlow<Boolean> = _isCustomAudioPassActive.asStateFlow()
+
+    private val _audioPassRemainingFormatted = MutableStateFlow(
+        formatPassDuration(repository.getCustomAudioPassExpiresAt())
+    )
+    val audioPassRemainingFormatted: StateFlow<String> = _audioPassRemainingFormatted.asStateFlow()
+
+    private val _isDoubleXpBoosterActive = MutableStateFlow(repository.isDoubleXpBoosterActive())
+    val isDoubleXpBoosterActive: StateFlow<Boolean> = _isDoubleXpBoosterActive.asStateFlow()
+
+    private val _xpBoosterMultiplier = MutableStateFlow(repository.getXpBoosterMultiplier())
+    val xpBoosterMultiplier: StateFlow<Int> = _xpBoosterMultiplier.asStateFlow()
+
+    private val _boosterRemainingFormatted = MutableStateFlow(
+        formatPassDuration(repository.getDoubleXpBoosterExpiresAt())
+    )
+    val boosterRemainingFormatted: StateFlow<String> = _boosterRemainingFormatted.asStateFlow()
+
+    private val _shieldSavedNotice = MutableStateFlow(repository.getLastShieldSavedDate())
+    val shieldSavedNotice: StateFlow<String?> = _shieldSavedNotice.asStateFlow()
 
     private val _customAudioUri = MutableStateFlow(repository.getCustomAudioUri())
     val customAudioUri: StateFlow<String?> = _customAudioUri.asStateFlow()
@@ -206,6 +252,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     automaticRestoreEnabled = false
                     continueActiveSession(plan)
                 }
+            }
+        }
+        viewModelScope.launch {
+            while (isActive) {
+                refreshPerksState()
+                delay(30_000L)
             }
         }
     }
@@ -1480,6 +1532,64 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             }
             repository.deletePlanById(id)
         }
+    }
+
+    // ==========================================
+    // 🏪 XP Perks & Power-ups Shop Functions
+    // ==========================================
+
+    fun refreshPerksState() {
+        _streakShieldCount.value = repository.getStreakShieldCount()
+        val isWpActive = repository.isCustomWallpaperPassActive()
+        _isCustomWallpaperPassActive.value = isWpActive
+        _wallpaperPassRemainingFormatted.value = formatPassDuration(repository.getCustomWallpaperPassExpiresAt())
+        _customWallpaperUri.value = if (isWpActive) repository.getCustomWallpaperUri() else null
+
+        _isCustomAudioPassActive.value = repository.isCustomAudioPassActive()
+        _audioPassRemainingFormatted.value = formatPassDuration(repository.getCustomAudioPassExpiresAt())
+
+        _isDoubleXpBoosterActive.value = repository.isDoubleXpBoosterActive()
+        _xpBoosterMultiplier.value = repository.getXpBoosterMultiplier()
+        _boosterRemainingFormatted.value = formatPassDuration(repository.getDoubleXpBoosterExpiresAt())
+
+        _shieldSavedNotice.value = repository.getLastShieldSavedDate()
+    }
+
+    fun buyStreakShield(onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val (success, msg) = repository.buyStreakShield()
+            refreshPerksState()
+            refreshTodayStats()
+            onResult(success, msg)
+        }
+    }
+
+    fun buyCustomWallpaperPass(hours: Int = 24, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val (success, msg) = repository.buyCustomWallpaperPass(hours)
+            refreshPerksState()
+            refreshTodayStats()
+            onResult(success, msg)
+        }
+    }
+
+    fun buyCustomAudioPass(hours: Int = 24, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val (success, msg) = repository.buyCustomAudioPass(hours)
+            refreshPerksState()
+            refreshTodayStats()
+            onResult(success, msg)
+        }
+    }
+
+    fun activateDoubleXpBooster(minutes: Int = 60, multiplier: Int = 2) {
+        repository.activateDoubleXpBooster(minutes, multiplier)
+        refreshPerksState()
+    }
+
+    fun dismissShieldNotice() {
+        repository.clearLastShieldSavedDate()
+        _shieldSavedNotice.value = null
     }
 
     override fun onCleared() {

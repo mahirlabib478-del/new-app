@@ -250,6 +250,74 @@ class ThemePreferences(context: Context) {
         }
     }
 
+    // ==========================================
+    // 🛡️ Streak Shield & Temporary Passes
+    // ==========================================
+
+    fun getStreakShieldCount(): Int {
+        return prefs.getInt(KEY_STREAK_SHIELD_COUNT, 0).coerceIn(0, 2)
+    }
+
+    fun setStreakShieldCount(count: Int) {
+        prefs.edit().putInt(KEY_STREAK_SHIELD_COUNT, count.coerceIn(0, 2)).apply()
+    }
+
+    fun getLastShieldSavedDate(): String? {
+        return prefs.getString(KEY_LAST_SHIELD_SAVED_DATE, null)
+    }
+
+    fun setLastShieldSavedDate(dateStr: String?) {
+        if (dateStr == null) {
+            prefs.edit().remove(KEY_LAST_SHIELD_SAVED_DATE).apply()
+        } else {
+            prefs.edit().putString(KEY_LAST_SHIELD_SAVED_DATE, dateStr).apply()
+        }
+    }
+
+    fun getCustomWallpaperPassExpiresAt(): Long {
+        return prefs.getLong(KEY_CUSTOM_WALLPAPER_PASS_EXPIRES, 0L)
+    }
+
+    fun setCustomWallpaperPassExpiresAt(expiresAt: Long) {
+        prefs.edit().putLong(KEY_CUSTOM_WALLPAPER_PASS_EXPIRES, expiresAt).apply()
+    }
+
+    fun isCustomWallpaperPassActive(): Boolean {
+        return getCustomWallpaperPassExpiresAt() > System.currentTimeMillis()
+    }
+
+    fun getCustomAudioPassExpiresAt(): Long {
+        return prefs.getLong(KEY_CUSTOM_AUDIO_PASS_EXPIRES, 0L)
+    }
+
+    fun setCustomAudioPassExpiresAt(expiresAt: Long) {
+        prefs.edit().putLong(KEY_CUSTOM_AUDIO_PASS_EXPIRES, expiresAt).apply()
+    }
+
+    fun isCustomAudioPassActive(): Boolean {
+        return getCustomAudioPassExpiresAt() > System.currentTimeMillis()
+    }
+
+    fun getDoubleXpBoosterExpiresAt(): Long {
+        return prefs.getLong(KEY_DOUBLE_XP_BOOSTER_EXPIRES, 0L)
+    }
+
+    fun setDoubleXpBoosterExpiresAt(expiresAt: Long) {
+        prefs.edit().putLong(KEY_DOUBLE_XP_BOOSTER_EXPIRES, expiresAt).apply()
+    }
+
+    fun isDoubleXpBoosterActive(): Boolean {
+        return getDoubleXpBoosterExpiresAt() > System.currentTimeMillis()
+    }
+
+    fun getXpBoosterMultiplier(): Int {
+        return prefs.getInt(KEY_XP_BOOSTER_MULTIPLIER, 2).coerceIn(2, 3)
+    }
+
+    fun setXpBoosterMultiplier(multiplier: Int) {
+        prefs.edit().putInt(KEY_XP_BOOSTER_MULTIPLIER, multiplier.coerceIn(2, 3)).apply()
+    }
+
     companion object {
         private const val KEY_CACHED_RECENT_SESSIONS = "cached_recent_sessions_list"
         private const val KEY_THEME = "selected_theme_preset"
@@ -262,5 +330,12 @@ class ThemePreferences(context: Context) {
         private const val KEY_CUSTOM_AUDIO_NAME = "ambient_custom_audio_name"
         private const val KEY_CUSTOM_AUDIO_LIST = "ambient_custom_audio_list"
         private const val KEY_SELECTED_AUDIO_ID = "ambient_selected_audio_id"
+
+        private const val KEY_STREAK_SHIELD_COUNT = "perk_streak_shield_count"
+        private const val KEY_LAST_SHIELD_SAVED_DATE = "perk_last_shield_saved_date"
+        private const val KEY_CUSTOM_WALLPAPER_PASS_EXPIRES = "perk_custom_wallpaper_pass_expires"
+        private const val KEY_CUSTOM_AUDIO_PASS_EXPIRES = "perk_custom_audio_pass_expires"
+        private const val KEY_DOUBLE_XP_BOOSTER_EXPIRES = "perk_double_xp_booster_expires"
+        private const val KEY_XP_BOOSTER_MULTIPLIER = "perk_xp_booster_multiplier"
     }
 }

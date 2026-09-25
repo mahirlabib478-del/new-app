@@ -167,10 +167,22 @@ class StudyRepository(
                 profile.lastActiveDate != yesterdayStr &&
                 profile.streakDays > 0
             ) {
-                // Streak broken because more than 1 day missed without studying
-                database.userProfileDao().insertOrUpdate(
-                    profile.copy(streakDays = 0)
-                )
+                // Check if user has an active Streak Shield
+                val currentShields = themePreferences.getStreakShieldCount()
+                if (currentShields > 0) {
+                    // Consume 1 streak shield and protect the streak!
+                    themePreferences.setStreakShieldCount(currentShields - 1)
+                    themePreferences.setLastShieldSavedDate(todayStr)
+                    // Keep streak intact, advance lastActiveDate to yesterday so it won't break again today
+                    database.userProfileDao().insertOrUpdate(
+                        profile.copy(lastActiveDate = yesterdayStr)
+                    )
+                } else {
+                    // Streak broken because more than 1 day missed without studying and no shield
+                    database.userProfileDao().insertOrUpdate(
+                        profile.copy(streakDays = 0)
+                    )
+                }
             }
 
             if (profile.streakDays == 3 && profile.totalXP == 450 && profile.totalStudyMinutes == 150) {
@@ -429,7 +441,11 @@ class StudyRepository(
         durationMinutes: Int,
         mode: String
     ) {
-        val xpGained = durationMinutes * 3
+        val isBoosterActive = themePreferences.isDoubleXpBoosterActive()
+        val boosterMultiplier = if (isBoosterActive) themePreferences.getXpBoosterMultiplier() else 1
+        val baseXP = durationMinutes * 3
+        val xpGained = baseXP * boosterMultiplier
+
         val log = SessionLogEntity(
             subject = subject,
             chapter = chapter,
@@ -486,6 +502,108 @@ class StudyRepository(
             )
         )
     }
+
+    // ==========================================
+    // 🏪 XP Perks & Power-ups Shop Actions
+    // ==========================================
+
+    fun getStreakShieldCount(): Int = themePreferences.getStreakShieldCount()
+
+    fun isCustomWallpaperPassActive(): Boolean = themePreferences.isCustomWallpaperPassActive()
+    fun getCustomWallpaperPassExpiresAt(): Long = themePreferences.getCustomWallpaperPassExpiresAt()
+
+    fun isCustomAudioPassActive(): Boolean = themePreferences.isCustomAudioPassActive()
+    fun getCustomAudioPassExpiresAt(): Long = themePreferences.getCustomAudioPassExpiresAt()
+
+    fun isDoubleXpBoosterActive(): Boolean = themePreferences.isDoubleXpBoosterActive()
+    fun getDoubleXpBoosterExpiresAt(): Long = themePreferences.getDoubleXpBoosterExpiresAt()
+
+    fun getLastShieldSavedDate(): String? = themePreferences.getLastShieldSavedDate()
+    fun clearLastShieldSavedDate() = themePreferences.setLastShieldSavedDate(null)
+
+    suspend fun buyStreakShield(): Pair<Boolean, String> {
+        val profile = database.userProfileDao().getProfileSync() ?: return Pair(false, "Profile not found")
+        val currentShields = themePreferences.getStreakShieldCount()
+        if (currentShields >= 2) {
+            return Pair(false, "Inventory full! You already have max 2 Streak Shields equipped.")
+        }
+        val cost = 500
+        if (profile.totalXP < cost) {
+            return Pair(false, "Need ${cost - profile.totalXP} more XP to purchase a Streak Shield!")
+        }
+
+        val updatedXP = profile.totalXP - cost
+        val updatedLevel = (updatedXP / 200) + 1
+        database.userProfileDao().insertOrUpdate(
+            profile.copy(
+                totalXP = updatedXP,
+                currentLevel = updatedLevel
+            )
+        )
+        themePreferences.setStreakShieldCount(currentShields + 1)
+        return Pair(true, "🛡️ Streak Shield equipped! (Total: ${currentShields + 1}/2)")
+    }
+
+    suspend fun buyCustomWallpaperPass(hours: Int = 24): Pair<Boolean, String> {
+        val profile = database.userProfileDao().getProfileSync() ?: return Pair(false, "Profile not found")
+        val cost = 250
+        if (profile.totalXP < cost) {
+            return Pair(false, "Need ${cost - profile.totalXP} more XP to unlock the Custom Wallpaper Pass!")
+        }
+
+        val updatedXP = profile.totalXP - cost
+        val updatedLevel = (updatedXP / 200) + 1
+        database.userProfileDao().insertOrUpdate(
+            profile.copy(
+                totalXP = updatedXP,
+                currentLevel = updatedLevel
+            )
+        )
+
+        val currentExpires = themePreferences.getCustomWallpaperPassExpiresAt()
+        val now = System.currentTimeMillis()
+        val baseTime = if (currentExpires > now) currentExpires else now
+        val newExpires = baseTime + (hours * 3600 * 1000L)
+        themePreferences.setCustomWallpaperPassExpiresAt(newExpires)
+
+        return Pair(true, "🖼️ Custom Wallpaper Pass activated for 24 hours!")
+    }
+
+    suspend fun buyCustomAudioPass(hours: Int = 24): Pair<Boolean, String> {
+        val profile = database.userProfileDao().getProfileSync() ?: return Pair(false, "Profile not found")
+        val cost = 300
+        if (profile.totalXP < cost) {
+            return Pair(false, "Need ${cost - profile.totalXP} more XP to unlock the Custom Audio Pass!")
+        }
+
+        val updatedXP = profile.totalXP - cost
+        val updatedLevel = (updatedXP / 200) + 1
+        database.userProfileDao().insertOrUpdate(
+            profile.copy(
+                totalXP = updatedXP,
+                currentLevel = updatedLevel
+            )
+        )
+
+        val currentExpires = themePreferences.getCustomAudioPassExpiresAt()
+        val now = System.currentTimeMillis()
+        val baseTime = if (currentExpires > now) currentExpires else now
+        val newExpires = baseTime + (hours * 3600 * 1000L)
+        themePreferences.setCustomAudioPassExpiresAt(newExpires)
+
+        return Pair(true, "🎵 Custom Audio Pass activated for 24 hours!")
+    }
+
+    fun activateDoubleXpBooster(minutes: Int = 60, multiplier: Int = 2) {
+        val currentExpires = themePreferences.getDoubleXpBoosterExpiresAt()
+        val now = System.currentTimeMillis()
+        val baseTime = if (currentExpires > now) currentExpires else now
+        val newExpires = baseTime + (minutes * 60 * 1000L)
+        themePreferences.setDoubleXpBoosterExpiresAt(newExpires)
+        themePreferences.setXpBoosterMultiplier(multiplier)
+    }
+
+    fun getXpBoosterMultiplier(): Int = themePreferences.getXpBoosterMultiplier()
 
     suspend fun updateTheme(themeKey: String) {
         themePreferences.setThemePreset(themeKey)
