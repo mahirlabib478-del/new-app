@@ -333,7 +333,7 @@ fun XPShopBottomSheet(
                 },
                 costText = "Free",
                 isButtonEnabled = !isCooldownActive,
-                buttonLabel = if (isCooldownActive) "Wait $cooldownFormatted" else "Claim +${offerBonusXP} XP Key",
+                buttonLabel = if (isCooldownActive) "Wait $cooldownFormatted" else "Claim +${offerBonusXP} XP",
                 testTag = "btn_claim_2x_booster_key",
                 onAction = {
                     if (isCooldownActive) {
