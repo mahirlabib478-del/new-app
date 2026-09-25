@@ -20,7 +20,7 @@ object AdManager {
     const val ADSTERRA_DIRECT_LINK_URL = "https://studyosblog.blogspot.com/2026/09/study-os-2x-xp-reward-margin-0-padding.html"
 
     // High CPM Direct Link for 70% direct traffic
-    const val PROFITABLE_DIRECT_LINK_URL = "https://www.profitableratecpmnetwork.com/imicu21ne?key=1fe7e7b8c3ff936332bfed07d1052005"
+    const val PROFITABLE_DIRECT_LINK_URL = "https://www.profitableratecpmnetwork.com/jvkt09pgb?key=298992f0599b6af9f3dc8d8b5f30e40c"
 
     /**
      * Opens the high CPM direct sponsor page directly in the device browser.
