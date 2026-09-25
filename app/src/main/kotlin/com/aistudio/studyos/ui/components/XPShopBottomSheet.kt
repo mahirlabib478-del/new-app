@@ -117,6 +117,18 @@ fun XPShopBottomSheet(
     val offerBonusXP = remember { if (Random.nextFloat() < 0.30f) 250 else 150 }
 
     var showBoosterDialog by remember { mutableStateOf(false) }
+    var showDirectSponsorDialog by remember { mutableStateOf(false) }
+
+    if (showDirectSponsorDialog) {
+        DirectSponsorRewardDialog(
+            rewardXP = offerBonusXP,
+            subtitle = "Free XP Drop",
+            onDismiss = { showDirectSponsorDialog = false },
+            onRewardEarned = {
+                viewModel.claimFreeXpDrop(offerBonusXP)
+            }
+        )
+    }
 
     if (showBoosterDialog) {
         SecretCodeRewardDialog(
@@ -330,14 +342,7 @@ fun XPShopBottomSheet(
                     }
                     // 70% direct link, 30% secret code ad dialog
                     if (Random.nextFloat() < 0.70f) {
-                        AdManager.launchDirectSponsorFlow(
-                            context = context,
-                            rewardXp = offerBonusXP,
-                            rewardMessage = "+$offerBonusXP Free Drop XP added! Tap to return.",
-                            onRewardEarned = {
-                                viewModel.claimFreeXpDrop(offerBonusXP)
-                            }
-                        )
+                        showDirectSponsorDialog = true
                     } else {
                         showBoosterDialog = true
                     }

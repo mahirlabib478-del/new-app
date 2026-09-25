@@ -1,35 +1,15 @@
 package com.aistudio.studyos.service
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.util.Log
-import android.widget.Toast
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import com.aistudio.studyos.MainActivity
-import com.aistudio.studyos.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Manages Adsterra ads (300x250 In-App Rewarded Banner and Direct Links).
  */
 object AdManager {
     private const val TAG = "AdManager"
-
-    // Persistent application-level scope that is NOT cancelled when user switches to external browser
-    private val adScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     // Adsterra 300x250 Banner Unit Configuration
     const val ADSTERRA_BANNER_KEY = "b8de7d3f49db030cbee79a8f1f39dbf6"
@@ -43,31 +23,6 @@ object AdManager {
     const val PROFITABLE_DIRECT_LINK_URL = "https://www.profitableratecpmnetwork.com/jvkt09pgb?key=298992f0599b6af9f3dc8d8b5f30e40c"
 
     /**
-     * Opens the direct sponsor link in the browser, waits 7 seconds in a background scope,
-     * credits the XP reward, and alerts the user on the ad page via Heads-Up banner + vibration + toast.
-     */
-    fun launchDirectSponsorFlow(
-        context: Context,
-        rewardXp: Int,
-        rewardMessage: String,
-        onRewardEarned: () -> Unit
-    ) {
-        // 1. Open the ad page
-        openDirectSponsorLink(context)
-
-        // 2. Launch 7-second persistent timer
-        adScope.launch {
-            delay(7000L)
-            try {
-                onRewardEarned()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error executing onRewardEarned", e)
-            }
-            notifyRewardAdded(context, rewardXp, rewardMessage)
-        }
-    }
-
-    /**
      * Opens the high CPM direct sponsor page directly in the device browser.
      */
     fun openDirectSponsorLink(context: Context) {
@@ -78,89 +33,6 @@ object AdManager {
             context.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Error opening direct sponsor link", e)
-        }
-    }
-
-    /**
-     * Displays a Heads-Up high-priority notification banner at the top of the screen
-     * exactly after 7 seconds, vibrates the phone, and queues a toast.
-     */
-    fun notifyRewardAdded(context: Context, xpAmount: Int, customMessage: String? = null) {
-        val title = "🎉 +$xpAmount XP Added!"
-        val body = customMessage ?: "StudyOS: +$xpAmount XP added to your balance. Tap to return."
-
-        // 1. Trigger haptic vibration so user feels it in hand while browsing ad page
-        try {
-            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
-                vm?.defaultVibrator
-            } else {
-                @Suppress("DEPRECATION")
-                context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 180, 90, 220), -1))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(300)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error triggering vibration", e)
-        }
-
-        // 2. Heads-Up alert notification (drops down from top of screen over browser)
-        try {
-            val manager = context.getSystemService(NotificationManager::class.java)
-            val channelId = "xp_reward_channel_v3"
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    channelId,
-                    "StudyOS Rewards",
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "Instant notifications when bonus XP is credited"
-                    enableVibration(true)
-                    vibrationPattern = longArrayOf(0, 180, 90, 220)
-                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-                }
-                manager?.createNotificationChannel(channel)
-            }
-
-            val openIntent = PendingIntent.getActivity(
-                context,
-                7701,
-                Intent(context, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                },
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val notification = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.study_time_growth_logo)
-                .setContentTitle(title)
-                .setContentText(body)
-                .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setDefaults(NotificationCompat.DEFAULT_ALL)
-                .setAutoCancel(true)
-                .setContentIntent(openIntent)
-                .setFullScreenIntent(openIntent, true)
-                .build()
-
-            NotificationManagerCompat.from(context).notify(7702, notification)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error displaying reward notification", e)
-        }
-
-        // 3. Toast confirmation
-        try {
-            Toast.makeText(
-                context.applicationContext,
-                "$title $body",
-                Toast.LENGTH_LONG
-            ).show()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error showing toast", e)
         }
     }
 

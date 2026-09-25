@@ -1980,6 +1980,7 @@ private fun StudySessionCompleteScreen(
         val canShowBonus = remember { com.aistudio.studyos.service.AdManager.canShowFocusClaimBonus(context) }
         var bonusClaimed by remember { mutableStateOf(false) }
         var showSecretRewardDialog by remember { mutableStateOf(false) }
+        var showDirectSponsorDialog by remember { mutableStateOf(false) }
 
         if (canShowBonus) {
             LaunchedEffect(Unit) {
@@ -1989,6 +1990,20 @@ private fun StudySessionCompleteScreen(
             // 70% chance 2X multiplier, 30% chance 3X multiplier
             val bonusMultiplier = remember { if (kotlin.random.Random.nextFloat() < 0.30f) 3 else 2 }
             val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
+
+            if (showDirectSponsorDialog) {
+                com.aistudio.studyos.ui.components.DirectSponsorRewardDialog(
+                    rewardXP = calculatedBonusXP,
+                    subtitle = "${bonusMultiplier}X Session Bonus",
+                    onDismiss = {
+                        showDirectSponsorDialog = false
+                    },
+                    onRewardEarned = {
+                        bonusClaimed = true
+                        onClaimBonusXP(calculatedBonusXP)
+                    }
+                )
+            }
 
             if (showSecretRewardDialog) {
                 com.aistudio.studyos.ui.components.SecretCodeRewardDialog(
@@ -2054,15 +2069,7 @@ private fun StudySessionCompleteScreen(
                             if (!bonusClaimed) {
                                 // 70% direct link, 30% secret code ad dialog
                                 if (kotlin.random.Random.nextFloat() < 0.70f) {
-                                    bonusClaimed = true
-                                    com.aistudio.studyos.service.AdManager.launchDirectSponsorFlow(
-                                        context = context,
-                                        rewardXp = calculatedBonusXP,
-                                        rewardMessage = "${bonusMultiplier}X session reward credited! Tap to return.",
-                                        onRewardEarned = {
-                                            onClaimBonusXP(calculatedBonusXP)
-                                        }
-                                    )
+                                    showDirectSponsorDialog = true
                                 } else {
                                     showSecretRewardDialog = true
                                 }
