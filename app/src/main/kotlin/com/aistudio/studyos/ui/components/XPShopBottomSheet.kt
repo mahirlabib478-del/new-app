@@ -331,7 +331,7 @@ fun XPShopBottomSheet(
                 } else {
                     "Get an instant +${offerBonusXP} XP added directly to your wallet balance! Available every 30 minutes."
                 },
-                costText = "FREE (Key)",
+                costText = "Free",
                 isButtonEnabled = !isCooldownActive,
                 buttonLabel = if (isCooldownActive) "Wait $cooldownFormatted" else "Claim +${offerBonusXP} XP Key",
                 testTag = "btn_claim_2x_booster_key",
