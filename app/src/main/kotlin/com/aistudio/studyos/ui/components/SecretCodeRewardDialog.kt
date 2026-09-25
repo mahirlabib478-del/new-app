@@ -79,6 +79,32 @@ fun SecretCodeRewardDialog(
     var hasVisitedBlog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSuccess by remember { mutableStateOf(false) }
+    var showInAppSponsorViewer by remember { mutableStateOf(false) }
+
+    if (showInAppSponsorViewer) {
+        val expectedCode = AdManager.calculateSecretCode(sessionToken)
+        val url = if (AdManager.ADSTERRA_DIRECT_LINK_URL.contains("?")) {
+            "${AdManager.ADSTERRA_DIRECT_LINK_URL}&sid=$sessionToken"
+        } else {
+            "${AdManager.ADSTERRA_DIRECT_LINK_URL}?sid=$sessionToken"
+        }
+        DirectSponsorRewardDialog(
+            rewardXP = bonusXP,
+            mode = SponsorRewardMode.CLAIM_3X_SECRET_KEY,
+            url = url,
+            existingSecretCode = expectedCode,
+            onDismiss = { showInAppSponsorViewer = false },
+            onRewardEarned = { generatedCode ->
+                hasVisitedBlog = true
+                if (generatedCode != null) {
+                    enteredCode = generatedCode
+                    errorMessage = null
+                    isSuccess = true
+                    onClaimReward()
+                }
+            }
+        )
+    }
 
     Dialog(
         onDismissRequest = {
@@ -276,7 +302,7 @@ fun SecretCodeRewardDialog(
                             onClick = {
                                 hasVisitedBlog = true
                                 errorMessage = null
-                                AdManager.openBlogRewardSession(context, sessionToken)
+                                showInAppSponsorViewer = true
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

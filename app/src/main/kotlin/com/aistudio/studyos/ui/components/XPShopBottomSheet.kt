@@ -122,9 +122,9 @@ fun XPShopBottomSheet(
     if (showDirectSponsorDialog) {
         DirectSponsorRewardDialog(
             rewardXP = offerBonusXP,
-            subtitle = "Free XP Drop",
+            mode = if (offerBonusXP == 250) SponsorRewardMode.CLAIM_3X_SECRET_KEY else SponsorRewardMode.CLAIM_2X,
             onDismiss = { showDirectSponsorDialog = false },
-            onRewardEarned = {
+            onRewardEarned = { secretKey ->
                 viewModel.claimFreeXpDrop(offerBonusXP)
             }
         )

@@ -1994,13 +1994,21 @@ private fun StudySessionCompleteScreen(
             if (showDirectSponsorDialog) {
                 com.aistudio.studyos.ui.components.DirectSponsorRewardDialog(
                     rewardXP = calculatedBonusXP,
-                    subtitle = "${bonusMultiplier}X Session Bonus",
+                    mode = if (bonusMultiplier == 3)
+                        com.aistudio.studyos.ui.components.SponsorRewardMode.CLAIM_3X_SECRET_KEY
+                    else
+                        com.aistudio.studyos.ui.components.SponsorRewardMode.CLAIM_2X,
                     onDismiss = {
                         showDirectSponsorDialog = false
                     },
-                    onRewardEarned = {
+                    onRewardEarned = { secretKey ->
                         bonusClaimed = true
                         onClaimBonusXP(calculatedBonusXP)
+                        android.widget.Toast.makeText(
+                            context,
+                            "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
                     }
                 )
             }
@@ -2067,12 +2075,7 @@ private fun StudySessionCompleteScreen(
                     androidx.compose.material3.Button(
                         onClick = {
                             if (!bonusClaimed) {
-                                // 70% direct link, 30% secret code ad dialog
-                                if (kotlin.random.Random.nextFloat() < 0.70f) {
-                                    showDirectSponsorDialog = true
-                                } else {
-                                    showSecretRewardDialog = true
-                                }
+                                showDirectSponsorDialog = true
                             }
                         },
                         enabled = !bonusClaimed,
