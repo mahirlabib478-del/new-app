@@ -332,7 +332,7 @@ fun XPShopBottomSheet(
                     if (Random.nextFloat() < 0.70f) {
                         AdManager.openDirectSponsorLink(context)
                         coroutineScope.launch {
-                            delay(5000L)
+                            delay(7000L)
                             viewModel.claimFreeXpDrop(offerBonusXP)
                             Toast.makeText(
                                 context,

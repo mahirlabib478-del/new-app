@@ -2052,7 +2052,7 @@ private fun StudySessionCompleteScreen(
                                 bonusClaimed = true
                                 com.aistudio.studyos.service.AdManager.openDirectSponsorLink(context)
                                 coroutineScope.launch {
-                                    kotlinx.coroutines.delay(5000L)
+                                    kotlinx.coroutines.delay(7000L)
                                     onClaimBonusXP(calculatedBonusXP)
                                     android.widget.Toast.makeText(
                                         context,
