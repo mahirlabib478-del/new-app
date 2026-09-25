@@ -2054,11 +2054,11 @@ private fun StudySessionCompleteScreen(
                                 coroutineScope.launch {
                                     kotlinx.coroutines.delay(7000L)
                                     onClaimBonusXP(calculatedBonusXP)
-                                    android.widget.Toast.makeText(
+                                    com.aistudio.studyos.service.AdManager.notifyRewardAdded(
                                         context,
-                                        "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
+                                        calculatedBonusXP,
+                                        "${bonusMultiplier}X session reward credited! Tap to return."
+                                    )
                                 }
                             } else {
                                 showSecretRewardDialog = true

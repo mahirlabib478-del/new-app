@@ -1,9 +1,17 @@
 package com.aistudio.studyos.service
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.aistudio.studyos.MainActivity
+import com.aistudio.studyos.R
 
 /**
  * Manages Adsterra ads (300x250 In-App Rewarded Banner and Direct Links).
@@ -33,6 +41,53 @@ object AdManager {
             context.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Error opening direct sponsor link", e)
+        }
+    }
+
+    /**
+     * Displays a Heads-Up high-priority notification banner at the top of the screen
+     * exactly after 7 seconds, visible even while on the sponsor webpage.
+     */
+    fun notifyRewardAdded(context: Context, xpAmount: Int, customMessage: String? = null) {
+        val title = "🎉 +$xpAmount XP Added!"
+        val body = customMessage ?: "StudyOS: +$xpAmount XP added to your balance. Tap to return."
+
+        try {
+            val manager = context.getSystemService(NotificationManager::class.java)
+            val channelId = "xp_reward_channel"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    channelId,
+                    "XP Rewards",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Instant notification when bonus XP is credited"
+                }
+                manager?.createNotificationChannel(channel)
+            }
+
+            val openIntent = PendingIntent.getActivity(
+                context,
+                7701,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val notification = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.study_time_growth_logo)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setContentIntent(openIntent)
+                .build()
+
+            NotificationManagerCompat.from(context).notify(7702, notification)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error displaying reward notification", e)
         }
     }
 

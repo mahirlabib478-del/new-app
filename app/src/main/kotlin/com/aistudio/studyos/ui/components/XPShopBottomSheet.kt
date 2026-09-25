@@ -334,11 +334,11 @@ fun XPShopBottomSheet(
                         coroutineScope.launch {
                             delay(7000L)
                             viewModel.claimFreeXpDrop(offerBonusXP)
-                            Toast.makeText(
+                            AdManager.notifyRewardAdded(
                                 context,
-                                "🎉 +$offerBonusXP XP added to your balance!",
-                                Toast.LENGTH_LONG
-                            ).show()
+                                offerBonusXP,
+                                "+$offerBonusXP Free Drop XP added! Tap to return."
+                            )
                         }
                     } else {
                         showBoosterDialog = true
