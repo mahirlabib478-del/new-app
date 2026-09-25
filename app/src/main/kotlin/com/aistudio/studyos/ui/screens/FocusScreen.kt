@@ -240,8 +240,8 @@ fun FocusScreen(
             onClaimBonusXP = { bonusXP ->
                 viewModel.claimBonusXP(bonusXP)
             },
-            onActivateBooster = {
-                viewModel.activateDoubleXpBooster(60)
+            onActivateBooster = { multiplier ->
+                viewModel.activateDoubleXpBooster(60, multiplier)
             },
             onDone = {
                 if (!isDismissingAfterCompletion) {
@@ -1253,14 +1253,14 @@ private fun AmbientSoundConfigDialog(
                                     )
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
-                                        color = if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFFF59E0B).copy(alpha = 0.15f),
-                                        border = BorderStroke(1.dp, if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.3f) else Color(0xFFF59E0B).copy(alpha = 0.3f))
+                                        color = if (isAudioPassActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant,
+                                        border = BorderStroke(1.dp, if (isAudioPassActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                     ) {
                                         Text(
                                             text = if (isAudioPassActive) "✨ Pass Active • $audioPassRemaining" else "🔒 24h Pass (300 XP)",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (isAudioPassActive) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                            color = if (isAudioPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
                                     }
@@ -1338,8 +1338,8 @@ private fun AmbientSoundConfigDialog(
                         // Pass banner in library
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.12f) else Color(0xFFF59E0B).copy(alpha = 0.12f),
-                            border = BorderStroke(1.dp, if (isAudioPassActive) Color(0xFF10B981).copy(alpha = 0.3f) else Color(0xFFF59E0B).copy(alpha = 0.3f)),
+                            color = if (isAudioPassActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            border = BorderStroke(1.dp, if (isAudioPassActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -1353,11 +1353,14 @@ private fun AmbientSoundConfigDialog(
                                     text = if (isAudioPassActive) "✨ 24h Audio Pass: $audioPassRemaining" else "🔒 24h Pass Required (300 XP)",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isAudioPassActive) Color(0xFF10B981) else Color(0xFFF59E0B)
+                                    color = if (isAudioPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                                 TextButton(
                                     onClick = onOpenAudioShop,
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    )
                                 ) {
                                     Text(
                                         if (isAudioPassActive) "Extend" else "Get Pass",
@@ -1577,7 +1580,11 @@ private fun AmbientSoundConfigDialog(
                                 .fillMaxWidth()
                                 .height(44.dp)
                                 .testTag("btn_upload_audio_library"),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
                         ) {
                             Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
@@ -1806,7 +1813,7 @@ private fun StudySessionCompleteScreen(
     completedMinutes: Int,
     completedBlocks: Int,
     onClaimBonusXP: (Int) -> Unit = {},
-    onActivateBooster: () -> Unit = {},
+    onActivateBooster: (Int) -> Unit = {},
     onDone: () -> Unit
 ) {
     var animationTriggered by remember { mutableStateOf(false) }
@@ -1968,23 +1975,27 @@ private fun StudySessionCompleteScreen(
 
         Spacer(Modifier.height(18.dp))
 
-        // 🎁 Adsterra Double XP Blogspot Sponsor Reward Card with Secret Code
+        // 🎁 Adsterra XP Sponsor Reward Card (70% 2X, 30% 3X; 70% direct link, 30% secret code)
         val context = LocalContext.current
         var bonusClaimed by remember { mutableStateOf(false) }
         var showSecretRewardDialog by remember { mutableStateOf(false) }
 
+        // 70% chance 2X multiplier, 30% chance 3X multiplier
+        val bonusMultiplier = remember { if (kotlin.random.Random.nextFloat() < 0.30f) 3 else 2 }
+        val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
+
         if (showSecretRewardDialog) {
             com.aistudio.studyos.ui.components.SecretCodeRewardDialog(
-                bonusXP = earnedXP,
+                bonusXP = calculatedBonusXP,
+                multiplier = bonusMultiplier,
                 onDismiss = { showSecretRewardDialog = false },
                 onClaimReward = {
                     bonusClaimed = true
                     showSecretRewardDialog = false
-                    onClaimBonusXP(earnedXP)
-                    onActivateBooster()
+                    onClaimBonusXP(calculatedBonusXP)
                     android.widget.Toast.makeText(
                         context,
-                        "🎉 +$earnedXP Bonus XP & 1-Hour 2X XP Booster Activated!",
+                        "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -1998,12 +2009,12 @@ private fun StudySessionCompleteScreen(
                 containerColor = if (bonusClaimed)
                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 else
-                    Color(0xFFFEF3C7).copy(alpha = 0.9f)
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
             ),
             border = BorderStroke(
                 1.dp,
                 if (bonusClaimed) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                else Color(0xFFF59E0B).copy(alpha = 0.6f)
+                else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
             )
         ) {
             Row(
@@ -2015,39 +2026,51 @@ private fun StudySessionCompleteScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (bonusClaimed) "🎉 Bonus Claimed!" else "🎁 Double XP Bonus (+${earnedXP} XP)",
+                        text = if (bonusClaimed) "🎉 Bonus Claimed!" else if (bonusMultiplier == 3) "🎁 Triple XP Bonus (+${calculatedBonusXP} XP)" else "🎁 Double XP Bonus (+${calculatedBonusXP} XP)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = if (bonusClaimed) MaterialTheme.colorScheme.onSurface else Color(0xFF92400E)
+                        color = if (bonusClaimed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.height(3.dp))
                     Text(
                         text = if (bonusClaimed)
-                            "You doubled your earned XP for this study session!"
+                            "You multiplied your earned XP for this study session!"
                         else
-                            "Watch sponsor ad during break to double XP & support Study OS!",
+                            "Support Study OS sponsor to unlock ${bonusMultiplier}X XP bonus!",
                         fontSize = 12.sp,
                         lineHeight = 16.sp,
-                        color = if (bonusClaimed) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFFB45309)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Spacer(Modifier.width(12.dp))
                 androidx.compose.material3.Button(
                     onClick = {
                         if (!bonusClaimed) {
-                            showSecretRewardDialog = true
+                            // 70% direct link, 30% secret code ad dialog
+                            if (kotlin.random.Random.nextFloat() < 0.70f) {
+                                com.aistudio.studyos.service.AdManager.openDirectSponsorLink(context)
+                                bonusClaimed = true
+                                onClaimBonusXP(calculatedBonusXP)
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                showSecretRewardDialog = true
+                            }
                         }
                     },
                     enabled = !bonusClaimed,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFF59E0B),
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        if (bonusClaimed) "Done" else "Claim 2x",
+                        if (bonusClaimed) "Done" else "Claim ${bonusMultiplier}x",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )

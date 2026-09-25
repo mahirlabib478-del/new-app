@@ -318,6 +318,21 @@ class ThemePreferences(context: Context) {
         prefs.edit().putInt(KEY_XP_BOOSTER_MULTIPLIER, multiplier.coerceIn(2, 3)).apply()
     }
 
+    fun getLastFreeXpDropClaimTime(): Long {
+        return prefs.getLong(KEY_LAST_FREE_XP_DROP_CLAIM_TIME, 0L)
+    }
+
+    fun setLastFreeXpDropClaimTime(timestamp: Long) {
+        prefs.edit().putLong(KEY_LAST_FREE_XP_DROP_CLAIM_TIME, timestamp).apply()
+    }
+
+    fun getFreeXpDropRemainingCooldownMs(): Long {
+        val lastClaim = getLastFreeXpDropClaimTime()
+        val elapsed = System.currentTimeMillis() - lastClaim
+        val cooldownTotal = 30 * 60 * 1000L
+        return (cooldownTotal - elapsed).coerceAtLeast(0L)
+    }
+
     companion object {
         private const val KEY_CACHED_RECENT_SESSIONS = "cached_recent_sessions_list"
         private const val KEY_THEME = "selected_theme_preset"
@@ -337,5 +352,6 @@ class ThemePreferences(context: Context) {
         private const val KEY_CUSTOM_AUDIO_PASS_EXPIRES = "perk_custom_audio_pass_expires"
         private const val KEY_DOUBLE_XP_BOOSTER_EXPIRES = "perk_double_xp_booster_expires"
         private const val KEY_XP_BOOSTER_MULTIPLIER = "perk_xp_booster_multiplier"
+        private const val KEY_LAST_FREE_XP_DROP_CLAIM_TIME = "perk_last_free_xp_drop_claim_time"
     }
 }

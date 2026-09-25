@@ -151,6 +151,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val _shieldSavedNotice = MutableStateFlow(repository.getLastShieldSavedDate())
     val shieldSavedNotice: StateFlow<String?> = _shieldSavedNotice.asStateFlow()
 
+    private val _freeXpDropCooldownRemainingMs = MutableStateFlow(repository.getFreeXpDropRemainingCooldownMs())
+    val freeXpDropCooldownRemainingMs: StateFlow<Long> = _freeXpDropCooldownRemainingMs.asStateFlow()
+
     private val _customAudioUri = MutableStateFlow(repository.getCustomAudioUri())
     val customAudioUri: StateFlow<String?> = _customAudioUri.asStateFlow()
 
@@ -1584,6 +1587,17 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
 
     fun activateDoubleXpBooster(minutes: Int = 60, multiplier: Int = 2) {
         repository.activateDoubleXpBooster(minutes, multiplier)
+        refreshPerksState()
+    }
+
+    fun updateFreeXpDropCooldown() {
+        _freeXpDropCooldownRemainingMs.value = repository.getFreeXpDropRemainingCooldownMs()
+    }
+
+    fun claimFreeXpDrop(amount: Int) {
+        repository.setLastFreeXpDropClaimTime(System.currentTimeMillis())
+        _freeXpDropCooldownRemainingMs.value = 30 * 60 * 1000L
+        claimBonusXP(amount)
         refreshPerksState()
     }
 

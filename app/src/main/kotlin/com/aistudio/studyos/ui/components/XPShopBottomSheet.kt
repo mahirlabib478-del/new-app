@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,13 +21,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,13 +45,13 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -58,7 +59,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aistudio.studyos.service.AdManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,22 +82,39 @@ fun XPShopBottomSheet(
     val wallpaperPassRemaining by viewModel.wallpaperPassRemainingFormatted.collectAsState()
     val isAudioPassActive by viewModel.isCustomAudioPassActive.collectAsState()
     val audioPassRemaining by viewModel.audioPassRemainingFormatted.collectAsState()
-    val isBoosterActive by viewModel.isDoubleXpBoosterActive.collectAsState()
-    val boosterRemaining by viewModel.boosterRemainingFormatted.collectAsState()
+
+    // 30-minute cooldown for Free XP Drop
+    val cooldownMs by viewModel.freeXpDropCooldownRemainingMs.collectAsState()
+    val isCooldownActive = cooldownMs > 0L
+
+    // Live ticker every second to update remaining cooldown
+    androidx.compose.runtime.LaunchedEffect(isCooldownActive) {
+        while (viewModel.freeXpDropCooldownRemainingMs.value > 0L) {
+            viewModel.updateFreeXpDropCooldown()
+            delay(1000L)
+        }
+    }
+
+    val remainingMinutes = (cooldownMs / 60000L).toInt()
+    val remainingSeconds = ((cooldownMs % 60000L) / 1000L).toInt()
+    val cooldownFormatted = String.format("%02d:%02d", remainingMinutes, remainingSeconds)
+
+    // 70% chance +150 XP, 30% chance +250 XP instant drop
+    val offerBonusXP = remember { if (Random.nextFloat() < 0.30f) 250 else 150 }
 
     var showBoosterDialog by remember { mutableStateOf(false) }
 
     if (showBoosterDialog) {
         SecretCodeRewardDialog(
-            bonusXP = 150,
+            bonusXP = offerBonusXP,
+            multiplier = if (offerBonusXP == 250) 3 else 2,
             onDismiss = { showBoosterDialog = false },
             onClaimReward = {
                 showBoosterDialog = false
-                viewModel.claimBonusXP(150)
-                viewModel.activateDoubleXpBooster(60)
+                viewModel.claimFreeXpDrop(offerBonusXP)
                 Toast.makeText(
                     context,
-                    "⚡ 2X XP Booster Activated for 1 Hour! (+150 XP)",
+                    "🎉 +$offerBonusXP XP added to your balance!",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -104,72 +125,55 @@ fun XPShopBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = null,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 6.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Row
+            // Header Row - Clean layout without circular sparkle logo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFFF59E0B), Color(0xFFD97706))
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = "XP Perks & Power-ups",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Spend XP on temporary perks & protection",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "XP Perks & Power-ups",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Spend XP on temporary perks & protection",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 IconButton(
                     onClick = onDismiss,
                     modifier = Modifier.testTag("btn_close_xp_shop")
                 ) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
-            // XP Wallet Balance Card
+            // XP Wallet Balance Card - Theme-aware colors
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.35f))
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Row(
                     modifier = Modifier
@@ -189,7 +193,7 @@ fun XPShopBottomSheet(
                             text = "$totalXP XP",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFFF59E0B)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -214,10 +218,10 @@ fun XPShopBottomSheet(
             // ITEM 1: 🛡️ Streak Shield
             ShopItemCard(
                 icon = Icons.Default.Shield,
-                iconColor = Color(0xFF3B82F6),
+                iconColor = MaterialTheme.colorScheme.primary,
                 title = "Streak Shield",
                 badgeText = "$streakShieldCount/2 Equipped",
-                badgeColor = if (streakShieldCount > 0) Color(0xFF10B981) else MaterialTheme.colorScheme.outlineVariant,
+                badgeColor = if (streakShieldCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 description = "Automatically preserves your streak if you miss a study day. Max 2 stored in inventory.",
                 costText = "500 XP",
                 isButtonEnabled = streakShieldCount < 2 && totalXP >= 500,
@@ -237,10 +241,10 @@ fun XPShopBottomSheet(
             // ITEM 2: 🖼️ 24h Custom Wallpaper Pass
             ShopItemCard(
                 icon = Icons.Default.Image,
-                iconColor = Color(0xFF8B5CF6),
+                iconColor = MaterialTheme.colorScheme.secondary,
                 title = "Custom Wallpaper Pass",
                 badgeText = if (isWallpaperPassActive) "Active • $wallpaperPassRemaining" else "Expired",
-                badgeColor = if (isWallpaperPassActive) Color(0xFF10B981) else Color(0xFFF59E0B),
+                badgeColor = if (isWallpaperPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 description = "Set your own personal aesthetic photo from your phone gallery as the full-screen study background for 24 hours.",
                 costText = "250 XP / 24h",
                 isButtonEnabled = totalXP >= 250,
@@ -260,10 +264,10 @@ fun XPShopBottomSheet(
             // ITEM 3: 🎵 24h Custom Audio Pass
             ShopItemCard(
                 icon = Icons.Default.Headphones,
-                iconColor = Color(0xFFEC4899),
+                iconColor = MaterialTheme.colorScheme.tertiary,
                 title = "Custom Audio Pass",
                 badgeText = if (isAudioPassActive) "Active • $audioPassRemaining" else "Expired",
-                badgeColor = if (isAudioPassActive) Color(0xFF10B981) else Color(0xFFF59E0B),
+                badgeColor = if (isAudioPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 description = "Upload and play your own study playlists, lofi beats, or lecture audiobooks in the background for 24 hours.",
                 costText = "300 XP / 24h",
                 isButtonEnabled = totalXP >= 300,
@@ -280,20 +284,39 @@ fun XPShopBottomSheet(
                 }
             )
 
-            // ITEM 4: ⚡ 2X XP Multiplier Booster (1 Hour)
+            // ITEM 4: ⚡ Instant Free XP Drop via Sponsor (70% +150 XP, 30% +250 XP; 30-min cooldown)
             ShopItemCard(
                 icon = Icons.Default.Bolt,
-                iconColor = Color(0xFFEAB308),
-                title = "2X XP Multiplier (1 Hour)",
-                badgeText = if (isBoosterActive) "Active • $boosterRemaining" else "Free via Sponsor",
-                badgeColor = if (isBoosterActive) Color(0xFF10B981) else Color(0xFFEAB308),
-                description = "Doubles all XP earned from completed study sessions! Tap to visit sponsor page and get your secret key code.",
+                iconColor = MaterialTheme.colorScheme.primary,
+                title = "+${offerBonusXP} Free Bonus XP",
+                badgeText = if (isCooldownActive) "Cooldown: $cooldownFormatted" else "Available Now",
+                badgeColor = if (isCooldownActive) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary,
+                description = if (isCooldownActive) {
+                    "Next free XP drop available in $cooldownFormatted. Free XP drops are available every 30 minutes!"
+                } else {
+                    "Get an instant +${offerBonusXP} XP added directly to your wallet balance! Available every 30 minutes."
+                },
                 costText = "FREE (Key)",
-                isButtonEnabled = true,
-                buttonLabel = if (isBoosterActive) "Boost Active (Get Key)" else "Claim 2X Key",
+                isButtonEnabled = !isCooldownActive,
+                buttonLabel = if (isCooldownActive) "Wait $cooldownFormatted" else "Claim +${offerBonusXP} XP Key",
                 testTag = "btn_claim_2x_booster_key",
                 onAction = {
-                    showBoosterDialog = true
+                    if (isCooldownActive) {
+                        Toast.makeText(context, "⏳ Next XP drop available in $cooldownFormatted", Toast.LENGTH_SHORT).show()
+                        return@ShopItemCard
+                    }
+                    // 70% direct link, 30% secret code ad dialog
+                    if (Random.nextFloat() < 0.70f) {
+                        AdManager.openDirectSponsorLink(context)
+                        viewModel.claimFreeXpDrop(offerBonusXP)
+                        Toast.makeText(
+                            context,
+                            "🎉 +$offerBonusXP XP added to your balance!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        showBoosterDialog = true
+                    }
                 }
             )
 
@@ -358,7 +381,8 @@ private fun ShopItemCard(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -401,7 +425,7 @@ private fun ShopItemCard(
                         text = costText,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFFF59E0B)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -412,7 +436,9 @@ private fun ShopItemCard(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     ),
                     modifier = Modifier.testTag(testTag)
                 ) {
@@ -426,3 +452,4 @@ private fun ShopItemCard(
         }
     }
 }
+

@@ -605,6 +605,10 @@ class StudyRepository(
 
     fun getXpBoosterMultiplier(): Int = themePreferences.getXpBoosterMultiplier()
 
+    fun getLastFreeXpDropClaimTime(): Long = themePreferences.getLastFreeXpDropClaimTime()
+    fun setLastFreeXpDropClaimTime(timestamp: Long) = themePreferences.setLastFreeXpDropClaimTime(timestamp)
+    fun getFreeXpDropRemainingCooldownMs(): Long = themePreferences.getFreeXpDropRemainingCooldownMs()
+
     suspend fun updateTheme(themeKey: String) {
         themePreferences.setThemePreset(themeKey)
         val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(

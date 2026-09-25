@@ -163,6 +163,7 @@ fun ProfileScreen(
     val wallpaperPassRemaining by viewModel.wallpaperPassRemainingFormatted.collectAsState()
     val isAudioPassActive by viewModel.isCustomAudioPassActive.collectAsState()
     val isBoosterActive by viewModel.isDoubleXpBoosterActive.collectAsState()
+    val activeBoosterMultiplier by viewModel.xpBoosterMultiplier.collectAsState()
 
     // Photo picker launcher (complies with Google Play permissions policy)
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -286,8 +287,7 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.4f))
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -298,46 +298,38 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 12.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFF59E0B).copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = Color(0xFFF59E0B),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = "XP Perks & Power-ups Shop",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Streak shields, aesthetic passes & 2X boost",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            Text(
+                                text = "XP Perks & Power-ups Shop",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = "Streak shields, aesthetic passes & XP boost",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
 
                         Button(
                             onClick = { showXPShop = true },
                             shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             modifier = Modifier.testTag("btn_open_shop_from_profile")
                         ) {
-                            Text("Open Shop", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "Open Shop",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
                         }
                     }
 
@@ -359,13 +351,14 @@ fun ProfileScreen(
                                 Icon(
                                     Icons.Default.Shield,
                                     contentDescription = null,
-                                    tint = Color(0xFF3B82F6),
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
                                     text = "Shields: $streakShieldCount/2",
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -383,14 +376,14 @@ fun ProfileScreen(
                                 Icon(
                                     Icons.Default.Bolt,
                                     contentDescription = null,
-                                    tint = if (isBoosterActive) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = if (isBoosterActive) "2X Active" else "2X Booster",
+                                    text = "Free XP Drop",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (isBoosterActive) Color(0xFFF59E0B) else MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }

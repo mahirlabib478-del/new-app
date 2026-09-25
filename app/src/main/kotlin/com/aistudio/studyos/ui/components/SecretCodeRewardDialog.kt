@@ -64,11 +64,12 @@ import com.aistudio.studyos.service.AdManager
 
 /**
  * Dialog that prompts the user to visit the Blogspot sponsor page to view/click banner ads,
- * get a dynamically generated secret code unique to this session, and verify it to unlock 2X XP.
+ * get a dynamically generated secret code unique to this session, and verify it to unlock 2X or 3X XP.
  */
 @Composable
 fun SecretCodeRewardDialog(
     bonusXP: Int,
+    multiplier: Int = 2,
     onDismiss: () -> Unit,
     onClaimReward: () -> Unit
 ) {
@@ -116,9 +117,7 @@ fun SecretCodeRewardDialog(
                             modifier = Modifier
                                 .size(42.dp)
                                 .background(
-                                    Brush.linearGradient(
-                                        listOf(Color(0xFFF59E0B), Color(0xFFEF4444))
-                                    ),
+                                    MaterialTheme.colorScheme.primaryContainer,
                                     CircleShape
                                 ),
                             contentAlignment = Alignment.Center
@@ -126,23 +125,23 @@ fun SecretCodeRewardDialog(
                             Icon(
                                 imageVector = Icons.Default.Stars,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                         Spacer(Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Double Your XP!",
+                                text = if (multiplier == 3) "Triple Your XP!" else "Double Your XP!",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "+$bonusXP Bonus XP Reward",
+                                text = "+$bonusXP Bonus XP Reward (${multiplier}X)",
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp,
-                                color = Color(0xFFF59E0B)
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -228,13 +227,13 @@ fun SecretCodeRewardDialog(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (hasVisitedBlog)
-                            Color(0xFFECFDF5)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
                         else
-                            Color(0xFFFFFBEB)
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                     ),
                     border = BorderStroke(
                         1.dp,
-                        if (hasVisitedBlog) Color(0xFF10B981) else Color(0xFFF59E0B)
+                        if (hasVisitedBlog) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                 ) {
                     Column(
@@ -247,10 +246,10 @@ fun SecretCodeRewardDialog(
                                 text = "STEP 1",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 11.sp,
-                                color = if (hasVisitedBlog) Color(0xFF047857) else Color(0xFFB45309),
+                                color = if (hasVisitedBlog) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
                                     .background(
-                                        if (hasVisitedBlog) Color(0xFFD1FAE5) else Color(0xFFFEF3C7),
+                                        if (hasVisitedBlog) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                                         RoundedCornerShape(6.dp)
                                     )
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -283,8 +282,8 @@ fun SecretCodeRewardDialog(
                                 .fillMaxWidth()
                                 .testTag("open_blog_sponsor_button"),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (hasVisitedBlog) Color(0xFF059669) else Color(0xFFF59E0B),
-                                contentColor = Color.White
+                                containerColor = if (hasVisitedBlog) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -312,9 +311,9 @@ fun SecretCodeRewardDialog(
                             text = "STEP 2",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 11.sp,
-                            color = Color(0xFF4338CA),
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
-                                .background(Color(0xFFEEF2FF), RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                         Spacer(Modifier.width(8.dp))
@@ -431,13 +430,13 @@ fun SecretCodeRewardDialog(
                     enabled = enteredCode.isNotBlank(),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFF59E0B),
+                        containerColor = MaterialTheme.colorScheme.primary,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = Color.White
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Text(
-                        text = "Verify Code & Claim +$bonusXP XP 🎉",
+                        text = "Verify Code & Claim +$bonusXP XP (${multiplier}X) 🎉",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
