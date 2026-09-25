@@ -288,7 +288,7 @@ fun XPShopBottomSheet(
             // ITEM 2: 🖼️ Custom Wallpaper Pass (Custom days)
             ShopItemCard(
                 icon = Icons.Default.Image,
-                iconColor = MaterialTheme.colorScheme.secondary,
+                iconColor = MaterialTheme.colorScheme.primary,
                 title = "Custom Wallpaper Pass",
                 badgeText = if (isWallpaperPassActive) "Active • $wallpaperPassRemaining" else "Expired",
                 badgeColor = if (isWallpaperPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
