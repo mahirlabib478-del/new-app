@@ -185,22 +185,9 @@ class StudyRepository(
                 }
             }
 
-            if (profile.streakDays == 3 && profile.totalXP == 450 && profile.totalStudyMinutes == 150) {
-                // Old dummy seed cleanup if updating from prior installation
-                database.userProfileDao().insertOrUpdate(
-                    profile.copy(
-                        streakDays = 0,
-                        totalStudyMinutes = 0,
-                        totalXP = 0,
-                        currentLevel = 1
-                    )
-                )
-                val oldPlan = database.studyPlanDao().getPlanById(1)
-                if (oldPlan?.title == "Calculus & Linear Algebra") {
-                    database.studyPlanDao().deletePlanById(1)
-                }
-                database.sessionLogDao().clearAll()
-            }
+            // Do not infer that real user data is test/seed data from numeric values.
+            // Older builds used a dummy-data cleanup heuristic here; that could erase
+            // legitimate progress after an update if a user happened to match those values.
         }
     }
 
