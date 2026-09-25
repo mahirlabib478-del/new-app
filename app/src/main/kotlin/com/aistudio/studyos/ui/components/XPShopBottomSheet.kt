@@ -305,7 +305,7 @@ fun XPShopBottomSheet(
             // ITEM 3: 🎵 Custom Audio Pass (Custom days)
             ShopItemCard(
                 icon = Icons.Default.Headphones,
-                iconColor = MaterialTheme.colorScheme.tertiary,
+                iconColor = MaterialTheme.colorScheme.primary,
                 title = "Custom Audio Pass",
                 badgeText = if (isAudioPassActive) "Active • $audioPassRemaining" else "Expired",
                 badgeColor = if (isAudioPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
