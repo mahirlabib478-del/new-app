@@ -89,14 +89,17 @@ class StudyRepository(
     private suspend fun levelAfterMissionCheck(profile: UserProfileEntity): Int {
         val topics = database.sessionLogDao().getDistinctSubjectCountOnce()
         val peak = database.sessionLogDao().getPeakDailyFocusMinutesOnce()
-        var level = profile.currentLevel.coerceIn(1, 100)
-        while (
+        val level = profile.currentLevel.coerceIn(1, 100)
+        // Advance at most one level per mission check so a large accumulated
+        // history cannot cause the user to skip multiple levels at once.
+        return if (
             level < 100 &&
             LevelMissionCalculator.calculate(level, profile, topics, peak).allComplete
         ) {
-            level++
+            level + 1
+        } else {
+            level
         }
-        return level
     }
     
     fun getCachedRecentLogs(): List<SessionLogEntity> {
