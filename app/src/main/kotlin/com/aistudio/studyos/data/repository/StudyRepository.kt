@@ -512,6 +512,12 @@ class StudyRepository(
     fun isCustomAudioPassActive(): Boolean = themePreferences.isCustomAudioPassActive()
     fun getCustomAudioPassExpiresAt(): Long = themePreferences.getCustomAudioPassExpiresAt()
 
+    fun isPremiumThemePassActive(themeKey: String): Boolean =
+        themePreferences.isPremiumThemePassActive(themeKey)
+
+    fun getPremiumThemePassExpiresAt(themeKey: String): Long =
+        themePreferences.getPremiumThemePassExpiresAt(themeKey)
+
     fun isDoubleXpBoosterActive(): Boolean = themePreferences.isDoubleXpBoosterActive()
     fun getDoubleXpBoosterExpiresAt(): Long = themePreferences.getDoubleXpBoosterExpiresAt()
 
@@ -566,6 +572,34 @@ class StudyRepository(
 
         val durationLabel = if (days == 1) "24 hours" else "$days days"
         return Pair(true, "🖼️ Custom Wallpaper Pass activated for $durationLabel!")
+    }
+
+    suspend fun buyPremiumThemePass(themeKey: String, days: Int, xpCost: Int): Pair<Boolean, String> {
+        val profile = database.userProfileDao().getProfileSync() ?: return Pair(false, "Profile not found")
+        val safeDays = days.coerceIn(1, 60)
+        val safeCost = xpCost.coerceAtLeast(0)
+        if (profile.totalXP < safeCost) {
+            return Pair(false, "Need ${safeCost - profile.totalXP} more XP to unlock this Theme Pass!")
+        }
+
+        val updatedXP = profile.totalXP - safeCost
+        val updatedSpent = profile.totalXpSpent + safeCost
+        val candidateProfile = profile.copy(
+            totalXP = updatedXP,
+            currentLevel = profile.currentLevel,
+            totalXpSpent = updatedSpent
+        )
+        val updatedLevel = levelAfterMissionCheck(candidateProfile)
+        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
+
+        val currentExpires = themePreferences.getPremiumThemePassExpiresAt(themeKey)
+        val now = System.currentTimeMillis()
+        val baseTime = if (currentExpires > now) currentExpires else now
+        val newExpires = baseTime + safeDays * 24L * 60L * 60L * 1000L
+        themePreferences.setPremiumThemePassExpiresAt(themeKey, newExpires)
+
+        val durationLabel = if (safeDays == 1) "24 hours" else "${safeDays} days"
+        return Pair(true, "🎨 Theme Pass activated for $durationLabel!")
     }
 
     suspend fun buyCustomAudioPass(days: Int = 1, xpCost: Int = 300): Pair<Boolean, String> {
