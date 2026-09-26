@@ -10,7 +10,7 @@ class ThemePreferences(context: Context) {
         context.applicationContext.getSharedPreferences("study_os_theme_prefs", Context.MODE_PRIVATE)
 
     fun getThemePreset(): String {
-        return prefs.getString(KEY_THEME, "pitch_black") ?: "pitch_black"
+        return ThemeCatalog.normalize(prefs.getString(KEY_THEME, ThemeCatalog.DEFAULT_THEME))
     }
 
     fun setThemePreset(themeKey: String) {
