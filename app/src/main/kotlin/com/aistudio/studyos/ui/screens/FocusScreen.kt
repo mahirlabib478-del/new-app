@@ -1927,7 +1927,7 @@ private fun StudySessionCompleteScreen(
                     kotlinx.coroutines.delay(7000L)
                     android.widget.Toast.makeText(
                         context,
-                        "🎉 +$calculatedBonusXP XP Added! (\${bonusMultiplier}X XP for this session)",
+                        "🎉 +$calculatedBonusXP XP Added! (${bonusMultiplier}X XP for this session)",
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                 }
