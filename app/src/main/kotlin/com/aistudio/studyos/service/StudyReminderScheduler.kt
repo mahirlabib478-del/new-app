@@ -33,6 +33,7 @@ object StudyReminderScheduler {
 
     fun scheduleNext(context: Context) {
         if (!isEnabled(context)) return
+
         val alarmManager = context.getSystemService(AlarmManager::class.java)
         val trigger = nextTriggerMillis(getHour(context), getMinute(context))
         val pendingIntent = pendingIntent(context)
@@ -40,23 +41,51 @@ object StudyReminderScheduler {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             !alarmManager.canScheduleExactAlarms()
         ) {
-            // Keep the reminder alive even before exact-alarm access is granted.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
-            } else {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
-            }
+            // Exact-alarm access is optional. Keep the reminder scheduled with
+            // an idle-aware inexact alarm until access is granted.
+            scheduleFallback(alarmManager, trigger, pendingIntent)
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // User-visible alarm; reliable while the device is idle/dozing.
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(trigger, pendingIntent)
-            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // This is a normal notification reminder, not an alarm-clock UI.
+                // Use an exact idle-aware alarm without exposing an alarm-clock
+                // entry/icon on the system UI.
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    trigger,
+                    pendingIntent
+                )
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    trigger,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+            }
+        } catch (_: SecurityException) {
+            // Permission can be revoked while the app is running. Never lose
+            // the user's reminder in that case; fall back safely.
+            scheduleFallback(alarmManager, trigger, pendingIntent)
+        }
+    }
+
+    private fun scheduleFallback(
+        alarmManager: AlarmManager,
+        trigger: Long,
+        pendingIntent: PendingIntent
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                trigger,
+                pendingIntent
+            )
         } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+            alarmManager.set(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
         }
     }
 
