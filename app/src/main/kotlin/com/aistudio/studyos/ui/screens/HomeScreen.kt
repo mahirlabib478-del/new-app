@@ -110,14 +110,14 @@ private fun formatRelativeTime(timestamp: Long): String {
     }
 }
 
-private fun getSessionModeInfo(mode: String): Pair<String, Color> {
+private fun getSessionModeLabel(mode: String): String {
     return when (mode.lowercase()) {
-        "focus", "quick" -> Pair("🎯 25m Focus", Color(0xFF6366F1))
-        "exam" -> Pair("📝 Exam", Color(0xFFEC4899))
-        "cram" -> Pair("⚡ Cram", Color(0xFFF59E0B))
-        "early_finish" -> Pair("⏱️ Quick Session", Color(0xFF10B981))
-        "regular" -> Pair("📖 Regular", Color(0xFF3B82F6))
-        else -> Pair("📚 Study", Color(0xFF8B5CF6))
+        "focus", "quick" -> "🎯 25m Focus"
+        "exam" -> "📝 Exam"
+        "cram" -> "⚡ Cram"
+        "early_finish" -> "⏱️ Quick Session"
+        "regular" -> "📖 Regular"
+        else -> "📚 Study"
     }
 }
 
@@ -741,7 +741,8 @@ fun HomeScreen(
                 items = recentLogs.take(3),
                 key = { it.id }
             ) { log ->
-                val (modeLabel, modeColor) = getSessionModeInfo(log.mode)
+                val modeLabel = getSessionModeLabel(log.mode)
+                val modeColor = MaterialTheme.colorScheme.primary
                 val relativeTime = formatRelativeTime(log.timestamp)
 
                 Card(
