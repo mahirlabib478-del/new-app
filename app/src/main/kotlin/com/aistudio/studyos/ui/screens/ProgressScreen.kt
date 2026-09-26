@@ -391,7 +391,7 @@ fun ProgressScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Jan 1 – Present • " + currentYearSessionCount + " Sessions in " + Calendar.getInstance().get(Calendar.YEAR),
+                            text = "Jan 1–Present • " + currentYearSessionCount + " Sessions",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
