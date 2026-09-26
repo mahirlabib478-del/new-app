@@ -11,13 +11,10 @@ import android.util.Log
 object AdManager {
     private const val TAG = "AdManager"
 
-    // Adsterra Direct Link URL
-    const val ADSTERRA_DIRECT_LINK_URL = "https://studyosblog.blogspot.com/2026/09/study-os-2x-xp-reward-margin-0-padding.html"
-
-    // Direct sponsor URL used for monetization.
+    // Use the actual Smart Direct Link, not the Blogspot landing page.
     const val PROFITABLE_DIRECT_LINK_URL = "https://www.profitableratecpmnetwork.com/jvkt09pgb?key=298992f0599b6af9f3dc8d8b5f30e40c"
 
-    fun openDirectLink(context: Context, url: String = ADSTERRA_DIRECT_LINK_URL) {
+    fun openDirectLink(context: Context, url: String = PROFITABLE_DIRECT_LINK_URL) {
         try {
             val uri = Uri.parse(url)
             val intent = Intent(Intent.ACTION_VIEW, uri).apply {
@@ -60,6 +57,3 @@ object AdManager {
         prefs.edit().putString(KEY_FOCUS_CLAIM_TIMESTAMPS, validTimestamps.joinToString(",")).apply()
     }
 }
-
-
-
