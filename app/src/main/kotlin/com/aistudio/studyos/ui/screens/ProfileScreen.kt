@@ -188,7 +188,6 @@ fun ProfileScreen(
     var isCleaningCache by remember { mutableStateOf(false) }
     var cacheCleanedSuccess by remember { mutableStateOf(false) }
     var showXPShop by remember { mutableStateOf(false) }
-    var showWallpaperPassPrompt by remember { mutableStateOf(false) }
     var showThemePassFor by remember { mutableStateOf<String?>(null) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
@@ -234,71 +233,6 @@ fun ProfileScreen(
 
     if (showThemePassFor != null) {
         ThemePassPurchaseDialog(viewModel, showThemePassFor!!, totalXP, false, onOpenShop = { showThemePassFor = null; showXPShop = true }) { showThemePassFor = null }
-    }
-
-    if (showWallpaperPassPrompt) {
-        AlertDialog(
-            onDismissRequest = { showWallpaperPassPrompt = false },
-            icon = { Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-            title = { Text("Unlock Custom Wallpaper Pass", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Setting your own aesthetic photo from your phone gallery requires a 24-Hour Custom Wallpaper Pass.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Pass Cost:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text("250 XP (24 Hours)", fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B), fontSize = 14.sp)
-                        }
-                    }
-                    Text(
-                        "Your balance: $totalXP XP",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showWallpaperPassPrompt = false
-                        viewModel.buyCustomWallpaperPass(days = 1, xpCost = 250) { success, msg ->
-                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
-                            if (success) {
-                                photoPickerLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            }
-                        }
-                    },
-                    enabled = totalXP >= 250,
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(if (totalXP >= 250) "Unlock Now (250 XP)" else "Need ${250 - totalXP} More XP")
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = {
-                        showWallpaperPassPrompt = false
-                        showXPShop = true
-                    },
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Open XP Shop")
-                }
-            }
-        )
     }
 
     LazyColumn(
@@ -705,7 +639,7 @@ fun ProfileScreen(
                                     border = BorderStroke(1.dp, if (isWallpaperPassActive) Color(0xFF10B981).copy(alpha = 0.3f) else Color(0xFFF59E0B).copy(alpha = 0.3f))
                                 ) {
                                     Text(
-                                        text = if (isWallpaperPassActive) "✨ Pass Active • $wallpaperPassRemaining" else "🔒 24h Pass (250 XP)",
+                                        text = if (isWallpaperPassActive) "✨ Pass Active • $wallpaperPassRemaining" else "🔒 Available in XP Shop",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isWallpaperPassActive) Color(0xFF10B981) else Color(0xFFF59E0B),
@@ -726,7 +660,7 @@ fun ProfileScreen(
                                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                             )
                                         } else {
-                                            showWallpaperPassPrompt = true
+                                            showXPShop = true
                                         }
                                     },
                                     modifier = Modifier
@@ -742,7 +676,7 @@ fun ProfileScreen(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = when {
-                                            !isWallpaperPassActive -> "Unlock 24h Pass (250 XP)"
+                                            !isWallpaperPassActive -> "Open XP Shop"
                                             customWallpaperUri != null -> "Change Photo"
                                             else -> "Pick from Gallery"
                                         },
