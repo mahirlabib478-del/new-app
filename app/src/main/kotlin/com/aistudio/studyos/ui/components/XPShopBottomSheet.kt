@@ -126,6 +126,14 @@ fun XPShopBottomSheet(
     // 70% chance +150 XP, 30% chance +250 XP instant drop
     val offerBonusXP = remember { if (Random.nextFloat() < 0.30f) 250 else 150 }
 
+    var xpClaimedForConfirmation by remember { mutableStateOf(false) }
+    LaunchedEffect(xpClaimedForConfirmation) {
+        if (xpClaimedForConfirmation) {
+            delay(7000L)
+            Toast.makeText(context, "🎉 +$offerBonusXP XP Added!", Toast.LENGTH_SHORT).show()
+            xpClaimedForConfirmation = false
+        }
+    }
     // Custom Days Pass Selection Dialog with 30% Lucky Deal
     passTypeToPurchase?.let { type ->
         PassDurationSelectionDialog(
@@ -328,14 +336,7 @@ fun XPShopBottomSheet(
                     // XP is granted immediately. The Direct Link opens 100% of the time.
                     viewModel.claimFreeXpDrop(offerBonusXP)
                     AdManager.openDirectLink(context)
-                    coroutineScope.launch {
-                        delay(7000L)
-                        Toast.makeText(
-                            context,
-                            "🎉 +$offerBonusXP XP Added!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                    xpClaimedForConfirmation = true
                 }
             )
 
