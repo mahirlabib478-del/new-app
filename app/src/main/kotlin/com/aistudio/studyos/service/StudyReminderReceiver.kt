@@ -45,7 +45,7 @@ class StudyReminderReceiver : BroadcastReceiver() {
             NotificationManagerCompat.from(context).notify(
                 NOTIFICATION_ID,
                 NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.study_time_growth_logo)
+                    .setSmallIcon(R.drawable.ic_notification_reminder)
                     .setContentTitle("Study reminder")
                     .setContentText("It's time to focus. Start your next study session.")
                     .setCategory(NotificationCompat.CATEGORY_REMINDER)
