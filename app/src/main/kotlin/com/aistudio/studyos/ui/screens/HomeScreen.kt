@@ -343,7 +343,7 @@ fun HomeScreen(
                     .testTag("today_engine_hero_card"),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -375,12 +375,12 @@ fun HomeScreen(
                                 Text(
                                     text = "Today Engine",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = todayRecommendation.title,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1
                                 )
                             }
@@ -407,7 +407,7 @@ fun HomeScreen(
                     Text(
                         text = todayRecommendation.detail,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2
                     )
 
@@ -421,7 +421,7 @@ fun HomeScreen(
                         Text(
                             text = "Daily Goal Progress",
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "${todayMinutes} / ${dailyGoal}m",
@@ -437,7 +437,7 @@ fun HomeScreen(
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
+                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
