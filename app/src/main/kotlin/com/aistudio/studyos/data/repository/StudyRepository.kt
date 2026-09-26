@@ -161,7 +161,7 @@ class StudyRepository(
         if (profile != null) {
             val updatedMinutes = (profile.totalStudyMinutes - log.durationMinutes).coerceAtLeast(0)
             val updatedXP = (profile.totalXP - log.xpEarned).coerceAtLeast(0)
-            val updatedLevel = (updatedXP / 200) + 1
+            val updatedLevel = profile.currentLevel
             database.userProfileDao().insertOrUpdate(
                 profile.copy(
                     totalStudyMinutes = updatedMinutes,
