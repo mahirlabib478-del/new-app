@@ -234,7 +234,7 @@ class ThemePreferences(context: Context) {
     fun setCachedRecentSessions(logs: List<SessionLogEntity>) {
         try {
             val array = org.json.JSONArray()
-            for (log in logs.take(10)) {
+            for (log in logs.take(15)) {
                 val obj = org.json.JSONObject()
                 obj.put("id", log.id)
                 obj.put("subject", log.subject)
