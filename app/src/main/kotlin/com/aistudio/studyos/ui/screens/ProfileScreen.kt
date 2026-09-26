@@ -1436,6 +1436,11 @@ private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String,
                 Text(if (canAfford) "Get Pass" else "Need " + (finalCost - totalXP) + " XP")
             }
         },
-        dismissButton = {\n            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {\n                OutlinedButton(onClick = onOpenShop) { Text("Open XP Shop") }\n                TextButton(onClick = onDismiss) { Text("Cancel") }\n            }\n        }
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedButton(onClick = onOpenShop) { Text("Open XP Shop") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        }
     )
 }
