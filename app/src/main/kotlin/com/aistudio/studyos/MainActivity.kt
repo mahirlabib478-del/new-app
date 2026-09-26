@@ -196,7 +196,10 @@ fun MainApp(
                     }
 
                     NavigationBar(
-                        modifier = Modifier.testTag("bottom_nav_bar")
+                        modifier = Modifier.testTag("bottom_nav_bar"),
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onBackground,
+                        tonalElevation = 0.dp
                     ) {
                         BOTTOM_NAV_SCREENS.forEach { screen ->
                             val isSelected = currentRoute == screen.route
