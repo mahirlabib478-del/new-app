@@ -59,7 +59,7 @@ class SponsorWebViewActivity : Activity() {
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.WHITE)
+            setBackgroundColor(Color.rgb(246, 247, 250))
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
@@ -72,8 +72,13 @@ class SponsorWebViewActivity : Activity() {
         val toolbar = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setPadding(dp(16), dp(8), dp(16), dp(8))
-            setBackgroundColor(Color.WHITE)
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            background = GradientDrawable().apply {
+                cornerRadius = dp(18).toFloat()
+                setColor(Color.WHITE)
+                setStroke(dp(1), Color.rgb(232, 234, 238))
+            }
+            elevation = dp(3).toFloat()
         }
 
         val timerRow = LinearLayout(this).apply {
@@ -84,27 +89,28 @@ class SponsorWebViewActivity : Activity() {
         countdownLabel = TextView(this).apply {
             text = "Please wait"
             textSize = 13f
-            setTextColor(Color.rgb(100, 100, 100))
+            setTextColor(Color.rgb(90, 96, 105))
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
 
         countdownValue = TextView(this).apply {
             text = "7s"
-            textSize = 20f
-            setTextColor(Color.rgb(30, 30, 30))
+            textSize = 21f
+            setTextColor(Color.rgb(28, 32, 38))
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             gravity = Gravity.CENTER
             background = GradientDrawable().apply {
-                cornerRadius = dp(14).toFloat()
-                setColor(Color.rgb(245, 245, 245))
+                cornerRadius = dp(16).toFloat()
+                setColor(Color.rgb(242, 244, 247))
+                setStroke(dp(1), Color.rgb(225, 228, 233))
             }
-            setPadding(dp(14), dp(5), dp(14), dp(5))
+            setPadding(dp(15), dp(5), dp(15), dp(5))
         }
 
         backButton = TextView(this).apply {
             text = "Back"
             textSize = 14f
-            setTextColor(Color.rgb(35, 35, 35))
+            setTextColor(Color.rgb(35, 39, 45))
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             gravity = Gravity.CENTER
             visibility = View.GONE
@@ -112,7 +118,8 @@ class SponsorWebViewActivity : Activity() {
             isFocusable = true
             background = GradientDrawable().apply {
                 cornerRadius = dp(18).toFloat()
-                setColor(Color.rgb(245, 245, 245))
+                setColor(Color.rgb(242, 244, 247))
+                setStroke(dp(1), Color.rgb(225, 228, 233))
             }
             setPadding(dp(18), dp(8), dp(18), dp(8))
             setOnClickListener { closeSponsorPage() }
@@ -136,7 +143,7 @@ class SponsorWebViewActivity : Activity() {
         progressTrack = View(this).apply {
             background = GradientDrawable().apply {
                 cornerRadius = dp(3).toFloat()
-                setColor(Color.rgb(225, 225, 225))
+                setColor(Color.rgb(220, 223, 228))
             }
         }
 
@@ -147,7 +154,7 @@ class SponsorWebViewActivity : Activity() {
         toolbar.addView(
             progressTrack,
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(4)).apply {
-                topMargin = dp(6)
+                topMargin = dp(7)
             }
         )
 
@@ -173,8 +180,12 @@ class SponsorWebViewActivity : Activity() {
             toolbar,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(58)
-            )
+                dp(72)
+            ).apply {
+                leftMargin = dp(10)
+                rightMargin = dp(10)
+                bottomMargin = dp(8)
+            }
         )
         root.addView(
             webView,
@@ -193,7 +204,7 @@ class SponsorWebViewActivity : Activity() {
         countdownTimer = object : CountDownTimer(COUNTDOWN_MS, TICK_MS) {
             override fun onTick(millisUntilFinished: Long) {
                 val seconds = ((millisUntilFinished + 999L) / 1000L).toInt()
-                countdownValue.text = "${seconds}s"
+                countdownValue.text = "\${seconds}s"
 
                 val progress = ((COUNTDOWN_MS - millisUntilFinished).toFloat() / COUNTDOWN_MS)
                     .coerceIn(0f, 1f)
