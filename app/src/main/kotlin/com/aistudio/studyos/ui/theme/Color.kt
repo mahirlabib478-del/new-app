@@ -30,3 +30,15 @@ val MintSurface = Color(0xFFDCFCE7)
 val SunriseBg = Color(0xFFFFF7ED)
 val SunriseSurface = Color(0xFFFFEDD5)
 val SunriseAccent = Color(0xFFEA580C)
+
+// Cyberpunk / Synthwave 80s Theme
+val CyberpunkBg = Color(0xFF0F081D)
+val CyberpunkSurface = Color(0xFF1B1233)
+val CyberpunkPink = Color(0xFFFF2A85)
+val CyberpunkCyan = Color(0xFF00F0FF)
+
+// Dracula Pro Theme
+val DraculaBg = Color(0xFF21222C)
+val DraculaSurface = Color(0xFF343746)
+val DraculaPurple = Color(0xFFBD93F9)
+val DraculaGreen = Color(0xFF50FA7B)
