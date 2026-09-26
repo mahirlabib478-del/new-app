@@ -129,6 +129,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     )
     val wallpaperPassRemainingFormatted: StateFlow<String> = _wallpaperPassRemainingFormatted.asStateFlow()
 
+    private val premiumThemeKeys = setOf("cyberpunk", "cyber_runner")
+
+    fun isPremiumTheme(themeKey: String): Boolean = themeKey in premiumThemeKeys
+
+    fun isPremiumThemePassActive(themeKey: String): Boolean =
+        !isPremiumTheme(themeKey) || repository.isPremiumThemePassActive(themeKey)
+
+    fun premiumThemePassRemaining(themeKey: String): String =
+        formatPassDuration(repository.getPremiumThemePassExpiresAt(themeKey))
+
     private val _isCustomAudioPassActive = MutableStateFlow(repository.isCustomAudioPassActive())
     val isCustomAudioPassActive: StateFlow<Boolean> = _isCustomAudioPassActive.asStateFlow()
 
@@ -1415,6 +1425,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     }
 
     fun setTheme(themeKey: String) {
+        if (isPremiumTheme(themeKey) && !repository.isPremiumThemePassActive(themeKey)) {
+            return
+        }
         _currentTheme.value = themeKey
         _wallpaperStyle.value = repository.getThemeWallpaperStyle(themeKey)
         viewModelScope.launch {
@@ -1572,6 +1585,14 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             val (success, msg) = repository.buyStreakShield()
             refreshPerksState()
             refreshTodayStats()
+            onResult(success, msg)
+        }
+    }
+
+    fun buyPremiumThemePass(themeKey: String, days: Int, xpCost: Int, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val (success, msg) = repository.buyPremiumThemePass(themeKey, days, xpCost)
+            refreshPerksState()
             onResult(success, msg)
         }
     }
