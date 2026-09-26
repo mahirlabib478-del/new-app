@@ -126,14 +126,6 @@ fun XPShopBottomSheet(
     // 70% chance +150 XP, 30% chance +250 XP instant drop
     val offerBonusXP = remember { if (Random.nextFloat() < 0.30f) 250 else 150 }
 
-    var showDirectSponsorDialog by remember { mutableStateOf(false) }
-
-    if (showDirectSponsorDialog) {
-        DirectSponsorRewardDialog(
-            onDismiss = { showDirectSponsorDialog = false }
-        )
-    }
-
     // Custom Days Pass Selection Dialog with 30% Lucky Deal
     passTypeToPurchase?.let { type ->
         PassDurationSelectionDialog(
