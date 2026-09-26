@@ -46,7 +46,7 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             IconButton(onClick = onBack, modifier = Modifier.testTag("history_back")) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
             Column(Modifier.weight(1f)) {
                 Text("Study History", fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                Text(if (!isAllLogsLoaded) "Loading history..." else if (days.isEmpty()) "No sessions yet" else "${days.size} days • $totalMinutes min total", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text(if (!isAllLogsLoaded) "Loading history..." else if (days.isEmpty()) "No sessions in the last 30 days" else "${days.size} days • $totalMinutes min • Last 30 days", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(28.dp))
         }
