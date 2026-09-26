@@ -84,11 +84,11 @@ class StudyRepository(
     fun getCurrentYearSessionCount(): Flow<Int> =
         database.sessionLogDao().getCurrentYearSessionCount()
 
-    fun getDistinctStudyTopicCount(): Flow<Int> = database.sessionLogDao().getDistinctSubjectCount()
+    fun getDistinctStudyTopicCount(): Flow<Int> = database.sessionLogDao().getValidStudySessionCount()
     fun getPeakDailyFocusMinutes(): Flow<Int> = database.sessionLogDao().getPeakDailyFocusMinutes()
 
     private suspend fun levelAfterMissionCheck(profile: UserProfileEntity): Int {
-        val topics = database.sessionLogDao().getDistinctSubjectCountOnce()
+        val topics = database.sessionLogDao().getValidStudySessionCountOnce()
         val peak = database.sessionLogDao().getPeakDailyFocusMinutesOnce()
         val level = profile.currentLevel.coerceIn(1, 100)
         // Advance at most one level per mission check so a large accumulated
