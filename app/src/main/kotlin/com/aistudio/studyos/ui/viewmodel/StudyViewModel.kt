@@ -6,6 +6,7 @@ import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.aistudio.studyos.data.local.ThemeCatalog
 import com.aistudio.studyos.data.local.entity.ExamEntity
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
@@ -253,12 +254,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             repository.ensureCleanInitialData()
             userProfile.collect { profile ->
                 if (profile != null && profile.themePreset.isNotBlank()) {
-                    if (isPremiumTheme(profile.themePreset) && !repository.isPremiumThemePassActive(profile.themePreset)) {
-                        _currentTheme.value = "pitch_black"
-                        _wallpaperStyle.value = repository.getThemeWallpaperStyle("pitch_black")
-                        repository.updateTheme("pitch_black")
+                    val normalizedTheme = ThemeCatalog.normalize(profile.themePreset)
+                    if (normalizedTheme != profile.themePreset) {
+                        repository.updateTheme(normalizedTheme)
+                    }
+                    if (isPremiumTheme(normalizedTheme) && !repository.isPremiumThemePassActive(profile.themePreset)) {
+                        _currentTheme.value = ThemeCatalog.DEFAULT_THEME
+                        _wallpaperStyle.value = repository.getThemeWallpaperStyle(ThemeCatalog.DEFAULT_THEME)
+                        repository.updateTheme(ThemeCatalog.DEFAULT_THEME)
                     } else {
-                        _currentTheme.value = profile.themePreset
+                        _currentTheme.value = normalizedTheme
                     }
                 }
             }
