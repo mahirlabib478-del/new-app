@@ -102,6 +102,19 @@ class StudyRepository(
 
     fun getDistinctStudyTopicCount(): Flow<Int> = database.sessionLogDao().getDistinctSubjectCount()
     fun getPeakDailyFocusMinutes(): Flow<Int> = database.sessionLogDao().getPeakDailyFocusMinutes()
+
+    private suspend fun levelAfterMissionCheck(profile: UserProfileEntity): Int {
+        val topics = database.sessionLogDao().getDistinctSubjectCountOnce()
+        val peak = database.sessionLogDao().getPeakDailyFocusMinutesOnce()
+        var level = profile.currentLevel.coerceIn(1, 100)
+        while (
+            level < 100 &&
+            LevelMissionCalculator.calculate(level, profile, topics, peak).allComplete
+        ) {
+            level++
+        }
+        return level
+    }
     
     fun getCachedRecentLogs(): List<SessionLogEntity> {
         inMemoryCachedLogs?.let { if (it.isNotEmpty()) return it }
@@ -488,7 +501,6 @@ class StudyRepository(
         )
         val newTotalMinutes = currentProfile.totalStudyMinutes + durationMinutes
         val newTotalXP = currentProfile.totalXP + xpGained
-        val newLevel = currentProfile.currentLevel
 
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val todayStr = sdf.format(Date())
@@ -511,16 +523,16 @@ class StudyRepository(
             }
         }
 
-        database.userProfileDao().insertOrUpdate(
-            currentProfile.copy(
-                totalStudyMinutes = newTotalMinutes,
-                totalXP = newTotalXP,
-                currentLevel = newLevel,
-                totalXpSpent = currentProfile.totalXpSpent,
-                streakDays = updatedStreak,
-                lastActiveDate = todayStr
-            )
+        val candidateProfile = currentProfile.copy(
+            totalStudyMinutes = newTotalMinutes,
+            totalXP = newTotalXP,
+            currentLevel = currentProfile.currentLevel,
+            totalXpSpent = currentProfile.totalXpSpent,
+            streakDays = updatedStreak,
+            lastActiveDate = todayStr
         )
+        val newLevel = levelAfterMissionCheck(candidateProfile)
+        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = newLevel))
     }
 
     // ==========================================
@@ -554,14 +566,13 @@ class StudyRepository(
 
         val updatedXP = profile.totalXP - cost
         val updatedSpent = profile.totalXpSpent + cost
-        val updatedLevel = profile.currentLevel
-        database.userProfileDao().insertOrUpdate(
-            profile.copy(
-                totalXP = updatedXP,
-                currentLevel = updatedLevel,
-                totalXpSpent = updatedSpent
-            )
+        val candidateProfile = profile.copy(
+            totalXP = updatedXP,
+            currentLevel = profile.currentLevel,
+            totalXpSpent = updatedSpent
         )
+        val updatedLevel = levelAfterMissionCheck(candidateProfile)
+        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
         themePreferences.setStreakShieldCount(currentShields + 1)
         return Pair(true, "🛡️ Streak Shield equipped! (Total: ${currentShields + 1}/2)")
     }
@@ -574,14 +585,13 @@ class StudyRepository(
 
         val updatedXP = profile.totalXP - xpCost
         val updatedSpent = profile.totalXpSpent + xpCost
-        val updatedLevel = profile.currentLevel
-        database.userProfileDao().insertOrUpdate(
-            profile.copy(
-                totalXP = updatedXP,
-                currentLevel = updatedLevel,
-                totalXpSpent = updatedSpent
-            )
+        val candidateProfile = profile.copy(
+            totalXP = updatedXP,
+            currentLevel = profile.currentLevel,
+            totalXpSpent = updatedSpent
         )
+        val updatedLevel = levelAfterMissionCheck(candidateProfile)
+        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
 
         val currentExpires = themePreferences.getCustomWallpaperPassExpiresAt()
         val now = System.currentTimeMillis()
