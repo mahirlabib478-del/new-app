@@ -113,7 +113,6 @@ class ProfileScreenFeatureTest {
             "ocean",
             "mint",
             "sunrise",
-            "deep_teal",
             "deep_teal"
         )
 
