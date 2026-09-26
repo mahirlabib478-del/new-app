@@ -454,7 +454,7 @@ class StudyRepository(
         val insertedId = database.sessionLogDao().insertLog(log)
         val currentCached = themePreferences.getCachedRecentSessions().toMutableList()
         currentCached.add(0, log.copy(id = insertedId))
-        themePreferences.setCachedRecentSessions(currentCached.take(10))
+        themePreferences.setCachedRecentSessions(currentCached.take(15))
 
         val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
             id = 1,
