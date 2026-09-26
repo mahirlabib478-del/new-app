@@ -338,8 +338,12 @@ fun XPShopBottomSheet(
                         Toast.makeText(context, "⏳ Next XP drop available in $cooldownFormatted", Toast.LENGTH_SHORT).show()
                         return@ShopItemCard
                     }
-                    // Use the current in-app sponsor reward flow only.
-                    showDirectSponsorDialog = true
+                    // 70% opens the Direct Link; 30% opens the in-app Ad Banner flow.
+                    if (Random.nextFloat() < 0.70f) {
+                        AdManager.openDirectLink(context)
+                    } else {
+                        showDirectSponsorDialog = true
+                    }
                 }
             )
 
