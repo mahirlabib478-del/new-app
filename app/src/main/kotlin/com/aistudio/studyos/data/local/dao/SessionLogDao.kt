@@ -33,10 +33,10 @@ interface SessionLogDao {
     fun getSessionCountBetween(startMillis: Long, endMillis: Long): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM session_logs WHERE trim(subject) <> '' AND trim(chapter) <> ''")
-    fun getDistinctSubjectCount(): Flow<Int>
+    fun getValidStudySessionCount(): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM session_logs WHERE trim(subject) <> '' AND trim(chapter) <> ''")
-    suspend fun getDistinctSubjectCountOnce(): Int
+    suspend fun getValidStudySessionCountOnce(): Int
 
     @Query("""
         SELECT COALESCE(MAX(day_minutes), 0) FROM (
