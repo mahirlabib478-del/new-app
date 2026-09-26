@@ -128,7 +128,7 @@ fun DynamicStudyWallpaper(
             "light" -> Color(0xFFF8FAFC)
             "cyberpunk" -> Color(0xFF0F081D)
             "cyber_runner" -> Color(0xFFFAFAFA)
-            else -> Color(0xFF0C0E17) // midnight & default
+            else -> Color(0xFF0C0E17) // default theme & unknown values
         }
 
         if (baseOverlayAlpha > 0f) {
