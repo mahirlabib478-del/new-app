@@ -1,7 +1,6 @@
 package com.aistudio.studyos.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -72,8 +71,6 @@ interface SessionLogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLog(log: SessionLogEntity): Long
 
-    @Delete
-    suspend fun deleteLog(log: SessionLogEntity)
 
     @Query("DELETE FROM session_logs")
     suspend fun clearAll()
