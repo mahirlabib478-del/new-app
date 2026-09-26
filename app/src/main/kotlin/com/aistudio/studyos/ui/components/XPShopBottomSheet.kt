@@ -334,11 +334,12 @@ fun XPShopBottomSheet(
                         return@ShopItemCard
                     }
                     // 70% opens the Direct Link; 30% opens the in-app Ad Banner flow.
-                    if (Random.nextFloat() < 0.70f) {
-                        AdManager.openDirectLink(context)
-                    } else {
-                        showDirectSponsorDialog = true
-                    }
+                    viewModel.claimFreeXpDrop(offerBonusXP)
+                        if (Random.nextFloat() < 0.70f) {
+                            AdManager.openDirectLink(context)
+                        } else {
+                            showDirectSponsorDialog = true
+                        }
                 }
             )
 
