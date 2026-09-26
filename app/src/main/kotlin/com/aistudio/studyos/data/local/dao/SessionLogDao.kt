@@ -33,10 +33,10 @@ interface SessionLogDao {
     @Query("SELECT COUNT(*) FROM session_logs WHERE timestamp >= :startMillis AND timestamp < :endMillis")
     fun getSessionCountBetween(startMillis: Long, endMillis: Long): Flow<Int>
 
-    @Query("SELECT COUNT(DISTINCT subject) FROM session_logs WHERE trim(subject) <> ''")
+    @Query("SELECT COUNT(DISTINCT trim(subject) || char(31) || trim(chapter)) FROM session_logs WHERE trim(subject) <> '' AND trim(chapter) <> ''")
     fun getDistinctSubjectCount(): Flow<Int>
 
-    @Query("SELECT COUNT(DISTINCT subject) FROM session_logs WHERE trim(subject) <> ''")
+    @Query("SELECT COUNT(DISTINCT trim(subject) || char(31) || trim(chapter)) FROM session_logs WHERE trim(subject) <> '' AND trim(chapter) <> ''")
     suspend fun getDistinctSubjectCountOnce(): Int
 
     @Query("""
