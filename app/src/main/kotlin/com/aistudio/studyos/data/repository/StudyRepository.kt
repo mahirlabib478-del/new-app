@@ -460,7 +460,7 @@ class StudyRepository(
             totalXP = 0,
             currentLevel = 1,
             dailyGoalMinutes = 60,
-            themePreset = "midnight"
+            themePreset = "pitch_black"
         )
         val newTotalMinutes = currentProfile.totalStudyMinutes + durationMinutes
         val newTotalXP = currentProfile.totalXP + xpGained
@@ -631,7 +631,7 @@ class StudyRepository(
             totalXP = 0,
             currentLevel = 1,
             dailyGoalMinutes = 60,
-            themePreset = "midnight"
+            themePreset = "pitch_black"
         )
         database.userProfileDao().insertOrUpdate(currentProfile.copy(dailyGoalMinutes = minutes))
     }
@@ -645,7 +645,7 @@ class StudyRepository(
             totalXP = 0,
             currentLevel = 1,
             dailyGoalMinutes = 60,
-            themePreset = "midnight"
+            themePreset = "pitch_black"
         )
         val newTotalXP = currentProfile.totalXP + amount
         val newTotalXpEarned = currentProfile.totalXpEarned + amount
