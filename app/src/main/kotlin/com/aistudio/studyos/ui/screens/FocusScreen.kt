@@ -1913,6 +1913,7 @@ private fun StudySessionCompleteScreen(
         val context = LocalContext.current
         val canShowBonus = remember { com.aistudio.studyos.service.AdManager.canShowFocusClaimBonus(context) }
         var bonusClaimed by remember { mutableStateOf(false) }
+        val rewardScope = rememberCoroutineScope()
 
         if (canShowBonus) {
             LaunchedEffect(Unit) {
@@ -1970,7 +1971,7 @@ private fun StudySessionCompleteScreen(
                                 bonusClaimed = true
                                 onClaimBonusXP(calculatedBonusXP)
                                 com.aistudio.studyos.service.AdManager.openDirectLink(context)
-                                kotlinx.coroutines.GlobalScope.launch {
+                                rewardScope.launch {
                                     kotlinx.coroutines.delay(7000L)
                                     android.widget.Toast.makeText(
                                         context,
