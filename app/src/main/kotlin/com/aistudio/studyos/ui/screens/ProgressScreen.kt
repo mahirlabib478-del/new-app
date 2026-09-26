@@ -213,8 +213,6 @@ fun ProgressScreen(
         ProgressAnalyticsCalculator.calculate(allLogs, activePlan, latestCompletedPlan = latestCompletedPlan)
     }
 
-    var showAllLogs by remember { mutableStateOf(false) }
-    var logToDelete by remember { mutableStateOf<SessionLogEntity?>(null) }
     val focusState by viewModel.focusState.collectAsState()
     val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
 
@@ -237,47 +235,8 @@ fun ProgressScreen(
     val isStreakDoneToday = profile?.lastActiveDate == todayDateStr && streak > 0
     val achievements = remember(totalMins, streak, allLogs.size) { GamificationCalculator.achievements(totalMins, streak, allLogs.size) }
 
-    val displayedLogs = if (showAllLogs) allLogs else recentLogs
+    val displayedLogs = allLogs
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-
-    // Delete Log Confirmation Dialog
-    if (logToDelete != null) {
-        val targetLog = logToDelete!!
-        AlertDialog(
-            onDismissRequest = { logToDelete = null },
-            title = {
-                Text(
-                    text = "Delete Session Log",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = "Are you sure you want to remove this record for '${targetLog.subject}'?\n\nThis will deduct ${targetLog.durationMinutes} minutes and ${targetLog.xpEarned} XP from your totals.",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteSessionLog(targetLog)
-                        logToDelete = null
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Delete", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { logToDelete = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -836,34 +795,18 @@ fun ProgressScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = if (allLogs.isNotEmpty()) "Showing ${displayedLogs.size} of ${allLogs.size} sessions" else "No logged sessions",
+                            text = if (displayedLogs.isNotEmpty()) "Showing " + displayedLogs.size + " sessions • Last 30 days" else "No sessions in the last 30 days",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
-                    if (allLogs.size > 10) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            FilterChip(
-                                selected = !showAllLogs,
-                                onClick = { showAllLogs = false },
-                                label = { Text("Recent", fontSize = 11.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            )
-                            FilterChip(
-                                selected = showAllLogs,
-                                onClick = { showAllLogs = true },
-                                label = { Text("All (${allLogs.size})", fontSize = 11.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            )
-                        }
-                    }
+                    Text(
+                        "Last 30 days",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
@@ -975,19 +918,6 @@ fun ProgressScreen(
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.width(4.dp))
-
-                                IconButton(
-                                    onClick = { logToDelete = log },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DeleteOutline,
-                                        contentDescription = "Delete log entry",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
                             }
                         }
 
