@@ -68,8 +68,40 @@ class StudyRepository(
     private var inMemoryCachedLogs: List<SessionLogEntity>? = null
 
     // Logs & Stats
-    fun getAllLogs(): Flow<List<SessionLogEntity>> = database.sessionLogDao().getAllLogs()
+    fun getAllLogs(): Flow<List<SessionLogEntity>> {
+        val since = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000L
+        return database.sessionLogDao().getLogsSince(since)
+    }
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
+
+    fun getCurrentYearMinutes(): Flow<Int> {
+        val yearStart = Calendar.getInstance().apply {
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val now = System.currentTimeMillis()
+        return database.sessionLogDao().getMinutesBetween(yearStart.timeInMillis, now + 1L)
+    }
+
+    fun getCurrentYearSessionCount(): Flow<Int> {
+        val yearStart = Calendar.getInstance().apply {
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val now = System.currentTimeMillis()
+        return database.sessionLogDao().getSessionCountBetween(yearStart.timeInMillis, now + 1L)
+    }
+
+    fun getDistinctStudyTopicCount(): Flow<Int> = database.sessionLogDao().getDistinctSubjectCount()
+    fun getPeakDailyFocusMinutes(): Flow<Int> = database.sessionLogDao().getPeakDailyFocusMinutes()
     
     fun getCachedRecentLogs(): List<SessionLogEntity> {
         inMemoryCachedLogs?.let { if (it.isNotEmpty()) return it }
@@ -456,7 +488,7 @@ class StudyRepository(
         )
         val newTotalMinutes = currentProfile.totalStudyMinutes + durationMinutes
         val newTotalXP = currentProfile.totalXP + xpGained
-        val newLevel = (newTotalXP / 200) + 1
+        val newLevel = currentProfile.currentLevel
 
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val todayStr = sdf.format(Date())
@@ -484,6 +516,7 @@ class StudyRepository(
                 totalStudyMinutes = newTotalMinutes,
                 totalXP = newTotalXP,
                 currentLevel = newLevel,
+                totalXpSpent = currentProfile.totalXpSpent,
                 streakDays = updatedStreak,
                 lastActiveDate = todayStr
             )
@@ -520,11 +553,13 @@ class StudyRepository(
         }
 
         val updatedXP = profile.totalXP - cost
-        val updatedLevel = (updatedXP / 200) + 1
+        val updatedSpent = profile.totalXpSpent + cost
+        val updatedLevel = profile.currentLevel
         database.userProfileDao().insertOrUpdate(
             profile.copy(
                 totalXP = updatedXP,
-                currentLevel = updatedLevel
+                currentLevel = updatedLevel,
+                totalXpSpent = updatedSpent
             )
         )
         themePreferences.setStreakShieldCount(currentShields + 1)
@@ -538,11 +573,13 @@ class StudyRepository(
         }
 
         val updatedXP = profile.totalXP - xpCost
-        val updatedLevel = (updatedXP / 200) + 1
+        val updatedSpent = profile.totalXpSpent + xpCost
+        val updatedLevel = profile.currentLevel
         database.userProfileDao().insertOrUpdate(
             profile.copy(
                 totalXP = updatedXP,
-                currentLevel = updatedLevel
+                currentLevel = updatedLevel,
+                totalXpSpent = updatedSpent
             )
         )
 
@@ -567,7 +604,8 @@ class StudyRepository(
         database.userProfileDao().insertOrUpdate(
             profile.copy(
                 totalXP = updatedXP,
-                currentLevel = updatedLevel
+                currentLevel = updatedLevel,
+                totalXpSpent = updatedSpent
             )
         )
 
