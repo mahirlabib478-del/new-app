@@ -118,14 +118,14 @@ fun formatLogTimestamp(timestamp: Long): String {
     }
 }
 
-fun getModeBadgeInfo(mode: String): Pair<String, Color> {
+fun getModeBadgeLabel(mode: String): String {
     return when (mode.lowercase()) {
-        "focus" -> Pair("🎯 Focus Block", Color(0xFF6366F1))
-        "exam" -> Pair("📝 Exam Prep", Color(0xFFEC4899))
-        "cram" -> Pair("⚡ Cram Session", Color(0xFFF59E0B))
-        "early_finish" -> Pair("⏱️ Quick Session", Color(0xFF10B981))
-        "regular" -> Pair("📖 Regular Study", Color(0xFF3B82F6))
-        else -> Pair("📚 Study Session", Color(0xFF8B5CF6))
+        "focus" -> "🎯 Focus Block"
+        "exam" -> "📝 Exam Prep"
+        "cram" -> "⚡ Cram Session"
+        "early_finish" -> "⏱️ Quick Session"
+        "regular" -> "📖 Regular Study"
+        else -> "📚 Study Session"
     }
 }
 
@@ -1182,7 +1182,8 @@ fun ProgressScreen(
                 items = displayedLogs,
                 key = { it.id }
             ) { log ->
-                val (modeLabel, modeColor) = remember(log.mode) { getModeBadgeInfo(log.mode) }
+                val modeLabel = remember(log.mode) { getModeBadgeLabel(log.mode) }
+                val modeColor = MaterialTheme.colorScheme.primary
                 val timeString = remember(log.timestamp) { formatLogTimestamp(log.timestamp) }
 
                 Card(
