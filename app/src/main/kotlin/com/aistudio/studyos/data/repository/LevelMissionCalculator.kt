@@ -50,10 +50,16 @@ object LevelMissionCalculator {
     // smoothly interpolated so progression does not jump abruptly.
     private val anchors = listOf(
         Anchor(1, 150, 60, 1, 30, 50),
-        Anchor(10, 1800, 800, 3, 90, 500),
-        Anchor(25, 4000, 2500, 5, 150, 1500),
-        Anchor(50, 10000, 7000, 8, 210, 4000),
-        Anchor(100, 30000, 20000, 12, 300, 10000)
+        Anchor(10, 1800, 800, 4, 90, 500),
+        Anchor(20, 3200, 1600, 8, 120, 1000),
+        Anchor(30, 4800, 3000, 12, 150, 1800),
+        Anchor(40, 6800, 4500, 17, 180, 2600),
+        Anchor(50, 10000, 7000, 23, 210, 4000),
+        Anchor(60, 14000, 9500, 28, 240, 5200),
+        Anchor(70, 18000, 12000, 32, 255, 6500),
+        Anchor(80, 22000, 14500, 36, 270, 7600),
+        Anchor(90, 26000, 17000, 38, 285, 8800),
+        Anchor(100, 30000, 20000, 40, 300, 10000)
     )
 
     fun targetsForLevel(level: Int): LevelMissionTargets {
