@@ -210,7 +210,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private val _todayMinutes = MutableStateFlow(0)
     val todayMinutes: StateFlow<Int> = _todayMinutes.asStateFlow()
 
-    val allLogs: StateFlow<List<SessionLogEntity>> = repository.getAllLogs()
+    val allLogs: StateFlow<List<SessionLogEntity>> = repository.getRecentLogsSince30Days()
         .onEach { _isAllLogsLoaded.value = true }
         .stateIn(viewModelScope, SharingStarted.Eagerly, cachedRecentSessions)
 
