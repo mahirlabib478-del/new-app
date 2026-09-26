@@ -1913,7 +1913,6 @@ private fun StudySessionCompleteScreen(
         val context = LocalContext.current
         val canShowBonus = remember { com.aistudio.studyos.service.AdManager.canShowFocusClaimBonus(context) }
         var bonusClaimed by remember { mutableStateOf(false) }
-        var showSecretRewardDialog by remember { mutableStateOf(false) }
         var showDirectSponsorDialog by remember { mutableStateOf(false) }
 
         if (canShowBonus) {
@@ -1937,24 +1936,6 @@ private fun StudySessionCompleteScreen(
                     },
                     onRewardEarned = { secretKey ->
                         bonusClaimed = true
-                        onClaimBonusXP(calculatedBonusXP)
-                        android.widget.Toast.makeText(
-                            context,
-                            "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
-            }
-
-            if (showSecretRewardDialog) {
-                com.aistudio.studyos.ui.components.SecretCodeRewardDialog(
-                    bonusXP = calculatedBonusXP,
-                    multiplier = bonusMultiplier,
-                    onDismiss = { showSecretRewardDialog = false },
-                    onClaimReward = {
-                        bonusClaimed = true
-                        showSecretRewardDialog = false
                         onClaimBonusXP(calculatedBonusXP)
                         android.widget.Toast.makeText(
                             context,
