@@ -203,6 +203,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         .onEach { _isAllLogsLoaded.value = true }
         .stateIn(viewModelScope, SharingStarted.Eagerly, cachedRecentSessions)
 
+    val currentMonthLogs: StateFlow<List<SessionLogEntity>> = repository.getCurrentMonthLogs()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     val currentYearMinutes: StateFlow<Int> = repository.getCurrentYearMinutes()
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
