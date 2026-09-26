@@ -32,3 +32,10 @@ val CyberpunkSurface = Color(0xFF1B1233)
 val CyberpunkPink = Color(0xFFFF2A85)
 val CyberpunkCyan = Color(0xFF00F0FF)
 
+// Mirror's Edge / Cyber Runner Theme
+val CyberRunnerBg = Color(0xFFFAFAFA)
+val CyberRunnerSurface = Color(0xFFFFFFFF)
+val CyberRunnerRed = Color(0xFFEF4444)
+val CyberRunnerCyan = Color(0xFF00F0FF)
+val CyberRunnerCarbon = Color(0xFF18181B)
+
