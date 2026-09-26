@@ -120,9 +120,7 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("ocean", "Ocean Dark", Icons.Default.Water, Color(0xFF0284C7)),
     ThemeOption("mint", "Mint Fresh", Icons.Default.Spa, Color(0xFF0D9488)),
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C)),
-    ThemeOption("deep_teal", "Deep Teal", Icons.Default.Water, Color(0xFF14B8A6)),
     ThemeOption("cyberpunk", "Cyberpunk / Synthwave 80s", Icons.Default.Bolt, Color(0xFFFF2A85)),
-    ThemeOption("dracula", "Dracula Pro", Icons.Default.DarkMode, Color(0xFFBD93F9))
 )
 
 private fun formatDailyGoal(minutes: Int): String = when {
