@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Insights
@@ -33,17 +32,11 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Stars
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -51,7 +44,6 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -233,7 +225,6 @@ fun ProgressScreen(
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val todayDateStr = remember { sdf.format(Date()) }
     val isStreakDoneToday = profile?.lastActiveDate == todayDateStr && streak > 0
-    val achievements = remember(totalMins, streak, allLogs.size) { GamificationCalculator.achievements(totalMins, streak, allLogs.size) }
 
     val displayedLogs = allLogs
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -559,7 +550,7 @@ fun ProgressScreen(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
 
-                    // 2. Consistency Section (7-day Habit Tracking)
+                                        // 2. Monthly consistency snapshot
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(
                             Modifier.fillMaxWidth(),
@@ -568,91 +559,37 @@ fun ProgressScreen(
                         ) {
                             Column {
                                 Text(
-                                    "${analytics.consistencyDays}/7 Days Active",
+                                    activeMonthDays.toString() + "/30 Active Days",
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    "studied in the last 7 days",
+                                    "study activity in the last 30 days",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    "${analytics.averageMinutesOnStudyDays}m",
+                                    if (totalMonthMinutes >= 60) (totalMonthMinutes / 60).toString() + "h " + (totalMonthMinutes % 60) + "m" else totalMonthMinutes.toString() + "m",
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    "avg on study days",
+                                    "monthly total",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-
-                        // 7-day Visual Circles Row
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            weeklyData.forEach { day ->
-                                val hasStudied = day.minutes > 0
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                when {
-                                                    hasStudied -> MaterialTheme.colorScheme.primary
-                                                    day.isToday -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                                    else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
-                                                }
-                                            )
-                                            .border(
-                                                width = if (day.isToday && !hasStudied) 1.5.dp else 0.dp,
-                                                color = if (day.isToday && !hasStudied) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                                shape = CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (hasStudied) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = "Studied",
-                                                tint = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.size(15.dp)
-                                            )
-                                        } else {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(6.dp)
-                                                    .clip(CircleShape)
-                                                    .background(
-                                                        if (day.isToday) MaterialTheme.colorScheme.primary
-                                                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
-                                                    )
-                                            )
-                                        }
-                                    }
-                                    Text(
-                                        text = day.dayName.take(1),
-                                        fontSize = 11.sp,
-                                        fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (day.isToday) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
+                        Text(
+                            "Peak day: " + (peakMonthDay?.let { it.dayName + " " + it.dayNumber + " • " + it.minutes + "m" } ?: "No study yet"),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     }
                 }
             }
