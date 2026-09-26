@@ -74,6 +74,7 @@ private val THEME_PRESET_LIST = listOf(
     Triple("mint", "Mint Fresh", Color(0xFF0D9488)),
     Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C)),
     Triple("cyberpunk", "Cyberpunk / Synthwave 80s", Color(0xFFFF2A85)),
+    Triple("cyber_runner", "Mirror's Edge / Cyber Runner", Color(0xFFEF4444)),
 )
 
 private fun formatRelativeTime(timestamp: Long): String {
