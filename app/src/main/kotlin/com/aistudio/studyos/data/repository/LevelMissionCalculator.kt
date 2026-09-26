@@ -46,43 +46,59 @@ object LevelMissionCalculator {
         val spent: Int
     )
 
-    // The requested anchor points are kept explicit; intermediate levels are
-    // smoothly interpolated so progression does not jump abruptly.
+    // Keep the original progression anchors for XP, study time, peak focus,
+    // and shop spending. Topic breadth has its own curve so changing topic
+    // progression cannot accidentally change the other four missions.
     private val anchors = listOf(
         Anchor(1, 150, 60, 1, 30, 50),
-        Anchor(10, 1800, 800, 4, 90, 500),
-        Anchor(20, 3200, 1600, 8, 120, 1000),
-        Anchor(30, 4800, 3000, 12, 150, 1800),
-        Anchor(40, 6800, 4500, 17, 180, 2600),
-        Anchor(50, 10000, 7000, 23, 210, 4000),
-        Anchor(60, 14000, 9500, 28, 240, 5200),
-        Anchor(70, 18000, 12000, 32, 255, 6500),
-        Anchor(80, 22000, 14500, 36, 270, 7600),
-        Anchor(90, 26000, 17000, 38, 285, 8800),
-        Anchor(100, 30000, 20000, 40, 300, 10000)
+        Anchor(10, 1800, 800, 3, 90, 500),
+        Anchor(25, 4000, 2500, 5, 150, 1500),
+        Anchor(50, 10000, 7000, 8, 210, 4000),
+        Anchor(100, 30000, 20000, 12, 300, 10000)
     )
+
+    private val topicAnchors = listOf(
+        1 to 1,
+        10 to 4,
+        20 to 8,
+        30 to 12,
+        40 to 17,
+        50 to 23,
+        60 to 28,
+        70 to 32,
+        80 to 36,
+        90 to 38,
+        100 to 40
+    )
+
+    private fun interpolate(lowerLevel: Int, lowerValue: Int, upperLevel: Int, upperValue: Int, level: Int): Int {
+        if (lowerLevel == upperLevel) return lowerValue
+        val fraction = (level - lowerLevel).toDouble() / (upperLevel - lowerLevel).toDouble()
+        return (lowerValue + (upperValue - lowerValue) * fraction).roundToInt()
+    }
 
     fun targetsForLevel(level: Int): LevelMissionTargets {
         val safeLevel = level.coerceIn(1, 100)
         val lower = anchors.lastOrNull { it.level <= safeLevel } ?: anchors.first()
         val upper = anchors.firstOrNull { it.level >= safeLevel } ?: anchors.last()
 
-        if (lower.level == upper.level) {
-            return LevelMissionTargets(
-                safeLevel, lower.xp, lower.minutes, lower.topics, lower.peak, lower.spent
-            )
-        }
-
-        val fraction = (safeLevel - lower.level).toDouble() / (upper.level - lower.level).toDouble()
-        fun lerp(a: Int, b: Int): Int = (a + (b - a) * fraction).roundToInt()
+        val topicLower = topicAnchors.lastOrNull { it.first <= safeLevel } ?: topicAnchors.first()
+        val topicUpper = topicAnchors.firstOrNull { it.first >= safeLevel } ?: topicAnchors.last()
+        val topicCount = interpolate(
+            topicLower.first,
+            topicLower.second,
+            topicUpper.first,
+            topicUpper.second,
+            safeLevel
+        )
 
         return LevelMissionTargets(
             level = safeLevel,
-            xpRequired = lerp(lower.xp, upper.xp),
-            studyMinutesRequired = lerp(lower.minutes, upper.minutes),
-            topicCountRequired = lerp(lower.topics, upper.topics),
-            peakFocusMinutesRequired = lerp(lower.peak, upper.peak),
-            xpSpentRequired = lerp(lower.spent, upper.spent)
+            xpRequired = interpolate(lower.level, lower.xp, upper.level, upper.xp, safeLevel),
+            studyMinutesRequired = interpolate(lower.level, lower.minutes, upper.level, upper.minutes, safeLevel),
+            topicCountRequired = topicCount,
+            peakFocusMinutesRequired = interpolate(lower.level, lower.peak, upper.level, upper.peak, safeLevel),
+            xpSpentRequired = interpolate(lower.level, lower.spent, upper.level, upper.spent, safeLevel)
         )
     }
 
