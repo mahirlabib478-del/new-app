@@ -127,6 +127,8 @@ fun DynamicStudyWallpaper(
             "sunrise" -> Color(0xFFFFF7ED)
             "light" -> Color(0xFFF8FAFC)
             "deep_teal" -> Color(0xFF071414)
+            "cyberpunk" -> Color(0xFF0F081D)
+            "dracula" -> Color(0xFF21222C)
             else -> Color(0xFF0C0E17) // midnight & default
         }
 
