@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import com.aistudio.studyos.service.SponsorWebViewActivity
 
 /**
  * Manages Adsterra Direct Links.
@@ -14,15 +15,19 @@ object AdManager {
     // Use the actual Smart Direct Link, not the Blogspot landing page.
     const val PROFITABLE_DIRECT_LINK_URL = "https://www.profitableratecpmnetwork.com/jvkt09pgb?key=298992f0599b6af9f3dc8d8b5f30e40c"
 
-    fun openDirectLink(context: Context, url: String = PROFITABLE_DIRECT_LINK_URL) {
+    fun openDirectLink(
+        context: Context,
+        url: String = PROFITABLE_DIRECT_LINK_URL,
+        confirmationMessage: String = "🎉 XP Added!"
+    ) {
         try {
-            val uri = Uri.parse(url)
-            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val intent = Intent(context, SponsorWebViewActivity::class.java).apply {
+                putExtra(SponsorWebViewActivity.EXTRA_URL, url)
+                putExtra(SponsorWebViewActivity.EXTRA_CONFIRMATION_MESSAGE, confirmationMessage)
             }
             context.startActivity(intent)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to launch direct link: ${e.message}", e)
+            Log.e(TAG, "Failed to launch in-app direct link: ${e.message}", e)
         }
     }
 
