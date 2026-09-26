@@ -516,7 +516,7 @@ fun ProfileScreen(
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "Wallpapers are disabled in Light themes to ensure maximum text sharpness and timer visibility. Switch to a Dark theme (Midnight, Pitch Black, Dark, Ocean) to use wallpapers.",
+                                    text = "Wallpapers are disabled in Light themes to ensure maximum text sharpness and timer visibility. Switch to a supported Dark theme to use wallpapers.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
