@@ -113,14 +113,16 @@ class ProfileScreenFeatureTest {
             "ocean",
             "mint",
             "sunrise",
-            "deep_teal"
+            "cyberpunk",
+            "cyber_runner"
         )
 
-        assertEquals(7, themeKeys.size)
+        assertEquals(8, themeKeys.size)
         assertTrue(themeKeys.contains("dark"))
         assertTrue(themeKeys.contains("light"))
         assertTrue(themeKeys.contains("pitch_black"))
-        assertTrue(themeKeys.contains("deep_teal"))
+        assertTrue(themeKeys.contains("cyberpunk"))
+        assertTrue(themeKeys.contains("cyber_runner"))
     }
 
     @Test
