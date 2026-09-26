@@ -128,14 +128,14 @@ private val THEME_OPTIONS = listOf(
 @Composable
 private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Boolean, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.width(160.dp).clickable(onClick = onClick).testTag("theme_card_" + option.key),
+        modifier = Modifier.width(112.dp).clickable(onClick = onClick).testTag("theme_card_" + option.key),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.height(6.dp))
-            Text(option.name, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, maxLines = 2)
+            Text(option.name, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, maxLines = 3)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 when {
@@ -222,7 +222,7 @@ fun ProfileScreen(
     }
 
     if (showThemePassFor != null) {
-        ThemePassPurchaseDialog(viewModel, showThemePassFor!!, totalXP, false) { showThemePassFor = null }
+        ThemePassPurchaseDialog(viewModel, showThemePassFor!!, totalXP, false, onOpenShop = { showThemePassFor = null; showXPShop = true }) { showThemePassFor = null }
     }
 
     if (showWallpaperPassPrompt) {
@@ -1376,7 +1376,7 @@ fun ProfileScreen(
     }
 }
 @Composable
-private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String, totalXP: Int, shopMode: Boolean, onDismiss: () -> Unit) {
+private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String, totalXP: Int, shopMode: Boolean, onOpenShop: () -> Unit, onDismiss: () -> Unit) {
     val title = if (themeKey == "cyberpunk") "Cyberpunk / Synthwave 80s" else "Mirror's Edge / Cyber Runner"
     val baseDailyRate = if (themeKey == "cyberpunk") 400 else 500
     var selectedDays by remember { mutableStateOf(if (shopMode) 3 else 1) }
@@ -1436,6 +1436,6 @@ private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String,
                 Text(if (canAfford) "Get Pass" else "Need " + (finalCost - totalXP) + " XP")
             }
         },
-        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = {\n            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {\n                OutlinedButton(onClick = onOpenShop) { Text("Open XP Shop") }\n                TextButton(onClick = onDismiss) { Text("Cancel") }\n            }\n        }
     )
 }
