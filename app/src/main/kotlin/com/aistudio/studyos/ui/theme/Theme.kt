@@ -149,7 +149,7 @@ fun isLightPreset(preset: String): Boolean = preset in setOf("paper", "mint", "s
 
 @Composable
 fun StudyOSTheme(
-    preset: String = "midnight",
+    preset: String = "pitch_black",
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (preset) {
