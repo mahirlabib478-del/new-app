@@ -124,6 +124,32 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("cyber_runner", "Mirror's Edge / Cyber Runner", Icons.Default.Bolt, Color(0xFFEF4444)),
 )
 
+@Composable
+private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Boolean, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.width(160.dp).clickable(onClick = onClick).testTag("theme_card_" + option.key),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+    ) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(option.name, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, maxLines = 2)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                when {
+                    isSelected -> "Applied"
+                    locked -> if (option.key == "cyber_runner") "🔒 24H • 500 XP" else "🔒 24H • 400 XP"
+                    else -> "Free"
+                },
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (locked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
 private fun formatDailyGoal(minutes: Int): String = when {
     minutes >= 60 && minutes % 60 == 0 -> "${minutes / 60}h"
     minutes >= 60 -> "${minutes / 60}h ${minutes % 60}m"
@@ -151,6 +177,7 @@ fun ProfileScreen(
     var cacheCleanedSuccess by remember { mutableStateOf(false) }
     var showXPShop by remember { mutableStateOf(false) }
     var showWallpaperPassPrompt by remember { mutableStateOf(false) }
+    var showThemePassFor by remember { mutableStateOf<String?>(null) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
@@ -191,6 +218,10 @@ fun ProfileScreen(
             viewModel = viewModel,
             onDismiss = { showXPShop = false }
         )
+    }
+
+    if (showThemePassFor != null) {
+        ThemePassPurchaseDialog(viewModel, showThemePassFor!!, totalXP, false) { showThemePassFor = null }
     }
 
     if (showWallpaperPassPrompt) {
@@ -397,68 +428,33 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Palette,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Color Theme & Aesthetics",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Text("Color Theme & Aesthetics", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                     }
 
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(
-                            items = THEME_OPTIONS,
-                            key = { it.key }
-                        ) { option ->
+                    Text("FREE THEMES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        items(items = THEME_OPTIONS.filter { !viewModel.isPremiumTheme(it.key) }, key = { it.key }) { option ->
                             val isSelected = currentTheme == option.key
-                            Card(
-                                modifier = Modifier
-                                    .clickable { viewModel.setTheme(option.key) }
-                                    .testTag("theme_card_${option.key}"),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected)
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Icon(
-                                        imageVector = option.icon,
-                                        contentDescription = null,
-                                        tint = option.color,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = option.name,
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
+                            ThemeOptionCard(option, isSelected, false) { viewModel.setTheme(option.key) }
+                        }
+                    }
+
+                    Text("PREMIUM • 24H PASS", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        items(items = THEME_OPTIONS.filter { viewModel.isPremiumTheme(it.key) }, key = { it.key }) { option ->
+                            val isSelected = currentTheme == option.key
+                            val active = viewModel.isPremiumThemePassActive(option.key)
+                            ThemeOptionCard(option, isSelected, !active) {
+                                if (active) viewModel.setTheme(option.key) else showThemePassFor = option.key
                             }
                         }
                     }
@@ -1377,4 +1373,65 @@ fun ProfileScreen(
             }
         )
     }
+}
+@Composable
+private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String, totalXP: Int, shopMode: Boolean, onDismiss: () -> Unit) {
+    val title = if (themeKey == "cyberpunk") "Cyberpunk / Synthwave 80s" else "Mirror's Edge / Cyber Runner"
+    val baseDailyRate = if (themeKey == "cyberpunk") 400 else 500
+    var selectedDays by remember { mutableStateOf(if (shopMode) 3 else 1) }
+    val hasDiscount = remember(shopMode) { shopMode && kotlin.random.Random.nextFloat() < 0.30f }
+    val discountPercent = if (hasDiscount) when {
+        selectedDays == 1 -> 0
+        selectedDays in 2..6 -> 15
+        selectedDays in 7..13 -> 25
+        selectedDays in 14..29 -> 35
+        else -> 50
+    } else 0
+    val rawCost = selectedDays * baseDailyRate
+    val finalCost = if (discountPercent > 0) rawCost * (100 - discountPercent) / 100 else rawCost
+    val savings = rawCost - finalCost
+    val canAfford = totalXP >= finalCost
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(if (shopMode) "Choose a longer Theme Pass:" else "Premium theme access for 24 hours.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (shopMode) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(3, 7, 14, 30).forEach { days ->
+                            Surface(
+                                Modifier.weight(1f).clickable { selectedDays = days },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (selectedDays == days) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = if (selectedDays == days) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            ) {
+                                Box(Modifier.padding(vertical = 8.dp), contentAlignment = Alignment.Center) { Text(days.toString() + " d", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                            }
+                        }
+                    }
+                }
+                Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(if (shopMode) "Total Price" else "24-Hour Pass", fontWeight = FontWeight.SemiBold)
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                if (discountPercent > 0) Text(rawCost.toString() + " XP", style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(finalCost.toString() + " XP", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        if (discountPercent > 0) Text("-" + discountPercent + "% DISCOUNT • You save " + savings + " XP!", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF047857))
+                        Text("Your balance: " + totalXP + " XP", fontSize = 12.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { _, _ -> onDismiss() } }, enabled = canAfford) {
+                Text(if (canAfford) "Get Pass" else "Need " + (finalCost - totalXP) + " XP")
+            }
+        },
+        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }
