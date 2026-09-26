@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -228,6 +229,9 @@ fun ProgressScreen(
 
     val displayedLogs = allLogs
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    var selectedMonthDay by rememberSaveable {
+        mutableIntStateOf(Calendar.getInstance().get(Calendar.DAY_OF_MONTH))
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -561,7 +565,7 @@ fun ProgressScreen(
                         ) {
                             Column {
                                 Text(
-                                    activeMonthDays.toString() + "/30 Active Days",
+                                    activeMonthDays.toString() + "/" + monthlyData.size + " Active Days",
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -661,6 +665,21 @@ fun ProgressScreen(
             val monthMinutes = totalMonthMinutes % 60
             val firstDayOffset = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK) - 1
             val cells: List<DayActivityData?> = List(firstDayOffset) { null } + monthlyData
+            val selectedDay = monthlyData.firstOrNull { it.dayNumber == selectedMonthDay }
+            val selectedDayStart = Calendar.getInstance().apply {
+                set(Calendar.DAY_OF_MONTH, selectedMonthDay.coerceIn(1, monthlyData.size))
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            val selectedDayEnd = Calendar.getInstance().apply {
+                timeInMillis = selectedDayStart
+                add(Calendar.DAY_OF_MONTH, 1)
+            }.timeInMillis
+            val selectedDaySessionCount = currentMonthLogs.count {
+                it.timestamp in selectedDayStart until selectedDayEnd
+            }
             val monthLabel = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.time)
             Card(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).testTag("monthly_activity_card"),
@@ -691,6 +710,7 @@ fun ProgressScreen(
                                         val intensity = if (maxMinutes > 0 && day.minutes > 0) (day.minutes.toFloat() / maxMinutes).coerceIn(0.15f, 1f) else 0f
                                         Box(
                                             Modifier.weight(1f).size(26.dp).clip(RoundedCornerShape(6.dp))
+                                                .clickable { selectedMonthDay = day.dayNumber }
                                                 .background(if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity) else MaterialTheme.colorScheme.surface)
                                                 .border(
                                                     width = if (day.isToday) 2.dp else 1.dp,
@@ -703,6 +723,31 @@ fun ProgressScreen(
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                    selectedDay?.let { day ->
+                        val selectedLabel = SimpleDateFormat("MMM d", Locale.getDefault()).format(
+                            Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, day.dayNumber) }.time
+                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                        ) {
+                            Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                                Text(
+                                    selectedLabel + if (day.isToday) " • Today" else "",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    (if (day.minutes >= 60) (day.minutes / 60).toString() + "h " + (day.minutes % 60) + "m" else day.minutes.toString() + "m") +
+                                            " studied • " + selectedDaySessionCount + if (selectedDaySessionCount == 1) " session" else " sessions",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
