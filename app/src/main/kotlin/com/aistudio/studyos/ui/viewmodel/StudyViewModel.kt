@@ -203,6 +203,18 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         .onEach { _isAllLogsLoaded.value = true }
         .stateIn(viewModelScope, SharingStarted.Eagerly, cachedRecentSessions)
 
+    val currentYearMinutes: StateFlow<Int> = repository.getCurrentYearMinutes()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    val currentYearSessionCount: StateFlow<Int> = repository.getCurrentYearSessionCount()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    val distinctStudyTopicCount: StateFlow<Int> = repository.getDistinctStudyTopicCount()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    val peakDailyFocusMinutes: StateFlow<Int> = repository.getPeakDailyFocusMinutes()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
     val userProfile: StateFlow<UserProfileEntity?> = repository.getUserProfile()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
