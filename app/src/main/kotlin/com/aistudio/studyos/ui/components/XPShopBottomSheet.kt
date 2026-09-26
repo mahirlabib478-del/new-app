@@ -825,6 +825,38 @@ private fun ThemePassDurationSelectionDialog(
                 }
 
                 Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Custom Days:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            IconButton(
+                                onClick = { if (selectedDays > 1) selectedDays-- },
+                                enabled = selectedDays > 1,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "Decrease Days")
+                            }
+                            Text(selectedDays.toString() + if (selectedDays == 1) " Day" else " Days", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            IconButton(
+                                onClick = { if (selectedDays < 60) selectedDays++ },
+                                enabled = selectedDays < 60,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Increase Days")
+                            }
+                        }
+                    }
+                }
+
+                Surface(
                     Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
