@@ -96,6 +96,16 @@ fun XPShopBottomSheet(
     val audioPassRemaining by viewModel.audioPassRemainingFormatted.collectAsState()
 
     var passTypeToPurchase by remember { mutableStateOf<PassType?>(null) }
+    var themeKeyToPurchase by remember { mutableStateOf<String?>(null) }
+
+    themeKeyToPurchase?.let { themeKey ->
+        ThemePassDurationSelectionDialog(
+            viewModel = viewModel,
+            themeKey = themeKey,
+            totalXP = totalXP,
+            onDismiss = { themeKeyToPurchase = null }
+        )
+    }
 
     // 30-minute cooldown for Free XP Drop
     val cooldownMs by viewModel.freeXpDropCooldownRemainingMs.collectAsState()
@@ -319,7 +329,36 @@ fun XPShopBottomSheet(
                 }
             )
 
-            // ITEM 4: ⚡ Instant Free XP Drop via Sponsor (70% +150 XP, 30% +250 XP; 30-min cooldown; 5s silent delay)
+            // ITEM 4: 🎨 Premium Theme Passes
+            ShopItemCard(
+                icon = Icons.Default.Bolt,
+                iconColor = MaterialTheme.colorScheme.primary,
+                title = "Cyberpunk / Synthwave 80s",
+                badgeText = if (viewModel.isPremiumThemePassActive("cyberpunk")) "Active" else "Premium",
+                badgeColor = if (viewModel.isPremiumThemePassActive("cyberpunk")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                description = "Premium visual theme. Buy 3+ day passes here; the 24-hour quick pass is available from Settings/Profile.",
+                costText = "From 400 XP / day",
+                isButtonEnabled = true,
+                buttonLabel = "Select Duration",
+                testTag = "btn_buy_cyberpunk_theme_pass",
+                onAction = { themeKeyToPurchase = "cyberpunk" }
+            )
+
+            ShopItemCard(
+                icon = Icons.Default.Bolt,
+                iconColor = MaterialTheme.colorScheme.primary,
+                title = "Mirror's Edge / Cyber Runner",
+                badgeText = if (viewModel.isPremiumThemePassActive("cyber_runner")) "Active" else "Premium",
+                badgeColor = if (viewModel.isPremiumThemePassActive("cyber_runner")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                description = "Premium visual theme. Buy 3+ day passes here; the 24-hour quick pass is available from Settings/Profile.",
+                costText = "From 500 XP / day",
+                isButtonEnabled = true,
+                buttonLabel = "Select Duration",
+                testTag = "btn_buy_cyber_runner_theme_pass",
+                onAction = { themeKeyToPurchase = "cyber_runner" }
+            )
+
+            // ITEM 6: ⚡ Instant Free XP Drop via Sponsor (70% +150 XP, 30% +250 XP; 30-min cooldown; 5s silent delay)
             ShopItemCard(
                 icon = Icons.Default.Bolt,
                 iconColor = MaterialTheme.colorScheme.primary,
@@ -727,6 +766,101 @@ private fun PassDurationSelectionDialog(
             ) {
                 Text("Cancel")
             }
+        }
+    )
+}@Composable
+private fun ThemePassDurationSelectionDialog(
+    viewModel: StudyViewModel,
+    themeKey: String,
+    totalXP: Int,
+    onDismiss: () -> Unit
+) {
+    val title = if (themeKey == "cyberpunk") "Cyberpunk / Synthwave 80s" else "Mirror's Edge / Cyber Runner"
+    val baseDailyRate = if (themeKey == "cyberpunk") 400 else 500
+    var selectedDays by remember { mutableIntStateOf(3) }
+
+    val hasDiscount = remember { Random.nextFloat() < 0.30f }
+    val discountPercent = if (hasDiscount) {
+        when {
+            selectedDays in 2..6 -> 15
+            selectedDays in 7..13 -> 25
+            selectedDays in 14..29 -> 35
+            else -> 50
+        }
+    } else 0
+
+    val rawCost = selectedDays * baseDailyRate
+    val finalCost = if (discountPercent > 0) rawCost * (100 - discountPercent) / 100 else rawCost
+    val savingsXP = rawCost - finalCost
+    val canAfford = totalXP >= finalCost
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.Bolt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                Text(title, fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text("Select a longer pass:", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(3, 7, 14, 30).forEach { days ->
+                        val selected = selectedDays == days
+                        Surface(
+                            Modifier.weight(1f).clickable { selectedDays = days },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        ) {
+                            Box(Modifier.padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                                Text(days.toString() + "d", fontSize = 12.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
+                            }
+                        }
+                    }
+                }
+
+                Surface(
+                    Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Total Price:", fontWeight = FontWeight.SemiBold)
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                if (discountPercent > 0) {
+                                    Text(rawCost.toString() + " XP", style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Text(finalCost.toString() + " XP", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        if (discountPercent > 0) {
+                            Text("-" + discountPercent + "% DISCOUNT • You save " + savingsXP + " XP!", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF047857))
+                        }
+                        Text("Your balance: " + totalXP + " XP", fontSize = 12.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { _, _ -> onDismiss() }
+                },
+                enabled = canAfford,
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(if (canAfford) "Buy " + selectedDays + " Days" else "Need " + (finalCost - totalXP) + " More XP")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(10.dp)) { Text("Cancel") }
         }
     )
 }
