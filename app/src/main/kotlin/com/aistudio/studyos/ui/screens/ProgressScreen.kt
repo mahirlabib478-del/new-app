@@ -424,7 +424,7 @@ fun ProgressScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Total Time",
+                                text = "Total Time (" + Calendar.getInstance().get(Calendar.YEAR) + ")",
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -432,14 +432,14 @@ fun ProgressScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (totalHours > 0) "${totalHours}h ${remainingMins}m" else "${remainingMins}m",
+                            text = if (currentYearMinutes / 60 > 0) (currentYearMinutes / 60).toString() + "h " + (currentYearMinutes % 60) + "m" else currentYearMinutes.toString() + "m",
                             fontWeight = FontWeight.Black,
                             fontSize = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "${allLogs.size} completed sessions",
+                            text = "Jan 1 – Present • " + currentYearSessionCount + " Sessions in " + Calendar.getInstance().get(Calendar.YEAR),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
