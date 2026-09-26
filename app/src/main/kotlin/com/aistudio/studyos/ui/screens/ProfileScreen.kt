@@ -614,7 +614,7 @@ fun ProfileScreen(
                             }
                         }
 
-                        // Custom Picture from Gallery Option (24-Hour Pass)
+                        // Custom Picture from Gallery Option
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
