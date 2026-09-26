@@ -74,31 +74,11 @@ class StudyRepository(
     }
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
 
-    fun getCurrentYearMinutes(): Flow<Int> {
-        val yearStart = Calendar.getInstance().apply {
-            set(Calendar.MONTH, Calendar.JANUARY)
-            set(Calendar.DAY_OF_MONTH, 1)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val now = System.currentTimeMillis()
-        return database.sessionLogDao().getMinutesBetween(yearStart.timeInMillis, now + 1L)
-    }
+    fun getCurrentYearMinutes(): Flow<Int> =
+        database.sessionLogDao().getCurrentYearMinutes()
 
-    fun getCurrentYearSessionCount(): Flow<Int> {
-        val yearStart = Calendar.getInstance().apply {
-            set(Calendar.MONTH, Calendar.JANUARY)
-            set(Calendar.DAY_OF_MONTH, 1)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val now = System.currentTimeMillis()
-        return database.sessionLogDao().getSessionCountBetween(yearStart.timeInMillis, now + 1L)
-    }
+    fun getCurrentYearSessionCount(): Flow<Int> =
+        database.sessionLogDao().getCurrentYearSessionCount()
 
     fun getDistinctStudyTopicCount(): Flow<Int> = database.sessionLogDao().getDistinctSubjectCount()
     fun getPeakDailyFocusMinutes(): Flow<Int> = database.sessionLogDao().getPeakDailyFocusMinutes()
