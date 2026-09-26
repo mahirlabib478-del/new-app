@@ -67,7 +67,6 @@ import java.util.Date
 import java.util.Locale
 
 private val THEME_PRESET_LIST = listOf(
-    Triple("midnight", "Midnight Indigo", Color(0xFF6366F1)),
     Triple("pitch_black", "Pitch Black", Color(0xFF00E5FF)),
     Triple("dark", "Dark", Color(0xFF64748B)),
     Triple("light", "Light", Color(0xFF2563EB)),
@@ -75,7 +74,8 @@ private val THEME_PRESET_LIST = listOf(
     Triple("mint", "Mint Fresh", Color(0xFF0D9488)),
     Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C)),
     Triple("deep_teal", "Deep Teal", Color(0xFF14B8A6)),
-    Triple("soft_mint", "Soft Mint", Color(0xFF0F766E))
+    Triple("cyberpunk", "Cyberpunk / Synthwave 80s", Color(0xFFFF2A85)),
+    Triple("dracula", "Dracula Pro", Color(0xFFBD93F9))
 )
 
 private fun formatRelativeTime(timestamp: Long): String {
