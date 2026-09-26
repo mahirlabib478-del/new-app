@@ -329,33 +329,10 @@ fun XPShopBottomSheet(
                 }
             )
 
-            // ITEM 4: 🎨 Premium Theme Passes
-            ShopItemCard(
-                icon = Icons.Default.Bolt,
-                iconColor = MaterialTheme.colorScheme.primary,
-                title = "Cyberpunk / Synthwave 80s",
-                badgeText = if (viewModel.isPremiumThemePassActive("cyberpunk")) "Active" else "Premium",
-                badgeColor = if (viewModel.isPremiumThemePassActive("cyberpunk")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                description = "Premium visual theme. Buy 3+ day passes here; the 24-hour quick pass is available from Settings/Profile.",
-                costText = "From 400 XP / day",
-                isButtonEnabled = true,
-                buttonLabel = "Select Duration",
-                testTag = "btn_buy_cyberpunk_theme_pass",
-                onAction = { themeKeyToPurchase = "cyberpunk" }
-            )
-
-            ShopItemCard(
-                icon = Icons.Default.Bolt,
-                iconColor = MaterialTheme.colorScheme.primary,
-                title = "Mirror's Edge / Cyber Runner",
-                badgeText = if (viewModel.isPremiumThemePassActive("cyber_runner")) "Active" else "Premium",
-                badgeColor = if (viewModel.isPremiumThemePassActive("cyber_runner")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                description = "Premium visual theme. Buy 3+ day passes here; the 24-hour quick pass is available from Settings/Profile.",
-                costText = "From 500 XP / day",
-                isButtonEnabled = true,
-                buttonLabel = "Select Duration",
-                testTag = "btn_buy_cyber_runner_theme_pass",
-                onAction = { themeKeyToPurchase = "cyber_runner" }
+            // Premium Theme Passes — grouped compact section
+            PremiumThemeSection(
+                viewModel = viewModel,
+                onSelectTheme = { themeKeyToPurchase = it }
             )
 
             // ITEM 6: ⚡ Instant Free XP Drop via Sponsor (70% +150 XP, 30% +250 XP; 30-min cooldown; 5s silent delay)
@@ -389,6 +366,94 @@ fun XPShopBottomSheet(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun PremiumThemeSection(
+    viewModel: StudyViewModel,
+    onSelectTheme: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().testTag("premium_theme_section"),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Premium Themes", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text("Choose a theme and set the pass duration", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            PremiumThemeRow(
+                title = "Cyberpunk / Synthwave 80s",
+                price = "400 XP/day",
+                active = viewModel.isPremiumThemePassActive("cyberpunk"),
+                testTag = "btn_buy_cyberpunk_theme_pass",
+                onClick = { onSelectTheme("cyberpunk") }
+            )
+            PremiumThemeRow(
+                title = "Mirror's Edge / Cyber Runner",
+                price = "500 XP/day",
+                active = viewModel.isPremiumThemePassActive("cyber_runner"),
+                testTag = "btn_buy_cyber_runner_theme_pass",
+                onClick = { onSelectTheme("cyber_runner") }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PremiumThemeRow(
+    title: String,
+    price: String,
+    active: Boolean,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            ) {
+                Icon(
+                    Icons.Default.Bolt,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(8.dp).size(20.dp)
+                )
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    if (active) "Active • $price" else "Premium • $price",
+                    fontSize = 11.sp,
+                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            FilledTonalButton(
+                onClick = onClick,
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp),
+                modifier = Modifier.testTag(testTag)
+            ) {
+                Text("Select", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
