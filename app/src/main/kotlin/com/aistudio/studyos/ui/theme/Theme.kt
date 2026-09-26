@@ -10,23 +10,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val MidnightColorScheme = darkColorScheme(
-    primary = IndigoPrimary,
-    onPrimary = Color.White,
-    primaryContainer = MidnightCard,
-    onPrimaryContainer = IndigoLight,
-    secondary = Color(0xFF38BDF8),
-    onSecondary = Color.Black,
-    secondaryContainer = Color(0xFF1E293B),
-    onSecondaryContainer = Color(0xFFE2E8F0),
-    background = MidnightBg,
-    onBackground = Color(0xFFF1F5F9),
-    surface = MidnightSurface,
-    onSurface = Color(0xFFF8FAFC),
-    surfaceVariant = MidnightCard,
-    onSurfaceVariant = Color(0xFF94A3B8)
-)
-
 private val PitchBlackColorScheme = darkColorScheme(
     primary = CyanAccent,
     onPrimary = Color.Black,
@@ -39,21 +22,6 @@ private val PitchBlackColorScheme = darkColorScheme(
     onSurface = Color.White,
     surfaceVariant = Color(0xFF1E1E1E),
     onSurfaceVariant = Color(0xFFA0A0A0)
-)
-
-private val MidnightIndigoColorScheme = darkColorScheme(
-    primary = MidnightIndigoPrimary,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFF1B2540),
-    onPrimaryContainer = MidnightIndigoAccent,
-    secondary = Color(0xFF818CF8),
-    onSecondary = Color.White,
-    background = MidnightIndigoBg,
-    onBackground = Color(0xFFF8FAFC),
-    surface = MidnightIndigoSurface,
-    onSurface = Color(0xFFF8FAFC),
-    surfaceVariant = Color(0xFF1B2540),
-    onSurfaceVariant = Color(0xFF94A3B8)
 )
 
 private val DeepTealColorScheme = darkColorScheme(
@@ -71,44 +39,6 @@ private val DeepTealColorScheme = darkColorScheme(
     onSurfaceVariant = Color(0xFF94A3B8)
 )
 
-private val CleanIndigoColorScheme = lightColorScheme(
-    primary = CleanIndigoPrimary,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFE0E7FF),
-    onPrimaryContainer = Color(0xFF312E81),
-    secondary = CleanIndigoAccent,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFEEF2FF),
-    onSecondaryContainer = Color(0xFF3730A3),
-    background = CleanIndigoBg,
-    onBackground = Color(0xFF0F172A),
-    surface = CleanIndigoSurface,
-    onSurface = Color(0xFF0F172A),
-    surfaceVariant = Color(0xFFF1F5F9),
-    onSurfaceVariant = Color(0xFF64748B),
-    outline = Color(0xFFCBD5E1),
-    outlineVariant = Color(0xFFE2E8F0)
-)
-
-private val SoftMintColorScheme = lightColorScheme(
-    primary = SoftMintPrimary,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFCCFBF1),
-    onPrimaryContainer = Color(0xFF134E4A),
-    secondary = SoftMintAccent,
-    onSecondary = Color(0xFF042F2E),
-    secondaryContainer = Color(0xFFDFF7F3),
-    onSecondaryContainer = Color(0xFF115E59),
-    background = SoftMintBg,
-    onBackground = Color(0xFF13201F),
-    surface = SoftMintSurface,
-    onSurface = Color(0xFF13201F),
-    surfaceVariant = Color(0xFFE8F5F3),
-    onSurfaceVariant = Color(0xFF5F6F6D),
-    outline = Color(0xFFA7D8D1),
-    outlineVariant = Color(0xFFD7ECE9)
-)
-
 private val OceanColorScheme = darkColorScheme(
     primary = OceanAccent,
     onPrimary = Color.White,
@@ -121,25 +51,6 @@ private val OceanColorScheme = darkColorScheme(
     onSurface = Color(0xFFE0F2FE),
     surfaceVariant = Color(0xFF13283E),
     onSurfaceVariant = Color(0xFF94A3B8)
-)
-
-private val PaperColorScheme = lightColorScheme(
-    primary = Color(0xFF78350F),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFFDE68A),
-    onPrimaryContainer = Color(0xFF451A03),
-    secondary = Color(0xFFB45309),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFEF3C7),
-    onSecondaryContainer = Color(0xFF78350F),
-    background = Color(0xFFFBF8F1),
-    onBackground = Color(0xFF1C1917),
-    surface = Color(0xFFFFFDF8),
-    onSurface = Color(0xFF1C1917),
-    surfaceVariant = Color(0xFFF2ECE1),
-    onSurfaceVariant = Color(0xFF44403C),
-    outline = Color(0xFFD6C7B2),
-    outlineVariant = Color(0xFFE5DDD0)
 )
 
 private val MintColorScheme = lightColorScheme(
@@ -213,7 +124,7 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFE2E8F0)
 )
 
-fun isLightPreset(preset: String): Boolean = preset in setOf("paper", "mint", "sunrise", "light", "clean_indigo", "soft_mint")
+fun isLightPreset(preset: String): Boolean = preset in setOf("mint", "sunrise", "light")
 
 @Composable
 fun StudyOSTheme(
@@ -222,21 +133,17 @@ fun StudyOSTheme(
 ) {
     val colorScheme = when (preset) {
         "pitch_black" -> PitchBlackColorScheme
-        "midnight_indigo" -> MidnightIndigoColorScheme
         "deep_teal" -> DeepTealColorScheme
-        "clean_indigo" -> CleanIndigoColorScheme
-        "soft_mint" -> SoftMintColorScheme
         "dark" -> DarkColorScheme
         "light" -> LightColorScheme
         "ocean" -> OceanColorScheme
-        "paper" -> PaperColorScheme
         "mint" -> MintColorScheme
         "sunrise" -> SunriseColorScheme
-        else -> MidnightColorScheme
+        else -> PitchBlackColorScheme
     }
 
     val isDark = when (preset) {
-        "paper", "mint", "sunrise", "light", "clean_indigo", "soft_mint" -> false
+        "mint", "sunrise", "light" -> false
         else -> true
     }
 
