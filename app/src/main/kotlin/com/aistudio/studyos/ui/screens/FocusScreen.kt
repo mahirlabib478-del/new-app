@@ -1913,7 +1913,6 @@ private fun StudySessionCompleteScreen(
         val context = LocalContext.current
         val canShowBonus = remember { com.aistudio.studyos.service.AdManager.canShowFocusClaimBonus(context) }
         var bonusClaimed by remember { mutableStateOf(false) }
-        var showDirectSponsorDialog by remember { mutableStateOf(false) }
 
         if (canShowBonus) {
             LaunchedEffect(Unit) {
@@ -1923,14 +1922,6 @@ private fun StudySessionCompleteScreen(
             // 70% chance 2X multiplier, 30% chance 3X multiplier
             val bonusMultiplier = remember { if (kotlin.random.Random.nextFloat() < 0.30f) 3 else 2 }
             val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
-
-            if (showDirectSponsorDialog) {
-                com.aistudio.studyos.ui.components.DirectSponsorRewardDialog(
-                    onDismiss = {
-                        showDirectSponsorDialog = false
-                    }
-                )
-            }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -1966,7 +1957,7 @@ private fun StudySessionCompleteScreen(
                             text = if (bonusClaimed)
                                 "You multiplied your earned XP for this study session!"
                             else
-                                "Support Study OS sponsor to unlock ${bonusMultiplier}X XP bonus!",
+                                "Claim your ${bonusMultiplier}X XP bonus. A sponsor page will open after claiming.",
                             fontSize = 12.sp,
                             lineHeight = 16.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1978,16 +1969,15 @@ private fun StudySessionCompleteScreen(
                             if (!bonusClaimed) {
                                 bonusClaimed = true
                                 onClaimBonusXP(calculatedBonusXP)
-                                if (kotlin.random.Random.nextFloat() < 0.70f) {
-                                    com.aistudio.studyos.service.AdManager.openDirectLink(context)
-                                } else {
-                                    showDirectSponsorDialog = true
+                                com.aistudio.studyos.service.AdManager.openDirectLink(context)
+                                kotlinx.coroutines.GlobalScope.launch {
+                                    kotlinx.coroutines.delay(7000L)
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        "🎉 +$calculatedBonusXP XP Added! ($\{bonusMultiplier}X XP for this session)",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
                                 }
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "🎉 +$calculatedBonusXP Bonus XP Added! ($\{bonusMultiplier}X XP for this session)",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
                             }
                         },
                         enabled = !bonusClaimed,
