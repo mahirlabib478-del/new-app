@@ -298,6 +298,18 @@ class ThemePreferences(context: Context) {
         return getCustomAudioPassExpiresAt() > System.currentTimeMillis()
     }
 
+    fun getPremiumThemePassExpiresAt(themeKey: String): Long {
+        return prefs.getLong("${KEY_PREMIUM_THEME_PASS_PREFIX}_$themeKey", 0L)
+    }
+
+    fun setPremiumThemePassExpiresAt(themeKey: String, expiresAt: Long) {
+        prefs.edit().putLong("${KEY_PREMIUM_THEME_PASS_PREFIX}_$themeKey", expiresAt).apply()
+    }
+
+    fun isPremiumThemePassActive(themeKey: String): Boolean {
+        return getPremiumThemePassExpiresAt(themeKey) > System.currentTimeMillis()
+    }
+
     fun getDoubleXpBoosterExpiresAt(): Long {
         return prefs.getLong(KEY_DOUBLE_XP_BOOSTER_EXPIRES, 0L)
     }
@@ -350,6 +362,7 @@ class ThemePreferences(context: Context) {
         private const val KEY_LAST_SHIELD_SAVED_DATE = "perk_last_shield_saved_date"
         private const val KEY_CUSTOM_WALLPAPER_PASS_EXPIRES = "perk_custom_wallpaper_pass_expires"
         private const val KEY_CUSTOM_AUDIO_PASS_EXPIRES = "perk_custom_audio_pass_expires"
+        private const val KEY_PREMIUM_THEME_PASS_PREFIX = "perk_premium_theme_pass_expires"
         private const val KEY_DOUBLE_XP_BOOSTER_EXPIRES = "perk_double_xp_booster_expires"
         private const val KEY_XP_BOOSTER_MULTIPLIER = "perk_xp_booster_multiplier"
         private const val KEY_LAST_FREE_XP_DROP_CLAIM_TIME = "perk_last_free_xp_drop_claim_time"
