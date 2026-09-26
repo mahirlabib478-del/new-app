@@ -1927,21 +1927,8 @@ private fun StudySessionCompleteScreen(
             if (showDirectSponsorDialog) {
                 com.aistudio.studyos.ui.components.DirectSponsorRewardDialog(
                     rewardXP = calculatedBonusXP,
-                    mode = if (bonusMultiplier == 3)
-                        com.aistudio.studyos.ui.components.SponsorRewardMode.CLAIM_3X_SECRET_KEY
-                    else
-                        com.aistudio.studyos.ui.components.SponsorRewardMode.CLAIM_2X,
                     onDismiss = {
                         showDirectSponsorDialog = false
-                    },
-                    onRewardEarned = { secretKey ->
-                        bonusClaimed = true
-                        onClaimBonusXP(calculatedBonusXP)
-                        android.widget.Toast.makeText(
-                            context,
-                            "🎉 +$calculatedBonusXP Bonus XP Added! (${bonusMultiplier}X XP for this session)",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
                     }
                 )
             }
@@ -1990,7 +1977,18 @@ private fun StudySessionCompleteScreen(
                     androidx.compose.material3.Button(
                         onClick = {
                             if (!bonusClaimed) {
-                                showDirectSponsorDialog = true
+                                bonusClaimed = true
+                                onClaimBonusXP(calculatedBonusXP)
+                                if (kotlin.random.Random.nextFloat() < 0.70f) {
+                                    com.aistudio.studyos.service.AdManager.openDirectLink(context)
+                                } else {
+                                    showDirectSponsorDialog = true
+                                }
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "🎉 +$calculatedBonusXP Bonus XP Added! ($\{bonusMultiplier}X XP for this session)",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
                             }
                         },
                         enabled = !bonusClaimed,
