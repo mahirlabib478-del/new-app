@@ -38,6 +38,15 @@ interface StudyPlanDao {
     @Query("UPDATE study_plans SET isCompleted = 1, isTimerRunning = 0, endAtElapsedRealtime = 0, endAtWallClockMillis = 0, lastUpdated = :timestamp WHERE id = :planId")
     suspend fun markPlanCompleted(planId: Long, timestamp: Long = System.currentTimeMillis())
 
+    @Query("UPDATE study_plans SET currentBlockIndex = :currentBlockIndex, remainingSecondsInBlock = 0, isTimerRunning = 0, endAtElapsedRealtime = 0, endAtWallClockMillis = 0, accumulatedStudiedSeconds = :accumulatedStudiedSeconds, accumulatedBillableMinutes = :accumulatedBillableMinutes, isCompleted = 1, lastUpdated = :timestamp WHERE id = :planId AND isCompleted = 0")
+    suspend fun completePlanEarlyIfActive(
+        planId: Long,
+        currentBlockIndex: Int,
+        accumulatedStudiedSeconds: Int,
+        accumulatedBillableMinutes: Int,
+        timestamp: Long = System.currentTimeMillis()
+    ): Int
+
     @Query("UPDATE study_plans SET isArchived = 1, isTimerRunning = 0, endAtElapsedRealtime = 0, endAtWallClockMillis = 0, lastUpdated = :timestamp WHERE isCompleted = 0 AND isDraft = 0 AND isArchived = 0 AND id != :exceptId")
     suspend fun archiveOtherActivePlans(exceptId: Long, timestamp: Long = System.currentTimeMillis())
 
