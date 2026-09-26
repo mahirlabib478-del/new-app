@@ -15,6 +15,9 @@ interface SessionLogDao {
     @Query("SELECT * FROM session_logs WHERE timestamp >= :sinceMillis ORDER BY timestamp DESC")
     fun getLogsSince(sinceMillis: Long): Flow<List<SessionLogEntity>>
 
+    @Query("SELECT * FROM session_logs WHERE strftime('%Y-%m', timestamp / 1000, 'unixepoch', 'localtime') = strftime('%Y-%m', 'now', 'localtime') ORDER BY timestamp DESC")
+    fun getCurrentMonthLogs(): Flow<List<SessionLogEntity>>
+
     @Query("SELECT * FROM session_logs ORDER BY timestamp DESC LIMIT :limit")
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>>
 
