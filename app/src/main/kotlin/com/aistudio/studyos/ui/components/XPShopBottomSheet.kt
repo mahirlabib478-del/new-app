@@ -126,7 +126,6 @@ fun XPShopBottomSheet(
     // 70% chance +150 XP, 30% chance +250 XP instant drop
     val offerBonusXP = remember { if (Random.nextFloat() < 0.30f) 250 else 150 }
 
-    var showBoosterDialog by remember { mutableStateOf(false) }
     var showDirectSponsorDialog by remember { mutableStateOf(false) }
 
     if (showDirectSponsorDialog) {
@@ -136,23 +135,6 @@ fun XPShopBottomSheet(
             onDismiss = { showDirectSponsorDialog = false },
             onRewardEarned = { secretKey ->
                 viewModel.claimFreeXpDrop(offerBonusXP)
-            }
-        )
-    }
-
-    if (showBoosterDialog) {
-        SecretCodeRewardDialog(
-            bonusXP = offerBonusXP,
-            multiplier = if (offerBonusXP == 250) 3 else 2,
-            onDismiss = { showBoosterDialog = false },
-            onClaimReward = {
-                showBoosterDialog = false
-                viewModel.claimFreeXpDrop(offerBonusXP)
-                Toast.makeText(
-                    context,
-                    "🎉 +$offerBonusXP XP added to your balance!",
-                    Toast.LENGTH_LONG
-                ).show()
             }
         )
     }
@@ -356,12 +338,8 @@ fun XPShopBottomSheet(
                         Toast.makeText(context, "⏳ Next XP drop available in $cooldownFormatted", Toast.LENGTH_SHORT).show()
                         return@ShopItemCard
                     }
-                    // 70% direct link, 30% secret code ad dialog
-                    if (Random.nextFloat() < 0.70f) {
-                        showDirectSponsorDialog = true
-                    } else {
-                        showBoosterDialog = true
-                    }
+                    // Use the current in-app sponsor reward flow only.
+                    showDirectSponsorDialog = true
                 }
             )
 
