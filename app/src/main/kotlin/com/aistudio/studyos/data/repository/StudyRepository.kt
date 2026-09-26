@@ -69,7 +69,7 @@ class StudyRepository(
     private var inMemoryCachedLogs: List<SessionLogEntity>? = null
 
     // Logs & Stats
-    fun getAllLogs(): Flow<List<SessionLogEntity>> {
+    fun getRecentLogsSince30Days(): Flow<List<SessionLogEntity>> {
         val since = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000L
         return database.sessionLogDao().getLogsSince(since)
     }
