@@ -188,14 +188,12 @@ fun ProfileScreen(
     var isCleaningCache by remember { mutableStateOf(false) }
     var cacheCleanedSuccess by remember { mutableStateOf(false) }
     var showXPShop by remember { mutableStateOf(false) }
-    var showThemePassFor by remember { mutableStateOf<String?>(null) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
     val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
 
-    val totalXP = profile?.totalXP ?: 0
     val streakShieldCount by viewModel.streakShieldCount.collectAsState()
     val isWallpaperPassActive by viewModel.isCustomWallpaperPassActive.collectAsState()
     val wallpaperPassRemaining by viewModel.wallpaperPassRemainingFormatted.collectAsState()
@@ -231,9 +229,6 @@ fun ProfileScreen(
         )
     }
 
-    if (showThemePassFor != null) {
-        ThemePassPurchaseDialog(viewModel, showThemePassFor!!, totalXP, false, onOpenShop = { showThemePassFor = null; showXPShop = true }) { showThemePassFor = null }
-    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -403,7 +398,7 @@ fun ProfileScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        if (active) viewModel.setTheme(option.key) else showThemePassFor = option.key
+                                        if (active) viewModel.setTheme(option.key) else showXPShop = true
                                     }
                                     .testTag("profile_premium_theme_" + option.key),
                                 shape = RoundedCornerShape(12.dp),
@@ -422,7 +417,7 @@ fun ProfileScreen(
                                     Column(Modifier.weight(1f)) {
                                         Text(option.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                                         Text(
-                                            if (active) "Active" else "24-hour pass • From " + if (option.key == "cyberpunk") "400 XP" else "500 XP",
+                                            if (active) "Active" else "Available in XP Shop",
                                             fontSize = 10.sp,
                                             color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -1352,73 +1347,4 @@ fun ProfileScreen(
             }
         )
     }
-}
-@Composable
-private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String, totalXP: Int, shopMode: Boolean, onOpenShop: () -> Unit, onDismiss: () -> Unit) {
-    val title = if (themeKey == "cyberpunk") "Cyberpunk / Synthwave 80s" else "Mirror's Edge / Cyber Runner"
-    val baseDailyRate = if (themeKey == "cyberpunk") 400 else 500
-    var selectedDays by remember { mutableStateOf(if (shopMode) 3 else 1) }
-    val hasDiscount = remember(shopMode) { shopMode && kotlin.random.Random.nextFloat() < 0.30f }
-    val discountPercent = if (hasDiscount) when {
-        selectedDays == 1 -> 0
-        selectedDays in 2..6 -> 15
-        selectedDays in 7..13 -> 25
-        selectedDays in 14..29 -> 35
-        else -> 50
-    } else 0
-    val rawCost = selectedDays * baseDailyRate
-    val finalCost = if (discountPercent > 0) rawCost * (100 - discountPercent) / 100 else rawCost
-    val savings = rawCost - finalCost
-    val canAfford = totalXP >= finalCost
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(if (shopMode) "Choose a longer Theme Pass:" else "Premium theme access for 24 hours. Longer passes are available in the XP Shop.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (shopMode) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf(3, 7, 14, 30).forEach { days ->
-                            Surface(
-                                Modifier.weight(1f).clickable { selectedDays = days },
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (selectedDays == days) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = if (selectedDays == days) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                            ) {
-                                Box(Modifier.padding(vertical = 8.dp), contentAlignment = Alignment.Center) { Text(days.toString() + " d", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-                            }
-                        }
-                    }
-                }
-                Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(if (shopMode) "Total Price" else "24-Hour Pass", fontWeight = FontWeight.SemiBold)
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                if (discountPercent > 0) Text(rawCost.toString() + " XP", style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(finalCost.toString() + " XP", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                        if (discountPercent > 0) Text("-" + discountPercent + "% DISCOUNT • You save " + savings + " XP!", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF047857))
-                        Text("Your balance: " + totalXP + " XP", fontSize = 12.sp)
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = { viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { success, _ ->
-                        if (success) viewModel.setTheme(themeKey)
-                        onDismiss()
-                    } }, enabled = canAfford) {
-                Text(if (canAfford) "Get Pass" else "Need " + (finalCost - totalXP) + " XP")
-            }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton(onClick = onOpenShop) { Text("Open XP Shop") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-            }
-        }
-    )
 }
