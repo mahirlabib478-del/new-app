@@ -21,10 +21,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.aistudio.studyos.service.AdManager
 
-/**
- * Sponsor banner viewer. Ad display is independent from XP granting.
- * No click, blur, countdown, secret-code, or key-generation reward trigger.
- */
 @Composable
 fun DirectSponsorRewardDialog(
     onDismiss: () -> Unit
@@ -43,16 +39,12 @@ fun DirectSponsorRewardDialog(
             color = MaterialTheme.colorScheme.background
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxSize().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
                     AndroidView(
@@ -75,10 +67,7 @@ fun DirectSponsorRewardDialog(
                         }
                     )
                 }
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                     Text("Close")
                 }
             }
