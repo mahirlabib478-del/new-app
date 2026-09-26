@@ -461,12 +461,45 @@ fun ProfileScreen(
                     }
 
                     Text("PREMIUM THEMES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        items(items = THEME_OPTIONS.filter { viewModel.isPremiumTheme(it.key) }, key = { it.key }) { option ->
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        THEME_OPTIONS.filter { viewModel.isPremiumTheme(it.key) }.forEach { option ->
                             val isSelected = currentTheme == option.key
                             val active = viewModel.isPremiumThemePassActive(option.key)
-                            ThemeOptionCard(option, isSelected, !active) {
-                                if (active) viewModel.setTheme(option.key) else showThemePassFor = option.key
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        if (active) viewModel.setTheme(option.key) else showThemePassFor = option.key
+                                    }
+                                    .testTag("profile_premium_theme_" + option.key),
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp))
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(option.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+                                        Text(
+                                            if (active) "Active" else "24-hour pass • From " + if (option.key == "cyberpunk") "400 XP" else "500 XP",
+                                            fontSize = 10.sp,
+                                            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Text(
+                                        if (isSelected) "Applied" else if (active) "Use" else "Unlock",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                         }
                     }
