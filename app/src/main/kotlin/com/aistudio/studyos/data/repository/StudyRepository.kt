@@ -1,6 +1,7 @@
 package com.aistudio.studyos.data.repository
 
 import com.aistudio.studyos.data.local.StudyDatabase
+import com.aistudio.studyos.data.local.ThemeCatalog
 import com.aistudio.studyos.data.local.ThemePreferences
 import com.aistudio.studyos.data.local.entity.ExamEntity
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
@@ -462,7 +463,7 @@ class StudyRepository(
             totalXP = 0,
             currentLevel = 1,
             dailyGoalMinutes = 60,
-            themePreset = "pitch_black"
+            themePreset = ThemeCatalog.DEFAULT_THEME
         )
         val newTotalMinutes = currentProfile.totalStudyMinutes + durationMinutes
         val newTotalXP = currentProfile.totalXP + xpGained
@@ -701,7 +702,7 @@ class StudyRepository(
         }
         themePreferences.setCachedRecentSessions(emptyList())
         val currentProfile = database.userProfileDao().getProfileSync()
-        val currentTheme = currentProfile?.themePreset ?: "midnight"
+        val currentTheme = ThemeCatalog.normalize(currentProfile?.themePreset)
         val currentGoal = currentProfile?.dailyGoalMinutes ?: 60
         database.userProfileDao().insertOrUpdate(
             UserProfileEntity(
