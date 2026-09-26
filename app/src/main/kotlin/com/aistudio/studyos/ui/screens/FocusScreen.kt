@@ -1922,16 +1922,6 @@ private fun StudySessionCompleteScreen(
             val bonusMultiplier = remember { if (kotlin.random.Random.nextFloat() < 0.30f) 3 else 2 }
             val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
 
-            LaunchedEffect(bonusClaimed) {
-                if (bonusClaimed) {
-                    kotlinx.coroutines.delay(7000L)
-                    android.widget.Toast.makeText(
-                        context,
-                        "🎉 +$calculatedBonusXP XP Added! (${bonusMultiplier}X XP for this session)",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
@@ -1978,7 +1968,10 @@ private fun StudySessionCompleteScreen(
                             if (!bonusClaimed) {
                                 bonusClaimed = true
                                 onClaimBonusXP(calculatedBonusXP)
-                                com.aistudio.studyos.service.AdManager.openDirectLink(context)
+                                com.aistudio.studyos.service.AdManager.openDirectLink(
+                                    context,
+                                    confirmationMessage = "🎉 +$calculatedBonusXP XP Added! (" + bonusMultiplier + "X XP for this session)"
+                                )
 
                             }
                         },
