@@ -1162,7 +1162,7 @@ private fun AmbientSoundConfigDialog(
                             thickness = 0.8.dp
                         )
 
-                        // 📁 Upload Audio Section inside Ambient Sound tab (with 24h Audio Pass status)
+                        // 📁 Upload Audio Section inside Ambient Sound tab
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
@@ -1284,7 +1284,7 @@ private fun AmbientSoundConfigDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (isAudioPassActive) "✨ 24h Audio Pass: $audioPassRemaining" else "Available in XP Shop",
+                                    text = if (isAudioPassActive) "✨ Active • $audioPassRemaining" else "Available in XP Shop",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isAudioPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
