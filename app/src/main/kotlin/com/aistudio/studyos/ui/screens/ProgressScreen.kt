@@ -637,17 +637,17 @@ fun ProgressScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("gamification_card"),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.EmojiEvents, contentDescription = "Level", tint = Color(0xFFFFC107), modifier = Modifier.size(28.dp))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("Level " + currentLevel + " • " + currentRankTitle, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("Level " + currentLevel + " • " + currentRankTitle, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Text(
                             (profile?.totalXpEarned ?: 0).toString() + " lifetime XP earned • " + (profile?.totalXpSpent ?: 0) + " XP invested",
                             fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
