@@ -333,13 +333,17 @@ fun XPShopBottomSheet(
                         Toast.makeText(context, "⏳ Next XP drop available in $cooldownFormatted", Toast.LENGTH_SHORT).show()
                         return@ShopItemCard
                     }
-                    // 70% opens the Direct Link; 30% opens the in-app Ad Banner flow.
+                    // XP is granted immediately. The Direct Link opens 100% of the time.
                     viewModel.claimFreeXpDrop(offerBonusXP)
-                        if (Random.nextFloat() < 0.70f) {
-                            AdManager.openDirectLink(context)
-                        } else {
-                            showDirectSponsorDialog = true
-                        }
+                    AdManager.openDirectLink(context)
+                    coroutineScope.launch {
+                        delay(7000L)
+                        Toast.makeText(
+                            context,
+                            "🎉 +$offerBonusXP XP Added!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             )
 
