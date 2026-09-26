@@ -204,7 +204,7 @@ class SponsorWebViewActivity : Activity() {
         countdownTimer = object : CountDownTimer(COUNTDOWN_MS, TICK_MS) {
             override fun onTick(millisUntilFinished: Long) {
                 val seconds = ((millisUntilFinished + 999L) / 1000L).toInt()
-                countdownValue.text = "\${seconds}s"
+                countdownValue.text = "${seconds}s"
 
                 val progress = ((COUNTDOWN_MS - millisUntilFinished).toFloat() / COUNTDOWN_MS)
                     .coerceIn(0f, 1f)
