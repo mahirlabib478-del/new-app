@@ -10,6 +10,7 @@ data class UserProfileEntity(
     val streakDays: Int = 0,
     val totalStudyMinutes: Int = 0,
     val totalXP: Int = 0,
+    val totalXpSpent: Int = 0,
     val currentLevel: Int = 1,
     val dailyGoalMinutes: Int = 60,
     val themePreset: String = "midnight", // midnight, pitch_black, espresso, ocean, forest, mint, sunrise
