@@ -143,11 +143,8 @@ fun FocusScreen(
     var customVolume by remember { mutableStateOf(AmbientSoundManager.getCustomAudioVolume()) }
     var isCustomAudioPlaying by remember { mutableStateOf(AmbientSoundManager.isCustomAudioPlaying()) }
 
-    val profile by viewModel.userProfile.collectAsState()
-    val totalXP = profile?.totalXP ?: 0
     val isAudioPassActive by viewModel.isCustomAudioPassActive.collectAsState()
     val audioPassRemaining by viewModel.audioPassRemainingFormatted.collectAsState()
-    var showAudioPassPrompt by remember { mutableStateOf(false) }
     var showXPShopFromFocus by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
@@ -292,69 +289,6 @@ fun FocusScreen(
         )
     }
 
-    if (showAudioPassPrompt) {
-        AlertDialog(
-            onDismissRequest = { showAudioPassPrompt = false },
-            icon = { Icon(Icons.Default.Headphones, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-            title = { Text("Unlock 24h Audio Pass", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Playing or uploading custom playlists, lofi beats, or lecture audiobooks requires an active 24-Hour Custom Audio Pass.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Pass Cost:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text("300 XP (24 Hours)", fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B), fontSize = 14.sp)
-                        }
-                    }
-                    Text(
-                        "Your balance: $totalXP XP",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showAudioPassPrompt = false
-                        viewModel.buyCustomAudioPass(24) { success, msg ->
-                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
-                            if (success) {
-                                audioPickerLauncher.launch(arrayOf("audio/*"))
-                            }
-                        }
-                    },
-                    enabled = totalXP >= 300,
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(if (totalXP >= 300) "Unlock Now (300 XP)" else "Need ${300 - totalXP} More XP")
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = {
-                        showAudioPassPrompt = false
-                        showXPShopFromFocus = true
-                    },
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Open XP Shop")
-                }
-            }
-        )
-    }
-
     if (showAmbientDialog) {
         AmbientSoundConfigDialog(
             preset = ambientPreset,
@@ -399,7 +333,7 @@ fun FocusScreen(
                     isCustomAudioPlaying = false
                 } else {
                     if (!isAudioPassActive) {
-                        showAudioPassPrompt = true
+                        showXPShopFromFocus = true
                     } else {
                         val uri = savedCustomAudioUri
                         if (!uri.isNullOrBlank()) {
@@ -413,7 +347,7 @@ fun FocusScreen(
             },
             onSelectAudio = { audio ->
                 if (!isAudioPassActive) {
-                    showAudioPassPrompt = true
+                    showXPShopFromFocus = true
                 } else {
                     viewModel.selectCustomAudio(audio.id)
                     AmbientSoundManager.setCustomAudio(audio.uri, audio.name)
@@ -423,7 +357,7 @@ fun FocusScreen(
             },
             onPickCustomAudio = {
                 if (!isAudioPassActive) {
-                    showAudioPassPrompt = true
+                    showXPShopFromFocus = true
                 } else {
                     audioPickerLauncher.launch(arrayOf("audio/*"))
                 }
