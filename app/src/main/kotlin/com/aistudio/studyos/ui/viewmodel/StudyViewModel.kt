@@ -1532,12 +1532,6 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         }
     }
 
-    fun deleteSessionLog(log: SessionLogEntity) {
-        viewModelScope.launch {
-            repository.deleteSessionLog(log)
-        }
-    }
-
     fun deleteSavedPlan(id: Long) {
         viewModelScope.launch {
             // Deleting the plan currently loaded in the timer must also clear
