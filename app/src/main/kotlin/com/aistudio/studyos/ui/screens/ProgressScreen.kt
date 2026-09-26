@@ -645,7 +645,7 @@ fun ProgressScreen(
                     Column(Modifier.weight(1f)) {
                         Text("Level " + currentLevel + " • " + currentRankTitle, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         Text(
-                            (totalXP + (profile?.totalXpSpent ?: 0)).toString() + " lifetime XP earned • " + (profile?.totalXpSpent ?: 0) + " XP invested",
+                            (profile?.totalXpEarned ?: 0).toString() + " lifetime XP earned • " + (profile?.totalXpSpent ?: 0) + " XP invested",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
                         )
