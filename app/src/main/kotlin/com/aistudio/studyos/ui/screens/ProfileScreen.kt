@@ -1428,7 +1428,10 @@ private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String,
             }
         },
         confirmButton = {
-            Button(onClick = { viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { _, _ -> onDismiss() } }, enabled = canAfford) {
+            Button(onClick = { viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { success, _ ->
+                        if (success) viewModel.setTheme(themeKey)
+                        onDismiss()
+                    } }, enabled = canAfford) {
                 Text(if (canAfford) "Get Pass" else "Need " + (finalCost - totalXP) + " XP")
             }
         },
