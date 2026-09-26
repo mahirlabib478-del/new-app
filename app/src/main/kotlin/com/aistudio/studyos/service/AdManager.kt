@@ -351,7 +351,6 @@ object AdManager {
                     adWrapper.addEventListener('click', function() { onAdClickConfirmed(); });
                     adWrapper.addEventListener('touchstart', function() { onAdClickConfirmed(); }, {passive: true});
 
-                    window.addEventListener('blur', function() { onAdClickConfirmed(); });
 
                     function onAdClickConfirmed() {
                         if (adClicked) return;
