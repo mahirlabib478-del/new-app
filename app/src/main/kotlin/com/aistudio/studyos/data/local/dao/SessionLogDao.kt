@@ -27,6 +27,9 @@ interface SessionLogDao {
     @Query("SELECT COUNT(DISTINCT subject) FROM session_logs WHERE trim(subject) <> ''")
     fun getDistinctSubjectCount(): Flow<Int>
 
+    @Query("SELECT COUNT(DISTINCT subject) FROM session_logs WHERE trim(subject) <> ''")
+    suspend fun getDistinctSubjectCountOnce(): Int
+
     @Query("""
         SELECT COALESCE(MAX(day_minutes), 0) FROM (
             SELECT date(timestamp / 1000, 'unixepoch', 'localtime') AS study_day,
@@ -37,8 +40,16 @@ interface SessionLogDao {
     """)
     fun getPeakDailyFocusMinutes(): Flow<Int>
 
-    @Query("SELECT * FROM session_logs ORDER BY timestamp DESC")
-    suspend fun getAllLogsForGamification(): List<SessionLogEntity>
+    @Query("""
+        SELECT COALESCE(MAX(day_minutes), 0) FROM (
+            SELECT date(timestamp / 1000, 'unixepoch', 'localtime') AS study_day,
+                   SUM(durationMinutes) AS day_minutes
+            FROM session_logs
+            GROUP BY study_day
+        )
+    """)
+    suspend fun getPeakDailyFocusMinutesOnce(): Int
+
 
     @Query("SELECT COALESCE(SUM(durationMinutes), 0) FROM session_logs WHERE timestamp >= :startOfDayMillis AND timestamp < :startOfNextDayMillis")
     fun getTodayMinutes(startOfDayMillis: Long, startOfNextDayMillis: Long): Flow<Int>
