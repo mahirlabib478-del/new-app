@@ -484,6 +484,7 @@ class StudyRepository(
         )
         val newTotalMinutes = currentProfile.totalStudyMinutes + durationMinutes
         val newTotalXP = currentProfile.totalXP + xpGained
+        val newTotalXpEarned = currentProfile.totalXpEarned + xpGained
 
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val todayStr = sdf.format(Date())
@@ -509,6 +510,7 @@ class StudyRepository(
         val candidateProfile = currentProfile.copy(
             totalStudyMinutes = newTotalMinutes,
             totalXP = newTotalXP,
+            totalXpEarned = newTotalXpEarned,
             currentLevel = currentProfile.currentLevel,
             totalXpSpent = currentProfile.totalXpSpent,
             streakDays = updatedStreak,
@@ -666,8 +668,10 @@ class StudyRepository(
             themePreset = "midnight"
         )
         val newTotalXP = currentProfile.totalXP + amount
+        val newTotalXpEarned = currentProfile.totalXpEarned + amount
         val candidateProfile = currentProfile.copy(
             totalXP = newTotalXP,
+            totalXpEarned = newTotalXpEarned,
             currentLevel = currentProfile.currentLevel
         )
         val newLevel = levelAfterMissionCheck(candidateProfile)
