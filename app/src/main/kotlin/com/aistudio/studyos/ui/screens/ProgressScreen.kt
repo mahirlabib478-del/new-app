@@ -72,7 +72,8 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.data.repository.ProgressAnalyticsCalculator
-import com.aistudio.studyos.data.repository.GamificationCalculator
+import com.aistudio.studyos.data.repository.LevelMissionCalculator
+import com.aistudio.studyos.data.repository.LevelMissionProgress
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -84,6 +85,35 @@ data class DayActivityData(
     val minutes: Int,
     val isToday: Boolean
 )
+
+@Composable
+private fun MissionProgressRow(
+    icon: String,
+    title: String,
+    valueText: String,
+    progress: Float,
+    complete: Boolean
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(icon, fontSize = 17.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.weight(1f))
+            Text(
+                if (complete) "✓" else valueText,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        LinearProgressIndicator(
+            progress = { progress.coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(4.dp)),
+            color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.78f),
+            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+        )
+    }
+}
 
 fun getRankTitle(level: Int): String = when {
     level <= 1 -> "Novice Scholar"
@@ -129,47 +159,31 @@ fun getModeBadgeLabel(mode: String): String {
     }
 }
 
-private fun calculateWeeklyActivity(logs: List<SessionLogEntity>): List<DayActivityData> {
+private fun calculateMonthlyActivity(logs: List<SessionLogEntity>): List<DayActivityData> {
     val now = Calendar.getInstance()
     val todayYear = now.get(Calendar.YEAR)
-    val todayDayOfYear = now.get(Calendar.DAY_OF_YEAR)
-
-    // Rewind to Monday of the current week
+    val todayDay = now.get(Calendar.DAY_OF_YEAR)
     val cal = Calendar.getInstance().apply {
-        firstDayOfWeek = Calendar.MONDAY
+        add(Calendar.DAY_OF_YEAR, -29)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
     }
-    while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
-        cal.add(Calendar.DAY_OF_MONTH, -1)
-    }
-    cal.set(Calendar.HOUR_OF_DAY, 0)
-    cal.set(Calendar.MINUTE, 0)
-    cal.set(Calendar.SECOND, 0)
-    cal.set(Calendar.MILLISECOND, 0)
-
-    val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
     val result = mutableListOf<DayActivityData>()
-
-    for (i in 0 until 7) {
-        val startOfDay = cal.timeInMillis
+    repeat(30) {
+        val start = cal.timeInMillis
         val dayYear = cal.get(Calendar.YEAR)
         val dayOfYear = cal.get(Calendar.DAY_OF_YEAR)
-        val dayNumber = cal.get(Calendar.DAY_OF_MONTH)
-
-        cal.add(Calendar.DAY_OF_MONTH, 1)
-        val endOfDay = cal.timeInMillis
-
-        val isToday = (dayYear == todayYear && dayOfYear == todayDayOfYear)
-
-        val minutes = logs.filter { it.timestamp in startOfDay until endOfDay }
-            .sumOf { it.durationMinutes }
-
-        result.add(
-            DayActivityData(
-                dayName = dayNames[i],
-                dayNumber = dayNumber,
-                minutes = minutes,
-                isToday = isToday
-            )
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+        val end = cal.timeInMillis
+        val minutes = logs.filter { it.timestamp in start until end }.sumOf { it.durationMinutes.coerceAtLeast(0) }
+        result += DayActivityData(
+            dayName = dayFormat.format(Date(start)),
+            dayNumber = Calendar.getInstance().apply { timeInMillis = start }.get(Calendar.DAY_OF_MONTH),
+            minutes = minutes,
+            isToday = dayYear == todayYear && dayOfYear == todayDay
         )
     }
     return result
@@ -185,8 +199,14 @@ fun ProgressScreen(
     val allLogs by viewModel.allLogs.collectAsState()
     val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val todayMinutes by viewModel.todayMinutes.collectAsState()
-    val weeklyData = remember(allLogs) { calculateWeeklyActivity(allLogs) }
-    val totalWeekMinutes = remember(weeklyData) { weeklyData.sumOf { it.minutes } }
+    val monthlyData = remember(allLogs) { calculateMonthlyActivity(allLogs) }
+    val totalMonthMinutes = remember(monthlyData) { monthlyData.sumOf { it.minutes } }
+    val activeMonthDays = remember(monthlyData) { monthlyData.count { it.minutes > 0 } }
+    val peakMonthDay = remember(monthlyData) { monthlyData.maxByOrNull { it.minutes } }
+    val currentYearMinutes by viewModel.currentYearMinutes.collectAsState()
+    val currentYearSessionCount by viewModel.currentYearSessionCount.collectAsState()
+    val topicCount by viewModel.distinctStudyTopicCount.collectAsState()
+    val peakDailyFocusMinutes by viewModel.peakDailyFocusMinutes.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
     val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()
     val analytics = remember(allLogs, activePlan, latestCompletedPlan) {
@@ -201,20 +221,14 @@ fun ProgressScreen(
     // Total Time uses the same session-log source as Today/Consistency.
     // This keeps partial/skip time visible everywhere instead of depending on a
     // separately maintained profile counter.
-    val totalMins = allLogs.sumOf { it.durationMinutes.coerceAtLeast(0) }
-    val totalHours = totalMins / 60
-    val remainingMins = totalMins % 60
     val totalXP = profile?.totalXP ?: 0
-    val currentLevel = profile?.currentLevel ?: 1
-    val currentRankTitle = remember(currentLevel) { getRankTitle(currentLevel) }
-    val nextRankTitle = remember(currentLevel) { getRankTitle(currentLevel + 1) }
-
-    val xpInCurrentLevel = totalXP % 200
-    val xpNeededForNext = 200 - xpInCurrentLevel
-    val levelProgress = (xpInCurrentLevel.toFloat() / 200f).coerceIn(0f, 1f)
-    val levelPercentage = (levelProgress * 100).toInt()
-    // Keep tiny progress visible without changing the displayed percentage/value.
-    val visibleLevelProgress = if (levelProgress > 0f) maxOf(levelProgress, 0.04f) else 0f
+    val currentLevel = (profile?.currentLevel ?: 1).coerceIn(1, 100)
+    val currentRankTitle = remember(currentLevel) { LevelMissionCalculator.rankTitle(currentLevel) }
+    val missionProgress: LevelMissionProgress? = remember(profile, currentLevel, topicCount, peakDailyFocusMinutes) {
+        profile?.let {
+            LevelMissionCalculator.calculate(currentLevel, it, topicCount, peakDailyFocusMinutes)
+        }
+    }
 
     val streak = profile?.streakDays ?: 0
     val streakText = if (streak == 1) "1 Day" else "$streak Days"
@@ -685,411 +699,127 @@ fun ProgressScreen(
             }
         }
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("achievement_milestones_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(
-                    Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            val mission = missionProgress
+            if (mission != null) {
+                val rank = LevelMissionCalculator.rankTitle(currentLevel)
+                Card(
+                    modifier = Modifier.fillMaxWidth().testTag("current_level_missions_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(13.dp)) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Level " + currentLevel + " Promotion Quests", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text(rank + " • " + mission.completedCount + "/5 missions complete", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
+                                Text("Lv " + currentLevel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp))
+                            }
+                        }
+                        MissionProgressRow("📘", "Total Focus", mission.studyMinutes.toString() + "m / " + mission.targets.studyMinutesRequired + "m", mission.studyMinutes.toFloat() / mission.targets.studyMinutesRequired, mission.studyTimeComplete)
+                        MissionProgressRow("⭐", "Total XP", mission.xpEarned.toString() + " / " + mission.targets.xpRequired + " XP", mission.xpEarned.toFloat() / mission.targets.xpRequired, mission.xpComplete)
+                        MissionProgressRow("📚", "Topic Breadth", mission.topicCount.toString() + " / " + mission.targets.topicCountRequired + " Topics Studied", mission.topicCount.toFloat() / mission.targets.topicCountRequired, mission.topicBreadthComplete)
+                        MissionProgressRow("🔥", "Day Peak Focus", mission.peakFocusMinutes.toString() + "m / " + mission.targets.peakFocusMinutesRequired + "m", mission.peakFocusMinutes.toFloat() / mission.targets.peakFocusMinutesRequired, mission.peakFocusComplete)
+                        MissionProgressRow("🛍️", "Shop Investment", mission.xpSpent.toString() + " / " + mission.targets.xpSpentRequired + " XP Spent", mission.xpSpent.toFloat() / mission.targets.xpSpentRequired, mission.shopInvestmentComplete)
+                        if (mission.allComplete) {
+                            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary) {
+                                Row(Modifier.padding(horizontal = 14.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                                    Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Level " + (currentLevel + 1) + " unlocked!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("gamification_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.EmojiEvents, contentDescription = "Level", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Level " + currentLevel + " • " + currentRankTitle, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text(
+                            (totalXP + (profile?.totalXpSpent ?: 0)).toString() + " lifetime XP earned • " + (profile?.totalXpSpent ?: 0) + " XP invested",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                        )
+                    }
+                }
+            }
+        }
+
+// Monthly Activity Visualizer
+        item {
+            val maxMinutes = monthlyData.maxOfOrNull { it.minutes } ?: 0
+            val monthHours = totalMonthMinutes / 60
+            val monthMinutes = totalMonthMinutes % 60
+            val cells: List<DayActivityData?> = List(5) { null }.take(35 - monthlyData.size) + monthlyData
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("monthly_activity_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
+                            Text("Monthly Activity Pattern", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                             Text(
-                                "Study Milestones",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
-                            )
-                            Text(
-                                "Keep studying to unlock new achievements",
-                                fontSize = 11.sp,
+                                if (monthHours > 0) monthHours.toString() + " hrs " + monthMinutes + " mins • " + activeMonthDays + "/30 active days"
+                                else activeMonthDays.toString() + "/30 active days • Start your monthly streak",
+                                fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                        ) {
-                            Text(
-                                "${achievements.count { it.unlocked }}/${achievements.size}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
-                            )
+                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
+                            Text(activeMonthDays.toString() + "/30", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
                         }
                     }
-
-                    achievements.forEach { achievement ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (achievement.unlocked) {
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        cells.chunked(7).forEach { week ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                week.forEach { day ->
+                                    if (day == null) {
+                                        Box(Modifier.weight(1f).size(26.dp))
+                                    } else {
+                                        val intensity = if (maxMinutes > 0 && day.minutes > 0) (day.minutes.toFloat() / maxMinutes).coerceIn(0.15f, 1f) else 0f
+                                        Box(
+                                            Modifier.weight(1f).size(26.dp).clip(RoundedCornerShape(6.dp))
+                                                .background(if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity) else MaterialTheme.colorScheme.surface)
+                                                .border(
+                                                    width = if (day.isToday) 2.dp else 1.dp,
+                                                    color = if (day.isToday) MaterialTheme.colorScheme.primary else if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                                    shape = RoundedCornerShape(6.dp)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(day.dayNumber.toString(), fontSize = 8.sp, fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal, color = if (intensity > 0.55f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (achievement.unlocked) {
-                                        Icons.Default.CheckCircle
-                                    } else {
-                                        Icons.Default.Schedule
-                                    },
-                                    contentDescription = null,
-                                    tint = if (achievement.unlocked) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                                    },
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            Spacer(Modifier.width(12.dp))
-
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    achievement.title,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    achievement.description,
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(7.dp),
-                                color = if (achievement.unlocked) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
-                                }
-                            ) {
-                                Text(
-                                    if (achievement.unlocked) "Unlocked" else "Locked",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = if (achievement.unlocked) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Gamification, Level & Next Rank Progress Card
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("gamification_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFF59E0B).copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.EmojiEvents,
-                                    contentDescription = "Trophy",
-                                    tint = Color(0xFFF59E0B),
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = currentRankTitle,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = "$totalXP Total XP Earned",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
-                                .padding(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = "Level $currentLevel",
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    // Next Rank Progress Breakdown
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Next Rank: ",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                            )
-                            Text(
-                                text = nextRankTitle,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                        Text(
-                            text = "$xpInCurrentLevel / 200 XP ($levelPercentage%)",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    LinearProgressIndicator(
-                        progress = { visibleLevelProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp)),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "$xpNeededForNext XP needed to unlock Level ${currentLevel + 1}",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
-                    )
-                }
-            }
-        }
-
-        // Weekly Activity Visualizer
-        item {
-            val weekHours = totalWeekMinutes / 60
-            val weekRemMins = totalWeekMinutes % 60
-            val maxDayMinutes = weeklyData.maxOfOrNull { it.minutes } ?: 0
-            val ceilingMinutes = maxOf(maxDayMinutes, profile?.dailyGoalMinutes ?: 60)
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("weekly_activity_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Insights,
-                                contentDescription = "Weekly Insights",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "Weekly Activity Pattern",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = if (totalWeekMinutes > 0) {
-                                        if (weekHours > 0) "$weekHours hrs $weekRemMins mins logged this week"
-                                        else "$weekRemMins mins logged this week"
-                                    } else {
-                                        "No study time recorded this week yet"
-                                    },
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        if (totalWeekMinutes > 0) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                            ) {
-                                Text(
-                                    text = if (weekHours > 0) "${weekHours}h ${weekRemMins}m" else "${weekRemMins}m",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    // 7-day Bar Chart
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(130.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        weeklyData.forEach { day ->
-                            val heightFraction = if (ceilingMinutes > 0) {
-                                (day.minutes.toFloat() / ceilingMinutes).coerceIn(0f, 1f)
-                            } else 0f
-                            val barHeightDp = if (day.minutes > 0) {
-                                (14f + (70f * heightFraction)).dp
-                            } else {
-                                4.dp
-                            }
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Bottom,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                // Minute tag above bar
-                                if (day.minutes > 0) {
-                                    val minLabel = if (day.minutes >= 60) {
-                                        "${day.minutes / 60}h"
-                                    } else {
-                                        "${day.minutes}m"
                                     }
-                                    Text(
-                                        text = minLabel,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (day.isToday) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface
-                                    )
-                                } else {
-                                    Text(
-                                        text = "-",
-                                        fontSize = 10.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                                    )
                                 }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                // Visual Bar
-                                Box(
-                                    modifier = Modifier
-                                        .width(22.dp)
-                                        .height(barHeightDp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(
-                                            when {
-                                                day.isToday && day.minutes > 0 -> MaterialTheme.colorScheme.primary
-                                                day.isToday && day.minutes == 0 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-                                                day.minutes > 0 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
-                                                else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                                            }
-                                        )
-                                )
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                // Day Name
-                                Text(
-                                    text = day.dayName,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (day.isToday) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                // Date Number
-                                Text(
-                                    text = "${day.dayNumber}",
-                                    fontSize = 10.sp,
-                                    color = if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
-                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                )
                             }
                         }
                     }
-
-                    if (totalWeekMinutes == 0) {
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(
-                            text = "Start a focus or regular session to track your daily pattern.",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                            "Peak: " + (peakMonthDay?.let { if (it.minutes >= 60) (it.minutes / 60).toString() + "h " + (it.minutes % 60) + "m" else it.minutes.toString() + "m" } ?: "0m"),
+                            fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Text("Today highlighted", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
         }
+
+
         } else {
             // Session History Log Header & Filter
             item {
