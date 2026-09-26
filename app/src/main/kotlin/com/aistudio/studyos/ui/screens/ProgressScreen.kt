@@ -663,7 +663,7 @@ fun ProgressScreen(
             val cells: List<DayActivityData?> = List(firstDayOffset) { null } + monthlyData
             val monthLabel = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.time)
             Card(
-                modifier = Modifier.fillMaxWidth().testTag("monthly_activity_card"),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).testTag("monthly_activity_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
