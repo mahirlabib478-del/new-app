@@ -1913,8 +1913,6 @@ private fun StudySessionCompleteScreen(
         val context = LocalContext.current
         val canShowBonus = remember { com.aistudio.studyos.service.AdManager.canShowFocusClaimBonus(context) }
         var bonusClaimed by remember { mutableStateOf(false) }
-        val rewardScope = rememberCoroutineScope()
-
         if (canShowBonus) {
             LaunchedEffect(Unit) {
                 com.aistudio.studyos.service.AdManager.recordFocusClaimAppearance(context)
@@ -1924,6 +1922,16 @@ private fun StudySessionCompleteScreen(
             val bonusMultiplier = remember { if (kotlin.random.Random.nextFloat() < 0.30f) 3 else 2 }
             val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
 
+            LaunchedEffect(bonusClaimed) {
+                if (bonusClaimed) {
+                    kotlinx.coroutines.delay(7000L)
+                    android.widget.Toast.makeText(
+                        context,
+                        "🎉 +$calculatedBonusXP XP Added! (\${bonusMultiplier}X XP for this session)",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
@@ -1971,14 +1979,7 @@ private fun StudySessionCompleteScreen(
                                 bonusClaimed = true
                                 onClaimBonusXP(calculatedBonusXP)
                                 com.aistudio.studyos.service.AdManager.openDirectLink(context)
-                                rewardScope.launch {
-                                    kotlinx.coroutines.delay(7000L)
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        "🎉 +$calculatedBonusXP XP Added! (${bonusMultiplier}X XP for this session)",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+
                             }
                         },
                         enabled = !bonusClaimed,
