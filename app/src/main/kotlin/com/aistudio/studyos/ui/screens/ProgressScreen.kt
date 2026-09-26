@@ -593,7 +593,6 @@ fun ProgressScreen(
                     }
                 }
             }
-        }
         item {
             val mission = missionProgress
             if (mission != null) {
