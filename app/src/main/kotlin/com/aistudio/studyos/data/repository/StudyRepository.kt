@@ -610,14 +610,14 @@ class StudyRepository(
         }
 
         val updatedXP = profile.totalXP - xpCost
-        val updatedLevel = (updatedXP / 200) + 1
-        database.userProfileDao().insertOrUpdate(
-            profile.copy(
-                totalXP = updatedXP,
-                currentLevel = updatedLevel,
-                totalXpSpent = updatedSpent
-            )
+        val updatedSpent = profile.totalXpSpent + xpCost
+        val candidateProfile = profile.copy(
+            totalXP = updatedXP,
+            currentLevel = profile.currentLevel,
+            totalXpSpent = updatedSpent
         )
+        val updatedLevel = levelAfterMissionCheck(candidateProfile)
+        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
 
         val currentExpires = themePreferences.getCustomAudioPassExpiresAt()
         val now = System.currentTimeMillis()
@@ -683,13 +683,12 @@ class StudyRepository(
             themePreset = "midnight"
         )
         val newTotalXP = currentProfile.totalXP + amount
-        val newLevel = (newTotalXP / 200) + 1
-        database.userProfileDao().insertOrUpdate(
-            currentProfile.copy(
-                totalXP = newTotalXP,
-                currentLevel = newLevel
-            )
+        val candidateProfile = currentProfile.copy(
+            totalXP = newTotalXP,
+            currentLevel = currentProfile.currentLevel
         )
+        val newLevel = levelAfterMissionCheck(candidateProfile)
+        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = newLevel))
     }
 
     suspend fun resetStats() {
@@ -707,6 +706,7 @@ class StudyRepository(
                 streakDays = 0,
                 totalStudyMinutes = 0,
                 totalXP = 0,
+                totalXpSpent = 0,
                 currentLevel = 1,
                 dailyGoalMinutes = currentGoal,
                 themePreset = currentTheme
