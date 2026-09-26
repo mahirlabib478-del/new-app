@@ -156,13 +156,13 @@ fun StudyPlanBuilderScreen(
                 Card(
                     Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 Modifier.clip(RoundedCornerShape(14.dp))
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = .12f))
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
                                     .padding(11.dp)
                             ) {
                                 Icon(Icons.Default.Timer, null, tint = MaterialTheme.colorScheme.primary)
@@ -233,7 +233,7 @@ fun StudyPlanBuilderScreen(
                 Card(
                     Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .55f))
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(Modifier.padding(17.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
