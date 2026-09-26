@@ -253,7 +253,13 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             repository.ensureCleanInitialData()
             userProfile.collect { profile ->
                 if (profile != null && profile.themePreset.isNotBlank()) {
-                    _currentTheme.value = profile.themePreset
+                    if (isPremiumTheme(profile.themePreset) && !repository.isPremiumThemePassActive(profile.themePreset)) {
+                        _currentTheme.value = "pitch_black"
+                        _wallpaperStyle.value = repository.getThemeWallpaperStyle("pitch_black")
+                        repository.updateTheme("pitch_black")
+                    } else {
+                        _currentTheme.value = profile.themePreset
+                    }
                 }
             }
         }
@@ -1564,6 +1570,12 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     // ==========================================
 
     fun refreshPerksState() {
+        val activeTheme = _currentTheme.value
+        if (isPremiumTheme(activeTheme) && !repository.isPremiumThemePassActive(activeTheme)) {
+            _currentTheme.value = "pitch_black"
+            _wallpaperStyle.value = repository.getThemeWallpaperStyle("pitch_black")
+            viewModelScope.launch { repository.updateTheme("pitch_black") }
+        }
         _streakShieldCount.value = repository.getStreakShieldCount()
         val isWpActive = repository.isCustomWallpaperPassActive()
         _isCustomWallpaperPassActive.value = isWpActive
