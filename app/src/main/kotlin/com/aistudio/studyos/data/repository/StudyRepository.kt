@@ -398,21 +398,20 @@ class StudyRepository(
     ) {
         database.withTransaction {
             val plan = database.studyPlanDao().getPlanById(planId) ?: return@withTransaction
-            database.studyPlanDao().updatePlan(
-                plan.copy(
-                    currentBlockIndex = nextBlockIndex ?: plan.currentBlockIndex,
-                    remainingSecondsInBlock = 0,
-                    isTimerRunning = false,
-                    endAtElapsedRealtime = 0L,
-                    endAtWallClockMillis = 0L,
-                    accumulatedStudiedSeconds = plan.accumulatedStudiedSeconds + studiedSeconds.coerceAtLeast(0),
-                    accumulatedBillableMinutes = plan.accumulatedBillableMinutes + minutesStudied.coerceAtLeast(0),
-                    isCompleted = true,
-                    lastUpdated = System.currentTimeMillis()
-                )
+            val safeMinutes = minutesStudied.coerceAtLeast(0)
+            val safeSeconds = studiedSeconds.coerceAtLeast(0)
+            val updatedRows = database.studyPlanDao().completePlanEarlyIfActive(
+                planId = planId,
+                currentBlockIndex = nextBlockIndex ?: plan.currentBlockIndex,
+                accumulatedStudiedSeconds = plan.accumulatedStudiedSeconds + safeSeconds,
+                accumulatedBillableMinutes = plan.accumulatedBillableMinutes + safeMinutes
             )
-            if (minutesStudied > 0) {
-                recordCompletedSession(subject, chapter, minutesStudied, mode)
+
+            // Only the first caller may complete the plan. A stale/lifecycle
+            // callback sees 0 updated rows and must not create another log
+            // or increment profile totals a second time.
+            if (updatedRows == 1 && safeMinutes > 0) {
+                recordCompletedSession(subject, chapter, safeMinutes, mode)
             }
         }
     }
