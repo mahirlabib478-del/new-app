@@ -15,6 +15,6 @@ data class UserProfileEntity(
     val totalXpEarned: Int = 0,
     val currentLevel: Int = 1,
     val dailyGoalMinutes: Int = 60,
-    val themePreset: String = ThemeCatalog.DEFAULT_THEME
+    val themePreset: String = ThemeCatalog.DEFAULT_THEME,
     val lastActiveDate: String = ""
 )
