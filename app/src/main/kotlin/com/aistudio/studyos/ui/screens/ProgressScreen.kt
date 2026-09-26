@@ -618,7 +618,7 @@ fun ProgressScreen(
                         MissionProgressRow("📚", "Topic Breadth", mission.topicCount.toString() + " / " + mission.targets.topicCountRequired + " Topics Studied", mission.topicCount.toFloat() / mission.targets.topicCountRequired, mission.topicBreadthComplete)
                         MissionProgressRow("🔥", "Day Peak Focus", mission.peakFocusMinutes.toString() + "m / " + mission.targets.peakFocusMinutesRequired + "m", mission.peakFocusMinutes.toFloat() / mission.targets.peakFocusMinutesRequired, mission.peakFocusComplete)
                         MissionProgressRow("🛍️", "Shop Investment", mission.xpSpent.toString() + " / " + mission.targets.xpSpentRequired + " XP Spent", mission.xpSpent.toFloat() / mission.targets.xpSpentRequired, mission.shopInvestmentComplete)
-                        if (mission.allComplete) {
+                        if (mission.allComplete && currentLevel < 100) {
                             Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary) {
                                 Row(Modifier.padding(horizontal = 14.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                                     Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
@@ -771,14 +771,14 @@ fun ProgressScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "No study sessions recorded yet",
+                                text = "No study sessions in the last 30 days",
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Complete a study session or focus block to start building your knowledge log.",
+                                text = "Complete a study session or focus block and it will appear here for 30 days.",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
