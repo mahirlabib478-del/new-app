@@ -22,7 +22,7 @@ import com.aistudio.studyos.data.local.entity.UserProfileEntity
         SessionLogEntity::class,
         UserProfileEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class StudyDatabase : RoomDatabase() {
@@ -34,6 +34,12 @@ abstract class StudyDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: StudyDatabase? = null
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_profile ADD COLUMN totalXpSpent INTEGER NOT NULL DEFAULT 0")
+            }
+        }
 
         private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -72,7 +78,7 @@ abstract class StudyDatabase : RoomDatabase() {
                 )
                     // Never silently destroy user data when a future migration is missing.
                     // A missing migration must fail loudly so it can be implemented and verified.
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build()
                 INSTANCE = instance
                 instance
