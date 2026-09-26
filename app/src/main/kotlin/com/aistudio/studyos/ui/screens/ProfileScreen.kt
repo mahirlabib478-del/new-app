@@ -121,7 +121,11 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("ocean", "Ocean Dark", Icons.Default.Water, Color(0xFF0284C7)),
     ThemeOption("paper", "Paper Sepia", Icons.AutoMirrored.Filled.MenuBook, Color(0xFF8B5A2B)),
     ThemeOption("mint", "Mint Fresh", Icons.Default.Spa, Color(0xFF0D9488)),
-    ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C))
+    ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C)),
+    ThemeOption("midnight_indigo", "Midnight Indigo", Icons.Default.NightsStay, Color(0xFF6366F1)),
+    ThemeOption("deep_teal", "Deep Teal", Icons.Default.Water, Color(0xFF14B8A6)),
+    ThemeOption("clean_indigo", "Clean Indigo", Icons.Default.WbSunny, Color(0xFF4F46E5)),
+    ThemeOption("soft_mint", "Soft Mint", Icons.Default.Spa, Color(0xFF0F766E))
 )
 
 private fun formatDailyGoal(minutes: Int): String = when {
