@@ -270,7 +270,11 @@ fun StudyPlanBuilderScreen(
             }
 
             itemsIndexed(subjects) { si, subject ->
-                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp)) {
+                Card(
+                    Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
                     Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.MenuBook, null, tint = MaterialTheme.colorScheme.primary)
@@ -295,7 +299,7 @@ fun StudyPlanBuilderScreen(
                                 Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(17.dp),
                                 colors = CardDefaults.cardColors(
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .42f)
+                                    MaterialTheme.colorScheme.surface.copy(alpha = .92f)
                                 )
                             ) {
                                 Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
