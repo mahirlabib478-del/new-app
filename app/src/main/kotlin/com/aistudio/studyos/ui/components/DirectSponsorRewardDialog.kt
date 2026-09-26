@@ -382,9 +382,6 @@ fun DirectSponsorRewardDialog(
                                                         if (window.StudyOSBridge) window.StudyOSBridge.onBannerClick();
                                                     });
                                                 }
-                                                window.addEventListener('blur', function() {
-                                                    if (window.StudyOSBridge) window.StudyOSBridge.onBannerClick();
-                                                });
                                             })();
                                             """.trimIndent(),
                                             null
