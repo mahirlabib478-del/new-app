@@ -42,39 +42,6 @@ private val CyberpunkColorScheme = darkColorScheme(
     outline = Color(0xFF6C3A78)
 )
 
-private val DraculaColorScheme = darkColorScheme(
-    primary = DraculaPurple,
-    onPrimary = Color(0xFF282A36),
-    primaryContainer = Color(0xFF4A405F),
-    onPrimaryContainer = Color(0xFFE6D7FF),
-    secondary = DraculaGreen,
-    onSecondary = Color(0xFF17251B),
-    secondaryContainer = Color(0xFF315A3D),
-    onSecondaryContainer = Color(0xFFC7FFD5),
-    background = DraculaBg,
-    onBackground = Color(0xFFF8F8F2),
-    surface = DraculaSurface,
-    onSurface = Color(0xFFF8F8F2),
-    surfaceVariant = Color(0xFF44475A),
-    onSurfaceVariant = Color(0xFFB9BBC8),
-    outline = Color(0xFF6272A4)
-)
-
-private val DeepTealColorScheme = darkColorScheme(
-    primary = DeepTealPrimary,
-    onPrimary = Color(0xFF042F2E),
-    primaryContainer = Color(0xFF163333),
-    onPrimaryContainer = DeepTealAccent,
-    secondary = DeepTealAccent,
-    onSecondary = Color(0xFF042F2E),
-    background = DeepTealBg,
-    onBackground = Color(0xFFF0FDFA),
-    surface = DeepTealSurface,
-    onSurface = Color(0xFFF0FDFA),
-    surfaceVariant = Color(0xFF163333),
-    onSurfaceVariant = Color(0xFF94A3B8)
-)
-
 private val OceanColorScheme = darkColorScheme(
     primary = OceanAccent,
     onPrimary = Color.White,
@@ -169,9 +136,7 @@ fun StudyOSTheme(
 ) {
     val colorScheme = when (preset) {
         "pitch_black" -> PitchBlackColorScheme
-        "deep_teal" -> DeepTealColorScheme
         "cyberpunk" -> CyberpunkColorScheme
-        "dracula" -> DraculaColorScheme
         "dark" -> DarkColorScheme
         "light" -> LightColorScheme
         "ocean" -> OceanColorScheme
