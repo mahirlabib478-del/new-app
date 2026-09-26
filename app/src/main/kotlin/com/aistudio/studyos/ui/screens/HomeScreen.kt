@@ -74,7 +74,11 @@ private val THEME_PRESET_LIST = listOf(
     Triple("ocean", "Ocean Deep", Color(0xFF0284C7)),
     Triple("paper", "Paper Sepia", Color(0xFF8B5A2B)),
     Triple("mint", "Mint Fresh", Color(0xFF0D9488)),
-    Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C))
+    Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C)),
+    Triple("midnight_indigo", "Midnight Indigo", Color(0xFF6366F1)),
+    Triple("deep_teal", "Deep Teal", Color(0xFF14B8A6)),
+    Triple("clean_indigo", "Clean Indigo", Color(0xFF4F46E5)),
+    Triple("soft_mint", "Soft Mint", Color(0xFF0F766E))
 )
 
 private fun formatRelativeTime(timestamp: Long): String {
