@@ -449,7 +449,7 @@ fun ProfileScreen(
                         }
                     }
 
-                    Text("PREMIUM • 24H PASS", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("PREMIUM THEMES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                         items(items = THEME_OPTIONS.filter { viewModel.isPremiumTheme(it.key) }, key = { it.key }) { option ->
                             val isSelected = currentTheme == option.key
@@ -1398,7 +1398,7 @@ private fun ThemePassPurchaseDialog(viewModel: StudyViewModel, themeKey: String,
         title = { Text(title, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(if (shopMode) "Choose a longer Theme Pass:" else "Premium theme access for 24 hours.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (shopMode) "Choose a longer Theme Pass:" else "Premium theme access for 24 hours. Longer passes are available in the XP Shop.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (shopMode) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         listOf(3, 7, 14, 30).forEach { days ->
