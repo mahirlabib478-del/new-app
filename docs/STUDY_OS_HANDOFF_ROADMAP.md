@@ -48,7 +48,7 @@ Status meanings: **DONE** = implemented, reachable, main action works, and regre
 | Achievements | DONE | Five achievement rules are implemented and shown through progress experience. |
 | Daily goal | DONE | Persisted goal, Home/Progress/Profile usage, tests. |
 | Custom subjects | DONE | Add/remove and duplicate prevention are integrated into planning. |
-| Themes | DONE | Midnight/Ocean/Forest/Sunrise persisted through Profile. |
+| Themes | DONE | Supported theme keys are centralized and legacy theme values are normalized during startup. |
 | English / বাংলা | DONE | Persisted language and user-facing Home/navigation/Profile support. |
 | Sound effects | DONE | Setting and interaction integration with tests. |
 | Study reminders | PARTIAL | Policy/coordinator/scheduler and unit tests exist; physical Android delivery still needs device verification. |
