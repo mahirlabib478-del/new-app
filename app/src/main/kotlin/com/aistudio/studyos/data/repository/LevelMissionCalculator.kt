@@ -87,12 +87,11 @@ object LevelMissionCalculator {
         peakFocusMinutes: Int
     ): LevelMissionProgress {
         val targets = targetsForLevel(level)
-        // totalXP is the current spendable balance. Adding lifetime spend gives
-        // the lifetime XP earned value needed by the XP mission.
-        val lifetimeXpEarned = profile.totalXP + profile.totalXpSpent
+        // Lifetime earned XP is tracked independently from the spendable XP balance,
+        // so shop purchases cannot distort the XP mission.
         return LevelMissionProgress(
             targets = targets,
-            xpEarned = lifetimeXpEarned.coerceAtLeast(0),
+            xpEarned = profile.totalXpEarned.coerceAtLeast(0),
             studyMinutes = profile.totalStudyMinutes.coerceAtLeast(0),
             topicCount = topicCount.coerceAtLeast(0),
             peakFocusMinutes = peakFocusMinutes.coerceAtLeast(0),
