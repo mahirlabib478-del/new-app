@@ -713,13 +713,13 @@ fun ProgressScreen(
                                                 .clickable { selectedMonthDay = day.dayNumber }
                                                 .background(if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity) else MaterialTheme.colorScheme.surface)
                                                 .border(
-                                                    width = if (day.isToday) 2.dp else 1.dp,
-                                                    color = if (day.isToday) MaterialTheme.colorScheme.primary else if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                                    width = if (day.dayNumber == selectedMonthDay) 2.dp else if (day.isToday) 2.dp else 1.dp,
+                                                    color = if (day.dayNumber == selectedMonthDay) MaterialTheme.colorScheme.primary else if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                                                     shape = RoundedCornerShape(6.dp)
                                                 ),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text(day.dayNumber.toString(), fontSize = 8.sp, fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal, color = if (intensity > 0.55f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(day.dayNumber.toString(), fontSize = 8.sp, fontWeight = if (day.dayNumber == selectedMonthDay || day.isToday) FontWeight.Bold else FontWeight.Normal, color = if (intensity > 0.55f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     }
                                 }
@@ -756,7 +756,7 @@ fun ProgressScreen(
                             "Peak: " + (peakMonthDay?.let { if (it.minutes >= 60) (it.minutes / 60).toString() + "h " + (it.minutes % 60) + "m" else it.minutes.toString() + "m" } ?: "0m"),
                             fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Text("Today highlighted", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                        Text("Selected: " + (selectedDay?.dayNumber ?: Calendar.getInstance().get(Calendar.DAY_OF_MONTH)), fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
