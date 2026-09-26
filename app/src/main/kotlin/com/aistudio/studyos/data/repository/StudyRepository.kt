@@ -72,6 +72,9 @@ class StudyRepository(
         val since = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000L
         return database.sessionLogDao().getLogsSince(since)
     }
+
+    fun getCurrentMonthLogs(): Flow<List<SessionLogEntity>> =
+        database.sessionLogDao().getCurrentMonthLogs()
     fun getRecentLogs(limit: Int = 10): Flow<List<SessionLogEntity>> = database.sessionLogDao().getRecentLogs(limit)
 
     fun getCurrentYearMinutes(): Flow<Int> =
