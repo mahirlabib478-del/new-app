@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
  * 2. Slider snapping to 15-minute increments (15m to 720m)
  * 3. Stepper micro-adjustments (+15m, -15m, +1h, -1h) with clamping
  * 4. Custom target input validation (15 to 1440 minutes)
- * 5. Theme preset selection keys matching the 12 design palettes
+ * 5. Theme preset selection keys matching the 7 design palettes
  * 6. App Update states (Checking, UpToDate, Available)
  * 7. Reset profile stats entity resetting to initial zero/default values
  */
@@ -107,29 +107,21 @@ class ProfileScreenFeatureTest {
     @Test
     fun testThemeOptionsKeys() {
         val themeKeys = listOf(
-            "midnight",
             "pitch_black",
             "dark",
             "light",
             "ocean",
-            "paper",
             "mint",
             "sunrise",
-            "midnight_indigo",
             "deep_teal",
-            "clean_indigo",
-            "soft_mint"
+            "deep_teal"
         )
 
-        assertEquals(12, themeKeys.size)
-        assertTrue(themeKeys.contains("midnight"))
+        assertEquals(7, themeKeys.size)
         assertTrue(themeKeys.contains("dark"))
         assertTrue(themeKeys.contains("light"))
         assertTrue(themeKeys.contains("pitch_black"))
-        assertTrue(themeKeys.contains("midnight_indigo"))
         assertTrue(themeKeys.contains("deep_teal"))
-        assertTrue(themeKeys.contains("clean_indigo"))
-        assertTrue(themeKeys.contains("soft_mint"))
     }
 
     @Test
@@ -161,7 +153,7 @@ class ProfileScreenFeatureTest {
             totalXP = 3200,
             currentLevel = 17,
             dailyGoalMinutes = 90,
-            themePreset = "midnight"
+            themePreset = "pitch_black"
         )
 
         // Reset operation preserves theme and daily goal preference while resetting progress
@@ -177,6 +169,6 @@ class ProfileScreenFeatureTest {
         assertEquals(0, resetProfile.totalXP)
         assertEquals(1, resetProfile.currentLevel)
         assertEquals(90, resetProfile.dailyGoalMinutes)
-        assertEquals("midnight", resetProfile.themePreset)
+        assertEquals("pitch_black", resetProfile.themePreset)
     }
 }
