@@ -188,9 +188,10 @@ fun ProgressScreen(
     val profile by viewModel.userProfile.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
     val allLogs by viewModel.allLogs.collectAsState()
+    val currentMonthLogs by viewModel.currentMonthLogs.collectAsState()
     val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val todayMinutes by viewModel.todayMinutes.collectAsState()
-    val monthlyData = remember(allLogs) { calculateMonthlyActivity(allLogs) }
+    val monthlyData = remember(currentMonthLogs) { calculateMonthlyActivity(currentMonthLogs) }
     val totalMonthMinutes = remember(monthlyData) { monthlyData.sumOf { it.minutes } }
     val activeMonthDays = remember(monthlyData) { monthlyData.count { it.minutes > 0 } }
     val peakMonthDay = remember(monthlyData) { monthlyData.maxByOrNull { it.minutes } }
