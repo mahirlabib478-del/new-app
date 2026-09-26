@@ -1926,7 +1926,6 @@ private fun StudySessionCompleteScreen(
 
             if (showDirectSponsorDialog) {
                 com.aistudio.studyos.ui.components.DirectSponsorRewardDialog(
-                    rewardXP = calculatedBonusXP,
                     onDismiss = {
                         showDirectSponsorDialog = false
                     }
