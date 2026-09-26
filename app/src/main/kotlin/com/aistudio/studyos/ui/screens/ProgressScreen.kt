@@ -311,7 +311,7 @@ fun ProgressScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .height(164.dp)
+                        .height(136.dp)
                         .testTag("streak_metric_card"),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
