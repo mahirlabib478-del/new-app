@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
  * 2. Slider snapping to 15-minute increments (15m to 720m)
  * 3. Stepper micro-adjustments (+15m, -15m, +1h, -1h) with clamping
  * 4. Custom target input validation (15 to 1440 minutes)
- * 5. Theme preset selection keys matching the 8 design palettes
+ * 5. Theme preset selection keys matching the 12 design palettes
  * 6. App Update states (Checking, UpToDate, Available)
  * 7. Reset profile stats entity resetting to initial zero/default values
  */
@@ -114,14 +114,22 @@ class ProfileScreenFeatureTest {
             "ocean",
             "paper",
             "mint",
-            "sunrise"
+            "sunrise",
+            "midnight_indigo",
+            "deep_teal",
+            "clean_indigo",
+            "soft_mint"
         )
 
-        assertEquals(8, themeKeys.size)
+        assertEquals(12, themeKeys.size)
         assertTrue(themeKeys.contains("midnight"))
         assertTrue(themeKeys.contains("dark"))
         assertTrue(themeKeys.contains("light"))
         assertTrue(themeKeys.contains("pitch_black"))
+        assertTrue(themeKeys.contains("midnight_indigo"))
+        assertTrue(themeKeys.contains("deep_teal"))
+        assertTrue(themeKeys.contains("clean_indigo"))
+        assertTrue(themeKeys.contains("soft_mint"))
     }
 
     @Test
