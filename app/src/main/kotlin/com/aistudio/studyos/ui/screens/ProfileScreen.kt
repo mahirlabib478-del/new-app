@@ -128,22 +128,33 @@ private val THEME_OPTIONS = listOf(
 @Composable
 private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Boolean, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.width(112.dp).clickable(onClick = onClick).testTag("theme_card_" + option.key),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+        modifier = Modifier.width(104.dp).clickable(onClick = onClick).testTag("theme_card_" + option.key),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(option.name, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, maxLines = 3)
+        Column(
+            Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp))
             Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                option.name,
+                fontSize = 10.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                maxLines = 3
+            )
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 when {
                     isSelected -> "Applied"
-                    locked -> if (option.key == "cyber_runner") "🔒 24H • 500 XP" else "🔒 24H • 400 XP"
+                    locked -> "🔒 Locked"
                     else -> "Free"
                 },
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (locked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -432,8 +443,8 @@ fun ProfileScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 13.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
@@ -442,7 +453,7 @@ fun ProfileScreen(
                     }
 
                     Text("FREE THEMES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         items(items = THEME_OPTIONS.filter { !viewModel.isPremiumTheme(it.key) }, key = { it.key }) { option ->
                             val isSelected = currentTheme == option.key
                             ThemeOptionCard(option, isSelected, false) { viewModel.setTheme(option.key) }
@@ -450,7 +461,7 @@ fun ProfileScreen(
                     }
 
                     Text("PREMIUM THEMES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         items(items = THEME_OPTIONS.filter { viewModel.isPremiumTheme(it.key) }, key = { it.key }) { option ->
                             val isSelected = currentTheme == option.key
                             val active = viewModel.isPremiumThemePassActive(option.key)
