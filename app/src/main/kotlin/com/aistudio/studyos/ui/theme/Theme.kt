@@ -42,6 +42,25 @@ private val CyberpunkColorScheme = darkColorScheme(
     outline = Color(0xFF6C3A78)
 )
 
+private val CyberRunnerColorScheme = lightColorScheme(
+    primary = CyberRunnerRed,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFFEE2E2),
+    onPrimaryContainer = Color(0xFF7F1D1D),
+    secondary = CyberRunnerCyan,
+    onSecondary = Color.Black,
+    secondaryContainer = Color(0xFFCFFAFE),
+    onSecondaryContainer = Color(0xFF164E63),
+    background = CyberRunnerBg,
+    onBackground = CyberRunnerCarbon,
+    surface = CyberRunnerSurface,
+    onSurface = CyberRunnerCarbon,
+    surfaceVariant = Color(0xFFF4F4F5),
+    onSurfaceVariant = Color(0xFF52525B),
+    outline = Color(0xFFD4D4D8),
+    outlineVariant = Color(0xFFE4E4E7)
+)
+
 private val OceanColorScheme = darkColorScheme(
     primary = OceanAccent,
     onPrimary = Color.White,
@@ -127,7 +146,7 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFE2E8F0)
 )
 
-fun isLightPreset(preset: String): Boolean = preset in setOf("mint", "sunrise", "light")
+fun isLightPreset(preset: String): Boolean = preset in setOf("mint", "sunrise", "light", "cyber_runner")
 
 @Composable
 fun StudyOSTheme(
@@ -137,6 +156,7 @@ fun StudyOSTheme(
     val colorScheme = when (preset) {
         "pitch_black" -> PitchBlackColorScheme
         "cyberpunk" -> CyberpunkColorScheme
+        "cyber_runner" -> CyberRunnerColorScheme
         "dark" -> DarkColorScheme
         "light" -> LightColorScheme
         "ocean" -> OceanColorScheme
@@ -146,7 +166,7 @@ fun StudyOSTheme(
     }
 
     val isDark = when (preset) {
-        "mint", "sunrise", "light" -> false
+        "mint", "sunrise", "light", "cyber_runner" -> false
         else -> true
     }
 
