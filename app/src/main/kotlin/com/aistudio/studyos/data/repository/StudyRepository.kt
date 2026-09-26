@@ -134,26 +134,6 @@ class StudyRepository(
         themePreferences.setCachedRecentSessions(trimmed)
         return id
     }
-    suspend fun deleteSessionLog(log: SessionLogEntity) {
-        database.sessionLogDao().deleteLog(log)
-        val currentCached = (inMemoryCachedLogs ?: themePreferences.getCachedRecentSessions()).toMutableList()
-        currentCached.removeAll { it.id == log.id }
-        inMemoryCachedLogs = currentCached
-        themePreferences.setCachedRecentSessions(currentCached)
-        val profile = database.userProfileDao().getProfileSync()
-        if (profile != null) {
-            val updatedMinutes = (profile.totalStudyMinutes - log.durationMinutes).coerceAtLeast(0)
-            val updatedXP = (profile.totalXP - log.xpEarned).coerceAtLeast(0)
-            val updatedLevel = profile.currentLevel
-            database.userProfileDao().insertOrUpdate(
-                profile.copy(
-                    totalStudyMinutes = updatedMinutes,
-                    totalXP = updatedXP,
-                    currentLevel = updatedLevel
-                )
-            )
-        }
-    }
     suspend fun clearHistory() {
         database.sessionLogDao().clearAll()
         inMemoryCachedLogs = emptyList()
