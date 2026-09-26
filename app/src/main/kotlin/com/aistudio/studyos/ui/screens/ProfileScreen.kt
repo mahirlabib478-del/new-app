@@ -121,6 +121,7 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("mint", "Mint Fresh", Icons.Default.Spa, Color(0xFF0D9488)),
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C)),
     ThemeOption("cyberpunk", "Cyberpunk / Synthwave 80s", Icons.Default.Bolt, Color(0xFFFF2A85)),
+    ThemeOption("cyber_runner", "Mirror's Edge / Cyber Runner", Icons.Default.Bolt, Color(0xFFEF4444)),
 )
 
 private fun formatDailyGoal(minutes: Int): String = when {
