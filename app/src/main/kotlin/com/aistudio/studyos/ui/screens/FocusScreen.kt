@@ -1191,7 +1191,7 @@ private fun AmbientSoundConfigDialog(
                                         border = BorderStroke(1.dp, if (isAudioPassActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                     ) {
                                         Text(
-                                            text = if (isAudioPassActive) "✨ Pass Active • $audioPassRemaining" else "🔒 24h Pass (300 XP)",
+                                            text = if (isAudioPassActive) "✨ Pass Active • $audioPassRemaining" else "Available in XP Shop",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (isAudioPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1253,7 +1253,7 @@ private fun AmbientSoundConfigDialog(
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = if (isAudioPassActive) "Upload Audio" else "Unlock Pass",
+                                            text = if (isAudioPassActive) "Upload Audio" else "Open XP Shop",
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -1284,7 +1284,7 @@ private fun AmbientSoundConfigDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (isAudioPassActive) "✨ 24h Audio Pass: $audioPassRemaining" else "🔒 24h Pass Required (300 XP)",
+                                    text = if (isAudioPassActive) "✨ 24h Audio Pass: $audioPassRemaining" else "Available in XP Shop",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isAudioPassActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -1297,7 +1297,7 @@ private fun AmbientSoundConfigDialog(
                                     )
                                 ) {
                                     Text(
-                                        if (isAudioPassActive) "Extend" else "Get Pass",
+                                        if (isAudioPassActive) "Extend" else "Open Shop",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )
