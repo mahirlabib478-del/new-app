@@ -17,6 +17,28 @@ val PitchBlackBg = Color(0xFF000000)
 val PitchBlackSurface = Color(0xFF101010)
 val CyanAccent = Color(0xFF00E5FF)
 
+// New Dark Themes
+val MidnightIndigoBg = Color(0xFF0B1020)
+val MidnightIndigoSurface = Color(0xFF151B2F)
+val MidnightIndigoPrimary = Color(0xFF6366F1)
+val MidnightIndigoAccent = Color(0xFF818CF8)
+
+val DeepTealBg = Color(0xFF071414)
+val DeepTealSurface = Color(0xFF102222)
+val DeepTealPrimary = Color(0xFF14B8A6)
+val DeepTealAccent = Color(0xFF2DD4BF)
+
+// New Light Themes
+val CleanIndigoBg = Color(0xFFF8FAFC)
+val CleanIndigoSurface = Color.White
+val CleanIndigoPrimary = Color(0xFF4F46E5)
+val CleanIndigoAccent = Color(0xFF6366F1)
+
+val SoftMintBg = Color(0xFFF5FBFA)
+val SoftMintSurface = Color.White
+val SoftMintPrimary = Color(0xFF0F766E)
+val SoftMintAccent = Color(0xFF14B8A6)
+
 // Ocean Theme
 val OceanBg = Color(0xFF08121E)
 val OceanSurface = Color(0xFF0F1E30)
