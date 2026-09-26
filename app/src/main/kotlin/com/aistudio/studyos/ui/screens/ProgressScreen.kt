@@ -152,30 +152,29 @@ fun getModeBadgeLabel(mode: String): String {
 }
 
 private fun calculateMonthlyActivity(logs: List<SessionLogEntity>): List<DayActivityData> {
-    val now = Calendar.getInstance()
-    val todayYear = now.get(Calendar.YEAR)
-    val todayDay = now.get(Calendar.DAY_OF_YEAR)
+    val today = Calendar.getInstance()
+    val todayDay = today.get(Calendar.DAY_OF_MONTH)
     val cal = Calendar.getInstance().apply {
-        add(Calendar.DAY_OF_YEAR, -29)
+        set(Calendar.DAY_OF_MONTH, 1)
         set(Calendar.HOUR_OF_DAY, 0)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
     }
-    val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
+    val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
     val result = mutableListOf<DayActivityData>()
-    repeat(30) {
-        val start = cal.timeInMillis
-        val dayYear = cal.get(Calendar.YEAR)
-        val dayOfYear = cal.get(Calendar.DAY_OF_YEAR)
-        cal.add(Calendar.DAY_OF_YEAR, 1)
-        val end = cal.timeInMillis
-        val minutes = logs.filter { it.timestamp in start until end }.sumOf { it.durationMinutes.coerceAtLeast(0) }
+    repeat(daysInMonth) {
+        val startMillis = cal.timeInMillis
+        val dayNumber = cal.get(Calendar.DAY_OF_MONTH)
+        cal.add(Calendar.DAY_OF_MONTH, 1)
+        val endMillis = cal.timeInMillis
+        val minutes = logs.filter { it.timestamp in startMillis until endMillis }
+            .sumOf { it.durationMinutes.coerceAtLeast(0) }
         result += DayActivityData(
-            dayName = dayFormat.format(Date(start)),
-            dayNumber = Calendar.getInstance().apply { timeInMillis = start }.get(Calendar.DAY_OF_MONTH),
+            dayName = "",
+            dayNumber = dayNumber,
             minutes = minutes,
-            isToday = dayYear == todayYear && dayOfYear == todayDay
+            isToday = dayNumber == todayDay
         )
     }
     return result
@@ -311,6 +310,7 @@ fun ProgressScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
+                        .height(164.dp)
                         .testTag("streak_metric_card"),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
@@ -358,6 +358,7 @@ fun ProgressScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
+                        .height(164.dp)
                         .testTag("total_time_metric_card"),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
@@ -657,7 +658,9 @@ fun ProgressScreen(
             val maxMinutes = monthlyData.maxOfOrNull { it.minutes } ?: 0
             val monthHours = totalMonthMinutes / 60
             val monthMinutes = totalMonthMinutes % 60
-            val cells: List<DayActivityData?> = List(5) { null }.take(35 - monthlyData.size) + monthlyData
+            val firstDayOffset = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK) - 1
+            val cells: List<DayActivityData?> = List(firstDayOffset) { null } + monthlyData
+            val monthLabel = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.time)
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("monthly_activity_card"),
                 shape = RoundedCornerShape(20.dp),
@@ -668,14 +671,13 @@ fun ProgressScreen(
                         Column(Modifier.weight(1f)) {
                             Text("Monthly Activity Pattern", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                             Text(
-                                if (monthHours > 0) monthHours.toString() + " hrs " + monthMinutes + " mins • " + activeMonthDays + "/30 active days"
-                                else activeMonthDays.toString() + "/30 active days • Start your monthly streak",
+                                monthLabel + " • " + activeMonthDays + "/" + monthlyData.size + " active days",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                            Text(activeMonthDays.toString() + "/30", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
+                            Text(activeMonthDays.toString() + "/" + monthlyData.size, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
                         }
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -897,6 +899,10 @@ fun ProgressScreen(
                     }
                 }
             }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
         item {
