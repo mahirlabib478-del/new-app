@@ -5,9 +5,6 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
-import android.util.Log
-import com.aistudio.studyos.service.SponsorWebViewActivity
-import com.aistudio.studyos.service.CompactToast
 
 /**
  * Manages Adsterra Direct Links.
