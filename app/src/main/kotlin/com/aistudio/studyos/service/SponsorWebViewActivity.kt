@@ -237,7 +237,7 @@ class SponsorWebViewActivity : Activity() {
         if (!canClose) return
         canClose = false
         countdownTimer?.cancel()
-        CompactToast.show(applicationContext, compactConfirmationMessage(confirmationMessage), Toast.LENGTH_LONG)
+        CompactToast.show(applicationContext, compactConfirmationMessage(confirmationMessage), android.widget.Toast.LENGTH_LONG)
         finish()
     }
 
