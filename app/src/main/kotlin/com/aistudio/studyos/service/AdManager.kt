@@ -21,10 +21,10 @@ object AdManager {
         context: Context,
         url: String = PROFITABLE_DIRECT_LINK_URL,
         confirmationMessage: String = "🎉 XP Added!"
-    ) {
+    ): Boolean {
         if (!isInternetAvailable(context)) {
             Toast.makeText(context, "Internet connection required", Toast.LENGTH_SHORT).show()
-            return
+            return false
         }
         try {
             val intent = Intent(context, SponsorWebViewActivity::class.java).apply {
@@ -32,8 +32,11 @@ object AdManager {
                 putExtra(SponsorWebViewActivity.EXTRA_CONFIRMATION_MESSAGE, confirmationMessage)
             }
             context.startActivity(intent)
+            return true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch in-app direct link: ${e.message}", e)
+            Toast.makeText(context, "Unable to open sponsor page", Toast.LENGTH_SHORT).show()
+            return false
         }
     }
 
