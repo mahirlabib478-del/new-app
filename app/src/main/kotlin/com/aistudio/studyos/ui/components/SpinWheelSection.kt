@@ -225,11 +225,12 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
             } else {
                 OutlinedButton(
                     onClick = {
-                        if (viewModel.unlockSpinWheel()) {
-                            AdManager.openDirectLink(
-                                context,
-                                confirmationMessage = "🎡 Spin Wheel unlocked!"
-                            )
+                        val opened = AdManager.openDirectLink(
+                            context,
+                            confirmationMessage = "🎡 Spin Wheel unlocked!"
+                        )
+                        if (opened) {
+                            viewModel.unlockSpinWheel()
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
