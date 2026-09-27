@@ -132,6 +132,9 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     )
     val wallpaperPassRemainingFormatted: StateFlow<String> = _wallpaperPassRemainingFormatted.asStateFlow()
 
+    private val _passTimeTick = MutableStateFlow(System.currentTimeMillis())
+    val passTimeTick: StateFlow<Long> = _passTimeTick.asStateFlow()
+
     private val premiumThemeKeys = setOf("cyberpunk", "cyber_runner")
 
     fun isPremiumTheme(themeKey: String): Boolean = themeKey in premiumThemeKeys
@@ -246,6 +249,16 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     private var hasDismissedUpdateDialog: Boolean = false
 
     init {
+        viewModelScope.launch {
+            while (isActive) {
+                _passTimeTick.value = System.currentTimeMillis()
+                _isCustomWallpaperPassActive.value = repository.isCustomWallpaperPassActive()
+                _wallpaperPassRemainingFormatted.value = formatPassDuration(repository.getCustomWallpaperPassExpiresAt())
+                _isCustomAudioPassActive.value = repository.isCustomAudioPassActive()
+                _audioPassRemainingFormatted.value = formatPassDuration(repository.getCustomAudioPassExpiresAt())
+                delay(1000L)
+            }
+        }
         viewModelScope.launch {
             repository.getTodayMinutes().collect { minutes ->
                 _todayMinutes.value = minutes
