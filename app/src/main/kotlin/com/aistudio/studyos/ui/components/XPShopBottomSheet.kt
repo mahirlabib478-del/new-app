@@ -1,6 +1,6 @@
 package com.aistudio.studyos.ui.components
 
-import android.widget.Toast
+import com.aistudio.studyos.service.CompactToast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -135,7 +135,7 @@ fun XPShopBottomSheet(
                 passTypeToPurchase = null
                 if (type == PassType.WALLPAPER) {
                     viewModel.buyCustomWallpaperPass(days = days, xpCost = xpCost) { success, msg ->
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        CompactToast.show(context, msg)
                     }
                 } else {
                     viewModel.buyCustomAudioPass(days = days, xpCost = xpCost) { success, msg ->
@@ -325,7 +325,7 @@ fun XPShopBottomSheet(
                 testTag = "btn_claim_2x_booster_key",
                 onAction = {
                     if (isCooldownActive) {
-                        Toast.makeText(context, "⏳ Next XP drop available in $cooldownFormatted", Toast.LENGTH_SHORT).show()
+                        CompactToast.show(context, "⏳ Next XP drop available in $cooldownFormatted")
                         return@ShopItemCard
                     }
                     val opened = AdManager.openDirectLink(
