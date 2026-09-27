@@ -18,6 +18,8 @@ import com.aistudio.studyos.data.repository.TimerDeadlineCalculator
 import com.aistudio.studyos.StudyApplication
 import com.aistudio.studyos.service.StudyTimerForegroundService
 import com.aistudio.studyos.data.repository.StudyRepository
+import com.aistudio.studyos.data.repository.SpinWheelReward
+import com.aistudio.studyos.data.repository.SpinWheelStatus
 import com.aistudio.studyos.data.update.AppUpdateInfo
 import com.aistudio.studyos.data.update.UpdateCheckState
 import com.aistudio.studyos.data.update.UpdateManager
@@ -1595,6 +1597,18 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
         _boosterRemainingFormatted.value = formatPassDuration(repository.getDoubleXpBoosterExpiresAt())
 
         _shieldSavedNotice.value = repository.getLastShieldSavedDate()
+    }
+
+    fun getSpinWheelStatus(): SpinWheelStatus = repository.getSpinWheelStatus()
+
+    fun unlockSpinWheel(): Boolean = repository.unlockSpinWheel()
+
+    fun spinWheel(onResult: (SpinWheelReward?) -> Unit) {
+        viewModelScope.launch {
+            val reward = repository.spinWheel()
+            refreshPerksState()
+            onResult(reward)
+        }
     }
 
     fun buyStreakShield(onResult: (Boolean, String) -> Unit) {
