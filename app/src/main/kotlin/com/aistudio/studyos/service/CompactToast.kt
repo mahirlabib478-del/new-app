@@ -24,7 +24,7 @@ object CompactToast {
         }
 
         Toast(context).apply {
-            duration = duration
+            this.duration = duration
             view = textView
             setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, dp(context, 76))
         }.show()
