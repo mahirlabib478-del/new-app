@@ -15,6 +15,9 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+data class SpinWheelReward(val slotIndex: Int, val label: String, val xp: Int = 0)
+data class SpinWheelStatus(val unlocked: Boolean, val spinsUsed: Int, val remainingMs: Long)
+
 class StudyRepository(
     private val database: StudyDatabase,
     private val themePreferences: ThemePreferences
@@ -506,6 +509,87 @@ class StudyRepository(
     // ==========================================
     // 🏪 XP Perks & Power-ups Shop Actions
     // ==========================================
+
+    fun getSpinWheelStatus(): SpinWheelStatus = SpinWheelStatus(
+        unlocked = themePreferences.isSpinWheelUnlocked(),
+        spinsUsed = themePreferences.getSpinWheelSpinsUsed(),
+        remainingMs = themePreferences.getSpinWheelRemainingMs()
+    )
+
+    fun unlockSpinWheel(): Boolean {
+        if (themePreferences.isSpinWheelUnlocked()) return false
+        themePreferences.setSpinWheelUnlockedAt(System.currentTimeMillis())
+        themePreferences.setSpinWheelSpinsUsed(0)
+        return true
+    }
+
+    suspend fun spinWheel(): SpinWheelReward? {
+        if (!themePreferences.isSpinWheelUnlocked()) return null
+        val profile = database.userProfileDao().getProfileSync() ?: return null
+        val spinNumber = themePreferences.getSpinWheelSpinsUsed() + 1
+        val cost = 50 + (spinNumber - 1) * 20
+        if (profile.totalXP < cost) return null
+
+        val xpValues = listOf(
+            listOf(5, 100, 150, 10), listOf(10, 120, 170, 20),
+            listOf(15, 140, 190, 25), listOf(20, 160, 210, 30),
+            listOf(25, 180, 230, 35), listOf(30, 200, 250, 40),
+            listOf(35, 220, 270, 45), listOf(40, 240, 290, 50),
+            listOf(45, 260, 310, 55), listOf(50, 280, 330, 60),
+            listOf(55, 300, 350, 65), listOf(60, 320, 370, 70),
+            listOf(65, 340, 390, 75), listOf(70, 360, 410, 80),
+            listOf(75, 380, 430, 85), listOf(80, 400, 450, 90),
+            listOf(85, 420, 470, 95), listOf(90, 440, 490, 100),
+            listOf(95, 460, 510, 105), listOf(100, 480, 530, 110)
+        )[spinNumber - 1]
+
+        val weightedSlots = listOf(25, 18, 7, 20, 7, 10, 8, 5)
+        val roll = kotlin.random.Random.nextInt(weightedSlots.sum())
+        var cursor = 0
+        val slot = weightedSlots.indexOfFirst { weight ->
+            cursor += weight
+            roll < cursor
+        }
+
+        val candidate = profile.copy(
+            totalXP = profile.totalXP - cost,
+            totalXpSpent = profile.totalXpSpent + cost,
+            currentLevel = profile.currentLevel
+        )
+        val newLevel = levelAfterMissionCheck(candidate)
+        database.userProfileDao().insertOrUpdate(candidate.copy(currentLevel = newLevel))
+
+        val reward = when (slot) {
+            0 -> SpinWheelReward(slot, "${xpValues[0]} XP", xpValues[0])
+            1 -> SpinWheelReward(slot, "${xpValues[1]} XP", xpValues[1])
+            2 -> {
+                val themeKey = listOf("cyberpunk", "cyber_runner").random()
+                val now = System.currentTimeMillis()
+                val base = maxOf(themePreferences.getPremiumThemePassExpiresAt(themeKey), now)
+                themePreferences.setPremiumThemePassExpiresAt(themeKey, base + 60 * 60 * 1000L)
+                SpinWheelReward(slot, "+1h Premium Theme")
+            }
+            3 -> SpinWheelReward(slot, "+0 XP")
+            4 -> {
+                val now = System.currentTimeMillis()
+                val base = maxOf(themePreferences.getCustomAudioPassExpiresAt(), now)
+                themePreferences.setCustomAudioPassExpiresAt(base + 60 * 60 * 1000L)
+                SpinWheelReward(slot, "+1h Custom Audio")
+            }
+            5 -> SpinWheelReward(slot, "${xpValues[2]} XP", xpValues[2])
+            6 -> SpinWheelReward(slot, "${xpValues[3]} XP", xpValues[3])
+            else -> {
+                val now = System.currentTimeMillis()
+                val base = maxOf(themePreferences.getCustomWallpaperPassExpiresAt(), now)
+                themePreferences.setCustomWallpaperPassExpiresAt(base + 60 * 60 * 1000L)
+                SpinWheelReward(slot, "+1h Custom Wallpaper")
+            }
+        }
+
+        if (reward.xp > 0) addBonusXP(reward.xp)
+        themePreferences.setSpinWheelSpinsUsed(spinNumber)
+        return reward
+    }
 
     fun getStreakShieldCount(): Int = themePreferences.getStreakShieldCount()
 
