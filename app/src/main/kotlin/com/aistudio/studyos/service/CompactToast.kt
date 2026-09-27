@@ -12,7 +12,7 @@ object CompactToast {
     fun show(context: Context, message: CharSequence, duration: Int = Toast.LENGTH_SHORT) {
         val textView = TextView(context).apply {
             text = message
-            textSize = 13f
+            textSize = 14f
             setTextColor(Color.WHITE)
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
             maxLines = 2
