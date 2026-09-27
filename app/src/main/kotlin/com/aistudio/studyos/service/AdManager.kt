@@ -2,7 +2,9 @@ package com.aistudio.studyos.service
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.widget.Toast
 import android.util.Log
 import com.aistudio.studyos.service.SponsorWebViewActivity
 
@@ -20,6 +22,10 @@ object AdManager {
         url: String = PROFITABLE_DIRECT_LINK_URL,
         confirmationMessage: String = "🎉 XP Added!"
     ) {
+        if (!isInternetAvailable(context)) {
+            Toast.makeText(context, "Internet connection required", Toast.LENGTH_SHORT).show()
+            return
+        }
         try {
             val intent = Intent(context, SponsorWebViewActivity::class.java).apply {
                 putExtra(SponsorWebViewActivity.EXTRA_URL, url)
@@ -29,6 +35,15 @@ object AdManager {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch in-app direct link: ${e.message}", e)
         }
+    }
+
+    private fun isInternetAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            ?: return false
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
     private const val PREFS_NAME = "ad_rate_limit_prefs"
