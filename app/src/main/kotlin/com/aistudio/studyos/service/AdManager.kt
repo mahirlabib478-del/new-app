@@ -4,9 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.widget.Toast
+import android.util.Log
 import android.util.Log
 import com.aistudio.studyos.service.SponsorWebViewActivity
+import com.aistudio.studyos.service.CompactToast
 
 /**
  * Manages Adsterra Direct Links.
@@ -23,7 +24,7 @@ object AdManager {
         confirmationMessage: String = "🎉 XP Added!"
     ): Boolean {
         if (!isInternetAvailable(context)) {
-            Toast.makeText(context, "Internet connection required", Toast.LENGTH_SHORT).show()
+            CompactToast.show(context, "Internet connection required")
             return false
         }
         try {
@@ -35,7 +36,7 @@ object AdManager {
             return true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch in-app direct link: ${e.message}", e)
-            Toast.makeText(context, "Unable to open sponsor page", Toast.LENGTH_SHORT).show()
+            CompactToast.show(context, "Unable to open sponsor page")
             return false
         }
     }
