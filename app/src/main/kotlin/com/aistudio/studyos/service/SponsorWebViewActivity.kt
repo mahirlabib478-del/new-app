@@ -18,6 +18,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.ViewCompat
+import com.aistudio.studyos.service.CompactToast
 import androidx.core.view.WindowInsetsCompat
 
 class SponsorWebViewActivity : Activity() {
@@ -236,7 +237,7 @@ class SponsorWebViewActivity : Activity() {
         if (!canClose) return
         canClose = false
         countdownTimer?.cancel()
-        Toast.makeText(applicationContext, compactConfirmationMessage(confirmationMessage), Toast.LENGTH_LONG).show()
+        CompactToast.show(applicationContext, compactConfirmationMessage(confirmationMessage), Toast.LENGTH_LONG)
         finish()
     }
 
