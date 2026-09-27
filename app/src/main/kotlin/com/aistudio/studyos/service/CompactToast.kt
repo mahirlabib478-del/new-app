@@ -12,13 +12,13 @@ object CompactToast {
     fun show(context: Context, message: CharSequence, duration: Int = Toast.LENGTH_SHORT) {
         val textView = TextView(context).apply {
             text = message
-            textSize = 13f
+            textSize = 11f
             setTextColor(Color.WHITE)
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
             maxLines = 2
-            setPadding(dp(context, 14), dp(context, 9), dp(context, 14), dp(context, 9))
+            setPadding(dp(context, 12), dp(context, 7), dp(context, 12), dp(context, 7))
             background = GradientDrawable().apply {
-                cornerRadius = dp(context, 18).toFloat()
+                cornerRadius = dp(context, 16).toFloat()
                 setColor(Color.rgb(72, 72, 72))
             }
         }
