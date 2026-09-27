@@ -1966,13 +1966,14 @@ private fun StudySessionCompleteScreen(
                     androidx.compose.material3.Button(
                         onClick = {
                             if (!bonusClaimed) {
-                                bonusClaimed = true
-                                onClaimBonusXP(calculatedBonusXP)
-                                com.aistudio.studyos.service.AdManager.openDirectLink(
+                                val opened = com.aistudio.studyos.service.AdManager.openDirectLink(
                                     context,
                                     confirmationMessage = "🎉 +$calculatedBonusXP XP Added! (" + bonusMultiplier + "X XP for this session)"
                                 )
-
+                                if (opened) {
+                                    bonusClaimed = true
+                                    onClaimBonusXP(calculatedBonusXP)
+                                }
                             }
                         },
                         enabled = !bonusClaimed,
