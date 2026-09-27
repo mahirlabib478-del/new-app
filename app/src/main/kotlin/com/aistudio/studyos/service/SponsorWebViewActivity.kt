@@ -223,6 +223,15 @@ class SponsorWebViewActivity : Activity() {
         }.start()
     }
 
+    private fun handleBackNavigation() {
+        if (!canClose) return
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            closeSponsorPage()
+        }
+    }
+
     private fun closeSponsorPage() {
         if (!canClose) return
         canClose = false
@@ -234,7 +243,7 @@ class SponsorWebViewActivity : Activity() {
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && canClose) {
-            closeSponsorPage()
+            handleBackNavigation()
         }
     }
 
