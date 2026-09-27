@@ -38,7 +38,7 @@ class SponsorWebViewActivity : Activity() {
     private var confirmationMessage = "🎉 XP Added!"
 
     private val backCallback = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        android.window.OnBackInvokedCallback { if (canClose) closeSponsorPage() }
+        android.window.OnBackInvokedCallback { if (canClose) handleBackNavigation() }
     } else {
         null
     }
@@ -122,7 +122,7 @@ class SponsorWebViewActivity : Activity() {
                 setStroke(dp(1), Color.rgb(225, 228, 233))
             }
             setPadding(dp(18), dp(8), dp(18), dp(8))
-            setOnClickListener { closeSponsorPage() }
+            setOnClickListener { handleBackNavigation() }
         }
 
         timerRow.addView(
