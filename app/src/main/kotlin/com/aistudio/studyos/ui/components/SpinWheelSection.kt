@@ -76,7 +76,8 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
         }
     }
 
-    val status = viewModel.getSpinWheelStatus()
+    val storedStatus = viewModel.getSpinWheelStatus()
+    val status = storedStatus.copy(remainingMs = (storedStatus.remainingMs - (System.currentTimeMillis() - tick)).coerceAtLeast(0L))
     val active = status.unlocked && status.remainingMs > 0L && status.spinsUsed < 20
     val nextSpin = if (active) status.spinsUsed + 1 else 1
     val cost = 50 + (nextSpin - 1) * 20
