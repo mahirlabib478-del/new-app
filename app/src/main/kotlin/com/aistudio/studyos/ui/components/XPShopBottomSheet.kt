@@ -328,9 +328,13 @@ fun XPShopBottomSheet(
                         Toast.makeText(context, "⏳ Next XP drop available in $cooldownFormatted", Toast.LENGTH_SHORT).show()
                         return@ShopItemCard
                     }
-                    // XP is granted immediately. The Direct Link opens 100% of the time.
-                    viewModel.claimFreeXpDrop(offerBonusXP)
-                    AdManager.openDirectLink(context, confirmationMessage = "🎉 +$offerBonusXP XP Added!")
+                    val opened = AdManager.openDirectLink(
+                        context,
+                        confirmationMessage = "🎉 +$offerBonusXP XP Added!"
+                    )
+                    if (opened) {
+                        viewModel.claimFreeXpDrop(offerBonusXP)
+                    }
                 }
             )
 
