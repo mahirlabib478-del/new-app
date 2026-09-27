@@ -236,8 +236,12 @@ class SponsorWebViewActivity : Activity() {
         if (!canClose) return
         canClose = false
         countdownTimer?.cancel()
-        Toast.makeText(applicationContext, confirmationMessage, Toast.LENGTH_LONG).show()
+        Toast.makeText(applicationContext, compactConfirmationMessage(confirmationMessage), Toast.LENGTH_LONG).show()
         finish()
+    }
+
+    private fun compactConfirmationMessage(message: String): String {
+        return message.replace(Regex(" XP Added!.*$"), " XP")
     }
 
     @Suppress("DEPRECATION")
