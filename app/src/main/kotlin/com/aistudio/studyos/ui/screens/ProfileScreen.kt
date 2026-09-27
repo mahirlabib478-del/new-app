@@ -198,6 +198,7 @@ fun ProfileScreen(
     val isWallpaperPassActive by viewModel.isCustomWallpaperPassActive.collectAsState()
     val wallpaperPassRemaining by viewModel.wallpaperPassRemainingFormatted.collectAsState()
     val isAudioPassActive by viewModel.isCustomAudioPassActive.collectAsState()
+    val passTimeTick by viewModel.passTimeTick.collectAsState()
     val isBoosterActive by viewModel.isDoubleXpBoosterActive.collectAsState()
     val activeBoosterMultiplier by viewModel.xpBoosterMultiplier.collectAsState()
 
@@ -394,6 +395,7 @@ fun ProfileScreen(
                         THEME_OPTIONS.filter { viewModel.isPremiumTheme(it.key) }.forEach { option ->
                             val isSelected = currentTheme == option.key
                             val active = viewModel.isPremiumThemePassActive(option.key)
+                            val remaining = viewModel.premiumThemePassRemaining(option.key)
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -417,7 +419,7 @@ fun ProfileScreen(
                                     Column(Modifier.weight(1f)) {
                                         Text(option.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                                         Text(
-                                            if (active) "Active" else "Available in XP Shop",
+                                            if (active) "Active • $remaining" else "Available in XP Shop",
                                             fontSize = 10.sp,
                                             color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
