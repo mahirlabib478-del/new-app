@@ -258,7 +258,7 @@ fun XPShopBottomSheet(
                 testTag = "btn_buy_streak_shield",
                 onAction = {
                     viewModel.buyStreakShield { success, msg ->
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        CompactToast.show(context, msg)
                     }
                 }
             )
