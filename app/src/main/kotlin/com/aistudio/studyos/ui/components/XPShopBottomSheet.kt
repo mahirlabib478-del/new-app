@@ -139,7 +139,7 @@ fun XPShopBottomSheet(
                     }
                 } else {
                     viewModel.buyCustomAudioPass(days = days, xpCost = xpCost) { success, msg ->
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        CompactToast.show(context, msg)
                     }
                 }
             }
