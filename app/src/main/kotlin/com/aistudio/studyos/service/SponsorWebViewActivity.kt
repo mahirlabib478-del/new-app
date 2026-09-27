@@ -59,7 +59,7 @@ class SponsorWebViewActivity : Activity() {
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.rgb(246, 247, 250))
+            setBackgroundColor(Color.rgb(238, 241, 255))
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
@@ -75,8 +75,8 @@ class SponsorWebViewActivity : Activity() {
             setPadding(dp(12), dp(8), dp(12), dp(8))
             background = GradientDrawable().apply {
                 cornerRadius = dp(18).toFloat()
-                setColor(Color.WHITE)
-                setStroke(dp(1), Color.rgb(232, 234, 238))
+                setColor(Color.rgb(248, 249, 255))
+                setStroke(dp(1), Color.rgb(211, 217, 247))
             }
             elevation = dp(3).toFloat()
         }
@@ -89,20 +89,20 @@ class SponsorWebViewActivity : Activity() {
         countdownLabel = TextView(this).apply {
             text = "Please wait"
             textSize = 13f
-            setTextColor(Color.rgb(90, 96, 105))
+            setTextColor(Color.rgb(74, 82, 120))
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
 
         countdownValue = TextView(this).apply {
             text = "7s"
             textSize = 21f
-            setTextColor(Color.rgb(28, 32, 38))
+            setTextColor(Color.rgb(50, 58, 120))
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             gravity = Gravity.CENTER
             background = GradientDrawable().apply {
                 cornerRadius = dp(16).toFloat()
-                setColor(Color.rgb(242, 244, 247))
-                setStroke(dp(1), Color.rgb(225, 228, 233))
+                setColor(Color.rgb(225, 229, 255))
+                setStroke(dp(1), Color.rgb(194, 202, 244))
             }
             setPadding(dp(15), dp(5), dp(15), dp(5))
         }
@@ -143,7 +143,7 @@ class SponsorWebViewActivity : Activity() {
         progressTrack = View(this).apply {
             background = GradientDrawable().apply {
                 cornerRadius = dp(3).toFloat()
-                setColor(Color.rgb(220, 223, 228))
+                setColor(Color.rgb(202, 208, 239))
             }
         }
 
