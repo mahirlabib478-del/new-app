@@ -251,6 +251,31 @@ class ThemePreferences(context: Context) {
     }
 
     // ==========================================
+    // 🎡 Spin Wheel
+    // ==========================================
+
+    fun getSpinWheelUnlockedAt(): Long = prefs.getLong(KEY_SPIN_WHEEL_UNLOCKED_AT, 0L)
+
+    fun setSpinWheelUnlockedAt(timestamp: Long) {
+        prefs.edit().putLong(KEY_SPIN_WHEEL_UNLOCKED_AT, timestamp).apply()
+    }
+
+    fun getSpinWheelSpinsUsed(): Int = prefs.getInt(KEY_SPIN_WHEEL_SPINS_USED, 0).coerceIn(0, 20)
+
+    fun setSpinWheelSpinsUsed(value: Int) {
+        prefs.edit().putInt(KEY_SPIN_WHEEL_SPINS_USED, value.coerceIn(0, 20)).apply()
+    }
+
+    fun getSpinWheelRemainingMs(): Long {
+        val unlockedAt = getSpinWheelUnlockedAt()
+        if (unlockedAt <= 0L) return 0L
+        return (unlockedAt + 60 * 60 * 1000L - System.currentTimeMillis()).coerceAtLeast(0L)
+    }
+
+    fun isSpinWheelUnlocked(): Boolean =
+        getSpinWheelSpinsUsed() < 20 && getSpinWheelRemainingMs() > 0L
+
+    // ==========================================
     // 🛡️ Streak Shield & Temporary Passes
     // ==========================================
 
@@ -366,5 +391,7 @@ class ThemePreferences(context: Context) {
         private const val KEY_DOUBLE_XP_BOOSTER_EXPIRES = "perk_double_xp_booster_expires"
         private const val KEY_XP_BOOSTER_MULTIPLIER = "perk_xp_booster_multiplier"
         private const val KEY_LAST_FREE_XP_DROP_CLAIM_TIME = "perk_last_free_xp_drop_claim_time"
+        private const val KEY_SPIN_WHEEL_UNLOCKED_AT = "spin_wheel_unlocked_at"
+        private const val KEY_SPIN_WHEEL_SPINS_USED = "spin_wheel_spins_used"
     }
 }
