@@ -101,8 +101,8 @@ class SponsorWebViewActivity : Activity() {
             gravity = Gravity.CENTER
             background = GradientDrawable().apply {
                 cornerRadius = dp(16).toFloat()
-                setColor(Color.rgb(225, 229, 255))
-                setStroke(dp(1), Color.rgb(194, 202, 244))
+                setColor(Color.rgb(242, 244, 247))
+                setStroke(dp(1), Color.rgb(225, 228, 233))
             }
             setPadding(dp(15), dp(5), dp(15), dp(5))
         }
