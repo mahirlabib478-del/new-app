@@ -302,6 +302,9 @@ fun XPShopBottomSheet(
                 onSelectTheme = { themeKeyToPurchase = it }
             )
 
+            // 🎡 Spin Wheel
+            SpinWheelSection(viewModel = viewModel)
+
             // ITEM 6: ⚡ Instant Free XP Drop via Sponsor (70% +150 XP, 30% +250 XP; 30-min cooldown; 5s silent delay)
             ShopItemCard(
                 icon = Icons.Default.Bolt,
