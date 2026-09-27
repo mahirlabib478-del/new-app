@@ -92,6 +92,7 @@ fun XPShopBottomSheet(
     val wallpaperPassRemaining by viewModel.wallpaperPassRemainingFormatted.collectAsState()
     val isAudioPassActive by viewModel.isCustomAudioPassActive.collectAsState()
     val audioPassRemaining by viewModel.audioPassRemainingFormatted.collectAsState()
+    val passTimeTick by viewModel.passTimeTick.collectAsState()
 
     var passTypeToPurchase by remember { mutableStateOf<PassType?>(null) }
     var themeKeyToPurchase by remember { mutableStateOf<String?>(null) }
@@ -299,6 +300,7 @@ fun XPShopBottomSheet(
             // Premium Theme Passes — grouped compact section
             PremiumThemeSection(
                 viewModel = viewModel,
+                passTimeTick = passTimeTick,
                 onSelectTheme = { themeKeyToPurchase = it }
             )
 
@@ -340,6 +342,7 @@ fun XPShopBottomSheet(
 @Composable
 private fun PremiumThemeSection(
     viewModel: StudyViewModel,
+    passTimeTick: Long,
     onSelectTheme: (String) -> Unit
 ) {
     Card(
@@ -362,6 +365,7 @@ private fun PremiumThemeSection(
                 title = "Cyberpunk / Synthwave 80s",
                 price = "400 XP/day",
                 active = viewModel.isPremiumThemePassActive("cyberpunk"),
+                remaining = viewModel.premiumThemePassRemaining("cyberpunk"),
                 testTag = "btn_buy_cyberpunk_theme_pass",
                 onClick = { onSelectTheme("cyberpunk") }
             )
@@ -369,6 +373,7 @@ private fun PremiumThemeSection(
                 title = "Mirror's Edge / Cyber Runner",
                 price = "500 XP/day",
                 active = viewModel.isPremiumThemePassActive("cyber_runner"),
+                remaining = viewModel.premiumThemePassRemaining("cyber_runner"),
                 testTag = "btn_buy_cyber_runner_theme_pass",
                 onClick = { onSelectTheme("cyber_runner") }
             )
@@ -381,6 +386,7 @@ private fun PremiumThemeRow(
     title: String,
     price: String,
     active: Boolean,
+    remaining: String,
     testTag: String,
     onClick: () -> Unit
 ) {
@@ -408,7 +414,7 @@ private fun PremiumThemeRow(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
                 Text(
-                    if (active) "Active • $price" else "Premium • $price",
+                    if (active) "Active • $remaining" else "Premium • $price",
                     fontSize = 11.sp,
                     color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
