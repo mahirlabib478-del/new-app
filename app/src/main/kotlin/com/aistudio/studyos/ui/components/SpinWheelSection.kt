@@ -1,6 +1,6 @@
 package com.aistudio.studyos.ui.components
 
-import android.widget.Toast
+import com.aistudio.studyos.service.CompactToast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -190,7 +190,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     onClick = {
                         if (isSpinning) return@Button
                         if (totalXP < cost) {
-                            Toast.makeText(context, "Need " + (cost - totalXP) + " more XP", Toast.LENGTH_SHORT).show()
+                            CompactToast.show(context, "Need " + (cost - totalXP) + " more XP")
                             return@Button
                         }
                         isSpinning = true
@@ -198,7 +198,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                         viewModel.spinWheel { reward ->
                             if (reward == null) {
                                 isSpinning = false
-                                Toast.makeText(context, "Spin unavailable. Please try again.", Toast.LENGTH_SHORT).show()
+                                CompactToast.show(context, "Spin unavailable. Please try again.")
                                 return@spinWheel
                             }
                             scope.launch {
