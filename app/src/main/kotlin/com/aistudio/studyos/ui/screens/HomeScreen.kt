@@ -503,13 +503,21 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = "Study",
+                            modifier = Modifier.fillMaxWidth(),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "Plan your study",
+                            modifier = Modifier.fillMaxWidth(),
                             style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -535,13 +543,21 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = "Quick Focus",
+                            modifier = Modifier.fillMaxWidth(),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "25-minute Pomodoro",
+                            modifier = Modifier.fillMaxWidth(),
                             style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
