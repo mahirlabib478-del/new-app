@@ -120,4 +120,10 @@ interface SessionLogDao {
 
     @Query("DELETE FROM session_logs")
     suspend fun clearAll()
+    @Query("SELECT * FROM session_logs")
+    suspend fun getAllForBackup(): List<SessionLogEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllForRestore(logs: List<SessionLogEntity>)
+
 }
