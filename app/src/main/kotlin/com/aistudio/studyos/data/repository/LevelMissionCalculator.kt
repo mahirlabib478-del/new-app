@@ -113,11 +113,11 @@ object LevelMissionCalculator {
         // so shop purchases cannot distort the XP mission.
         return LevelMissionProgress(
             targets = targets,
-            xpEarned = profile.totalXpEarned.coerceAtLeast(0),
-            studyMinutes = profile.totalStudyMinutes.coerceAtLeast(0),
+            xpEarned = (profile.totalXpEarned - profile.levelStartXpEarned).coerceAtLeast(0),
+            studyMinutes = (profile.totalStudyMinutes - profile.levelStartStudyMinutes).coerceAtLeast(0),
             topicCount = topicCount.coerceAtLeast(0),
             peakFocusMinutes = peakFocusMinutes.coerceAtLeast(0),
-            xpSpent = profile.totalXpSpent.coerceAtLeast(0)
+            xpSpent = (profile.totalXpSpent - profile.levelStartXpSpent).coerceAtLeast(0)
         )
     }
 
