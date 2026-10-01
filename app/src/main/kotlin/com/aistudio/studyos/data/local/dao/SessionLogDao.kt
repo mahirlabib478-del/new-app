@@ -38,10 +38,28 @@ interface SessionLogDao {
     @Query("SELECT COUNT(*) FROM session_logs WHERE trim(subject) <> '' AND trim(chapter) <> ''")
     suspend fun getValidStudySessionCountOnce(): Int
 
-    @Query("SELECT COUNT(*) FROM session_logs WHERE timestamp >= :sinceMillis AND trim(subject) <> '' AND trim(chapter) <> ''")
+    @Query("""
+        SELECT COUNT(*) FROM (
+            SELECT 1
+            FROM session_logs
+            WHERE timestamp >= :sinceMillis
+              AND trim(subject) <> ''
+              AND trim(chapter) <> ''
+            GROUP BY lower(trim(subject)), lower(trim(chapter))
+        )
+    """)
     fun getValidStudySessionCountSince(sinceMillis: Long): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM session_logs WHERE timestamp >= :sinceMillis AND trim(subject) <> '' AND trim(chapter) <> ''")
+    @Query("""
+        SELECT COUNT(*) FROM (
+            SELECT 1
+            FROM session_logs
+            WHERE timestamp >= :sinceMillis
+              AND trim(subject) <> ''
+              AND trim(chapter) <> ''
+            GROUP BY lower(trim(subject)), lower(trim(chapter))
+        )
+    """)
     suspend fun getValidStudySessionCountSinceOnce(sinceMillis: Long): Int
 
     @Query("""
