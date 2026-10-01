@@ -105,6 +105,7 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.update.UpdateCheckState
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import kotlin.math.roundToInt
 
 data class ThemeOption(
@@ -188,6 +189,10 @@ fun ProfileScreen(
     var isCleaningCache by remember { mutableStateOf(false) }
     var cacheCleanedSuccess by remember { mutableStateOf(false) }
     var showXPShop by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+    var resetMessage by remember { mutableStateOf<String?>(null) }
+    var resetSending by remember { mutableStateOf(false) }
+    val accountRepository = remember { FirebaseAccountRepository() }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
@@ -248,6 +253,43 @@ fun ProfileScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Password Recovery", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text("Enter your account email to receive a password reset link.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    OutlinedTextField(
+                        value = resetEmail,
+                        onValueChange = { resetEmail = it; resetMessage = null },
+                        modifier = Modifier.fillMaxWidth().testTag("password_reset_email"),
+                        label = { Text("Email address") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    )
+                    Button(
+                        onClick = {
+                            resetSending = true
+                            resetMessage = null
+                            accountRepository.sendPasswordResetEmail(resetEmail) { error ->
+                                resetSending = false
+                                resetMessage = if (error == null) "If this email is registered, a password reset link has been sent." else "Could not send reset email. Check the address and try again."
+                            }
+                        },
+                        enabled = resetEmail.contains("@") && !resetSending,
+                        modifier = Modifier.fillMaxWidth().testTag("btn_send_password_reset")
+                    ) {
+                        if (resetSending) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        else Text("Send Reset Link")
+                    }
+                    resetMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+                }
+            }
         }
 
         // XP Perks & Power-ups Shop Card
