@@ -4,6 +4,7 @@ import android.app.Application
 import com.aistudio.studyos.data.local.StudyDatabase
 import com.aistudio.studyos.data.local.ThemePreferences
 import com.aistudio.studyos.data.repository.StudyRepository
+import com.aistudio.studyos.data.repository.FirebaseProgressSyncRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,6 +18,7 @@ class StudyApplication : Application() {
     val database: StudyDatabase by lazy { StudyDatabase.getInstance(this) }
     val themePreferences: ThemePreferences by lazy { ThemePreferences(this) }
     val repository: StudyRepository by lazy { StudyRepository(database, themePreferences) }
+    val cloudProgressSync: FirebaseProgressSyncRepository by lazy { FirebaseProgressSyncRepository(database) }
 
     override fun onCreate() {
         super.onCreate()
