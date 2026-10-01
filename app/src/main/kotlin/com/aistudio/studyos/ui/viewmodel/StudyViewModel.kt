@@ -240,6 +240,18 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
     val userProfile: StateFlow<UserProfileEntity?> = repository.getUserProfile()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val levelMissionTopicCount: StateFlow<Int> = userProfile
+        .filterNotNull()
+        .flatMapLatest { repository.getLevelMissionTopicCount(it.levelStartedAtMillis) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val levelMissionPeakFocusMinutes: StateFlow<Int> = userProfile
+        .filterNotNull()
+        .flatMapLatest { repository.getLevelMissionPeakFocusMinutes(it.levelStartedAtMillis) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
     private val _focusState = MutableStateFlow(FocusTimerState())
     val focusState: StateFlow<FocusTimerState> = _focusState.asStateFlow()
 
