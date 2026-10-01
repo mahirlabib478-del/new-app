@@ -91,8 +91,8 @@ class StudyRepository(
     fun getPeakDailyFocusMinutes(): Flow<Int> = database.sessionLogDao().getPeakDailyFocusMinutes()
 
     private suspend fun levelAfterMissionCheck(profile: UserProfileEntity): Int {
-        val topics = database.sessionLogDao().getValidStudySessionCountOnce()
-        val peak = database.sessionLogDao().getPeakDailyFocusMinutesOnce()
+        val topics = database.sessionLogDao().getValidStudySessionCountSinceOnce(profile.levelStartedAtMillis)
+        val peak = database.sessionLogDao().getPeakDailyFocusMinutesSinceOnce(profile.levelStartedAtMillis)
         val level = profile.currentLevel.coerceIn(1, 100)
         // Advance at most one level per mission check so a large accumulated
         // history cannot cause the user to skip multiple levels at once.
@@ -106,6 +106,21 @@ class StudyRepository(
         }
     }
     
+    private suspend fun saveLevelCheckedProfile(profile: UserProfileEntity, newLevel: Int) {
+        val updated = if (newLevel > profile.currentLevel) {
+            profile.copy(
+                currentLevel = newLevel,
+                levelStartStudyMinutes = profile.totalStudyMinutes,
+                levelStartXpEarned = profile.totalXpEarned,
+                levelStartXpSpent = profile.totalXpSpent,
+                levelStartedAtMillis = System.currentTimeMillis() + 1L
+            )
+        } else {
+            profile.copy(currentLevel = newLevel)
+        }
+        database.userProfileDao().insertOrUpdate(updated)
+    }
+
     fun getCachedRecentLogs(): List<SessionLogEntity> {
         inMemoryCachedLogs?.let { if (it.isNotEmpty()) return it }
         val loaded = themePreferences.getCachedRecentSessions()
@@ -503,7 +518,7 @@ class StudyRepository(
             lastActiveDate = todayStr
         )
         val newLevel = levelAfterMissionCheck(candidateProfile)
-        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = newLevel))
+        saveLevelCheckedProfile(candidateProfile, newLevel)
     }
 
     // ==========================================
@@ -557,7 +572,7 @@ class StudyRepository(
             currentLevel = profile.currentLevel
         )
         val newLevel = levelAfterMissionCheck(candidate)
-        database.userProfileDao().insertOrUpdate(candidate.copy(currentLevel = newLevel))
+        saveLevelCheckedProfile(candidate, newLevel)
 
         val reward = when (slot) {
             0 -> SpinWheelReward(slot, "${xpValues[0]} XP", xpValues[0])
@@ -630,7 +645,7 @@ class StudyRepository(
             totalXpSpent = updatedSpent
         )
         val updatedLevel = levelAfterMissionCheck(candidateProfile)
-        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
+        saveLevelCheckedProfile(candidateProfile, updatedLevel)
         themePreferences.setStreakShieldCount(currentShields + 1)
         return Pair(true, "🛡️ Streak Shield equipped! (Total: ${currentShields + 1}/2)")
     }
@@ -649,7 +664,7 @@ class StudyRepository(
             totalXpSpent = updatedSpent
         )
         val updatedLevel = levelAfterMissionCheck(candidateProfile)
-        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
+        saveLevelCheckedProfile(candidateProfile, updatedLevel)
 
         val currentExpires = themePreferences.getCustomWallpaperPassExpiresAt()
         val now = System.currentTimeMillis()
@@ -677,7 +692,7 @@ class StudyRepository(
             totalXpSpent = updatedSpent
         )
         val updatedLevel = levelAfterMissionCheck(candidateProfile)
-        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
+        saveLevelCheckedProfile(candidateProfile, updatedLevel)
 
         val currentExpires = themePreferences.getPremiumThemePassExpiresAt(themeKey)
         val now = System.currentTimeMillis()
@@ -703,7 +718,7 @@ class StudyRepository(
             totalXpSpent = updatedSpent
         )
         val updatedLevel = levelAfterMissionCheck(candidateProfile)
-        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = updatedLevel))
+        saveLevelCheckedProfile(candidateProfile, updatedLevel)
 
         val currentExpires = themePreferences.getCustomAudioPassExpiresAt()
         val now = System.currentTimeMillis()
@@ -776,7 +791,7 @@ class StudyRepository(
             currentLevel = currentProfile.currentLevel
         )
         val newLevel = levelAfterMissionCheck(candidateProfile)
-        database.userProfileDao().insertOrUpdate(candidateProfile.copy(currentLevel = newLevel))
+        saveLevelCheckedProfile(candidateProfile, newLevel)
     }
 
     suspend fun resetStats() {
