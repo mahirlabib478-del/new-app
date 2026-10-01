@@ -55,4 +55,10 @@ interface StudyPlanDao {
 
     @Query("DELETE FROM study_plans")
     suspend fun clearAll()
+    @Query("SELECT * FROM study_plans")
+    suspend fun getAllForBackup(): List<StudyPlanEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllForRestore(plans: List<StudyPlanEntity>)
+
 }
