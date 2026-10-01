@@ -3,7 +3,10 @@ package com.aistudio.studyos.data.repository
 import com.aistudio.studyos.data.local.StudyDatabase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.suspendCancellableCoroutine
+import com.google.android.gms.tasks.Task
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Uploads a complete local progress snapshot to the signed-in user's private Firestore document.
@@ -34,7 +37,15 @@ class FirebaseProgressSyncRepository(
         firestore.collection("users").document(uid)
             .collection("progress").document("current")
             .set(snapshot)
-            .await()
+            .asSuspendUnit()
+    }
+
+    private suspend fun Task<Void>.asSuspendUnit() = suspendCancellableCoroutine { continuation ->
+        addOnCompleteListener { task ->
+            if (!continuation.isActive) return@addOnCompleteListener
+            if (task.isSuccessful) continuation.resume(Unit)
+            else continuation.resumeWithException(task.exception ?: IllegalStateException("Cloud progress upload failed."))
+        }
     }
 
     private fun com.aistudio.studyos.data.local.entity.StudyPlanEntity.toCloudMap() = mapOf(
