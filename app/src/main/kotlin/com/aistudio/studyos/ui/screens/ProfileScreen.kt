@@ -106,6 +106,7 @@ import com.aistudio.studyos.data.update.UpdateCheckState
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 data class ThemeOption(
@@ -193,6 +194,11 @@ fun ProfileScreen(
     var resetMessage by remember { mutableStateOf<String?>(null) }
     var resetSending by remember { mutableStateOf(false) }
     val accountRepository = remember { FirebaseAccountRepository() }
+    val accountScope = androidx.compose.runtime.rememberCoroutineScope()
+    var accountEmail by remember { mutableStateOf(accountRepository.currentUser?.email.orEmpty()) }
+    var accountPassword by remember { mutableStateOf("") }
+    var accountBusy by remember { mutableStateOf(false) }
+    var accountMessage by remember { mutableStateOf<String?>(null) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
@@ -288,6 +294,71 @@ fun ProfileScreen(
                         else Text("Send Reset Link")
                     }
                     resetMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("StudyOS Account", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    val signedInEmail = accountRepository.currentUser?.email
+                    if (signedInEmail != null) {
+                        Text("Signed in as $signedInEmail", style = MaterialTheme.typography.bodyMedium)
+                        OutlinedButton(onClick = {
+                            accountRepository.signOut()
+                            accountEmail = ""
+                            accountPassword = ""
+                            accountMessage = "Signed out. Local study data remains on this device."
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Sign Out") }
+                    } else {
+                        OutlinedTextField(
+                            value = accountEmail,
+                            onValueChange = { accountEmail = it; accountMessage = null },
+                            modifier = Modifier.fillMaxWidth().testTag("account_email"),
+                            label = { Text("Email") }, singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        )
+                        OutlinedTextField(
+                            value = accountPassword,
+                            onValueChange = { accountPassword = it; accountMessage = null },
+                            modifier = Modifier.fillMaxWidth().testTag("account_password"),
+                            label = { Text("Password") }, singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = {
+                                accountBusy = true
+                                accountMessage = null
+                                accountScope.launch {
+                                    try {
+                                        accountRepository.signIn(accountEmail, accountPassword)
+                                        accountMessage = "Signed in. Cloud progress sync is not connected yet."
+                                    } catch (e: Exception) {
+                                        accountMessage = e.localizedMessage ?: "Could not sign in. Check your details."
+                                    } finally { accountBusy = false }
+                                }
+                            }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.isNotEmpty(), modifier = Modifier.weight(1f)) { Text("Log In") }
+                            OutlinedButton(onClick = {
+                                accountBusy = true
+                                accountMessage = null
+                                accountScope.launch {
+                                    try {
+                                        accountRepository.createAccount(accountEmail, accountPassword)
+                                        accountMessage = "Account created. Cloud progress sync is not connected yet."
+                                    } catch (e: Exception) {
+                                        accountMessage = e.localizedMessage ?: "Could not create account."
+                                    } finally { accountBusy = false }
+                                }
+                            }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.length >= 6, modifier = Modifier.weight(1f)) { Text("Create Account") }
+                        }
+                    }
+                    if (accountBusy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    accountMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
                 }
             }
         }
