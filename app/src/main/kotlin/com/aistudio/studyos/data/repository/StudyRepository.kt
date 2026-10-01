@@ -89,6 +89,8 @@ class StudyRepository(
 
     fun getDistinctStudyTopicCount(): Flow<Int> = database.sessionLogDao().getValidStudySessionCount()
     fun getPeakDailyFocusMinutes(): Flow<Int> = database.sessionLogDao().getPeakDailyFocusMinutes()
+    fun getLevelMissionTopicCount(sinceMillis: Long): Flow<Int> = database.sessionLogDao().getValidStudySessionCountSince(sinceMillis)
+    fun getLevelMissionPeakFocusMinutes(sinceMillis: Long): Flow<Int> = database.sessionLogDao().getPeakDailyFocusMinutesSince(sinceMillis)
 
     private suspend fun levelAfterMissionCheck(profile: UserProfileEntity): Int {
         val topics = database.sessionLogDao().getValidStudySessionCountSinceOnce(profile.levelStartedAtMillis)
