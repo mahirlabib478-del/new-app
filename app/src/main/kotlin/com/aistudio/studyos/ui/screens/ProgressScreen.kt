@@ -199,8 +199,8 @@ fun ProgressScreen(
     val peakMonthDay = remember(monthlyData) { monthlyData.maxByOrNull { it.minutes } }
     val currentYearMinutes by viewModel.currentYearMinutes.collectAsState()
     val currentYearSessionCount by viewModel.currentYearSessionCount.collectAsState()
-    val topicCount by viewModel.distinctStudyTopicCount.collectAsState()
-    val peakDailyFocusMinutes by viewModel.peakDailyFocusMinutes.collectAsState()
+    val topicCount by viewModel.levelMissionTopicCount.collectAsState()
+    val peakDailyFocusMinutes by viewModel.levelMissionPeakFocusMinutes.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
     val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()
     val analytics = remember(allLogs, activePlan, latestCompletedPlan) {
