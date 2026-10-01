@@ -38,6 +38,12 @@ interface SessionLogDao {
     @Query("SELECT COUNT(*) FROM session_logs WHERE trim(subject) <> '' AND trim(chapter) <> ''")
     suspend fun getValidStudySessionCountOnce(): Int
 
+    @Query("SELECT COUNT(*) FROM session_logs WHERE timestamp >= :sinceMillis AND trim(subject) <> '' AND trim(chapter) <> ''")
+    fun getValidStudySessionCountSince(sinceMillis: Long): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM session_logs WHERE timestamp >= :sinceMillis AND trim(subject) <> '' AND trim(chapter) <> ''")
+    suspend fun getValidStudySessionCountSinceOnce(sinceMillis: Long): Int
+
     @Query("""
         SELECT COALESCE(MAX(day_minutes), 0) FROM (
             SELECT date(timestamp / 1000, 'unixepoch', 'localtime') AS study_day,
@@ -57,6 +63,28 @@ interface SessionLogDao {
         )
     """)
     suspend fun getPeakDailyFocusMinutesOnce(): Int
+
+    @Query("""
+        SELECT COALESCE(MAX(day_minutes), 0) FROM (
+            SELECT date(timestamp / 1000, 'unixepoch', 'localtime') AS study_day,
+                   SUM(durationMinutes) AS day_minutes
+            FROM session_logs
+            WHERE timestamp >= :sinceMillis
+            GROUP BY study_day
+        )
+    """)
+    fun getPeakDailyFocusMinutesSince(sinceMillis: Long): Flow<Int>
+
+    @Query("""
+        SELECT COALESCE(MAX(day_minutes), 0) FROM (
+            SELECT date(timestamp / 1000, 'unixepoch', 'localtime') AS study_day,
+                   SUM(durationMinutes) AS day_minutes
+            FROM session_logs
+            WHERE timestamp >= :sinceMillis
+            GROUP BY study_day
+        )
+    """)
+    suspend fun getPeakDailyFocusMinutesSinceOnce(sinceMillis: Long): Int
 
 
     @Query("SELECT COALESCE(SUM(durationMinutes), 0) FROM session_logs WHERE timestamp >= :startOfDayMillis AND timestamp < :startOfNextDayMillis")
