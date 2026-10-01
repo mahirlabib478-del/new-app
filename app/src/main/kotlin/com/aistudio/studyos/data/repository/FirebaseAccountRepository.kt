@@ -22,6 +22,11 @@ class FirebaseAccountRepository(
     suspend fun signIn(email: String, password: String): FirebaseUser =
         awaitUser { auth.signInWithEmailAndPassword(email.trim(), password) }
 
+    fun sendPasswordResetEmail(email: String, onComplete: (Exception?) -> Unit) {
+        auth.sendPasswordResetEmail(email.trim())
+            .addOnCompleteListener { task -> onComplete(if (task.isSuccessful) null else task.exception ?: IllegalStateException("Password reset email failed.")) }
+    }
+
     fun signOut() = auth.signOut()
 
     private suspend fun awaitUser(
