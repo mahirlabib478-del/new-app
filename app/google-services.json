@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "835017340231",
+    "project_id": "study-os-98831",
+    "storage_bucket": "study-os-98831.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:835017340231:android:af12185e310cbabdc80862",
+        "android_client_info": {
+          "package_name": "com.aistudio.studyos.kxvpt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB768ATfU93mR0gWH1CtffW-vi42bF3ij4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
