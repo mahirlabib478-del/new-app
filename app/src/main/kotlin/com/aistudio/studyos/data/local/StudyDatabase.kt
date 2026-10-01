@@ -51,6 +51,16 @@ abstract class StudyDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_profile ADD COLUMN levelStartStudyMinutes INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE user_profile ADD COLUMN levelStartXpEarned INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE user_profile ADD COLUMN levelStartXpSpent INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE user_profile ADD COLUMN levelStartedAtMillis INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE user_profile SET levelStartStudyMinutes = totalStudyMinutes, levelStartXpEarned = totalXpEarned, levelStartXpSpent = totalXpSpent, levelStartedAtMillis = CAST(strftime('%s','now') AS INTEGER) * 1000")
+            }
+        }
+
         private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE user_profile ADD COLUMN totalXpEarned INTEGER NOT NULL DEFAULT 0")
