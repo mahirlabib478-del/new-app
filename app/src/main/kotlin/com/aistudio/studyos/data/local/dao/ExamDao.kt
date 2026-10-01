@@ -28,4 +28,10 @@ interface ExamDao {
 
     @Query("DELETE FROM exams WHERE id = :id")
     suspend fun deleteExamById(id: Long)
+    @Query("SELECT * FROM exams")
+    suspend fun getAllForBackup(): List<ExamEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllForRestore(exams: List<ExamEntity>)
+
 }
