@@ -21,4 +21,7 @@ interface UserProfileDao {
 
     @Update
     suspend fun update(profile: UserProfileEntity)
+    @Query("SELECT * FROM user_profile")
+    suspend fun getAllForBackup(): List<UserProfileEntity>
+
 }
