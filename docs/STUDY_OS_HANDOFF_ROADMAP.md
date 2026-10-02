@@ -60,40 +60,16 @@ Status meanings: **DONE** = implemented, reachable, main action works, and regre
 
 ## 3. Current architecture
 
-### Entry / shell
+The active repository is the native Android/Kotlin implementation (not the historical Flutter layout referenced in earlier handoff text).
 
-- `lib/main.dart` — app shell, theme/language state, navigation, Home/Study/Progress/Profile tabs, planner entry points, Focus launch, Saved Sessions resume callback, startup reminder sync.
-- `lib/widgets/attractive_home.dart` — primary Home / daily mission UI.
-- `lib/widgets/update_gate.dart` — startup update UX; optional updates are non-blocking.
+- Android entry/application: `app/src/main/kotlin/com/aistudio/studyos/MainActivity.kt` and `StudyApplication.kt`.
+- Local persistence: Room entities, DAOs and `StudyDatabase.kt` under `data/local`.
+- Preferences: `ThemePreferences.kt`.
+- Repositories: `data/repository`, including Firebase account/progress sync, Today recommendation and progress analytics calculators.
+- UI and navigation: Android app source under `app/src/main/kotlin/com/aistudio/studyos`.
+- Regression tests: `app/src/test/java/com/aistudio/studyos`.
 
-### Core models / persistence
-
-- `lib/models/study_models.dart` — StudyPlan / StudyItem data model.
-- `lib/services/local_store.dart` — SharedPreferences persistence, plan progress, item progress, position, timers, daily history, XP, streak, settings, and plan replacement archive.
-- `lib/services/study_session_store.dart` — canonical SavedStudySession model, session list, archive/restore/delete, canonical plan identity.
-
-### Decision / analytics engines
-
-- `lib/services/today_engine.dart` — derives the current daily snapshot: plan, item-level completion, remaining work, next unfinished item, block position, daily goal, recommendation.
-- `lib/services/progress_analytics.dart` — daily history and plan-progress analytics.
-- `lib/services/gamification.dart` — achievement definitions and XP-to-next-level helper.
-
-### Study flow
-
-- `lib/screens/setup_screen.dart` — Regular Study setup.
-- `lib/screens/exam_planner_screen.dart` — Exam Preparation / Next Day Exam planning.
-- `lib/screens/focus_flow.dart` — FocusScreen, BreakScreen and completion flow; lifecycle-safe timers and completion persistence.
-- `lib/screens/saved_sessions_screen.dart` — saved session list, delete, restore/resume.
-- `lib/screens/today_engine_screen.dart` — Today Engine UI.
-
-### Progress / personalization / system
-
-- `lib/screens/progress_dashboard.dart` — shipped progress UI.
-- `lib/screens/progress_screen.dart` — older/superseded progress UI.
-- `lib/screens/profile_screen.dart` — theme, language, goal, sound, reminders.
-- `lib/services/notification_service.dart` — OS notification scheduling.
-- `lib/services/reminder_coordinator.dart` / `reminder_policy.dart` / `reminder_settings.dart` — reminder decisions and persistence.
-- `lib/services/update_service.dart` — remote update policy, cache fallback, safe URL validation, version comparison.
+Use the current source tree as authoritative when locating screens, models and tests; do not reintroduce old `lib/` paths.
 
 ## 4. End-to-end data flow
 
@@ -176,24 +152,11 @@ The current Focus → Break → Completion flow was audited after the CI baselin
 
 ## 7. Test / CI status
 
-Repository CI workflow: `.github/workflows/android.yml` (Android/Kotlin app).
+Repository CI workflow: `.github/workflows/android.yml` (native Android/Kotlin).
 
-It runs on pushes and pull requests to `main` and performs:
+Latest observed GitHub Actions run **#737** (run ID `37041502063`) for head `c035bc263837f91dd232912104c6d3acc80d99a0` completed with conclusion **success**. Run #736 for `fc7ca9eebe408622108ae08abf8703b150f55dd5` also completed successfully. The latest run is the current verified baseline; older Flutter-era run #367 is historical and must not be presented as current.
 
-1. `flutter pub get`
-2. `flutter analyze`
-3. `flutter test`
-4. Android bootstrap
-5. notification manifest/desugaring checks
-6. debug APK build
-7. release APK build
-8. combined APK artifact upload
-
-### Current verified CI
-
-CI run **#367** (`35158080099`) for head `125138eeafb38f3c8125cfa210c3d6905627f8d9` was **fully green**. The `test` job completed successfully with both Analyze and Test passing. The `android-build` job also completed successfully, including notification manifest verification, dependency installation, debug APK build, release APK build, APK packaging and artifact upload.
-
-A new commit `89f297f896662c1545a4d70cbe127c2f29ceab36` adds the update-policy hardening tests. A workflow result for this new head was not yet exposed by GitHub at handoff time, so the new test commit must not be called CI-green until a run is observed.
+[Latest CI run](https://github.com/mahirlabib478-del/new-app/actions/runs/37041502063)
 
 ## 8. Roadmap by priority
 
@@ -230,16 +193,16 @@ A new commit `89f297f896662c1545a4d70cbe127c2f29ceab36` adds the update-policy h
 
 ## 9. Exact next development task
 
-**Next task: verify CI for the latest history hardening commits, then continue P1 TodayEngine recommendation and progress analytics improvements.**
+**Next task: improve Progress analytics with explicit plan-vs-actual and consistency views, while preserving existing persisted progress semantics.**
 
-Concrete implementation sequence:
+Implementation sequence:
+1. Inspect the shipped Progress UI and calculator before changing field meanings.
+2. Add a focused calculator test for the selected metric and its edge cases.
+3. Make the smallest UI/data change that distinguishes plan-specific completed minutes from session-log totals.
+4. Run CI and observe the exact head result before claiming green.
+5. Update this handoff and feature coverage after the behavior is verified.
 
-1. Observe the latest `main` CI run; do not claim green until Android CI completes successfully.
-2. If CI fails, fix only the real failure and add a regression test only when the failure is a product correctness issue.
-3. If CI passes, start the dedicated History/Timeline screen using existing `LocalStore.dailyStudyMinutes` and `ProgressAnalytics` data.
-4. Keep history read-only initially; do not change completion accounting while building the UI.
-5. Add widget/unit coverage for empty history, multi-day history ordering, daily totals, and navigation from Progress.
-6. Update this handoff and `docs/STUDY_OS_FEATURE_COVERAGE.md` with the history implementation and verified CI result.
+Account-scoped local data isolation remains a separate high-risk architecture task. Do not clear or migrate shared local data without a tested preservation strategy.
 
 ## 10. Definition of done for future work
 
