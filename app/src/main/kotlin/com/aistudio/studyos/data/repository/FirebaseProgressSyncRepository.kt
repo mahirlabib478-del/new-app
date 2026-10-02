@@ -57,8 +57,19 @@ class FirebaseProgressSyncRepository(
         val ref = firestore.collection("users").document(uid).collection("progress").document("current")
         val cloud = ref.get().asSuspendResult().data ?: run {
             if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
+            val hasLocalProgress =
+                database.studyPlanDao().getAllForBackup().isNotEmpty() ||
+                database.examDao().getAllForBackup().isNotEmpty() ||
+                database.sessionLogDao().getAllForBackup().isNotEmpty() ||
+                database.userProfileDao().getAllForBackup().any {
+                    it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
+                }
+            if (hasLocalProgress) {
+                cloudUploadUid = null
+                return "No cloud backup exists, but local progress is present. Automatic upload is paused to prevent transferring another account's data."
+            }
             cloudUploadUid = uid
-            return "No cloud backup found. Existing local progress was kept."
+            return "No cloud backup found and this device has no progress. Sync is ready for this account."
         }
         val localPlans = database.studyPlanDao().getAllForBackup()
         val localExams = database.examDao().getAllForBackup()
