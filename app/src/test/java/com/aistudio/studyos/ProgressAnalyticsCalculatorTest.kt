@@ -51,7 +51,7 @@ class ProgressAnalyticsCalculatorTest {
         val now=7*day
         val logs=listOf(log(now-1*day+1000,20),log(now-1*day+2000,10),log(now-3*day+1000,40))
         val s=ProgressAnalyticsCalculator.calculate(logs,null,now)
-        assertEquals(2,s.consistencyDays); assertEquals(35,s.averageMinutesOnStudyDays)
+        assertEquals(2,s.consistencyDays); assertEquals(28,s.consistencyPercent); assertEquals(70,s.weeklyStudyMinutes); assertEquals(35,s.averageMinutesOnStudyDays)
     }
 
     @Test fun completionPercentAndRemainingMinutesAreCappedAtPlanBudget() {
