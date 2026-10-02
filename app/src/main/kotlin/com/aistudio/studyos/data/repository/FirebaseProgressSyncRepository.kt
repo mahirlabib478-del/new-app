@@ -71,6 +71,7 @@ class FirebaseProgressSyncRepository(
             cloudUploadUid = uid
             return "No cloud backup found and this device has no progress. Sync is ready for this account."
         }
+        if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
         val localPlans = database.studyPlanDao().getAllForBackup()
         val localExams = database.examDao().getAllForBackup()
         val localSessions = database.sessionLogDao().getAllForBackup()
@@ -124,6 +125,7 @@ class FirebaseProgressSyncRepository(
                 dailyGoalMinutes = local.dailyGoalMinutes
             )
         }
+        if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
         database.withTransaction {
             database.studyPlanDao().insertAllForRestore(newPlans)
             database.examDao().insertAllForRestore(newExams)
