@@ -23,7 +23,25 @@ class FirebaseProgressSyncRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
-    fun startAutomaticUpload(scope: CoroutineScope) {\n        var pendingUpload: Job? = null\n        val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {\n            override fun onInvalidated(tables: Set<String>) {\n                if (auth.currentUser == null) return\n                pendingUpload?.cancel()\n                pendingUpload = scope.launch {\n                    delay(1800)\n                    runCatching { uploadLocalSnapshot() }\n                }\n            }\n        }\n        database.invalidationTracker.addObserver(observer)\n        auth.addAuthStateListener { firebaseAuth ->\n            if (firebaseAuth.currentUser == null) pendingUpload?.cancel()\n        }\n    }\n\n    suspend fun uploadLocalSnapshot() {
+    fun startAutomaticUpload(scope: CoroutineScope) {
+        var pendingUpload: Job? = null
+        val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {
+            override fun onInvalidated(tables: Set<String>) {
+                if (auth.currentUser == null) return
+                pendingUpload?.cancel()
+                pendingUpload = scope.launch {
+                    delay(1800)
+                    runCatching { uploadLocalSnapshot() }
+                }
+            }
+        }
+        database.invalidationTracker.addObserver(observer)
+        auth.addAuthStateListener { firebaseAuth ->
+            if (firebaseAuth.currentUser == null) pendingUpload?.cancel()
+        }
+    }
+
+    suspend fun uploadLocalSnapshot() {
         val uid = auth.currentUser?.uid
             ?: throw IllegalStateException("Sign in before syncing progress.")
         val plans = database.studyPlanDao().getAllForBackup()
