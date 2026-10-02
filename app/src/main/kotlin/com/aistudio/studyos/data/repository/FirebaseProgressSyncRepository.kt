@@ -90,9 +90,13 @@ class FirebaseProgressSyncRepository(
             cloudSessions.isNotEmpty() || cloudProfiles.any {
                 it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
             }
-        if (hasLocal && hasCloud) {
+        if (hasLocal) {
             cloudUploadUid = null
-            return "Both local and cloud progress exist. Automatic merge is paused to protect account data; no records were changed."
+            return if (hasCloud) {
+                "Both local and cloud progress exist. Automatic merge is paused to protect account data; no records were changed."
+            } else {
+                "This device has local progress, but the signed-in account's cloud document has no progress records. Automatic upload is paused to prevent transferring another account's data."
+            }
         }
 
         val newPlans = cloudPlans.filter { remote -> localPlans.none { it.createdAt == remote.createdAt && it.title == remote.title && it.subject == remote.subject } }.map { it.copy(id = 0L) }
