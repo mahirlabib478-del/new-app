@@ -12,6 +12,8 @@ data class ProgressAnalyticsSummary(
     val activePlanRemainingMinutes: Int,
     val consistencyDays: Int,
     val consistencyTargetDays: Int = 7,
+    val consistencyPercent: Int,
+    val weeklyStudyMinutes: Int,
     val averageMinutesOnStudyDays: Int
 )
 
@@ -53,6 +55,8 @@ object ProgressAnalyticsCalculator {
             activePlanTitle = progressPlan?.title,
             activePlanRemainingMinutes = (planned - planCompleted).coerceAtLeast(0),
             consistencyDays = studyDays,
+            consistencyPercent = (studyDays * 100 / 7).coerceIn(0, 100),
+            weeklyStudyMinutes = dayMinutes.sum(),
             averageMinutesOnStudyDays = avg
         )
     }
