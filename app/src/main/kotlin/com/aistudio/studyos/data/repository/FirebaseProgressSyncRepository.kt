@@ -67,7 +67,25 @@ class FirebaseProgressSyncRepository(
         val newSessions = cloudSessions.filter { remote -> localSessions.none { it.timestamp == remote.timestamp && it.subject == remote.subject && it.chapter == remote.chapter && it.durationMinutes == remote.durationMinutes && it.mode == remote.mode && it.xpEarned == remote.xpEarned } }.map { it.copy(id = 0L) }
         val mergedProfile = (localProfiles.firstOrNull() ?: cloudProfiles.firstOrNull())?.let { local ->
             val remote = cloudProfiles.firstOrNull() ?: local
-            local.copy(streakDays=maxOf(local.streakDays,remote.streakDays), totalStudyMinutes=maxOf(local.totalStudyMinutes,remote.totalStudyMinutes), totalXP=maxOf(local.totalXP,remote.totalXP), totalXpSpent=maxOf(local.totalXpSpent,remote.totalXpSpent), totalXpEarned=maxOf(local.totalXpEarned,remote.totalXpEarned), currentLevel=maxOf(local.currentLevel,remote.currentLevel), dailyGoalMinutes=local.dailyGoalMinutes)
+            // Keep level-mission baselines from the more advanced/newer profile. Taking
+            // max(currentLevel) while retaining the other device's baselines can reset
+            // or prematurely complete missions after a restore.
+            val levelState = when {
+                remote.currentLevel > local.currentLevel -> remote
+                local.currentLevel > remote.currentLevel -> local
+                remote.levelStartedAtMillis > local.levelStartedAtMillis -> remote
+                else -> local
+            }
+            levelState.copy(
+                id = local.id,
+                streakDays = maxOf(local.streakDays, remote.streakDays),
+                totalStudyMinutes = maxOf(local.totalStudyMinutes, remote.totalStudyMinutes),
+                totalXP = maxOf(local.totalXP, remote.totalXP),
+                totalXpSpent = maxOf(local.totalXpSpent, remote.totalXpSpent),
+                totalXpEarned = maxOf(local.totalXpEarned, remote.totalXpEarned),
+                currentLevel = maxOf(local.currentLevel, remote.currentLevel),
+                dailyGoalMinutes = local.dailyGoalMinutes
+            )
         }
         database.withTransaction {
             database.studyPlanDao().insertAllForRestore(newPlans)
