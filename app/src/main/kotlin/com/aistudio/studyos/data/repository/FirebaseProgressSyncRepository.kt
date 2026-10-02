@@ -69,6 +69,21 @@ class FirebaseProgressSyncRepository(
         val cloudSessions = (cloud["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
         val cloudProfiles = (cloud["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
         val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }
+
+        // The local Room database is shared across Firebase accounts. If both sides
+        // contain data, we cannot prove the local records belong to this UID. Do not
+        // merge or upload them automatically: that could leak one account's progress
+        // into another account. Keep uploads disabled until an explicit account-scoped
+        // migration/merge flow is implemented.
+        val hasCloud = cloudPlans.isNotEmpty() || cloudExams.isNotEmpty() ||
+            cloudSessions.isNotEmpty() || cloudProfiles.any {
+                it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
+            }
+        if (hasLocal && hasCloud) {
+            cloudUploadUid = null
+            return "Both local and cloud progress exist. Automatic merge is paused to protect account data; no records were changed."
+        }
+
         val newPlans = cloudPlans.filter { remote -> localPlans.none { it.createdAt == remote.createdAt && it.title == remote.title && it.subject == remote.subject } }.map { it.copy(id = 0L) }
         val newExams = cloudExams.filter { remote -> localExams.none { it.createdAt == remote.createdAt && it.subject == remote.subject && it.examDate == remote.examDate } }.map { it.copy(id = 0L) }
         val newSessions = cloudSessions.filter { remote -> localSessions.none { it.timestamp == remote.timestamp && it.subject == remote.subject && it.chapter == remote.chapter && it.durationMinutes == remote.durationMinutes && it.mode == remote.mode && it.xpEarned == remote.xpEarned } }.map { it.copy(id = 0L) }
