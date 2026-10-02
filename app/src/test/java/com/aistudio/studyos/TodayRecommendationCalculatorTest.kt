@@ -35,6 +35,16 @@ class TodayRecommendationCalculatorTest {
         assertFalse(TodayRecommendationCalculator.calculate(plan(items).copy(isDraft=true),emptyList(),0,60).shouldOpenFocus)
     }
 
+    @Test fun exhaustedPlanDoesNotRecommendItsLastCompletedBlock() {
+        val r = TodayRecommendationCalculator.calculate(
+            plan(listOf(StudyPlanItem("Math", "Algebra", 25)), currentBlockIndex = 1),
+            emptyList(), 20, 60
+        )
+        assertNull(r.nextItem)
+        assertFalse(r.shouldOpenFocus)
+        assertEquals("Start Study Session", r.actionLabel)
+    }
+
     @Test fun matchingUrgentExamAddsContextWithoutChangingPlanItem() {
         val r=TodayRecommendationCalculator.calculate(plan(listOf(StudyPlanItem("Physics","Optics",25))),listOf(ExamEntity(subject="Physics",examDate="Tomorrow",daysRemaining=1,priority="High")),0,60)
         assertEquals("Optics",r.nextItem?.topic); assertTrue(r.detail.contains("Exam is due tomorrow"))
