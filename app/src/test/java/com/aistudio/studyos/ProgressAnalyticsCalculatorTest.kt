@@ -155,6 +155,19 @@ class ProgressAnalyticsCalculatorTest {
         assertEquals(4, summary.averageMinutesOnStudyDays)
     }
 
+    @Test fun unusuallyLargeDailyTotalsSaturateInsteadOfOverflowing() {
+        val now = localDay(2026, java.util.Calendar.OCTOBER, 2, 12)
+        val summary = ProgressAnalyticsCalculator.calculate(
+            listOf(log(now - 60_000L, Int.MAX_VALUE), log(now - 30_000L, 100)),
+            null,
+            now
+        )
+
+        assertEquals(Int.MAX_VALUE, summary.weeklyStudyMinutes)
+        assertEquals(Int.MAX_VALUE, summary.averageMinutesOnStudyDays)
+        assertEquals(1, summary.consistencyDays)
+    }
+
     @Test fun calendarDayWindowHandlesDaylightSavingTransitions() {
         val zone = java.util.TimeZone.getDefault()
         try {
