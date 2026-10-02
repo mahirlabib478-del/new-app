@@ -51,18 +51,21 @@ object ProgressAnalyticsCalculator {
             // on the current day (for example, imported future-dated logs).
             start.timeInMillis to minOf(dayEnd, nowMillis + 1L)
         }
-        val dayMinutes = IntArray(7)
+        val dayMinutes = LongArray(7)
         logs.forEach { log ->
             val minutes = log.durationMinutes.coerceAtLeast(0)
             if (minutes > 0) {
                 val dayIndex = dayRanges.indexOfFirst { (start, endExclusive) ->
                     log.timestamp >= start && log.timestamp < endExclusive
                 }
-                if (dayIndex >= 0) dayMinutes[dayIndex] += minutes
+                if (dayIndex >= 0) dayMinutes[dayIndex] =
+                    (dayMinutes[dayIndex] + minutes.toLong()).coerceAtMost(Int.MAX_VALUE.toLong())
             }
         }
         val studyDays = dayMinutes.count { it > 0 }
-        val avg = if (studyDays > 0) dayMinutes.filter { it > 0 }.average().toInt() else 0
+        val avg = if (studyDays > 0) {
+            (dayMinutes.filter { it > 0 }.sum() / studyDays).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        } else 0
 
         return ProgressAnalyticsSummary(
             plannedMinutes = planned,
@@ -72,7 +75,7 @@ object ProgressAnalyticsCalculator {
             activePlanRemainingMinutes = (planned - planCompleted).coerceAtLeast(0),
             consistencyDays = studyDays,
             consistencyPercent = (studyDays * 100 / 7).coerceIn(0, 100),
-            weeklyStudyMinutes = dayMinutes.sum(),
+            weeklyStudyMinutes = dayMinutes.sum().coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
             averageMinutesOnStudyDays = avg
         )
     }
