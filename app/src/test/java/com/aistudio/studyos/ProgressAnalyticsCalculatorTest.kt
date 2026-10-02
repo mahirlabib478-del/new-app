@@ -53,4 +53,62 @@ class ProgressAnalyticsCalculatorTest {
         val s=ProgressAnalyticsCalculator.calculate(logs,null,now)
         assertEquals(2,s.consistencyDays); assertEquals(35,s.averageMinutesOnStudyDays)
     }
+
+    @Test fun completionPercentAndRemainingMinutesAreCappedAtPlanBudget() {
+        val plan = StudyPlanEntity(
+            id = 3,
+            title = "Over-completed",
+            subject = "Science",
+            chapter = "Cells",
+            mode = "regular",
+            totalBlocks = 2,
+            totalDurationMinutes = 50,
+            accumulatedBillableMinutes = 75
+        )
+        val s = ProgressAnalyticsCalculator.calculate(emptyList(), plan, 7 * 86_400_000L)
+        assertEquals(50, s.plannedMinutes)
+        assertEquals(75, s.actualMinutes)
+        assertEquals(100, s.planCompletionPercent)
+        assertEquals(0, s.activePlanRemainingMinutes)
+    }
+
+    @Test fun activePlanTakesPrecedenceOverLatestCompletedPlan() {
+        val active = StudyPlanEntity(
+            id = 4,
+            title = "Current",
+            subject = "Math",
+            chapter = "Algebra",
+            mode = "regular",
+            totalBlocks = 2,
+            totalDurationMinutes = 80,
+            accumulatedBillableMinutes = 20
+        )
+        val completed = StudyPlanEntity(
+            id = 5,
+            title = "Older completed",
+            subject = "English",
+            chapter = "Grammar",
+            mode = "regular",
+            totalBlocks = 1,
+            totalDurationMinutes = 30,
+            accumulatedBillableMinutes = 30,
+            isCompleted = true
+        )
+        val s = ProgressAnalyticsCalculator.calculate(
+            emptyList(), active, 7 * 86_400_000L, latestCompletedPlan = completed
+        )
+        assertEquals("Current", s.activePlanTitle)
+        assertEquals(80, s.plannedMinutes)
+        assertEquals(20, s.actualMinutes)
+    }
+
+    @Test fun negativeDurationsDoNotReduceConsistencyOrAverage() {
+        val day = 86_400_000L
+        val now = 7 * day
+        val logs = listOf(log(now - day + 1000, -25), log(now - day + 2000, 30))
+        val s = ProgressAnalyticsCalculator.calculate(logs, null, now)
+        assertEquals(1, s.consistencyDays)
+        assertEquals(30, s.averageMinutesOnStudyDays)
+    }
+
 }
