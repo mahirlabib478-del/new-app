@@ -28,11 +28,13 @@ class FirebaseProgressSyncRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    @Volatile private var cloudUploadEnabled = false
+
     fun startAutomaticUpload(scope: CoroutineScope) {
         var pendingUpload: Job? = null
         val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {
             override fun onInvalidated(tables: Set<String>) {
-                if (auth.currentUser == null) return
+                if (auth.currentUser == null || !cloudUploadEnabled) return
                 pendingUpload?.cancel()
                 pendingUpload = scope.launch {
                     delay(1800)
@@ -50,13 +52,14 @@ class FirebaseProgressSyncRepository(
     suspend fun restoreIfLocalEmpty(): String {
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before syncing progress.")
         val ref = firestore.collection("users").document(uid).collection("progress").document("current")
-        val cloud = ref.get().asSuspendResult().data ?: return "No cloud backup found. Existing local progress was kept."
+        val cloud = ref.get().asSuspendResult().data ?: run { cloudUploadEnabled = true; return "No cloud backup found. Existing local progress was kept." }
         val localPlans = database.studyPlanDao().getAllForBackup()
         val localExams = database.examDao().getAllForBackup()
         val localSessions = database.sessionLogDao().getAllForBackup()
         val localProfiles = database.userProfileDao().getAllForBackup()
         if (localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }) {
-            return "Both cloud and local progress exist. Local data was preserved; automatic restore was skipped to prevent overwriting either copy."
+            cloudUploadEnabled = false
+            return "Both cloud and local progress exist. Local data was preserved; sync is paused to prevent overwriting either copy."
         }
         val plans = (cloud["studyPlans"] as? List<*>)?.mapNotNull { it.asMap()?.toStudyPlan() }.orEmpty()
         val exams = (cloud["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
@@ -68,6 +71,7 @@ class FirebaseProgressSyncRepository(
             database.sessionLogDao().insertAllForRestore(sessions)
             profiles.forEach { database.userProfileDao().insertOrUpdate(it) }
         }
+        cloudUploadEnabled = true
         return "Cloud progress restored to this empty device."
     }
 
@@ -89,6 +93,7 @@ class FirebaseProgressSyncRepository(
     private fun Map<String, Any?>.toProfile() = UserProfileEntity(id=i("id",1), streakDays=i("streakDays"), totalStudyMinutes=i("totalStudyMinutes"), totalXP=i("totalXP"), totalXpSpent=i("totalXpSpent"), totalXpEarned=i("totalXpEarned"), levelStartStudyMinutes=i("levelStartStudyMinutes"), levelStartXpEarned=i("levelStartXpEarned"), levelStartXpSpent=i("levelStartXpSpent"), levelStartedAtMillis=n("levelStartedAtMillis"), currentLevel=i("currentLevel",1), dailyGoalMinutes=i("dailyGoalMinutes",60), themePreset=s("themePreset"), lastActiveDate=s("lastActiveDate"))
 
     suspend fun uploadLocalSnapshot() {
+        if (!cloudUploadEnabled) throw IllegalStateException("Sync is paused until cloud and local progress are safely reconciled.")
         val uid = auth.currentUser?.uid
             ?: throw IllegalStateException("Sign in before syncing progress.")
         val plans = database.studyPlanDao().getAllForBackup()
