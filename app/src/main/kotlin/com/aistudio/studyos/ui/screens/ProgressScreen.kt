@@ -611,6 +611,16 @@ fun ProgressScreen(
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                                Text(
+                                    "Last 7 days: ${analytics.consistencyDays}/7 active • ${analytics.consistencyPercent}% consistency",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Weekly study time: ${analytics.weeklyStudyMinutes}m • ${analytics.averageMinutesOnStudyDays}m per active day",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
