@@ -134,6 +134,27 @@ class ProgressAnalyticsCalculatorTest {
         assertEquals(40, summary.weeklyStudyMinutes)
     }
 
+    @Test fun optimizedAggregationTotalsEachOfSevenLocalDaysExactlyOnce() {
+        val now = localDay(2026, java.util.Calendar.OCTOBER, 2, 12)
+        val logs = (0 until 7).map { offset ->
+            val timestamp = java.util.Calendar.getInstance().apply {
+                timeInMillis = now
+                add(java.util.Calendar.DAY_OF_YEAR, -offset)
+                set(java.util.Calendar.HOUR_OF_DAY, 10)
+            }.timeInMillis
+            log(timestamp, offset + 1)
+        } + listOf(
+            log(localDay(2026, java.util.Calendar.SEPTEMBER, 24, 10), 100),
+            log(now + 60_000L, 200)
+        )
+
+        val summary = ProgressAnalyticsCalculator.calculate(logs, null, now)
+
+        assertEquals(7, summary.consistencyDays)
+        assertEquals(28, summary.weeklyStudyMinutes)
+        assertEquals(4, summary.averageMinutesOnStudyDays)
+    }
+
     @Test fun calendarDayWindowHandlesDaylightSavingTransitions() {
         val zone = java.util.TimeZone.getDefault()
         try {
