@@ -127,9 +127,9 @@ class FirebaseProgressSyncRepository(
     private fun Map<String, Any?>.toProfile() = UserProfileEntity(id=i("id",1), streakDays=i("streakDays"), totalStudyMinutes=i("totalStudyMinutes"), totalXP=i("totalXP"), totalXpSpent=i("totalXpSpent"), totalXpEarned=i("totalXpEarned"), levelStartStudyMinutes=i("levelStartStudyMinutes"), levelStartXpEarned=i("levelStartXpEarned"), levelStartXpSpent=i("levelStartXpSpent"), levelStartedAtMillis=n("levelStartedAtMillis"), currentLevel=i("currentLevel",1), dailyGoalMinutes=i("dailyGoalMinutes",60), themePreset=s("themePreset"), lastActiveDate=s("lastActiveDate"))
 
     suspend fun uploadLocalSnapshot() {
-        if (!cloudUploadEnabled) throw IllegalStateException("Sync is paused until cloud and local progress are safely reconciled.")
         val uid = auth.currentUser?.uid
             ?: throw IllegalStateException("Sign in before syncing progress.")
+        if (cloudUploadUid != uid) throw IllegalStateException("Sync is paused until cloud and local progress are safely reconciled.")
         val plans = database.studyPlanDao().getAllForBackup()
         val exams = database.examDao().getAllForBackup()
         val sessions = database.sessionLogDao().getAllForBackup()
