@@ -310,18 +310,6 @@ fun ProfileScreen(
                     if (signedInEmail != null) {
                         Text("Signed in as $signedInEmail", style = MaterialTheme.typography.bodyMedium)
                         OutlinedButton(onClick = {
-                            accountBusy = true
-                            accountMessage = null
-                            accountScope.launch {
-                                try {
-                                    (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.uploadLocalSnapshot()
-                                    accountMessage = "Local progress backup uploaded to your private cloud account."
-                                } catch (e: Exception) {
-                                    accountMessage = e.localizedMessage ?: "Cloud backup failed. Your local data is unchanged."
-                                } finally { accountBusy = false }
-                            }
-                        }, enabled = !accountBusy, modifier = Modifier.fillMaxWidth()) { Text("Back Up Local Progress to Cloud") }
-                        OutlinedButton(onClick = {
                             accountRepository.signOut()
                             accountEmail = ""
                             accountPassword = ""
@@ -349,7 +337,7 @@ fun ProfileScreen(
                                 accountScope.launch {
                                     try {
                                         accountRepository.signIn(accountEmail, accountPassword)
-                                        accountMessage = "Signed in. Use Back Up Local Progress to Cloud to upload this device’s records."
+                                        accountMessage = "Signed in. Progress changes will sync automatically when online."
                                     } catch (e: Exception) {
                                         accountMessage = e.localizedMessage ?: "Could not sign in. Check your details."
                                     } finally { accountBusy = false }
@@ -361,7 +349,7 @@ fun ProfileScreen(
                                 accountScope.launch {
                                     try {
                                         accountRepository.createAccount(accountEmail, accountPassword)
-                                        accountMessage = "Account created. Use Back Up Local Progress to Cloud to upload this device’s records."
+                                        accountMessage = "Account created. Progress changes will sync automatically when online."
                                     } catch (e: Exception) {
                                         accountMessage = e.localizedMessage ?: "Could not create account."
                                     } finally { accountBusy = false }
