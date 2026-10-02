@@ -23,6 +23,7 @@ class StudyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        cloudProgressSync.startAutomaticUpload(CoroutineScope(Dispatchers.IO))
 
         // Pre-warm Room database connection and cached data in background immediately
         // so that by the time UI/HomeScreen opens, SQLite is already initialized and fast
