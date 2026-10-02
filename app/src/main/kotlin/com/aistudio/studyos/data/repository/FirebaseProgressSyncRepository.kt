@@ -28,13 +28,13 @@ class FirebaseProgressSyncRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
-    @Volatile private var cloudUploadEnabled = false
+    @Volatile private var cloudUploadUid: String? = null
 
     fun startAutomaticUpload(scope: CoroutineScope) {
         var pendingUpload: Job? = null
         val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {
             override fun onInvalidated(tables: Set<String>) {
-                if (auth.currentUser == null || !cloudUploadEnabled) return
+                if (auth.currentUser?.uid == null || auth.currentUser?.uid != cloudUploadUid) return
                 pendingUpload?.cancel()
                 pendingUpload = scope.launch {
                     delay(1800)
@@ -44,7 +44,7 @@ class FirebaseProgressSyncRepository(
         }
         database.invalidationTracker.addObserver(observer)
         auth.addAuthStateListener { firebaseAuth ->
-            if (firebaseAuth.currentUser == null) pendingUpload?.cancel()
+            if (firebaseAuth.currentUser?.uid != cloudUploadUid) {\n                cloudUploadUid = null\n                pendingUpload?.cancel()\n            }
         }
     }
 
@@ -52,7 +52,7 @@ class FirebaseProgressSyncRepository(
     suspend fun restoreIfLocalEmpty(): String {
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before syncing progress.")
         val ref = firestore.collection("users").document(uid).collection("progress").document("current")
-        val cloud = ref.get().asSuspendResult().data ?: run { cloudUploadEnabled = true; return "No cloud backup found. Existing local progress was kept." }
+        val cloud = ref.get().asSuspendResult().data ?: run {\n            if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")\n            cloudUploadUid = uid\n            return "No cloud backup found. Existing local progress was kept."\n        }
         val localPlans = database.studyPlanDao().getAllForBackup()
         val localExams = database.examDao().getAllForBackup()
         val localSessions = database.sessionLogDao().getAllForBackup()
@@ -93,7 +93,7 @@ class FirebaseProgressSyncRepository(
             database.sessionLogDao().insertAllForRestore(newSessions)
             mergedProfile?.let { database.userProfileDao().insertOrUpdate(it) }
         }
-        cloudUploadEnabled = true
+        if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")\n        cloudUploadUid = uid
         if (hasLocal) {
             uploadLocalSnapshot()
             return "Local and cloud records were merged without matching duplicate sessions; merged snapshot uploaded."
