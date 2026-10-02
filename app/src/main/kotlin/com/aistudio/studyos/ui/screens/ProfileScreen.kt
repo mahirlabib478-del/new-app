@@ -198,6 +198,7 @@ fun ProfileScreen(
     var accountEmail by remember { mutableStateOf(accountRepository.currentUser?.email.orEmpty()) }
     var accountPassword by remember { mutableStateOf("") }
     var accountBusy by remember { mutableStateOf(false) }
+    var showSignOutDialog by remember { mutableStateOf(false) }
     var accountMessage by remember { mutableStateOf<String?>(null) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
@@ -309,12 +310,10 @@ fun ProfileScreen(
                     val signedInEmail = accountRepository.currentUser?.email
                     if (signedInEmail != null) {
                         Text("Signed in as $signedInEmail", style = MaterialTheme.typography.bodyMedium)
-                        OutlinedButton(onClick = {
-                            accountRepository.signOut()
-                            accountEmail = ""
-                            accountPassword = ""
-                            accountMessage = "Signed out. Local study data remains on this device."
-                        }, modifier = Modifier.fillMaxWidth()) { Text("Sign Out") }
+                        OutlinedButton(
+                            onClick = { showSignOutDialog = true },
+                            modifier = Modifier.fillMaxWidth().testTag("btn_sign_out")
+                        ) { Text("Sign Out") }
                     } else {
                         OutlinedTextField(
                             value = accountEmail,
@@ -1308,6 +1307,33 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+
+    if (showSignOutDialog) {
+        AlertDialog(
+            onDismissRequest = { showSignOutDialog = false },
+            title = { Text("Sign out of StudyOS?") },
+            text = {
+                Text(
+                    "Your study records will remain on this device. Account-specific local storage is not yet available, so signing into a different account on this device may expose the same local records. Cloud sync will stay paused when ownership cannot be verified."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        accountRepository.signOut()
+                        accountEmail = ""
+                        accountPassword = ""
+                        accountMessage = "Signed out. Local study data remains on this device."
+                        showSignOutDialog = false
+                    },
+                    modifier = Modifier.testTag("btn_confirm_sign_out")
+                ) { Text("Sign Out") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSignOutDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     if (showReminderTimeDialog) {
