@@ -44,7 +44,10 @@ class FirebaseProgressSyncRepository(
         }
         database.invalidationTracker.addObserver(observer)
         auth.addAuthStateListener { firebaseAuth ->
-            if (firebaseAuth.currentUser?.uid != cloudUploadUid) {\n                cloudUploadUid = null\n                pendingUpload?.cancel()\n            }
+            if (firebaseAuth.currentUser?.uid != cloudUploadUid) {
+                cloudUploadUid = null
+                pendingUpload?.cancel()
+            }
         }
     }
 
@@ -52,7 +55,11 @@ class FirebaseProgressSyncRepository(
     suspend fun restoreIfLocalEmpty(): String {
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before syncing progress.")
         val ref = firestore.collection("users").document(uid).collection("progress").document("current")
-        val cloud = ref.get().asSuspendResult().data ?: run {\n            if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")\n            cloudUploadUid = uid\n            return "No cloud backup found. Existing local progress was kept."\n        }
+        val cloud = ref.get().asSuspendResult().data ?: run {
+            if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
+            cloudUploadUid = uid
+            return "No cloud backup found. Existing local progress was kept."
+        }
         val localPlans = database.studyPlanDao().getAllForBackup()
         val localExams = database.examDao().getAllForBackup()
         val localSessions = database.sessionLogDao().getAllForBackup()
@@ -93,7 +100,8 @@ class FirebaseProgressSyncRepository(
             database.sessionLogDao().insertAllForRestore(newSessions)
             mergedProfile?.let { database.userProfileDao().insertOrUpdate(it) }
         }
-        if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")\n        cloudUploadUid = uid
+        if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
+        cloudUploadUid = uid
         if (hasLocal) {
             uploadLocalSnapshot()
             return "Local and cloud records were merged without matching duplicate sessions; merged snapshot uploaded."
