@@ -53,6 +53,10 @@ class FirebaseProgressSyncRepository(
 
     /** Restores cloud data only when this device has no local progress. Never overwrites populated local data. */
     suspend fun restoreIfLocalEmpty(): String {
+        // Pause observer-driven uploads while reconciliation is in progress. If any
+        // read, validation, or restore step fails, uploads stay paused until a later
+        // explicit successful sync decision re-arms this UID.
+        cloudUploadUid = null
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before syncing progress.")
         val ref = firestore.collection("users").document(uid).collection("progress").document("current")
         val cloud = ref.get().asSuspendResult().data ?: run {
