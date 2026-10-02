@@ -42,7 +42,7 @@ Status meanings: **DONE** = implemented, reachable, main action works, and regre
 | Saved Sessions | DONE | StudySessionStore + SavedSessionsScreen + store tests. |
 | Exact resume position | DONE | Item/block position restored; canonical plan identity is centralized in StudySessionStore and covered by tests. |
 | Progress Dashboard | DONE | ProgressDashboard + ProgressAnalytics integration and tests. |
-| Daily history persistence | PARTIAL | LocalStore stores daily totals and ProgressAnalytics consumes them; there is no dedicated history browser/timeline UI yet. |
+| Study History timeline | DONE | Android HistoryScreen groups the latest 30 days of Room session logs by local calendar day; Progress and Home navigation can open it; HistoryTimelineTest covers empty, grouped, newest-first, and invalid-duration cases. |
 | XP / levels | DONE | LocalStore + Gamification; XP is 2 per completed minute and level is based on 250 XP. |
 | Streak | DONE | Once-per-day streak update in LocalStore; analytics also calculates current/best streak windows. |
 | Achievements | DONE | Five achievement rules are implemented and shown through progress experience. |
@@ -168,7 +168,7 @@ The current Focus → Break → Completion flow was audited after the CI baselin
 ### Still open / needs verification
 
 - **Archive ownership is duplicated:** LocalStore archives during `savePlan`, while Focus/Break lifecycle code also calls StudySessionStore.archiveCurrentPlan. The persistence format is aligned and regression coverage is in place, but one service should eventually become authoritative without breaking planner behavior.
-- **History UI is incomplete:** daily history exists and feeds analytics, but there is no dedicated user-facing history screen/timeline.
+- **History timeline is read-only:** HistoryScreen shows the latest 30 days grouped by local day. Editing/deleting session history is intentionally not exposed.
 - **Reminder delivery needs real Android-device verification.** Unit tests cannot prove OS delivery after reboot/background restrictions.
 - **Signed APK update needs real-device verification.** Confirm same package ID/signing key and higher versionCode upgrade from an installed previous release.
 - **Localization coverage should be expanded beyond Home/navigation/Profile; deeper screens still contain English UI strings.**
@@ -176,7 +176,7 @@ The current Focus → Break → Completion flow was audited after the CI baselin
 
 ## 7. Test / CI status
 
-Repository CI workflow: `.github/workflows/flutter.yml`.
+Repository CI workflow: `.github/workflows/android.yml` (Android/Kotlin app).
 
 It runs on pushes and pull requests to `main` and performs:
 
@@ -208,7 +208,7 @@ A new commit `89f297f896662c1545a4d70cbe127c2f29ceab36` adds the update-policy h
 ### P1 — core intelligence
 
 6. Improve TodayEngine recommendation quality while preserving budget constraints and item-level authority.
-7. Add explicit history/timeline UX using existing daily history data.
+7. ~~Add explicit history/timeline UX using existing Room session logs.~~ **DONE — read-only 30-day HistoryScreen, reachable from Home and Progress, with grouping and ordering regression tests.**
 8. Expand progress analytics with useful plan-vs-actual and consistency views.
 
 ### P2 — motivation / reminders
@@ -230,11 +230,11 @@ A new commit `89f297f896662c1545a4d70cbe127c2f29ceab36` adds the update-policy h
 
 ## 9. Exact next development task
 
-**Next task: verify the new update-policy test commit in CI, then move to P1 history/timeline UX.**
+**Next task: verify CI for the latest history hardening commits, then continue P1 TodayEngine recommendation and progress analytics improvements.**
 
 Concrete implementation sequence:
 
-1. Observe CI for `89f297f896662c1545a4d70cbe127c2f29ceab36`; do not claim green until Analyze + Test + Android build are actually reported successful.
+1. Observe the latest `main` CI run; do not claim green until Android CI completes successfully.
 2. If CI fails, fix only the real failure and add a regression test only when the failure is a product correctness issue.
 3. If CI passes, start the dedicated History/Timeline screen using existing `LocalStore.dailyStudyMinutes` and `ProgressAnalytics` data.
 4. Keep history read-only initially; do not change completion accounting while building the UI.
