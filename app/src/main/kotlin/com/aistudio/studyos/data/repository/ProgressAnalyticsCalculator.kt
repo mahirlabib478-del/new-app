@@ -27,7 +27,6 @@ object ProgressAnalyticsCalculator {
         // Prefer the currently active plan. Once it is completed, fall back to
         // the latest completed plan so Progress does not lose the finished plan.
         val progressPlan = activePlan ?: latestCompletedPlan
-        val actual = logs.sumOf { it.durationMinutes.coerceAtLeast(0) }
         val planned = progressPlan?.totalDurationMinutes?.coerceAtLeast(0) ?: 0
         val planCompleted = progressPlan?.accumulatedBillableMinutes?.coerceAtLeast(0) ?: 0
         val planPercent = if (planned > 0) ((planCompleted * 100L) / planned).toInt().coerceIn(0, 100) else 0
@@ -41,17 +40,26 @@ object ProgressAnalyticsCalculator {
                 set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
             }
         }
-        val dayMinutes = days.map { start ->
+        // Build the seven local-calendar-day ranges once, then aggregate each log
+        // in a single pass instead of rescanning the full log list for every day.
+        val dayRanges = days.map { start ->
             val dayEnd = Calendar.getInstance().apply {
                 timeInMillis = start.timeInMillis
                 add(Calendar.DAY_OF_YEAR, 1)
             }.timeInMillis
             // Include completed days fully, but never count sessions after "now"
             // on the current day (for example, imported future-dated logs).
-            val endExclusive = minOf(dayEnd, nowMillis + 1L)
-            logs.asSequence()
-                .filter { it.timestamp >= start.timeInMillis && it.timestamp < endExclusive }
-                .sumOf { it.durationMinutes.coerceAtLeast(0) }
+            start.timeInMillis to minOf(dayEnd, nowMillis + 1L)
+        }
+        val dayMinutes = IntArray(7)
+        logs.forEach { log ->
+            val minutes = log.durationMinutes.coerceAtLeast(0)
+            if (minutes > 0) {
+                val dayIndex = dayRanges.indexOfFirst { (start, endExclusive) ->
+                    log.timestamp >= start && log.timestamp < endExclusive
+                }
+                if (dayIndex >= 0) dayMinutes[dayIndex] += minutes
+            }
         }
         val studyDays = dayMinutes.count { it > 0 }
         val avg = if (studyDays > 0) dayMinutes.filter { it > 0 }.average().toInt() else 0
