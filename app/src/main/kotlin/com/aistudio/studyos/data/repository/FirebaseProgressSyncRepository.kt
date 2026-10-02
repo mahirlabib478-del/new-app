@@ -1,6 +1,11 @@
 package com.aistudio.studyos.data.repository
 
 import com.aistudio.studyos.data.local.StudyDatabase
+import androidx.room.withTransaction
+import com.aistudio.studyos.data.local.entity.StudyPlanEntity
+import com.aistudio.studyos.data.local.entity.ExamEntity
+import com.aistudio.studyos.data.local.entity.SessionLogEntity
+import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import androidx.room.InvalidationTracker
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +45,48 @@ class FirebaseProgressSyncRepository(
             if (firebaseAuth.currentUser == null) pendingUpload?.cancel()
         }
     }
+
+    /** Restores cloud data only when this device has no local progress. Never overwrites populated local data. */
+    suspend fun restoreIfLocalEmpty(): String {
+        val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before syncing progress.")
+        val ref = firestore.collection("users").document(uid).collection("progress").document("current")
+        val cloud = ref.get().asSuspendResult().data ?: return "No cloud backup found. Existing local progress was kept."
+        val localPlans = database.studyPlanDao().getAllForBackup()
+        val localExams = database.examDao().getAllForBackup()
+        val localSessions = database.sessionLogDao().getAllForBackup()
+        val localProfiles = database.userProfileDao().getAllForBackup()
+        if (localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }) {
+            return "Both cloud and local progress exist. Local data was preserved; automatic restore was skipped to prevent overwriting either copy."
+        }
+        val plans = (cloud["studyPlans"] as? List<*>)?.mapNotNull { it.asMap()?.toStudyPlan() }.orEmpty()
+        val exams = (cloud["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
+        val sessions = (cloud["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
+        val profiles = (cloud["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
+        database.withTransaction {
+            database.studyPlanDao().insertAllForRestore(plans)
+            database.examDao().insertAllForRestore(exams)
+            database.sessionLogDao().insertAllForRestore(sessions)
+            profiles.forEach { database.userProfileDao().insertOrUpdate(it) }
+        }
+        return "Cloud progress restored to this empty device."
+    }
+
+    private suspend fun <T> Task<T>.asSuspendResult(): T = suspendCancellableCoroutine { continuation ->
+        addOnCompleteListener { task ->
+            if (!continuation.isActive) return@addOnCompleteListener
+            if (task.isSuccessful) continuation.resume(task.result)
+            else continuation.resumeWithException(task.exception ?: IllegalStateException("Cloud request failed."))
+        }
+    }
+    private fun Any?.asMap(): Map<String, Any?>? = this as? Map<String, Any?>
+    private fun Map<String, Any?>.n(key: String, d: Long = 0L) = (this[key] as? Number)?.toLong() ?: d
+    private fun Map<String, Any?>.i(key: String, d: Int = 0) = n(key, d.toLong()).toInt()
+    private fun Map<String, Any?>.s(key: String, d: String = "") = this[key] as? String ?: d
+    private fun Map<String, Any?>.b(key: String, d: Boolean = false) = this[key] as? Boolean ?: d
+    private fun Map<String, Any?>.toStudyPlan() = StudyPlanEntity(id=n("id"), title=s("title"), subject=s("subject"), chapter=s("chapter"), mode=s("mode"), totalBlocks=i("totalBlocks"), currentBlockIndex=i("currentBlockIndex"), durationPerBlockMinutes=i("durationPerBlockMinutes",25), breakMinutes=i("breakMinutes",5), remainingSecondsInBlock=i("remainingSecondsInBlock",1500), isBreakPhase=b("isBreakPhase"), isCompleted=b("isCompleted"), isDraft=b("isDraft"), isArchived=b("isArchived"), isTimerRunning=b("isTimerRunning"), endAtElapsedRealtime=n("endAtElapsedRealtime"), endAtWallClockMillis=n("endAtWallClockMillis"), timerBootCount=i("timerBootCount",-1), accumulatedStudiedSeconds=i("accumulatedStudiedSeconds"), accumulatedBillableMinutes=i("accumulatedBillableMinutes"), createdAt=n("createdAt"), lastUpdated=n("lastUpdated"), planItems=s("planItems"), totalDurationMinutes=i("totalDurationMinutes"))
+    private fun Map<String, Any?>.toExam() = ExamEntity(id=n("id"), subject=s("subject"), examDate=s("examDate"), daysRemaining=i("daysRemaining",1), priority=s("priority","High"), syllabusTopics=s("syllabusTopics"), confidenceLevel=i("confidenceLevel",50), isCompleted=b("isCompleted"), createdAt=n("createdAt"))
+    private fun Map<String, Any?>.toSession() = SessionLogEntity(id=n("id"), subject=s("subject"), chapter=s("chapter"), durationMinutes=i("durationMinutes"), mode=s("mode"), xpEarned=i("xpEarned"), timestamp=n("timestamp"))
+    private fun Map<String, Any?>.toProfile() = UserProfileEntity(id=i("id",1), streakDays=i("streakDays"), totalStudyMinutes=i("totalStudyMinutes"), totalXP=i("totalXP"), totalXpSpent=i("totalXpSpent"), totalXpEarned=i("totalXpEarned"), levelStartStudyMinutes=i("levelStartStudyMinutes"), levelStartXpEarned=i("levelStartXpEarned"), levelStartXpSpent=i("levelStartXpSpent"), levelStartedAtMillis=n("levelStartedAtMillis"), currentLevel=i("currentLevel",1), dailyGoalMinutes=i("dailyGoalMinutes",60), themePreset=s("themePreset"), lastActiveDate=s("lastActiveDate"))
 
     suspend fun uploadLocalSnapshot() {
         val uid = auth.currentUser?.uid
