@@ -143,17 +143,21 @@ class FirebaseProgressSyncRepository(
         }
         if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
         database.withTransaction {
+            // Recheck ownership inside the transaction as well as before it. If the
+            // account changed while Room was preparing the restore, throwing here
+            // rolls back the whole restore instead of leaving a partial import.
+            if (auth.currentUser?.uid != uid) {
+                throw IllegalStateException("Account changed during sync. Please retry.")
+            }
             database.studyPlanDao().insertAllForRestore(newPlans)
             database.examDao().insertAllForRestore(newExams)
             database.sessionLogDao().insertAllForRestore(newSessions)
             mergedProfile?.let { database.userProfileDao().insertOrUpdate(it) }
+            if (auth.currentUser?.uid != uid) {
+                throw IllegalStateException("Account changed during sync. Please retry.")
+            }
         }
-        if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
         cloudUploadUid = uid
-        if (hasLocal) {
-            uploadLocalSnapshot()
-            return "Local and cloud records were merged without matching duplicate sessions; merged snapshot uploaded."
-        }
         return "Cloud progress restored to this empty device."
     }
 
