@@ -200,6 +200,7 @@ fun ProfileScreen(
     var accountBusy by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
     var accountMessage by remember { mutableStateOf<String?>(null) }
+    var pendingAccountAction by remember { mutableStateOf<String?>(null) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
@@ -330,32 +331,8 @@ fun ProfileScreen(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = {
-                                accountBusy = true
-                                accountMessage = null
-                                accountScope.launch {
-                                    try {
-                                        accountRepository.signIn(accountEmail, accountPassword)
-                                        val syncResult = (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.restoreIfLocalEmpty()
-                                        accountMessage = "Signed in. $syncResult"
-                                    } catch (e: Exception) {
-                                        accountMessage = e.localizedMessage ?: "Could not sign in. Check your details."
-                                    } finally { accountBusy = false }
-                                }
-                            }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.isNotEmpty(), modifier = Modifier.weight(1f)) { Text("Log In") }
-                            OutlinedButton(onClick = {
-                                accountBusy = true
-                                accountMessage = null
-                                accountScope.launch {
-                                    try {
-                                        accountRepository.createAccount(accountEmail, accountPassword)
-                                        val syncResult = (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.restoreIfLocalEmpty()
-                                        accountMessage = "Account created. $syncResult"
-                                    } catch (e: Exception) {
-                                        accountMessage = e.localizedMessage ?: "Could not create account."
-                                    } finally { accountBusy = false }
-                                }
-                            }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.length >= 6, modifier = Modifier.weight(1f)) { Text("Create Account") }
+                            Button(onClick = { pendingAccountAction = "login" }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.isNotEmpty(), modifier = Modifier.weight(1f).testTag("btn_login")) { Text("Log In") }
+                            OutlinedButton(onClick = { pendingAccountAction = "create" }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.length >= 6, modifier = Modifier.weight(1f).testTag("btn_create_account")) { Text("Create Account") }
                         }
                     }
                     if (accountBusy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -1307,6 +1284,40 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+
+    if (pendingAccountAction != null) {
+        AlertDialog(
+            onDismissRequest = { pendingAccountAction = null },
+            title = { Text("Local study data notice") },
+            text = {
+                Text("StudyOS local records are not yet separated by account on this device. Continuing may leave existing study records visible after sign-in. Continue only if you understand this.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val action = pendingAccountAction ?: return@Button
+                        pendingAccountAction = null
+                        accountBusy = true
+                        accountMessage = null
+                        accountScope.launch {
+                            try {
+                                if (action == "login") accountRepository.signIn(accountEmail, accountPassword)
+                                else accountRepository.createAccount(accountEmail, accountPassword)
+                                val syncResult = (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.restoreIfLocalEmpty()
+                                accountMessage = (if (action == "login") "Signed in. " else "Account created. ") + syncResult
+                            } catch (e: Exception) {
+                                accountMessage = e.localizedMessage ?: "Account action failed."
+                            } finally { accountBusy = false }
+                        }
+                    },
+                    modifier = Modifier.testTag("btn_confirm_account_action")
+                ) { Text("Continue") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingAccountAction = null }) { Text("Cancel") }
+            }
+        )
     }
 
     if (showSignOutDialog) {
