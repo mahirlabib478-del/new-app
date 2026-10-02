@@ -111,4 +111,46 @@ class ProgressAnalyticsCalculatorTest {
         assertEquals(30, s.averageMinutesOnStudyDays)
     }
 
+    private fun localDay(year: Int, month: Int, day: Int, hour: Int = 0): Long =
+        java.util.Calendar.getInstance().apply {
+            clear()
+            set(year, month, day, hour, 0, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+    @Test fun localMidnightBelongsToItsCalendarDayAndSevenDayWindowIsInclusive() {
+        val todayStart = localDay(2026, java.util.Calendar.OCTOBER, 2)
+        val now = todayStart + 12 * 60 * 60 * 1000L
+        val logs = listOf(
+            log(todayStart, 15),
+            log(localDay(2026, java.util.Calendar.SEPTEMBER, 26, 23), 25),
+            log(localDay(2026, java.util.Calendar.SEPTEMBER, 25, 23), 90),
+            log(now + 60_000L, 40)
+        )
+
+        val summary = ProgressAnalyticsCalculator.calculate(logs, null, now)
+
+        assertEquals(2, summary.consistencyDays)
+        assertEquals(40, summary.weeklyStudyMinutes)
+    }
+
+    @Test fun calendarDayWindowHandlesDaylightSavingTransitions() {
+        val zone = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
+            val now = localDay(2026, java.util.Calendar.MARCH, 9, 12)
+            val yesterday = localDay(2026, java.util.Calendar.MARCH, 8, 12)
+            val summary = ProgressAnalyticsCalculator.calculate(
+                listOf(log(now, 20), log(yesterday, 30)),
+                null,
+                now
+            )
+
+            assertEquals(2, summary.consistencyDays)
+            assertEquals(50, summary.weeklyStudyMinutes)
+        } finally {
+            java.util.TimeZone.setDefault(zone)
+        }
+    }
+
 }
