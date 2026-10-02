@@ -42,8 +42,16 @@ object ProgressAnalyticsCalculator {
             }
         }
         val dayMinutes = days.map { start ->
-            val end = Calendar.getInstance().apply { timeInMillis = start.timeInMillis; add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
-            logs.filter { it.timestamp in start.timeInMillis until end }.sumOf { it.durationMinutes.coerceAtLeast(0) }
+            val dayEnd = Calendar.getInstance().apply {
+                timeInMillis = start.timeInMillis
+                add(Calendar.DAY_OF_YEAR, 1)
+            }.timeInMillis
+            // Include completed days fully, but never count sessions after "now"
+            // on the current day (for example, imported future-dated logs).
+            val endExclusive = minOf(dayEnd, nowMillis + 1L)
+            logs.asSequence()
+                .filter { it.timestamp >= start.timeInMillis && it.timestamp < endExclusive }
+                .sumOf { it.durationMinutes.coerceAtLeast(0) }
         }
         val studyDays = dayMinutes.count { it > 0 }
         val avg = if (studyDays > 0) dayMinutes.filter { it > 0 }.average().toInt() else 0
