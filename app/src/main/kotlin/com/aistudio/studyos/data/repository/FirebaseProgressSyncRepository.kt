@@ -1,7 +1,12 @@
 package com.aistudio.studyos.data.repository
 
 import com.aistudio.studyos.data.local.StudyDatabase
+import androidx.room.InvalidationTracker
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.suspendCancellableCoroutine
 import com.google.android.gms.tasks.Task
@@ -18,7 +23,7 @@ class FirebaseProgressSyncRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
-    suspend fun uploadLocalSnapshot() {
+    fun startAutomaticUpload(scope: CoroutineScope) {\n        var pendingUpload: Job? = null\n        val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {\n            override fun onInvalidated(tables: Set<String>) {\n                if (auth.currentUser == null) return\n                pendingUpload?.cancel()\n                pendingUpload = scope.launch {\n                    delay(1800)\n                    runCatching { uploadLocalSnapshot() }\n                }\n            }\n        }\n        database.invalidationTracker.addObserver(observer)\n        auth.addAuthStateListener { firebaseAuth ->\n            if (firebaseAuth.currentUser == null) pendingUpload?.cancel()\n        }\n    }\n\n    suspend fun uploadLocalSnapshot() {
         val uid = auth.currentUser?.uid
             ?: throw IllegalStateException("Sign in before syncing progress.")
         val plans = database.studyPlanDao().getAllForBackup()
