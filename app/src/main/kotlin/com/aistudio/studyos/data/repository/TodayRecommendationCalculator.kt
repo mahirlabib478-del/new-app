@@ -22,8 +22,8 @@ object TodayRecommendationCalculator {
         val remainingGoal = (safeGoal - safeToday).coerceAtLeast(0)
         val plan = activePlan?.takeUnless { it.isCompleted || it.isArchived || it.isDraft }
         val items = plan?.let { StudyPlanItemCodec.decode(it.planItems) }.orEmpty()
-        val nextIndex = plan?.currentBlockIndex?.coerceIn(0, (items.size - 1).coerceAtLeast(0))
-        val nextItem = if (items.isNotEmpty() && nextIndex != null) items.getOrNull(nextIndex) else null
+        val nextIndex = plan?.currentBlockIndex?.coerceAtLeast(0)?.takeIf { it < items.size }
+        val nextItem = nextIndex?.let(items::getOrNull)
         val hasRunningTimer = plan?.isTimerRunning == true
 
         if (plan != null && nextItem != null) {
