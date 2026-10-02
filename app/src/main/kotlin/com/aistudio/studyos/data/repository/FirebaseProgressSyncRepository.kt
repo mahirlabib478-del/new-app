@@ -57,21 +57,29 @@ class FirebaseProgressSyncRepository(
         val localExams = database.examDao().getAllForBackup()
         val localSessions = database.sessionLogDao().getAllForBackup()
         val localProfiles = database.userProfileDao().getAllForBackup()
-        if (localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }) {
-            cloudUploadEnabled = false
-            return "Both cloud and local progress exist. Local data was preserved; sync is paused to prevent overwriting either copy."
+        val cloudPlans = (cloud["studyPlans"] as? List<*>)?.mapNotNull { it.asMap()?.toStudyPlan() }.orEmpty()
+        val cloudExams = (cloud["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
+        val cloudSessions = (cloud["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
+        val cloudProfiles = (cloud["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
+        val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }
+        val newPlans = cloudPlans.filter { remote -> localPlans.none { it.createdAt == remote.createdAt && it.title == remote.title && it.subject == remote.subject } }.map { it.copy(id = 0L) }
+        val newExams = cloudExams.filter { remote -> localExams.none { it.createdAt == remote.createdAt && it.subject == remote.subject && it.examDate == remote.examDate } }.map { it.copy(id = 0L) }
+        val newSessions = cloudSessions.filter { remote -> localSessions.none { it.timestamp == remote.timestamp && it.subject == remote.subject && it.chapter == remote.chapter && it.durationMinutes == remote.durationMinutes && it.mode == remote.mode && it.xpEarned == remote.xpEarned } }.map { it.copy(id = 0L) }
+        val mergedProfile = (localProfiles.firstOrNull() ?: cloudProfiles.firstOrNull())?.let { local ->
+            val remote = cloudProfiles.firstOrNull() ?: local
+            local.copy(streakDays=maxOf(local.streakDays,remote.streakDays), totalStudyMinutes=maxOf(local.totalStudyMinutes,remote.totalStudyMinutes), totalXP=maxOf(local.totalXP,remote.totalXP), totalXpSpent=maxOf(local.totalXpSpent,remote.totalXpSpent), totalXpEarned=maxOf(local.totalXpEarned,remote.totalXpEarned), currentLevel=maxOf(local.currentLevel,remote.currentLevel), dailyGoalMinutes=local.dailyGoalMinutes)
         }
-        val plans = (cloud["studyPlans"] as? List<*>)?.mapNotNull { it.asMap()?.toStudyPlan() }.orEmpty()
-        val exams = (cloud["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
-        val sessions = (cloud["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
-        val profiles = (cloud["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
         database.withTransaction {
-            database.studyPlanDao().insertAllForRestore(plans)
-            database.examDao().insertAllForRestore(exams)
-            database.sessionLogDao().insertAllForRestore(sessions)
-            profiles.forEach { database.userProfileDao().insertOrUpdate(it) }
+            database.studyPlanDao().insertAllForRestore(newPlans)
+            database.examDao().insertAllForRestore(newExams)
+            database.sessionLogDao().insertAllForRestore(newSessions)
+            mergedProfile?.let { database.userProfileDao().insertOrUpdate(it) }
         }
         cloudUploadEnabled = true
+        if (hasLocal) {
+            uploadLocalSnapshot()
+            return "Local and cloud records were merged without matching duplicate sessions; merged snapshot uploaded."
+        }
         return "Cloud progress restored to this empty device."
     }
 
