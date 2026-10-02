@@ -521,8 +521,13 @@ fun ProgressScreen(
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        "${analytics.actualMinutes}m completed • ${analytics.activePlanRemainingMinutes}m remaining",
+                                        "Actual: ${analytics.actualMinutes}m • Plan target: ${analytics.plannedMinutes}m",
                                         fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        "${analytics.activePlanRemainingMinutes}m left to target",
+                                        fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -541,6 +546,22 @@ fun ProgressScreen(
                                 color = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f)
                             )
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "Plan vs Actual",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "${analytics.planCompletionPercent}% complete",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     } else {
                         Row(
