@@ -18,7 +18,7 @@ A feature is **shipped** only when it is implemented, user-reachable, its main a
 | Saved Sessions | SavedSessionsScreen | Study → Saved sessions | StudySessionStore | session tests | DONE |
 | Resume exact position | FocusScreen | Saved session → Resume | TodayEngine + canonical plan identity | session/home resume tests | DONE |
 | Progress dashboard | ProgressDashboard | Progress tab | ProgressAnalytics + Gamification | dashboard/analytics tests | DONE |
-| Daily history persistence | Progress / analytics | Internal persistence | LocalStore | analytics tests | PARTIAL — no dedicated history timeline UI |
+| Study History timeline | Progress → Study History | HistoryScreen | Room session logs + 30-day query + buildHistoryDays | HistoryTimelineTest (empty, grouping, totals, newest-first, invalid durations) | DONE — read-only daily timeline |
 | XP / level / streak | Home + Progress | Home/Progress | Gamification + LocalStore | gamification tests | DONE |
 | Achievements | Progress dashboard | Progress tab | Gamification | dashboard/gamification tests | DONE |
 | Daily goal | Home + Progress + Profile | Profile / Progress | LocalStore | dashboard/profile tests | DONE |
@@ -46,7 +46,7 @@ A feature is **shipped** only when it is implemented, user-reachable, its main a
 - Unit tests validate reminder policy/coordinator behavior, but only a physical Android device can prove OS-level notification delivery.
 - Normal CI release APK builds do not prove that an installed previous signed APK can be upgraded safely. That requires the same package ID/signing key and a higher versionCode.
 - `ProgressScreen` exists as an older UI; shipped navigation uses `ProgressDashboard`.
-- Daily history is persisted and analyzed but lacks a dedicated history/timeline screen.
+- Study History is a read-only 30-day timeline; it does not edit or delete session records.
 
 ## End-to-end journeys to keep green
 
