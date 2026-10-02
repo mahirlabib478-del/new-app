@@ -62,10 +62,9 @@ Never mark the current head **green** from code inspection alone. Confirm the Gi
 
 ### Latest verified run
 
-- CI **#367** / run `35158080099`
-- Head: `125138eeafb38f3c8125cfa210c3d6905627f8d9`
-- Analyze: PASS
-- Test: PASS
-- Android debug APK: PASS
-- Android release APK: PASS
-- APK artifact upload: PASS
+- CI **#737** / run `37041502063`
+- Head: `c035bc263837f91dd232912104c6d3acc80d99a0`
+- Conclusion: SUCCESS (workflow completed successfully)
+- [Open GitHub Actions run](https://github.com/mahirlabib478-del/new-app/actions/runs/37041502063)
+
+Older Flutter-era run #367 is historical, not the current baseline.
