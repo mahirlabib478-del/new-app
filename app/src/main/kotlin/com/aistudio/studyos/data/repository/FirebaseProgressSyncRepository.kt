@@ -167,6 +167,12 @@ class FirebaseProgressSyncRepository(
         val sessions = database.sessionLogDao().getAllForBackup()
         val profiles = database.userProfileDao().getAllForBackup()
 
+        // Account state may change while Room is being read. Revalidate ownership
+        // immediately before writing the snapshot to the captured UID's document.
+        if (auth.currentUser?.uid != uid || cloudUploadUid != uid) {
+            throw IllegalStateException("Account changed during sync. Please retry.")
+        }
+
         val snapshot = hashMapOf<String, Any>(
             "schemaVersion" to 1,
             "studyPlans" to plans.map { it.toCloudMap() },
