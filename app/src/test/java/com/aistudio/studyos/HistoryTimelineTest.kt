@@ -54,4 +54,16 @@ class HistoryTimelineTest {
 
         assertEquals(listOf(2L, 3L, 1L), days.single().logs.map { it.id })
     }
+
+    @Test
+    fun negativeDurationsDoNotReduceHistoryTotals() {
+        val day = 86_400_000L
+        val days = buildHistoryDays(
+            listOf(log(1, day + 10_000, 25), log(2, day + 20_000, -90)),
+            Locale.US
+        )
+
+        assertEquals(25, days.single().minutes)
+        assertEquals(2, days.single().sessions)
+    }
 }
