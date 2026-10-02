@@ -337,7 +337,8 @@ fun ProfileScreen(
                                 accountScope.launch {
                                     try {
                                         accountRepository.signIn(accountEmail, accountPassword)
-                                        accountMessage = "Signed in. Progress changes will sync automatically when online."
+                                        val syncResult = (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.restoreIfLocalEmpty()
+                                        accountMessage = "Signed in. $syncResult"
                                     } catch (e: Exception) {
                                         accountMessage = e.localizedMessage ?: "Could not sign in. Check your details."
                                     } finally { accountBusy = false }
@@ -349,7 +350,8 @@ fun ProfileScreen(
                                 accountScope.launch {
                                     try {
                                         accountRepository.createAccount(accountEmail, accountPassword)
-                                        accountMessage = "Account created. Progress changes will sync automatically when online."
+                                        val syncResult = (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.restoreIfLocalEmpty()
+                                        accountMessage = "Account created. $syncResult"
                                     } catch (e: Exception) {
                                         accountMessage = e.localizedMessage ?: "Could not create account."
                                     } finally { accountBusy = false }
