@@ -64,6 +64,12 @@ class FirebaseProgressSyncRepository(
                 database.userProfileDao().getAllForBackup().any {
                     it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
                 }
+            // Room reads are asynchronous boundaries: never arm upload for a UID that
+            // signed out or changed while the local ownership check was running.
+            if (auth.currentUser?.uid != uid) {
+                cloudUploadUid = null
+                throw IllegalStateException("Account changed during sync. Please retry.")
+            }
             if (hasLocalProgress) {
                 cloudUploadUid = null
                 return "No cloud backup exists, but local progress is present. Automatic upload is paused to prevent transferring another account's data."
@@ -80,6 +86,12 @@ class FirebaseProgressSyncRepository(
         val cloudExams = (cloud["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
         val cloudSessions = (cloud["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
         val cloudProfiles = (cloud["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
+        // Revalidate after all local reads, before deciding whether this account may
+        // restore or enable future automatic uploads.
+        if (auth.currentUser?.uid != uid) {
+            cloudUploadUid = null
+            throw IllegalStateException("Account changed during sync. Please retry.")
+        }
         val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }
 
         // The local Room database is shared across Firebase accounts. If both sides
