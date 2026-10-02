@@ -31,7 +31,7 @@ fun buildHistoryDays(logs: List<SessionLogEntity>, locale: Locale = Locale.getDe
     val keyFormat = SimpleDateFormat("yyyy-MM-dd", locale)
     val labelFormat = SimpleDateFormat("EEEE, MMM d", locale)
     return logs.sortedByDescending { it.timestamp }.groupBy { keyFormat.format(Date(it.timestamp)) }.map { (key, dayLogs) ->
-        HistoryDay(key, labelFormat.format(Date(dayLogs.maxOf { it.timestamp })), dayLogs.sumOf { it.durationMinutes }, dayLogs.size, dayLogs.sortedByDescending { it.timestamp })
+        HistoryDay(key, labelFormat.format(Date(dayLogs.maxOf { it.timestamp })), dayLogs.sumOf { it.durationMinutes.coerceAtLeast(0) }, dayLogs.size, dayLogs.sortedByDescending { it.timestamp })
     }
 }
 
@@ -40,7 +40,7 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
     val allLogs by viewModel.allLogs.collectAsState()
     val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val days = buildHistoryDays(allLogs)
-    val totalMinutes = allLogs.sumOf { it.durationMinutes }
+    val totalMinutes = allLogs.sumOf { it.durationMinutes.coerceAtLeast(0) }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack, modifier = Modifier.testTag("history_back")) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
@@ -76,7 +76,7 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                                         Text(log.subject.ifBlank { "Study Session" }, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(log.chapter.ifBlank { "General Practice" }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     }
-                                    Surface(shape = RoundedCornerShape(7.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = .10f)) { Text("${log.durationMinutes}m", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)) }
+                                    Surface(shape = RoundedCornerShape(7.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = .10f)) { Text("${log.durationMinutes.coerceAtLeast(0)}m", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)) }
                                 }
                             }
                         }
