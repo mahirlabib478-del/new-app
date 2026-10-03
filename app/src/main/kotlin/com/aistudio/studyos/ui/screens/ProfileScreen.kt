@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
@@ -303,45 +304,50 @@ fun ProfileScreen(
 
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                modifier = Modifier.fillMaxWidth().testTag("studyos_account_card"),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("StudyOS Account", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    val signedInEmail = accountRepository.currentUser?.email
-                    if (signedInEmail != null) {
-                        Text("Signed in as $signedInEmail", style = MaterialTheme.typography.bodyMedium)
-                        Button(
-                            onClick = { showLinkProgressDialog = true },
-                            enabled = !accountBusy,
-                            modifier = Modifier.fillMaxWidth().testTag("btn_link_local_progress")
-                        ) { Text("Back Up This Device to This Account") }
-                        OutlinedButton(
-                            onClick = { showSignOutDialog = true },
-                            modifier = Modifier.fillMaxWidth().testTag("btn_sign_out")
-                        ) { Text("Sign Out") }
-                    } else {
-                        OutlinedTextField(
-                            value = accountEmail,
-                            onValueChange = { accountEmail = it; accountMessage = null },
-                            modifier = Modifier.fillMaxWidth().testTag("account_email"),
-                            label = { Text("Email") }, singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                        )
-                        OutlinedTextField(
-                            value = accountPassword,
-                            onValueChange = { accountPassword = it; accountMessage = null },
-                            modifier = Modifier.fillMaxWidth().testTag("account_password"),
-                            label = { Text("Password") }, singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { pendingAccountAction = "login" }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.isNotEmpty(), modifier = Modifier.weight(1f).testTag("btn_login")) { Text("Log In") }
-                            OutlinedButton(onClick = { pendingAccountAction = "create" }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.length >= 6, modifier = Modifier.weight(1f).testTag("btn_create_account")) { Text("Create Account") }
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Surface(shape = RoundedCornerShape(15.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(48.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(23.dp))
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("Your StudyOS Account", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text("Sign in to keep your progress connected", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    if (accountBusy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    val signedInEmail = accountRepository.currentUser?.email
+                    if (signedInEmail != null) {
+                        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f), modifier = Modifier.fillMaxWidth()) {
+                            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Column {
+                                    Text("Signed in", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    Text(signedInEmail, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                        Button(onClick = { showLinkProgressDialog = true }, enabled = !accountBusy, modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_link_local_progress"), shape = RoundedCornerShape(15.dp)) {
+                            Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Back Up This Device")
+                        }
+                        OutlinedButton(onClick = { showSignOutDialog = true }, modifier = Modifier.fillMaxWidth().height(48.dp).testTag("btn_sign_out"), shape = RoundedCornerShape(15.dp)) { Text("Sign Out") }
+                    } else {
+                        OutlinedTextField(value = accountEmail, onValueChange = { accountEmail = it; accountMessage = null }, modifier = Modifier.fillMaxWidth().testTag("account_email"), label = { Text("Email address") }, placeholder = { Text("you@example.com") }, singleLine = true, shape = RoundedCornerShape(14.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
+                        OutlinedTextField(value = accountPassword, onValueChange = { accountPassword = it; accountMessage = null }, modifier = Modifier.fillMaxWidth().testTag("account_password"), label = { Text("Password") }, placeholder = { Text("Enter your password") }, singleLine = true, shape = RoundedCornerShape(14.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Button(onClick = { pendingAccountAction = "login" }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.isNotEmpty(), modifier = Modifier.weight(1f).height(50.dp).testTag("btn_login"), shape = RoundedCornerShape(14.dp)) { Text("Log In", fontWeight = FontWeight.SemiBold) }
+                            OutlinedButton(onClick = { pendingAccountAction = "create" }, enabled = !accountBusy && accountEmail.contains("@") && accountPassword.length >= 6, modifier = Modifier.weight(1f).height(50.dp).testTag("btn_create_account"), shape = RoundedCornerShape(14.dp)) { Text("Create Account", fontWeight = FontWeight.SemiBold) }
+                        }
+                        Text("Use at least 6 characters for a new account password.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (accountBusy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
                     accountMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
                 }
             }
