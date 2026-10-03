@@ -63,6 +63,7 @@ import com.aistudio.studyos.ui.screens.FocusScreen
 import com.aistudio.studyos.ui.screens.HomeScreen
 import com.aistudio.studyos.ui.screens.HistoryScreen
 import com.aistudio.studyos.ui.screens.ProfileScreen\nimport com.aistudio.studyos.ui.screens.AccountScreen
+import com.aistudio.studyos.ui.screens.ResetPasswordScreen
 import com.aistudio.studyos.ui.screens.ProgressScreen
 import com.aistudio.studyos.ui.screens.StudyPlanBuilderScreen
 import com.aistudio.studyos.ui.screens.SavedSessionsScreen
