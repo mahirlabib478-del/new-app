@@ -250,3 +250,28 @@ Before marking a feature **DONE**:
 ## 9.3 Account dataset routing guard — implementation stage
 
 Added pure Kotlin `AccountDataIsolationPolicy` and unit tests for signed-out access, first sign-in with legacy data, same-account return, switching to an existing account, switching to an empty account, and first sign-in without legacy data. The policy chooses a dataset visibility outcome only; it does not change Room, preferences, authentication, or stored user data. An empty account namespace must not fall back to another UID or ambiguous legacy data. This is a policy/test checkpoint, not shipped account-scoped persistence; CI must be observed for the new commits.
+
+
+## 9.4 Account-sensitive storage inventory — audit checkpoint
+
+Reviewed the current Room database, `ThemePreferences`, Firebase account repository, and progress-sync repository. This is documentation only; no production data or storage behavior changed.
+
+| Storage area | Current contents / behavior | Ownership risk | Safe treatment before account scoping |
+|---|---|---|---|
+| Room `study_os_database` (schema v9) | `study_plans`, `exams`, `session_logs`, `user_profile`; singleton database, entities have no Firebase UID owner | All rows share device storage; cannot infer which account owns old rows | Preserve untouched as legacy until export + explicit import/rollback exists |
+| Active plan / focus timer | Plan row stores current block, remaining seconds, timer-running flag, elapsed/wall-clock deadlines and boot count | A running session can be lost or attributed to another account if namespace switches mid-session | Snapshot and quiesce timer before any future namespace transition; verify restore before commit |
+| Profile / progression | User profile includes study totals, XP, level baselines, streak, daily goal and theme field | Progress and some preferences are mixed in one profile row | Separate account-owned progress from device appearance only through versioned, tested migration |
+| SharedPreferences `study_os_theme_prefs` | Theme/wallpaper/audio choices, custom media URIs, cached recent sessions, spin-wheel/perk counters and expiry timestamps | Same file mixes device preferences, account-sensitive session cache and progression/perks | Keep appearance settings device-wide; classify session/perk keys individually; do not clear whole file |
+| Firebase auth | Sign-in/out changes Firebase user only; repository deliberately leaves local progress untouched | Auth identity can change while local DB remains same | Preserve current no-delete behavior; account transition must gate reads/writes explicitly |
+| Firestore progress snapshot | `users/{uid}/progress/current`; upload-only checkpoint plus guarded empty-device restore | Shared local data must not be uploaded to a newly signed-in UID | Keep automatic upload paused for ambiguous local ownership; require explicit, verified account-scoped decision |
+
+### Migration safety gates (before implementation
+
+- Capture a consistent export of all four Room tables plus account-sensitive preference keys and active timer/session state; include schema/version metadata and integrity counts/checksums.
+- Keep the original dataset read-only and recoverable until the target namespace has been written, reopened, and verified against the export; only then record a committed migration marker.
+- Make each stage idempotent. On process death or account change, resume from a durable stage marker or roll back to the preserved source; never expose a partially copied namespace.
+- Require explicit user confirmation naming the destination Firebase account before importing ambiguous legacy data. Do not infer ownership from whichever UID signs in first.
+- Test interruption after backup, during copy, after verification and before commit; test rollback, repeated execution, empty destination, existing destination, and account switch during work.
+- Do not implement database-per-UID or preference-key migration until these gates have executable tests and an app-level recovery path.
+
+This audit identifies the storage surfaces and gates; it does not claim account-scoped persistence or migration is implemented.
