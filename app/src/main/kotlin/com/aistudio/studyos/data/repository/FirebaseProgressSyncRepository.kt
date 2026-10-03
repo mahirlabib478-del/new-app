@@ -78,8 +78,8 @@ class FirebaseProgressSyncRepository(
                 cloudUploadUid = null
                 return "No cloud backup exists, but local progress is present. Automatic upload is paused to prevent transferring another account's data."
             }
-            cloudUploadUid = uid
-            return "No cloud backup found and this device has no progress. Sync is ready for this account."
+            cloudUploadUid = null
+            return "No cloud backup found and this device has no progress. Automatic sync remains paused until an explicit account-link action is completed."
         }
         if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
         val localPlans = database.studyPlanDao().getAllForBackup()
@@ -157,8 +157,12 @@ class FirebaseProgressSyncRepository(
                 throw IllegalStateException("Account changed during sync. Please retry.")
             }
         }
-        cloudUploadUid = uid
-        return "Cloud progress restored to this empty device."
+        if (hasCloud && auth.currentUser?.uid == uid) {
+            cloudUploadUid = uid
+            return "Cloud progress restored to this empty device."
+        }
+        cloudUploadUid = null
+        return "The cloud document has no progress records. Automatic sync remains paused until an explicit account-link action is completed."
     }
 
     private suspend fun <T> Task<T>.asSuspendResult(): T = suspendCancellableCoroutine { continuation ->
