@@ -182,6 +182,19 @@ class FirebaseProgressSyncRepository(
     private fun Map<String, Any?>.toSession() = SessionLogEntity(id=n("id"), subject=s("subject"), chapter=s("chapter"), durationMinutes=i("durationMinutes"), mode=s("mode"), xpEarned=i("xpEarned"), timestamp=n("timestamp"))
     private fun Map<String, Any?>.toProfile() = UserProfileEntity(id=i("id",1), streakDays=i("streakDays"), totalStudyMinutes=i("totalStudyMinutes"), totalXP=i("totalXP"), totalXpSpent=i("totalXpSpent"), totalXpEarned=i("totalXpEarned"), levelStartStudyMinutes=i("levelStartStudyMinutes"), levelStartXpEarned=i("levelStartXpEarned"), levelStartXpSpent=i("levelStartXpSpent"), levelStartedAtMillis=n("levelStartedAtMillis"), currentLevel=i("currentLevel",1), dailyGoalMinutes=i("dailyGoalMinutes",60), themePreset=s("themePreset"), lastActiveDate=s("lastActiveDate"))
 
+    /** Explicitly links this device's current local dataset to the currently signed-in account. */
+    suspend fun linkLocalProgressToCurrentAccount() {
+        val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before linking progress.")
+        cloudUploadUid = uid
+        try {
+            uploadLocalSnapshot()
+            if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during linking. Please retry.")
+        } catch (error: Exception) {
+            cloudUploadUid = null
+            throw error
+        }
+    }
+
     suspend fun uploadLocalSnapshot() {
         val uid = auth.currentUser?.uid
             ?: throw IllegalStateException("Sign in before syncing progress.")
