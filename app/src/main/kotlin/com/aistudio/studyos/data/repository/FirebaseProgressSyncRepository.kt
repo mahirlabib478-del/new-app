@@ -48,9 +48,15 @@ class FirebaseProgressSyncRepository(
         }
         database.invalidationTracker.addObserver(observer)
         auth.addAuthStateListener { firebaseAuth ->
-            if (firebaseAuth.currentUser?.uid != cloudUploadUid) {
+            val activeUid = firebaseAuth.currentUser?.uid
+            val savedOwnerUid = ownershipPrefs.getString("owner_uid", null)
+            if (activeUid.isNullOrBlank() || activeUid != savedOwnerUid) {
                 cloudUploadUid = null
                 pendingUpload?.cancel()
+            } else {
+                // Re-arm only when the newly signed-in account matches the
+                // explicitly linked owner saved on this device.
+                cloudUploadUid = activeUid
             }
         }
     }
