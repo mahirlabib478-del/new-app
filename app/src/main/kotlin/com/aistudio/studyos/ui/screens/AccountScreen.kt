@@ -5,7 +5,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,18 +21,15 @@ import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun AccountScreen(onBack: () -> Unit) {
+fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
     val context = LocalContext.current
     val app = context.applicationContext as StudyApplication
     val repository = remember { FirebaseAccountRepository() }
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf(repository.currentUser?.email.orEmpty()) }
     var password by remember { mutableStateOf("") }
-    var resetEmail by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-    var resetMessage by remember { mutableStateOf<String?>(null) }
-    var resetBusy by remember { mutableStateOf(false) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
     var confirmBackup by remember { mutableStateOf(false) }
     val user = repository.currentUser
@@ -70,26 +66,10 @@ fun AccountScreen(onBack: () -> Unit) {
                 message?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
             }
         }
-        Spacer(Modifier.height(18.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(Icons.Default.LockReset, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Text("Password Recovery", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-                Text("Forgot your password? We'll email you a secure reset link.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedTextField(resetEmail, { resetEmail = it; resetMessage = null }, Modifier.fillMaxWidth().testTag("password_reset_email"), label = { Text("Account email") }, singleLine = true, shape = RoundedCornerShape(14.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                Button(onClick = {
-                    resetBusy = true
-                    repository.sendPasswordResetEmail(resetEmail) { error ->
-                        resetBusy = false
-                        resetMessage = if (error == null) "If this email is registered, a reset link has been sent." else "Could not send reset link. Check the email and try again."
-                    }
-                }, enabled = resetEmail.contains("@") && !resetBusy, modifier = Modifier.fillMaxWidth().height(48.dp).testTag("btn_send_password_reset"), shape = RoundedCornerShape(14.dp)) {
-                    if (resetBusy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("Send Reset Link")
-                }
-                resetMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
-            }
+        TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")) {
+            Icon(Icons.Default.LockReset, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Forgot password?")
         }
     }
     if (confirmAction != null) AlertDialog(onDismissRequest = { confirmAction = null }, title = { Text("Local study data notice") }, text = { Text("Study records are stored locally on this device and are not yet separated by account. Continuing may leave existing records visible after sign-in.") }, confirmButton = {
