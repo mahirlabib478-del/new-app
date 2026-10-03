@@ -67,7 +67,7 @@ fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
             }
         }
         TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")) {
-            Icon(Icons.Default.LockReset, contentDescription = null)
+            Icon(Icons.Default.Security, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text("Forgot password?")
         }
