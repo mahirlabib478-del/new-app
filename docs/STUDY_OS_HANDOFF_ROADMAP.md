@@ -229,7 +229,7 @@ This stage was an audit/design checkpoint only; no production storage or user da
 
 ## 9.2 Legacy import policy guard — implementation stage
 
-Added pure Kotlin `LegacyProgressImportPolicy` and unit tests. The policy returns explicit outcomes for no legacy data, signed-out state, existing target data, missing user confirmation, and an allowed import. It does not perform a copy or migration; callers must still implement transactional backup, verification, idempotency and rollback before any data movement. CI for this change has not yet been observed.
+Added pure Kotlin `LegacyProgressImportPolicy` and unit tests. The policy returns explicit outcomes for no legacy data, signed-out state, existing target data, missing user confirmation, and an allowed import. It does not perform a copy or migration; callers must still implement transactional backup, verification, idempotency and rollback before any data movement. CI run #758 passed for the preceding legacy-import policy/docs head; later account-isolation changes are awaiting CI.
 
 ## 10. Definition of done for future work
 
@@ -245,3 +245,8 @@ Before marking a feature **DONE**:
 - Android build passes when the change affects Android/runtime integration;
 - CI result is actually observed before claiming green;
 - this document and `docs/STUDY_OS_FEATURE_COVERAGE.md` are updated when the architecture/status changes.
+
+
+## 9.3 Account dataset routing guard — implementation stage
+
+Added pure Kotlin `AccountDataIsolationPolicy` and unit tests for signed-out access, first sign-in with legacy data, same-account return, switching to an existing account, switching to an empty account, and first sign-in without legacy data. The policy chooses a dataset visibility outcome only; it does not change Room, preferences, authentication, or stored user data. An empty account namespace must not fall back to another UID or ambiguous legacy data. This is a policy/test checkpoint, not shipped account-scoped persistence; CI must be observed for the new commits.
