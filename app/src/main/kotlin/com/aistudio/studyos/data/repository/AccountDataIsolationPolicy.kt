@@ -21,10 +21,8 @@ object AccountDataIsolationPolicy {
         requestedAccountHasData: Boolean,
         hasLegacyData: Boolean
     ): Dataset {
-        if (activeUid.isNullOrBlank() || requestedUid.isNullOrBlank()) {
-            return Dataset.SIGNED_OUT
-        }
-        if (activeUid != requestedUid) {
+        if (requestedUid.isNullOrBlank()) return Dataset.SIGNED_OUT
+        if (!activeUid.isNullOrBlank() && activeUid != requestedUid) {
             return if (requestedAccountHasData) Dataset.ACCOUNT_SCOPED
             else Dataset.EMPTY_ACCOUNT_SCOPE
         }
