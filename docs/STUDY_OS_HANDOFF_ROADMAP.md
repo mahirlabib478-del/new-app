@@ -154,9 +154,9 @@ The current Focus → Break → Completion flow was audited after the CI baselin
 
 Repository CI workflow: `.github/workflows/android.yml` (native Android/Kotlin).
 
-Latest observed GitHub Actions run **#753** (run ID `37091680374`) for head `c11859118fb2207f82b579f760db6ec64e44923a` completed with conclusion **success**. Run #752 failed because its midnight test expectation omitted a valid prior-day session inside the seven-day window; #753 corrected the expectation and passed.
+Latest previously observed GitHub Actions run **#755** (run ID `37098527484`) for head `05fbb1caad156c032708034ce20c397b93f7c054` completed with conclusion **success**. The legacy-import policy work below is newer and its CI result is not yet verified.
 
-[Latest CI run](https://github.com/mahirlabib478-del/new-app/actions/runs/37091680374)
+[Latest verified CI run](https://github.com/mahirlabib478-del/new-app/actions/runs/37098527484)
 
 ## 8. Roadmap by priority
 
@@ -225,7 +225,11 @@ Safe migration decision:
 5. On account switch, each UID must open only its own scoped dataset; sign-out must not delete either scoped or legacy data.
 6. Add migration state/version markers so interruption resumes safely and repeated migration is idempotent.
 
-This stage is an audit/design checkpoint only; no production storage or user data was changed.
+This stage was an audit/design checkpoint only; no production storage or user data was changed.
+
+## 9.2 Legacy import policy guard — implementation stage
+
+Added pure Kotlin `LegacyProgressImportPolicy` and unit tests. The policy returns explicit outcomes for no legacy data, signed-out state, existing target data, missing user confirmation, and an allowed import. It does not perform a copy or migration; callers must still implement transactional backup, verification, idempotency and rollback before any data movement. CI for this change has not yet been observed.
 
 ## 10. Definition of done for future work
 
