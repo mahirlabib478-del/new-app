@@ -275,3 +275,20 @@ Reviewed the current Room database, `ThemePreferences`, Firebase account reposit
 - Do not implement database-per-UID or preference-key migration until these gates have executable tests and an app-level recovery path.
 
 This audit identifies the storage surfaces and gates; it does not claim account-scoped persistence or migration is implemented.
+
+## 9.5 Automatic cloud sync activation contract — design checkpoint
+
+The requested behavior is: after a user explicitly links the current device dataset to the displayed Firebase account, subsequent Room progress mutations are uploaded automatically; offline mutations remain local and are retried when connectivity returns. This is not yet implemented.
+
+Required runtime contract before enabling it:
+
+- A durable local ownership marker must bind the imported dataset to one Firebase UID only after explicit confirmation and successful cloud write/verification. Never bind legacy data merely because a user signed in.
+- The confirmation UI must name the destination account and explain that existing device study plans, exams, sessions, profile progression and active timer state will be associated with that account.
+- Before the first upload, detect an existing cloud snapshot and require a deliberate conflict decision; never silently overwrite or merge two populated datasets.
+- Every upload captures the UID, checks it before and after local reads, and refuses to write if auth UID or durable owner marker changed.
+- Debounced Room invalidations trigger snapshots; failed writes retain a dirty/retry state and are retried on connectivity/app restart. UI must not report cloud-saved until Firestore confirms success.
+- Sign-out/account switch cancels pending work and blocks writes; it must not erase local data. A different UID must not read or upload the prior UID's local dataset.
+- Preferences with mixed device/account ownership and active timer state remain outside automatic cloud sync until separately classified and covered by migration tests.
+- Add unit tests for authorization, UID switch races, offline retry state, existing-cloud conflict, and no-success-before-ack; add integration/device verification before marking automatic sync DONE.
+
+This contract is a planning checkpoint only. No runtime behavior or user data changed in this stage.
