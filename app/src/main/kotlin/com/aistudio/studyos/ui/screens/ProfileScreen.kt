@@ -174,7 +174,8 @@ private fun formatDailyGoal(minutes: Int): String = when {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    viewModel: StudyViewModel
+    viewModel: StudyViewModel,
+    onOpenAccount: () -> Unit
 ) {
     val context = LocalContext.current
     val profile by viewModel.userProfile.collectAsState()
