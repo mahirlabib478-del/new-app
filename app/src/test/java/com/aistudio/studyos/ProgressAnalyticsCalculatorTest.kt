@@ -200,7 +200,7 @@ class ProgressAnalyticsCalculatorTest {
     }
 
 
-    @Test fun midnightNowDoesNotCountPreviousDayOrFutureSessions() {
+    @Test fun midnightNowIncludesPreviousDayWithinWeeklyWindowAndExcludesFutureSessions() {
         val midnight = localDay(2026, java.util.Calendar.OCTOBER, 3)
         val summary = ProgressAnalyticsCalculator.calculate(
             listOf(
@@ -212,8 +212,8 @@ class ProgressAnalyticsCalculatorTest {
             midnight
         )
 
-        assertEquals(1, summary.consistencyDays)
-        assertEquals(10, summary.weeklyStudyMinutes)
-        assertEquals(10, summary.averageMinutesOnStudyDays)
+        assertEquals(2, summary.consistencyDays)
+        assertEquals(55, summary.weeklyStudyMinutes)
+        assertEquals(27, summary.averageMinutesOnStudyDays)
     }
 }
