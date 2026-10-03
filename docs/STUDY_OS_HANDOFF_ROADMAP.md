@@ -207,6 +207,26 @@ Implementation sequence:
 
 Do not clear or migrate shared local data without a tested preservation strategy.
 
+## 9.1 Account-isolation audit — first stage
+
+Source audit confirms these ownership boundaries:
+
+- Room's `study_os_database` is one process-wide database; plans, exams, session logs and profile rows have no Firebase UID owner column.
+- `ThemePreferences` uses one device-wide SharedPreferences file. It stores presentation preferences (theme/wallpaper/audio) alongside cached recent sessions and gameplay/perk state (streak shield, XP booster, spin-wheel counters and unlock timestamps).
+- `FirebaseAccountRepository` signs in/out without changing local progress ownership.
+- `FirebaseProgressSyncRepository` intentionally pauses upload/merge when local ownership is ambiguous; this guard must remain until scoped storage is implemented.
+
+Safe migration decision:
+
+1. Treat existing Room rows and account-sensitive preference keys as **legacy device-local data with unknown account ownership**. Never assign them to whichever Firebase user signs in first.
+2. Keep appearance preferences device-wide unless a later product decision explicitly makes them account-scoped.
+3. Before scoped storage is enabled, create a tested export/backup and rollback path for the legacy dataset.
+4. On sign-in, do not copy legacy progress into an account namespace automatically. Require an explicit user choice after showing the destination account and explaining the one-time import; retain the source until verification succeeds.
+5. On account switch, each UID must open only its own scoped dataset; sign-out must not delete either scoped or legacy data.
+6. Add migration state/version markers so interruption resumes safely and repeated migration is idempotent.
+
+This stage is an audit/design checkpoint only; no production storage or user data was changed.
+
 ## 10. Definition of done for future work
 
 Before marking a feature **DONE**:
