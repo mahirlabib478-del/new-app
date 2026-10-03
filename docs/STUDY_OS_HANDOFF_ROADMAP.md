@@ -154,9 +154,9 @@ The current Focus → Break → Completion flow was audited after the CI baselin
 
 Repository CI workflow: `.github/workflows/android.yml` (native Android/Kotlin).
 
-Latest observed GitHub Actions run **#737** (run ID `37041502063`) for head `c035bc263837f91dd232912104c6d3acc80d99a0` completed with conclusion **success**. Run #736 for `fc7ca9eebe408622108ae08abf8703b150f55dd5` also completed successfully. The latest run is the current verified baseline; older Flutter-era run #367 is historical and must not be presented as current.
+Latest observed GitHub Actions run **#753** (run ID `37091680374`) for head `c11859118fb2207f82b579f760db6ec64e44923a` completed with conclusion **success**. Run #752 failed because its midnight test expectation omitted a valid prior-day session inside the seven-day window; #753 corrected the expectation and passed.
 
-[Latest CI run](https://github.com/mahirlabib478-del/new-app/actions/runs/37041502063)
+[Latest CI run](https://github.com/mahirlabib478-del/new-app/actions/runs/37091680374)
 
 ## 8. Roadmap by priority
 
@@ -172,7 +172,7 @@ Latest observed GitHub Actions run **#737** (run ID `37041502063`) for head `c03
 
 6. Improve TodayEngine recommendation quality while preserving budget constraints and item-level authority.
 7. ~~Add explicit history/timeline UX using existing Room session logs.~~ **DONE — read-only 30-day HistoryScreen, reachable from Home and Progress, with grouping and ordering regression tests.**
-8. Expand progress analytics with useful plan-vs-actual and consistency views.
+8. ~~Expand progress analytics with useful plan-vs-actual and consistency views.~~ **DONE — plan-vs-actual, weekly consistency, current-day boundaries, overflow handling and regression tests are integrated; CI #753 passed.**
 
 ### P2 — motivation / reminders
 
@@ -193,16 +193,19 @@ Latest observed GitHub Actions run **#737** (run ID `37041502063`) for head `c03
 
 ## 9. Exact next development task
 
-**Next task: improve Progress analytics with explicit plan-vs-actual and consistency views, while preserving existing persisted progress semantics.**
+**Next task: design and test account-scoped local data isolation without losing existing offline progress.**
+
+Current evidence: Room uses one shared `study_os_database` for all signed-in Firebase accounts. `FirebaseProgressSyncRepository` pauses automatic upload when local progress ownership is ambiguous and refuses automatic merge when both local and cloud data exist. This protects against accidental cross-account transfer, but it does not yet provide separate local datasets per account.
 
 Implementation sequence:
-1. Inspect the shipped Progress UI and calculator before changing field meanings.
-2. Add a focused calculator test for the selected metric and its edge cases.
-3. Make the smallest UI/data change that distinguishes plan-specific completed minutes from session-log totals.
-4. Run CI and observe the exact head result before claiming green.
-5. Update this handoff and feature coverage after the behavior is verified.
+1. Inventory every account-sensitive local table, preference, active timer/session snapshot and read/write entry point.
+2. Define explicit ownership behavior for signed-out, first-sign-in, account-switch and same-account return flows.
+3. Design a preservation-first migration (backup/rollback strategy, schema versioning, and deterministic legacy-data ownership); never silently assign ambiguous legacy records to the newly signed-in UID.
+4. Add tests for account switching, empty/local/cloud combinations, interrupted migration and rollback before changing production storage.
+5. Implement the smallest safe stage, run CI and observe the exact head result.
+6. Update this handoff and feature coverage after verified behavior.
 
-Account-scoped local data isolation remains a separate high-risk architecture task. Do not clear or migrate shared local data without a tested preservation strategy.
+Do not clear or migrate shared local data without a tested preservation strategy.
 
 ## 10. Definition of done for future work
 
