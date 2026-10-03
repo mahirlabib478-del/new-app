@@ -18,7 +18,7 @@ class StudyApplication : Application() {
     val database: StudyDatabase by lazy { StudyDatabase.getInstance(this) }
     val themePreferences: ThemePreferences by lazy { ThemePreferences(this) }
     val repository: StudyRepository by lazy { StudyRepository(database, themePreferences) }
-    val cloudProgressSync: FirebaseProgressSyncRepository by lazy { FirebaseProgressSyncRepository(database) }
+    val cloudProgressSync: FirebaseProgressSyncRepository by lazy { FirebaseProgressSyncRepository(this, database) }
 
     override fun onCreate() {
         super.onCreate()
