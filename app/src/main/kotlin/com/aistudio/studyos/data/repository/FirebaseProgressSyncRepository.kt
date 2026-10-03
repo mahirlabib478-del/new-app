@@ -1,5 +1,6 @@
 package com.aistudio.studyos.data.repository
 
+import android.content.Context
 import com.aistudio.studyos.data.local.StudyDatabase
 import androidx.room.withTransaction
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
@@ -24,14 +25,17 @@ import kotlin.coroutines.resumeWithException
  * cannot silently overwrite either device's data.
  */
 class FirebaseProgressSyncRepository(
+    context: Context,
     private val database: StudyDatabase,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    private val ownershipPrefs = context.applicationContext.getSharedPreferences("progress_sync_ownership", Context.MODE_PRIVATE)
     @Volatile private var cloudUploadUid: String? = null
 
     fun startAutomaticUpload(scope: CoroutineScope) {
         var pendingUpload: Job? = null
+        cloudUploadUid = auth.currentUser?.uid?.takeIf { it == ownershipPrefs.getString("owner_uid", null) }
         val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {
             override fun onInvalidated(tables: Set<String>) {
                 if (auth.currentUser?.uid == null || auth.currentUser?.uid != cloudUploadUid) return
@@ -158,6 +162,7 @@ class FirebaseProgressSyncRepository(
             }
         }
         if (hasCloud && auth.currentUser?.uid == uid) {
+            ownershipPrefs.edit().putString("owner_uid", uid).apply()
             cloudUploadUid = uid
             return "Cloud progress restored to this empty device."
         }
@@ -189,6 +194,7 @@ class FirebaseProgressSyncRepository(
         try {
             uploadLocalSnapshot()
             if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during linking. Please retry.")
+            ownershipPrefs.edit().putString("owner_uid", uid).apply()
         } catch (error: Exception) {
             cloudUploadUid = null
             throw error
