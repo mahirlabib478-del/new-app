@@ -292,3 +292,8 @@ Required runtime contract before enabling it:
 - Add unit tests for authorization, UID switch races, offline retry state, existing-cloud conflict, and no-success-before-ack; add integration/device verification before marking automatic sync DONE.
 
 This contract is a planning checkpoint only. No runtime behavior or user data changed in this stage.
+
+
+## 9.6 Migration state safety policy — test checkpoint
+
+Added pure Kotlin `LegacyMigrationSafetyPolicy` and unit tests for backup-first progression, blocking unverified backup/target states, account-switch interruption, source recovery, rollback blocking, and idempotent committed state. This is a decision policy only: it does not create backups, copy Room/preferences, persist stage markers, or perform rollback. Runtime migration remains blocked until those operations and an app-level recovery path are implemented and verified.
