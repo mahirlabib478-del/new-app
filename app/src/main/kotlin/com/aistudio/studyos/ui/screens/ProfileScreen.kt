@@ -199,6 +199,7 @@ fun ProfileScreen(
     var accountPassword by remember { mutableStateOf("") }
     var accountBusy by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
+    var showLinkProgressDialog by remember { mutableStateOf(false) }
     var accountMessage by remember { mutableStateOf<String?>(null) }
     var pendingAccountAction by remember { mutableStateOf<String?>(null) }
 
@@ -311,6 +312,11 @@ fun ProfileScreen(
                     val signedInEmail = accountRepository.currentUser?.email
                     if (signedInEmail != null) {
                         Text("Signed in as $signedInEmail", style = MaterialTheme.typography.bodyMedium)
+                        Button(
+                            onClick = { showLinkProgressDialog = true },
+                            enabled = !accountBusy,
+                            modifier = Modifier.fillMaxWidth().testTag("btn_link_local_progress")
+                        ) { Text("Back Up This Device to This Account") }
                         OutlinedButton(
                             onClick = { showSignOutDialog = true },
                             modifier = Modifier.fillMaxWidth().testTag("btn_sign_out")
@@ -1317,6 +1323,30 @@ fun ProfileScreen(
             dismissButton = {
                 TextButton(onClick = { pendingAccountAction = null }) { Text("Cancel") }
             }
+        )
+    }
+
+    if (showLinkProgressDialog) {
+        AlertDialog(
+            onDismissRequest = { showLinkProgressDialog = false },
+            title = { Text("Link local study data?") },
+            text = { Text("This will upload the study records currently stored on this device to the signed-in account's private cloud backup. Continue only if these records belong to you. No local records will be deleted.") },
+            confirmButton = {
+                Button(onClick = {
+                    showLinkProgressDialog = false
+                    accountBusy = true
+                    accountMessage = null
+                    accountScope.launch {
+                        try {
+                            (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.linkLocalProgressToCurrentAccount()
+                            accountMessage = "Device progress linked and backed up. Automatic sync is enabled for this account."
+                        } catch (e: Exception) {
+                            accountMessage = e.localizedMessage ?: "Could not link progress."
+                        } finally { accountBusy = false }
+                    }
+                }, modifier = Modifier.testTag("btn_confirm_link_progress")) { Text("Upload & Link") }
+            },
+            dismissButton = { TextButton(onClick = { showLinkProgressDialog = false }) { Text("Cancel") } }
         )
     }
 
