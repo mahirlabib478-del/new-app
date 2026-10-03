@@ -155,6 +155,18 @@ class ProgressAnalyticsCalculatorTest {
         assertEquals(4, summary.averageMinutesOnStudyDays)
     }
 
+    @Test fun currentDayIncludesTimestampNowButExcludesNextMillisecond() {
+        val now = localDay(2026, java.util.Calendar.OCTOBER, 2, 12)
+        val summary = ProgressAnalyticsCalculator.calculate(
+            listOf(log(now, 12), log(now + 1L, 99)),
+            null,
+            now
+        )
+
+        assertEquals(1, summary.consistencyDays)
+        assertEquals(12, summary.weeklyStudyMinutes)
+    }
+
     @Test fun unusuallyLargeDailyTotalsSaturateInsteadOfOverflowing() {
         val now = localDay(2026, java.util.Calendar.OCTOBER, 2, 12)
         val summary = ProgressAnalyticsCalculator.calculate(
