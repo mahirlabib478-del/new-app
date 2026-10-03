@@ -62,7 +62,8 @@ import com.aistudio.studyos.ui.screens.ExamPlannerScreen
 import com.aistudio.studyos.ui.screens.FocusScreen
 import com.aistudio.studyos.ui.screens.HomeScreen
 import com.aistudio.studyos.ui.screens.HistoryScreen
-import com.aistudio.studyos.ui.screens.ProfileScreen\nimport com.aistudio.studyos.ui.screens.AccountScreen
+import com.aistudio.studyos.ui.screens.ProfileScreen
+import com.aistudio.studyos.ui.screens.AccountScreen
 import com.aistudio.studyos.ui.screens.ResetPasswordScreen
 import com.aistudio.studyos.ui.screens.ProgressScreen
 import com.aistudio.studyos.ui.screens.StudyPlanBuilderScreen
@@ -78,7 +79,8 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
     object StudyHub : Screen("study_hub", "Study", Icons.Default.School)
     object Progress : Screen("progress", "Progress", Icons.Default.BarChart)
     object History : Screen("history", "Study History")
-    object Profile : Screen("profile", "Profile", Icons.Default.Person)\n    object Account : Screen("account", "Account")
+    object Profile : Screen("profile", "Profile", Icons.Default.Person)
+    object Account : Screen("account", "Account")
     object ResetPassword : Screen("reset_password", "Reset Password")
 
     // Full screen sub-destinations
@@ -332,7 +334,10 @@ fun MainApp(
                 HistoryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(Screen.Profile.route) {
-                ProfileScreen(viewModel = viewModel, onOpenAccount = { navController.navigate(Screen.Account.route) })\n            }\n            composable(Screen.Account.route) {\n                AccountScreen(onBack = { navController.popBackStack() }, onForgotPassword = { navController.navigate(Screen.ResetPassword.route) })
+                ProfileScreen(viewModel = viewModel, onOpenAccount = { navController.navigate(Screen.Account.route) })
+            }
+            composable(Screen.Account.route) {
+                AccountScreen(onBack = { navController.popBackStack() }, onForgotPassword = { navController.navigate(Screen.ResetPassword.route) })
             }
             composable(Screen.ResetPassword.route) {
                 ResetPasswordScreen(onBack = { navController.popBackStack() })
