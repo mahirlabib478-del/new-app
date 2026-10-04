@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.LocalDate
+import java.time.Instant
+import java.time.ZoneId
 
 data class SpinWheelReward(val slotIndex: Int, val label: String, val xp: Int = 0)
 data class SpinWheelStatus(val unlocked: Boolean, val spinsUsed: Int, val remainingMs: Long)
@@ -24,6 +26,27 @@ class StudyRepository(
     // Serializes streak reconciliation so startup and a completed session cannot
     // consume the same shield twice.
     private val streakMutex = Mutex()
+
+    /**
+     * Recover a streak that is lower than the actual consecutive study-day history.
+     * The current session log is inserted before this is called, so today's date is
+     * included. This repairs stale profile streak metadata without ever reducing a
+     * streak that is legitimately protected by streak shields.
+     */
+    private suspend fun consecutiveLoggedStudyDaysEnding(today: LocalDate): Int {
+        val zone = ZoneId.systemDefault()
+        val activeDates = database.sessionLogDao().getAllForBackup()
+            .map { log -> LocalDate.ofInstant(Instant.ofEpochMilli(log.timestamp), zone) }
+            .toSet()
+
+        var date = today
+        var consecutiveDays = 0
+        while (date in activeDates) {
+            consecutiveDays++
+            date = date.minusDays(1)
+        }
+        return consecutiveDays
+    }
 
     private fun resolveStreakGap(profile: UserProfileEntity, today: LocalDate): UserProfileEntity {
         val resolution = StreakShieldCalculator.resolve(
@@ -510,13 +533,19 @@ class StudyRepository(
                 }
             }
 
+            // Session history is the durable source of truth for active study dates.
+            // If profile metadata stayed at "1 Day" after a consecutive-day session,
+            // recover the higher streak from the actual logged calendar days.
+            val recoveredStreak = consecutiveLoggedStudyDaysEnding(today)
+            val finalStreak = maxOf(updatedStreak, recoveredStreak)
+
             val candidateProfile = resolvedProfile.copy(
                 totalStudyMinutes = resolvedProfile.totalStudyMinutes + durationMinutes,
                 totalXP = resolvedProfile.totalXP + xpGained,
                 totalXpEarned = resolvedProfile.totalXpEarned + xpGained,
                 currentLevel = resolvedProfile.currentLevel,
                 totalXpSpent = resolvedProfile.totalXpSpent,
-                streakDays = updatedStreak,
+                streakDays = finalStreak,
                 lastActiveDate = todayStr
             )
             val newLevel = levelAfterMissionCheck(candidateProfile)
