@@ -41,7 +41,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
