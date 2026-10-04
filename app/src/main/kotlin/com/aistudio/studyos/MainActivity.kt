@@ -19,6 +19,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,12 +33,14 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -58,6 +61,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -234,153 +238,173 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun WelcomeScreen(onGetStarted: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
+    val pitchBlack = Color(0xFF050505)
+    val green = Color(0xFF4CAF00)
+    val softGreen = Color(0xFF9BE66B)
+    val mutedText = Color(0xFF9A9A9A)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.background)
+            .background(pitchBlack)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 18.dp),
+            .padding(horizontal = 24.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Brand header stays below the status bar and follows the active app theme.
         Row(
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(15.dp))
-                    .background(colors.primaryContainer),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(13.dp))
+                    .background(Color(0xFF10200C))
+                    .border(1.dp, Color(0xFF24431B), RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.School,
                     contentDescription = null,
-                    tint = colors.primary,
-                    modifier = Modifier.size(25.dp)
+                    tint = softGreen,
+                    modifier = Modifier.size(23.dp)
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(
-                    text = "StudyOS",
-                    color = colors.onBackground,
+                    text = "Study OS",
+                    color = Color.White,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "YOUR PERSONAL STUDY SPACE",
-                    color = colors.onSurfaceVariant,
+                    color = mutedText,
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.1.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(0.7f))
 
-        // Larger, theme-aware study illustration with an accent-tinted backdrop (not a grey panel).
+        // A clean, black-on-black focus orb: no grey panel or bulky illustration card.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 2.dp)
-                .height(286.dp)
-                .clip(RoundedCornerShape(34.dp))
-                .background(colors.primary.copy(alpha = 0.12f)),
+                .height(238.dp),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(width = 224.dp, height = 238.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(colors.surface),
+                    .size(224.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF091108))
+                    .border(1.dp, Color(0xFF1C3516), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                Box(
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF0D190B))
+                        .border(1.dp, Color(0xFF28451F), CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(104.dp)
-                            .clip(RoundedCornerShape(32.dp))
-                            .background(colors.primaryContainer),
+                            .size(132.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF142710))
+                            .border(1.dp, Color(0xFF386329), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = "Study illustration",
-                            tint = colors.primary,
-                            modifier = Modifier.size(62.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(22.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(width = 142.dp, height = 9.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.primary.copy(alpha = 0.32f))
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(width = 104.dp, height = 8.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.outlineVariant)
-                    )
-                    Spacer(modifier = Modifier.height(18.dp))
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = colors.primaryContainer
-                    ) {
-                        Text(
-                            "PLAN  •  FOCUS  •  GROW",
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            color = colors.onPrimaryContainer,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
+                            imageVector = Icons.Default.Timer,
+                            contentDescription = "Focus timer",
+                            tint = softGreen,
+                            modifier = Modifier.size(68.dp)
                         )
                     }
                 }
             }
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 32.dp, bottom = 15.dp),
+                shape = RoundedCornerShape(50),
+                color = Color(0xFF142710),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF386329))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(green)
+                    )
+                    Text(
+                        text = "FOCUS MODE",
+                        color = softGreen,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.7.sp
+                    )
+                }
+            }
         }
 
-        Spacer(modifier = Modifier.height(26.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "Make Every Study\nSession Count",
-            color = colors.onBackground,
+            text = "Make Every",
+            color = Color.White,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center,
-            lineHeight = MaterialTheme.typography.headlineLarge.lineHeight
+            textAlign = TextAlign.Center
         )
+        Text(
+            text = "Minute Count.",
+            color = green,
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center
+        )
+
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Plan smarter, stay focused, and see your progress grow — one session at a time.",
-            color = colors.onSurfaceVariant,
+            text = "Focus better. Build habits.\nReach your goals — one session at a time.",
+            color = mutedText,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
         )
 
         Spacer(modifier = Modifier.weight(1f))
+
         Button(
             onClick = onGetStarted,
-            modifier = Modifier.fillMaxWidth().height(60.dp),
-            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(58.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = colors.primary,
-                contentColor = colors.onPrimary
+                containerColor = green,
+                contentColor = Color.White
             )
         ) {
             Text(
                 text = "Get Started",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.size(10.dp))
             Icon(
@@ -389,7 +413,16 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                 modifier = Modifier.size(19.dp)
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
+
+        Spacer(modifier = Modifier.height(13.dp))
+        Text(
+            text = "YOUR PERSONAL SPACE TO GROW",
+            color = Color(0xFF686868),
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+            letterSpacing = 1.05.sp
+        )
+        Spacer(modifier = Modifier.height(7.dp))
     }
 }
 
