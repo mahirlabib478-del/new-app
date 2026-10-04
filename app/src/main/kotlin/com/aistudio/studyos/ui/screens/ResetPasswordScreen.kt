@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -122,7 +123,14 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                     label = { Text("Email address") },
                     placeholder = { Text("you@example.com") },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
                 Button(
@@ -139,8 +147,8 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                         }
                     },
                     enabled = email.contains("@") && !busy,
-                    modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_send_password_reset"),
-                    shape = RoundedCornerShape(14.dp)
+                    modifier = Modifier.fillMaxWidth().height(56.dp).testTag("btn_send_password_reset"),
+                    shape = RoundedCornerShape(18.dp)
                 ) {
                     if (busy) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp) else Text("Send reset link")
                 }
@@ -155,8 +163,8 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                     Spacer(Modifier.height(2.dp))
                     OutlinedButton(
                         onClick = onBack,
-                        modifier = Modifier.fillMaxWidth().height(50.dp).testTag("btn_back_to_login"),
-                        shape = RoundedCornerShape(14.dp)
+                        modifier = Modifier.fillMaxWidth().height(54.dp).testTag("btn_back_to_login"),
+                        shape = RoundedCornerShape(18.dp)
                     ) {
                         Text("Back to login")
                     }
