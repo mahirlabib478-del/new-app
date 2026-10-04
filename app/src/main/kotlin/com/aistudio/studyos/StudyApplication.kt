@@ -15,18 +15,31 @@ class StudyApplication : Application() {
             private set
     }
 
-    /** Legacy/guest store; authenticated screens must use databaseFor(uid). */\n    val database: StudyDatabase by lazy { StudyDatabase.getInstance(this) }\n\n    fun databaseFor(uid: String?): StudyDatabase =\n        if (uid.isNullOrBlank()) database else StudyDatabase.getAccountInstance(this, uid)\n\n    fun preferencesFor(uid: String?): ThemePreferences =\n        if (uid.isNullOrBlank()) themePreferences\n        else ThemePreferences(this, ThemePreferences.accountStorageName(uid))\n\n    fun repositoryFor(uid: String?): StudyRepository =\n        if (uid.isNullOrBlank()) repository\n        else StudyRepository(databaseFor(uid), preferencesFor(uid))\n\n    fun cloudSyncFor(uid: String): FirebaseProgressSyncRepository =\n        FirebaseProgressSyncRepository(this, databaseFor(uid))
+    /** Legacy/guest store; authenticated screens must use databaseFor(uid). */
+    val database: StudyDatabase by lazy { StudyDatabase.getInstance(this) }
     val themePreferences: ThemePreferences by lazy { ThemePreferences(this) }
     val repository: StudyRepository by lazy { StudyRepository(database, themePreferences) }
     val cloudProgressSync: FirebaseProgressSyncRepository by lazy { FirebaseProgressSyncRepository(this, database) }
+
+    fun databaseFor(uid: String?): StudyDatabase =
+        if (uid.isNullOrBlank()) database else StudyDatabase.getAccountInstance(this, uid)
+
+    fun preferencesFor(uid: String?): ThemePreferences =
+        if (uid.isNullOrBlank()) themePreferences
+        else ThemePreferences(this, ThemePreferences.accountStorageName(uid))
+
+    fun repositoryFor(uid: String?): StudyRepository =
+        if (uid.isNullOrBlank()) repository
+        else StudyRepository(databaseFor(uid), preferencesFor(uid))
+
+    fun cloudSyncFor(uid: String): FirebaseProgressSyncRepository =
+        FirebaseProgressSyncRepository(this, databaseFor(uid))
 
     override fun onCreate() {
         super.onCreate()
         instance = this
         cloudProgressSync.startAutomaticUpload(CoroutineScope(Dispatchers.IO))
 
-        // Pre-warm Room database connection and cached data in background immediately
-        // so that by the time UI/HomeScreen opens, SQLite is already initialized and fast
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 repository.getCachedRecentLogs()
@@ -36,4 +49,3 @@ class StudyApplication : Application() {
         }
     }
 }
-
