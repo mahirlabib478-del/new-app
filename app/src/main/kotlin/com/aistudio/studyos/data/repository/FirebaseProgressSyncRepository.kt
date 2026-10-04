@@ -144,11 +144,15 @@ class FirebaseProgressSyncRepository(
      */
     suspend fun syncNowBeforeSignOut(): String {
         val user = auth.currentUser ?: return "Already signed out."
-        if (!user.isEmailVerified) return "Email is not verified; cloud sync is unavailable."
+        if (!user.isEmailVerified) {
+            throw IllegalStateException("Verify your email before syncing progress.")
+        }
         if (cloudUploadUid != user.uid ||
             !ownershipPrefs.getBoolean(ownerKey(user.uid), false)
         ) {
-            return "Cloud sync is not enabled for this account. Local progress was kept on this device."
+            throw IllegalStateException(
+                "Cloud sync is not ready for this account yet. Stay signed in and wait until Cloud sync reports success, then sign out. Your local progress has not been intentionally deleted."
+            )
         }
 
         pendingUpload?.cancel()
