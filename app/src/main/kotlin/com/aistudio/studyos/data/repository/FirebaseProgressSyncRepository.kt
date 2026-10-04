@@ -32,13 +32,20 @@ class FirebaseProgressSyncRepository(
 ) {
     private val ownershipPrefs = context.applicationContext.getSharedPreferences("progress_sync_ownership", Context.MODE_PRIVATE)
     @Volatile private var cloudUploadUid: String? = null
+    private var pendingUpload: Job? = null
+    private var invalidationObserver: InvalidationTracker.Observer? = null
+    private var authStateListener: FirebaseAuth.AuthStateListener? = null
 
+    @Synchronized
     fun startAutomaticUpload(scope: CoroutineScope) {
-        var pendingUpload: Job? = null
-        cloudUploadUid = auth.currentUser?.uid?.takeIf { it == ownershipPrefs.getString("owner_uid", null) }
+        stopAutomaticUpload()
+        cloudUploadUid = auth.currentUser
+            ?.takeIf { it.isEmailVerified && ownershipPrefs.getBoolean(ownerKey(it.uid), false) }
+            ?.uid
         val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {
             override fun onInvalidated(tables: Set<String>) {
-                if (auth.currentUser?.uid == null || auth.currentUser?.uid != cloudUploadUid) return
+                val active = auth.currentUser
+                if (active?.isEmailVerified != true || active.uid != cloudUploadUid) return
                 pendingUpload?.cancel()
                 pendingUpload = scope.launch {
                     delay(1800)
@@ -46,20 +53,36 @@ class FirebaseProgressSyncRepository(
                 }
             }
         }
+        invalidationObserver = observer
         database.invalidationTracker.addObserver(observer)
-        auth.addAuthStateListener { firebaseAuth ->
-            val activeUid = firebaseAuth.currentUser?.uid
-            val savedOwnerUid = ownershipPrefs.getString("owner_uid", null)
-            if (activeUid.isNullOrBlank() || activeUid != savedOwnerUid) {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            val activeUser = firebaseAuth.currentUser
+            val activeUid = activeUser?.takeIf {
+                it.isEmailVerified && ownershipPrefs.getBoolean(ownerKey(it.uid), false)
+            }?.uid
+            if (activeUid == null || activeUid != cloudUploadUid) {
                 cloudUploadUid = null
                 pendingUpload?.cancel()
             } else {
-                // Re-arm only when the newly signed-in account matches the
-                // explicitly linked owner saved on this device.
                 cloudUploadUid = activeUid
             }
         }
+        authStateListener = listener
+        auth.addAuthStateListener(listener)
     }
+
+    @Synchronized
+    fun stopAutomaticUpload() {
+        pendingUpload?.cancel()
+        pendingUpload = null
+        invalidationObserver?.let { database.invalidationTracker.removeObserver(it) }
+        invalidationObserver = null
+        authStateListener?.let { auth.removeAuthStateListener(it) }
+        authStateListener = null
+        cloudUploadUid = null
+    }
+
+    private fun ownerKey(uid: String) = "owner_$uid"
 
     /** Restores cloud data only when this device has no local progress. Never overwrites populated local data. */
     suspend fun restoreIfLocalEmpty(): String {
@@ -170,7 +193,7 @@ class FirebaseProgressSyncRepository(
             }
         }
         if (hasCloud && auth.currentUser?.uid == uid) {
-            ownershipPrefs.edit().putString("owner_uid", uid).apply()
+            ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
             cloudUploadUid = uid
             return "Cloud progress restored to this empty device."
         }
@@ -241,7 +264,7 @@ class FirebaseProgressSyncRepository(
             cloudUploadUid = null
             throw IllegalStateException("Account changed after backup. Please sign in again.")
         }
-        ownershipPrefs.edit().putString("owner_uid", uid).apply()
+        ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
         cloudUploadUid = uid
         return "Initial cloud backup created. Existing local progress was kept."
     }
