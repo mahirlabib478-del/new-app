@@ -7,8 +7,8 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * Email/password account operations. This class deliberately does not touch local progress;
- * progress import/export must be coordinated by the caller to avoid overwriting local data.
+ * Email/password account operations. Local progress is intentionally not touched here.
+ * New accounts must verify their email before the app grants access to study data.
  */
 class FirebaseAccountRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -16,15 +16,51 @@ class FirebaseAccountRepository(
     val currentUser: FirebaseUser?
         get() = auth.currentUser
 
-    suspend fun createAccount(email: String, password: String): FirebaseUser =
-        awaitUser { auth.createUserWithEmailAndPassword(email.trim(), password) }
+    suspend fun createAccount(email: String, password: String): FirebaseUser {
+        val user = awaitUser { auth.createUserWithEmailAndPassword(email.trim(), password) }
+        try {
+            user.sendEmailVerification().awaitCompletion()
+        } catch (error: Exception) {
+            // Do not pretend verification was sent. Keep the account so the user can retry.
+            throw IllegalStateException(
+                "Account created, but verification email could not be sent. Please resend it.",
+                error
+            )
+        }
+        return user
+    }
 
-    suspend fun signIn(email: String, password: String): FirebaseUser =
-        awaitUser { auth.signInWithEmailAndPassword(email.trim(), password) }
+    suspend fun signIn(email: String, password: String): FirebaseUser {
+        val user = awaitUser { auth.signInWithEmailAndPassword(email.trim(), password) }
+        user.reload().awaitCompletion()
+        val refreshedUser = auth.currentUser
+            ?: throw IllegalStateException("Firebase session is unavailable. Please sign in again.")
+        if (!refreshedUser.isEmailVerified) {
+            throw EmailNotVerifiedException()
+        }
+        return refreshedUser
+    }
+
+    suspend fun refreshCurrentUser(): FirebaseUser? {
+        val user = auth.currentUser ?: return null
+        user.reload().awaitCompletion()
+        return auth.currentUser
+    }
+
+    suspend fun resendVerificationEmail() {
+        val user = auth.currentUser ?: throw IllegalStateException("Sign in to resend the verification email.")
+        user.reload().awaitCompletion()
+        val refreshed = auth.currentUser ?: throw IllegalStateException("Firebase session is unavailable.")
+        if (refreshed.isEmailVerified) return
+        refreshed.sendEmailVerification().awaitCompletion()
+    }
 
     fun sendPasswordResetEmail(email: String, onComplete: (Exception?) -> Unit) {
         auth.sendPasswordResetEmail(email.trim())
-            .addOnCompleteListener { task -> onComplete(if (task.isSuccessful) null else task.exception ?: IllegalStateException("Password reset email failed.")) }
+            .addOnCompleteListener { task ->
+                onComplete(if (task.isSuccessful) null else task.exception
+                    ?: IllegalStateException("Password reset email failed."))
+            }
     }
 
     fun signOut() = auth.signOut()
@@ -46,3 +82,22 @@ class FirebaseAccountRepository(
         }
     }
 }
+
+class EmailNotVerifiedException : IllegalStateException(
+    "Your email is not verified yet. Open the verification email, then tap “I've verified my email”."
+)
+
+private suspend fun <T> com.google.android.gms.tasks.Task<T>.awaitCompletion(): T =
+    suspendCancellableCoroutine { continuation ->
+        addOnCompleteListener { task ->
+            if (!continuation.isActive) return@addOnCompleteListener
+            if (task.isSuccessful) {
+                @Suppress("UNCHECKED_CAST")
+                continuation.resume(task.result as T)
+            } else {
+                continuation.resumeWithException(
+                    task.exception ?: IllegalStateException("The requested Firebase action failed.")
+                )
+            }
+        }
+    }
