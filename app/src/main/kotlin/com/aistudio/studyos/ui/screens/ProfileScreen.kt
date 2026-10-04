@@ -882,7 +882,7 @@ fun ProfileScreen(
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(17.dp))
                         Spacer(Modifier.width(7.dp))
-                        Text("Set Daily Target Manually")
+                        Text("Set Daily Target Manually", maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -1706,7 +1706,7 @@ fun ProfileScreen(
                     enabled = (customGoalInput.toIntOrNull() ?: 0) in 15..1440,
                     modifier = Modifier.testTag("save_custom_goal_btn")
                 ) {
-                    Text("Save Target")
+                    Text("Save Target", maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
             },
             dismissButton = {
