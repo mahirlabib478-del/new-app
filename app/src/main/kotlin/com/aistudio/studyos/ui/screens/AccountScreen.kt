@@ -95,12 +95,12 @@ fun AccountScreen(
                 )
             }
         }
+        val guestAccountPage = !showContinueAsGuest && !verificationPending && user == null
         if (!verificationPending && user == null) {
-            val guestAccountPage = !showContinueAsGuest
-            Spacer(Modifier.height(30.dp))
+            Spacer(Modifier.height(if (guestAccountPage) 12.dp else 30.dp))
             Surface(
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                color = MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Icon(
                     Icons.Default.School,
@@ -126,13 +126,13 @@ fun AccountScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
+                    color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Text(
                         "Create an account to access your study progress on supported devices. You can choose whether to import this device's progress after email verification.",
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -140,9 +140,12 @@ fun AccountScreen(
             Text(if (verified) "Your StudyOS account" else "Verify your email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(if (verified) "Your study data is ready and private to your account." else "Verify once to keep your study progress linked to your account.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(if (guestAccountPage) 18.dp else 32.dp))
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
-            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column(
+                Modifier.padding(if (guestAccountPage) 20.dp else 24.dp),
+                verticalArrangement = Arrangement.spacedBy(if (guestAccountPage) 14.dp else 18.dp)
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Text(
