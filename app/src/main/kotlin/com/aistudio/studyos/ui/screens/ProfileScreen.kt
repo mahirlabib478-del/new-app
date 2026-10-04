@@ -152,7 +152,7 @@ private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Bo
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 option.name,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 maxLines = 3
@@ -533,13 +533,13 @@ fun ProfileScreen(
                                         Text(option.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                                         Text(
                                             if (active) "Active • $remaining" else "Available in XP Shop",
-                                            fontSize = 10.sp,
+                                            fontSize = 12.sp,
                                             color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                     Text(
                                         if (isSelected) "Applied" else if (active) "Use" else "Unlock",
-                                        fontSize = 10.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
@@ -719,7 +719,7 @@ fun ProfileScreen(
                                         Spacer(modifier = Modifier.height(2.dp))
                                         Text(
                                             text = style.description,
-                                            fontSize = 10.sp,
+                                            fontSize = 12.sp,
                                             maxLines = 2,
                                             lineHeight = 13.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
