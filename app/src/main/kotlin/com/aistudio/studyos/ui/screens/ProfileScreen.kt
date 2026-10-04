@@ -197,6 +197,12 @@ fun ProfileScreen(
     var resetSending by remember { mutableStateOf(false) }
     val accountRepository = remember { FirebaseAccountRepository() }
     val accountScope = androidx.compose.runtime.rememberCoroutineScope()
+    val activeAccountUid = accountRepository.currentUser?.takeIf { it.isEmailVerified }?.uid
+    val accountCloudSync = remember(activeAccountUid) {
+        activeAccountUid?.let { (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudSyncFor(it) }
+    }
+    val accountCloudSyncState = accountCloudSync?.syncStatus?.collectAsState(initial = "Checking cloud sync…")
+    val accountCloudSyncStatus = accountCloudSyncState?.value ?: "Sign in with a verified account to sync progress"
     var accountEmail by remember { mutableStateOf(accountRepository.currentUser?.email.orEmpty()) }
     var accountPassword by remember { mutableStateOf("") }
     var accountBusy by remember { mutableStateOf(false) }
@@ -280,6 +286,7 @@ fun ProfileScreen(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("Account & Security", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text("Sign in, create account or reset password", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Cloud sync: $accountCloudSyncStatus", style = MaterialTheme.typography.bodySmall, color = if (accountCloudSyncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open account settings", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
