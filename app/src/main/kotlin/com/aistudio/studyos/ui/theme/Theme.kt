@@ -61,17 +61,17 @@ private val CyberRunnerColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFE4E4E7)
 )
 
-private val OceanColorScheme = darkColorScheme(
-    primary = OceanAccent,
+private val SkyNightColorScheme = darkColorScheme(
+    primary = SkyNightAccent,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFF13283E),
-    onPrimaryContainer = Color(0xFF7DD3FC),
+    primaryContainer = Color(0xFF102A43),
+    onPrimaryContainer = Color(0xFFBAE6FD),
     secondary = Color(0xFF38BDF8),
-    background = OceanBg,
-    onBackground = Color(0xFFE0F2FE),
-    surface = OceanSurface,
-    onSurface = Color(0xFFE0F2FE),
-    surfaceVariant = Color(0xFF13283E),
+    background = SkyNightBg,
+    onBackground = Color(0xFFF0F9FF),
+    surface = SkyNightSurface,
+    onSurface = Color(0xFFF0F9FF),
+    surfaceVariant = Color(0xFF102A43),
     onSurfaceVariant = Color(0xFF94A3B8)
 )
 
@@ -115,18 +115,21 @@ private val SunriseColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFFFEDD5)
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF94A3B8),
-    onPrimary = Color(0xFF0F172A),
-    primaryContainer = Color(0xFF273449),
-    onPrimaryContainer = Color(0xFFE2E8F0),
-    secondary = Color(0xFF60A5FA),
-    background = Color(0xFF111827),
-    onBackground = Color(0xFFF9FAFB),
-    surface = Color(0xFF1F2937),
-    onSurface = Color(0xFFF9FAFB),
-    surfaceVariant = Color(0xFF273449),
-    onSurfaceVariant = Color(0xFFCBD5E1)
+private val ObsidianGoldColorScheme = darkColorScheme(
+    primary = Color(0xFFFFD60A),
+    onPrimary = Color(0xFF000000),
+    primaryContainer = Color(0xFF111111),
+    onPrimaryContainer = Color(0xFFFFD60A),
+    secondary = Color(0xFFFFC107),
+    onSecondary = Color(0xFF000000),
+    background = Color(0xFF000000),
+    onBackground = Color(0xFFFFFFFF),
+    surface = Color(0xFF0A0A0A),
+    onSurface = Color(0xFFFFFFFF),
+    surfaceVariant = Color(0xFF111111),
+    onSurfaceVariant = Color(0xFFA3A3A3),
+    outline = Color(0xFF333333),
+    outlineVariant = Color(0xFF1F1F1F)
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -159,9 +162,9 @@ fun StudyOSTheme(
         "pitch_black" -> PitchBlackColorScheme
         "cyberpunk" -> CyberpunkColorScheme
         "cyber_runner" -> CyberRunnerColorScheme
-        "dark" -> DarkColorScheme
+        "obsidian_gold" -> ObsidianGoldColorScheme
         "light" -> LightColorScheme
-        "ocean" -> OceanColorScheme
+        "sky_night" -> SkyNightColorScheme
         "learning_green" -> LearningGreenColorScheme
         "sunrise" -> SunriseColorScheme
         else -> PitchBlackColorScheme
