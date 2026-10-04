@@ -315,6 +315,106 @@ class FirebaseProgressSyncRepository(
         return "The cloud document has no progress records. Automatic sync remains paused until an explicit account-link action is completed."
     }
 
+    /**
+     * Explicit conflict resolution: merge cloud records into this account's local database,
+     * keep local settings when preferences differ, then upload the merged snapshot.
+     * Cloud records receive fresh Room IDs and logical duplicates are skipped, so existing
+     * local rows are never replaced by a remote row with a colliding numeric ID.
+     */
+    suspend fun mergeCloudIntoLocalAndUpload(): String {
+        val user = auth.currentUser
+            ?: throw IllegalStateException("Sign in before resolving progress.")
+        if (!user.isEmailVerified) throw IllegalStateException("Verify your email before syncing progress.")
+        val uid = user.uid
+        cloudUploadUid = null
+        ownershipPrefs.edit().remove(ownerKey(uid)).apply()
+        pendingUpload?.cancel()
+        pendingUpload = null
+
+        val ref = firestore.collection("users").document(uid)
+            .collection("progress").document("current")
+        val cloud = ref.get().asSuspendResult().data
+            ?: throw IllegalStateException("No cloud backup exists for this account. Nothing was changed.")
+
+        val localPlans = database.studyPlanDao().getAllForBackup()
+        val localExams = database.examDao().getAllForBackup()
+        val localSessions = database.sessionLogDao().getAllForBackup()
+        val localProfiles = database.userProfileDao().getAllForBackup()
+        val cloudPlans = (cloud["studyPlans"] as? List<*>)?.mapNotNull { it.asMap()?.toStudyPlan() }.orEmpty()
+        val cloudExams = (cloud["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
+        val cloudSessions = (cloud["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
+        val cloudProfiles = (cloud["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
+
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            throw IllegalStateException("Account changed during merge. Please sign in again.")
+        }
+
+        val newPlans = cloudPlans.filter { remote ->
+            localPlans.none { it.createdAt == remote.createdAt && it.title == remote.title && it.subject == remote.subject }
+        }.map { it.copy(id = 0L, isTimerRunning = false, endAtElapsedRealtime = 0L, endAtWallClockMillis = 0L) }
+        val newExams = cloudExams.filter { remote ->
+            localExams.none { it.createdAt == remote.createdAt && it.subject == remote.subject && it.examDate == remote.examDate }
+        }.map { it.copy(id = 0L) }
+        val newSessions = cloudSessions.filter { remote ->
+            localSessions.none {
+                it.timestamp == remote.timestamp && it.subject == remote.subject &&
+                    it.chapter == remote.chapter && it.durationMinutes == remote.durationMinutes &&
+                    it.mode == remote.mode && it.xpEarned == remote.xpEarned
+            }
+        }.map { it.copy(id = 0L) }
+
+        val localProfile = localProfiles.firstOrNull()
+        val remoteProfile = cloudProfiles.firstOrNull()
+        val mergedProfile = when {
+            localProfile == null -> remoteProfile?.copy(id = 1)
+            remoteProfile == null -> localProfile
+            else -> {
+                val levelState = when {
+                    remoteProfile.currentLevel > localProfile.currentLevel -> remoteProfile
+                    localProfile.currentLevel > remoteProfile.currentLevel -> localProfile
+                    remoteProfile.levelStartedAtMillis > localProfile.levelStartedAtMillis -> remoteProfile
+                    else -> localProfile
+                }
+                levelState.copy(
+                    id = 1,
+                    streakDays = maxOf(localProfile.streakDays, remoteProfile.streakDays),
+                    totalStudyMinutes = maxOf(localProfile.totalStudyMinutes, remoteProfile.totalStudyMinutes),
+                    totalXP = maxOf(localProfile.totalXP, remoteProfile.totalXP),
+                    totalXpSpent = maxOf(localProfile.totalXpSpent, remoteProfile.totalXpSpent),
+                    totalXpEarned = maxOf(localProfile.totalXpEarned, remoteProfile.totalXpEarned),
+                    currentLevel = maxOf(localProfile.currentLevel, remoteProfile.currentLevel),
+                    dailyGoalMinutes = localProfile.dailyGoalMinutes
+                )
+            }
+        }
+
+        database.withTransaction {
+            if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+                throw IllegalStateException("Account changed during merge. No local changes were committed.")
+            }
+            database.studyPlanDao().insertAllForRestore(newPlans)
+            database.examDao().insertAllForRestore(newExams)
+            database.sessionLogDao().insertAllForRestore(newSessions)
+            mergedProfile?.let { database.userProfileDao().insertOrUpdate(it) }
+        }
+
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            throw IllegalStateException("Account changed after local merge. Local progress remains on this device; cloud upload was not enabled.")
+        }
+
+        // Preference conflicts are deliberately not auto-merged: preserve this device's
+        // settings and make that policy clear in the confirmation UI.
+        uploadLocalSnapshot()
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            throw IllegalStateException("Account changed during cloud upload. Local merged progress is preserved; please retry sync.")
+        }
+        ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
+        cloudUploadUid = uid
+        lastSuccessfulSyncMillis = System.currentTimeMillis()
+        _syncStatus.value = "Synced just now"
+        return "Merge complete: added ${newPlans.size} plans, ${newExams.size} exams and ${newSessions.size} study sessions. Progress totals were reconciled. This device's theme/settings were kept, and the merged progress was uploaded."
+    }
+
     private suspend fun <T> Task<T>.asSuspendResult(): T = suspendCancellableCoroutine { continuation ->
         addOnCompleteListener { task ->
             if (!continuation.isActive) return@addOnCompleteListener
