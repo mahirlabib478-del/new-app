@@ -65,7 +65,7 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                     Card(Modifier.fillMaxWidth().testTag("history_day_${day.key}"), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column { Text(day.label, fontWeight = FontWeight.Bold); Text("${day.sessions} ${if (day.sessions == 1) "session" else "sessions"}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                Column { Text(day.label, fontWeight = FontWeight.Bold); Text("${day.sessions} ${if (day.sessions == 1) "session" else "sessions"}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                                 Text("${day.minutes} min", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                             }
                             day.logs.forEach { log ->
@@ -74,9 +74,9 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                                     Spacer(Modifier.width(8.dp))
                                     Column(Modifier.weight(1f)) {
                                         Text(log.subject.ifBlank { "Study Session" }, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text(log.chapter.ifBlank { "General Practice" }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(log.chapter.ifBlank { "General Practice" }, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     }
-                                    Surface(shape = RoundedCornerShape(7.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = .10f)) { Text("${log.durationMinutes.coerceAtLeast(0)}m", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)) }
+                                    Surface(shape = RoundedCornerShape(7.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = .10f)) { Text("${log.durationMinutes.coerceAtLeast(0)}m", fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)) }
                                 }
                             }
                         }
