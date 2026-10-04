@@ -2,6 +2,7 @@ package com.aistudio.studyos.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -135,8 +136,7 @@ fun HomeScreen(
 ) {
     val profile by viewModel.userProfile.collectAsState()
     val upcomingExams by viewModel.upcomingExams.collectAsState()
-    val recentLogs by viewModel.recentLogs.collectAsState()
-    val isRecentLogsLoaded by viewModel.isRecentLogsLoaded.collectAsState()
+    val allLogs by viewModel.allLogs.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
 
     val streak = profile?.streakDays ?: 0
@@ -637,213 +637,188 @@ fun HomeScreen(
         }
 
         // Recent Completed Sessions
+           // Compact seven-day activity heatmap with current streak.
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Recent Sessions",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (recentLogs.isNotEmpty()) {
-                    TextButton(
-                        onClick = onOpenHistory,
-                        modifier = Modifier.testTag("btn_view_all_history")
-                    ) {
-                        Text("View All", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            val activityDays = remember(allLogs) {
+                (6 downTo 0).map { daysAgo ->
+                    val startCalendar = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                        add(Calendar.DAY_OF_YEAR, -daysAgo)
                     }
+                    val startMillis = startCalendar.timeInMillis
+                    val endMillis = (startCalendar.clone() as Calendar).apply {
+                        add(Calendar.DAY_OF_YEAR, 1)
+                    }.timeInMillis
+                    val dayLogs = allLogs.filter { it.timestamp >= startMillis && it.timestamp < endMillis }
+                    Triple(
+                        SimpleDateFormat("EEE", Locale.getDefault()).format(Date(startMillis)),
+                        dayLogs.sumOf { it.durationMinutes },
+                        dayLogs.size
+                    )
                 }
             }
-        }
+            var selectedActivityDay by remember { mutableStateOf(6) }
+            val selectedDay = activityDays.getOrNull(selectedActivityDay)
 
-        if (recentLogs.isEmpty()) {
-            if (isRecentLogsLoaded) {
-                item {
-                    Card(
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("study_activity_heatmap_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        )
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Bookmark,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                text = "No study logs yet",
+                                text = "Study Activity",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Complete your first focus block to earn XP and build streaks!",
+                                text = "Your last 7 days",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(14.dp))
-                            Button(
-                                onClick = onOpenQuickFocus,
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Start First Focus Session", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            }
                         }
-                    }
-                }
-            } else {
-                // Skeleton placeholders while initial data is being read from SQLite to avoid sudden layout jumping
-                items(2) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(68.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        TextButton(
+                            onClick = onOpenHistory,
+                            modifier = Modifier.testTag("btn_activity_view_history")
                         ) {
-                            Box(
+                            Text("History", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        activityDays.forEachIndexed { index, day ->
+                            val isSelected = selectedActivityDay == index
+                            val cellColor = when {
+                                day.second <= 0 -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+                                day.second < 15 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                                day.second < 30 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.48f)
+                                day.second < 60 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)
+                                else -> MaterialTheme.colorScheme.primary
+                            }
+                            Column(
                                 modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { selectedActivityDay = index }
+                                    .padding(vertical = 3.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Box(
                                     modifier = Modifier
-                                        .width(130.dp)
-                                        .height(14.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                        .fillMaxWidth()
+                                        .height(34.dp)
+                                        .clip(RoundedCornerShape(9.dp))
+                                        .background(cellColor)
+                                        .border(
+                                            width = if (isSelected) 1.5.dp else 0.dp,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                            shape = RoundedCornerShape(9.dp)
+                                        )
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .width(80.dp)
-                                        .height(10.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                                Text(
+                                    text = day.first,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
                                 )
                             }
                         }
                     }
-                }
-            }
-        } else {
-            items(
-                items = recentLogs.take(3),
-                key = { it.id }
-            ) { log ->
-                val modeLabel = getSessionModeLabel(log.mode)
-                val modeColor = MaterialTheme.colorScheme.primary
-                val relativeTime = formatRelativeTime(log.timestamp)
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenHistory() }
-                        .testTag("recent_session_${log.id}"),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    if (selectedDay != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = if (selectedActivityDay == 6) "Today" else selectedDay.first,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "${selectedDay.second} min  •  ${selectedDay.third} session${if (selectedDay.third == 1) "" else "s"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    androidx.compose.material3.HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
-                ) {
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { onOpenHistory() }
+                            .padding(vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(Color(0x26F97316)),
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CheckCircle,
+                                imageVector = Icons.Default.LocalFireDepartment,
                                 contentDescription = null,
-                                tint = modeColor,
-                                modifier = Modifier.size(20.dp)
+                                tint = Color(0xFFF97316),
+                                modifier = Modifier.size(24.dp)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Text(
-                                        text = log.subject,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(modeColor.copy(alpha = 0.15f))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = modeLabel,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = modeColor
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "${log.chapter} • ${log.durationMinutes}m • $relativeTime",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "+${log.xpEarned} XP",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.primary
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "$streak-Day Streak",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Tap to explore your study history",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "Open study history",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(80.dp))
+er = Modifier.height(80.dp))
         }
     }
 
