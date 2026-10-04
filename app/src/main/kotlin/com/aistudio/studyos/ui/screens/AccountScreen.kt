@@ -242,7 +242,7 @@ fun AccountScreen(
                 message?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
             }
         }
-        if (user == null && !verificationPending && showContinueAsGuest) {
+        if (user == null && !verificationPending) {
             TextButton(
                 onClick = onForgotPassword,
                 modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")
