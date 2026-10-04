@@ -38,7 +38,8 @@ class StudyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        cloudProgressSync.startAutomaticUpload(CoroutineScope(Dispatchers.IO))
+        // Legacy shared storage must never auto-upload into a signed-in account.
+        // Account-scoped cloud sync will be enabled only after its own explicit-link flow is wired.
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
