@@ -53,19 +53,17 @@ fun AccountScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (!verificationPending && user == null) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
-                Column {
-                    Text("StudyOS Account", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("Sign in or create your account", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
+            Spacer(Modifier.height(18.dp))
+            Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
+            Spacer(Modifier.height(10.dp))
+            Text("StudyOS", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold)
+            Text("Your personal study space", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
-            Text("Verify your email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("StudyOS keeps each account's study progress separate.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(if (verified) "Your StudyOS account" else "Verify your email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(if (verified) "Your study data is ready and private to your account." else "Verify once to keep your study progress linked to your account.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Spacer(Modifier.height(22.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp)) {
+        Spacer(Modifier.height(28.dp))
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
