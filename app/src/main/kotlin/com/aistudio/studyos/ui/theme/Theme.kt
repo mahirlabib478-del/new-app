@@ -76,7 +76,7 @@ private val SkyNightColorScheme = darkColorScheme(
 )
 
 private val LearningGreenColorScheme = lightColorScheme(
-    primary = Color(0xFF58CC02),
+    primary = Color(0xFF46B800),
     onPrimary = Color.White,
     primaryContainer = Color(0xFFD7F8B8),
     onPrimaryContainer = Color(0xFF1F4D00),
