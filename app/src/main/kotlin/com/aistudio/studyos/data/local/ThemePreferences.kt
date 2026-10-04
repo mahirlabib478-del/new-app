@@ -371,6 +371,16 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
     }
 
     companion object {
+        const val LEGACY_STORAGE_NAME = "study_os_theme_prefs"
+
+        fun accountStorageName(uid: String): String {
+            require(uid.isNotBlank()) { "UID must not be blank" }
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+                .digest(uid.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+            return "study_os_theme_account_$digest"
+        }
+
         private const val KEY_CACHED_RECENT_SESSIONS = "cached_recent_sessions_list"
         private const val KEY_THEME = "selected_theme_preset"
         private const val KEY_WALLPAPER_ENABLED = "wallpaper_master_enabled"
