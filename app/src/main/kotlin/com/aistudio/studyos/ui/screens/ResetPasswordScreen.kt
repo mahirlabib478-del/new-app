@@ -41,7 +41,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(60.dp)
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -57,7 +57,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "ACCOUNT & SECURITY",
+                    "Account & Security",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
