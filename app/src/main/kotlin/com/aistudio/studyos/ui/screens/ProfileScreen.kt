@@ -129,7 +129,7 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("obsidian_gold", "Obsidian Gold", Icons.Default.DarkMode, Color(0xFFFFD60A)),
     ThemeOption("light", "Light", Icons.Default.WbSunny, Color(0xFF2563EB)),
     ThemeOption("sky_night", "Sky Night", Icons.Default.NightsStay, Color(0xFF38BDF8)),
-    ThemeOption("learning_green", "Learning Green", Icons.Default.Eco, Color(0xFF46B800)),
+    ThemeOption("learning_green", "Learning Green", Icons.Default.Eco, Color(0xFF4CAF00)),
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C)),
     ThemeOption("cyberpunk", "Cyberpunk / Synthwave 80s", Icons.Default.Bolt, Color(0xFFFF2A85)),
     ThemeOption("cyber_runner", "Mirror's Edge / Cyber Runner", Icons.Default.Bolt, Color(0xFFEF4444)),
