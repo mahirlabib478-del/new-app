@@ -70,7 +70,8 @@ fun AccountScreen(
             .imePadding()
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
-            .padding(horizontal = horizontalContentPadding),
+            .padding(horizontal = horizontalContentPadding)
+            .padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (showBackButton) {
