@@ -48,7 +48,16 @@ class StudyApplication : Application() {
     fun activateCloudSync(uid: String) {
         val user = FirebaseAuth.getInstance().currentUser ?: return
         if (user.uid != uid || !user.isEmailVerified) return
-        cloudSyncFor(uid).startAutomaticUpload(appScope)
+        val sync = cloudSyncFor(uid)
+        sync.startAutomaticUpload(appScope)
+        appScope.launch {
+            try {
+                sync.bootstrapOnVerifiedSignIn()
+            } catch (error: Exception) {
+                // Sync repository exposes the error state; keep local data untouched.
+                android.util.Log.e("StudyOSCloudSync", "Cloud bootstrap failed for the active account", error)
+            }
+        }
     }
 
     override fun onCreate() {
@@ -63,7 +72,7 @@ class StudyApplication : Application() {
                 accountCloudSyncs.forEach { (uid, sync) ->
                     if (uid != user?.uid) sync.stopAutomaticUpload()
                 }
-                user?.let { cloudSyncFor(it.uid).startAutomaticUpload(appScope) }
+                user?.let { activateCloudSync(it.uid) }
             }
         }
 
