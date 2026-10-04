@@ -632,6 +632,12 @@ fun MainApp(
                     onForgotPassword = { navController.navigate(Screen.ResetPassword.route) },
                     onVerified = {
                         onAccountVerified()
+                        // This NavHost is already running in guest mode, so changing its
+                        // startDestination alone does not move its existing back stack.
+                        navController.navigate(Screen.Profile.route) {
+                            popUpTo(Screen.Home.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
                     },
                     onContinueAsGuest = {},
                     showBackButton = true,
