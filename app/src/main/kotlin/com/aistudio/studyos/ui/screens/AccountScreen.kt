@@ -32,7 +32,8 @@ fun AccountScreen(
     onBack: () -> Unit,
     onForgotPassword: () -> Unit,
     onVerified: () -> Unit = {},
-    onContinueAsGuest: () -> Unit = {}
+    onContinueAsGuest: () -> Unit = {},
+    showBackButton: Boolean = true
 ) {
     val context = LocalContext.current
     val repository = remember { FirebaseAccountRepository() }
@@ -59,10 +60,11 @@ fun AccountScreen(
             .background(MaterialTheme.colorScheme.background)
             .imePadding()
             .verticalScroll(rememberScrollState())
+            .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (verified) {
+        if (showBackButton) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -76,7 +78,7 @@ fun AccountScreen(
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "ACCOUNT",
+                    "ACCOUNT & SECURITY",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
