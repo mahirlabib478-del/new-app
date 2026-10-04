@@ -1256,8 +1256,8 @@ fun ProfileScreen(
                                     throw IllegalStateException("Verify your email before syncing progress.")
                                 }
                                 app.activateCloudSync(signedInUser.uid)
-                                val syncResult = app.cloudSyncFor(signedInUser.uid).bootstrapOnVerifiedSignIn()
-                                accountMessage = (if (action == "login") "Signed in. " else "Account created. ") + syncResult
+                                accountMessage = (if (action == "login") "Signed in. " else "Account created. ") +
+                                    "Cloud restore/sync has started for this account. Check the Cloud sync status before uninstalling."
                             } catch (e: Exception) {
                                 accountMessage = e.localizedMessage ?: "Account action failed."
                             } finally { accountBusy = false }
