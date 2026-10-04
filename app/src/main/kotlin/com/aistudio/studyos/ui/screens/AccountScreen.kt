@@ -67,7 +67,11 @@ fun AccountScreen(
 
                 if (verified) {
                     Text(user?.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
-                    Text("Your email is verified. Opening your account…", style = MaterialTheme.typography.bodyMedium)
+                    Text("Your email is verified. Your account-specific study data is ready.", style = MaterialTheme.typography.bodyMedium)
+                    OutlinedButton(
+                        onClick = { repository.signOut(); message = "Signed out." },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Sign Out") }
                     LaunchedEffect(user?.uid) { onVerified() }
                 } else if (verificationPending || user != null) {
                     Text(user?.email ?: email, style = MaterialTheme.typography.bodyLarge)
