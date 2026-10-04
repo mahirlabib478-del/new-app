@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,12 +64,13 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                 )
             }
         }
+        val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 22.dp
         Column(
             Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 22.dp, vertical = 12.dp),
+                .padding(horizontal = horizontalContentPadding, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
         Spacer(Modifier.height(18.dp))
