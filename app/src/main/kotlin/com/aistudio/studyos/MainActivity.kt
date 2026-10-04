@@ -18,15 +18,26 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +53,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -106,6 +123,8 @@ class MainActivity : ComponentActivity() {
             val auth = remember { FirebaseAuth.getInstance() }
             var currentUser by remember { mutableStateOf(auth.currentUser) }
             var showResetPassword by remember { mutableStateOf(false) }
+            val welcomePrefs = remember { getSharedPreferences("study_os_welcome", MODE_PRIVATE) }
+            var hasSeenWelcome by remember { mutableStateOf(welcomePrefs.getBoolean("has_seen_welcome", false)) }
             var authRefresh by remember { mutableStateOf(0) }
             val guestPrefs = remember { getSharedPreferences("study_os_guest_session", MODE_PRIVATE) }
             var guestMode by remember { mutableStateOf(guestPrefs.getBoolean("guest_mode", false)) }
@@ -165,7 +184,14 @@ class MainActivity : ComponentActivity() {
                 }
             } else {
                 StudyOSTheme {
-                    if (showResetPassword) {
+                    if (!hasSeenWelcome) {
+                        WelcomeScreen(
+                            onGetStarted = {
+                                welcomePrefs.edit().putBoolean("has_seen_welcome", true).apply()
+                                hasSeenWelcome = true
+                            }
+                        )
+                    } else if (showResetPassword) {
                         ResetPasswordScreen(onBack = { showResetPassword = false })
                     } else {
                         AccountScreen(
@@ -194,6 +220,144 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun WelcomeScreen(onGetStarted: () -> Unit) {
+    val ink = Color(0xFF202124)
+    val muted = Color(0xFF70757A)
+    val accent = Color(0xFF3559E8)
+    val page = Color(0xFFFAFAF8)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(page)
+            .padding(horizontal = 28.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.School,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(25.dp)
+                )
+            }
+            Text(
+                text = "StudyOS",
+                modifier = Modifier.padding(start = 11.dp),
+                color = ink,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .height(250.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 226.dp, height = 206.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(Color(0xFFECEFFE)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 148.dp, height = 174.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = "Study illustration",
+                            tint = accent,
+                            modifier = Modifier.size(66.dp)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(width = 82.dp, height = 7.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFDDE2FC))
+                        )
+                        Spacer(modifier = Modifier.height(7.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(width = 58.dp, height = 7.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFE8EAF6))
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
+        Text(
+            text = "Your Goals.\nYour Growth.",
+            color = ink,
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            lineHeight = MaterialTheme.typography.headlineLarge.lineHeight
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = "Build better habits, one study session at a time.",
+            color = muted,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        Button(
+            onClick = onGetStarted,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(58.dp),
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = accent,
+                contentColor = Color.White
+            )
+        ) {
+            Text(
+                text = "Get Started",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                modifier = Modifier.size(19.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
