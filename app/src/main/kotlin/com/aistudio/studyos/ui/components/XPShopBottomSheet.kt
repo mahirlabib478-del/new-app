@@ -249,7 +249,7 @@ fun XPShopBottomSheet(
                 title = "Streak Shield",
                 badgeText = "$streakShieldCount/2 Equipped",
                 badgeColor = if (streakShieldCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                description = "Automatically preserves your streak if you miss a study day. Max 2 stored in inventory.",
+                description = "Each shield protects 1 missed day. Shields activate automatically when they cover the full gap. Max 2 stored.",
                 costText = "500 XP",
                 isButtonEnabled = streakShieldCount < 2 && totalXP >= 500,
                 buttonLabel = when {
