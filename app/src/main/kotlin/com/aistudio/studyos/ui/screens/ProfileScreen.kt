@@ -299,7 +299,8 @@ fun ProfileScreen(
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = if (profileAccountUser == null) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.primaryContainer,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                         modifier = Modifier.size(54.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -308,13 +309,13 @@ fun ProfileScreen(
                                     profileAvatarInitial,
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             } else {
                                 Icon(
                                     Icons.Default.Person,
                                     contentDescription = "Guest profile",
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(30.dp)
                                 )
                             }
