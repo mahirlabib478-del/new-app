@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import com.aistudio.studyos.MainActivity
 import com.aistudio.studyos.R
 import com.aistudio.studyos.StudyApplication
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,6 +37,7 @@ class StudyTimerForegroundService : Service() {
         val planId = intent?.getLongExtra(EXTRA_PLAN_ID, 0L) ?: 0L
         val isBreak = intent?.getBooleanExtra(EXTRA_IS_BREAK, false) ?: false
         val subject = intent?.getStringExtra(EXTRA_SUBJECT).orEmpty().ifBlank { "Study Session" }
+        val accountUid = intent?.getStringExtra(EXTRA_ACCOUNT_UID).orEmpty()
 
         val notification = buildNotification(
             endAtWallClockMillis = endAtWallClockMillis,
@@ -54,7 +56,10 @@ class StudyTimerForegroundService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
 
-        if (intent == null || endAtWallClockMillis <= System.currentTimeMillis()) {
+        val activeUser = FirebaseAuth.getInstance().currentUser?.takeIf {
+            it.uid == accountUid && it.isEmailVerified
+        }
+        if (intent == null || activeUser == null || endAtWallClockMillis <= System.currentTimeMillis()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 stopForeground(STOP_FOREGROUND_REMOVE)
             } else {
@@ -65,17 +70,20 @@ class StudyTimerForegroundService : Service() {
             return START_NOT_STICKY
         }
 
-        scheduleExpiry(planId, endAtWallClockMillis)
+        scheduleExpiry(accountUid, planId, endAtWallClockMillis)
         return START_REDELIVER_INTENT
     }
 
-    private fun scheduleExpiry(planId: Long, endAtWallClockMillis: Long) {
+    private fun scheduleExpiry(accountUid: String, planId: Long, endAtWallClockMillis: Long) {
         expiryJob?.cancel()
         expiryJob = serviceScope.launch {
             val waitMillis = (endAtWallClockMillis - System.currentTimeMillis()).coerceAtLeast(0L)
             delay(waitMillis)
-            if (planId > 0L) {
-                StudyApplication.instance.repository.expireRunningPlanIfNeeded(
+            val stillOwnsSession = FirebaseAuth.getInstance().currentUser?.let {
+                it.uid == accountUid && it.isEmailVerified
+            } == true
+            if (planId > 0L && stillOwnsSession) {
+                StudyApplication.instance.repositoryFor(accountUid).expireRunningPlanIfNeeded(
                     planId = planId,
                     expectedEndAtWallClockMillis = endAtWallClockMillis
                 )
@@ -151,19 +159,26 @@ class StudyTimerForegroundService : Service() {
         private const val EXTRA_PLAN_ID = "plan_id"
         private const val EXTRA_IS_BREAK = "is_break"
         private const val EXTRA_SUBJECT = "subject"
+        private const val EXTRA_ACCOUNT_UID = "account_uid"
 
         fun start(
             context: Context,
             endAtWallClockMillis: Long,
             planId: Long,
             isBreak: Boolean,
-            subject: String
+            subject: String,
+            accountUid: String? = null
         ) {
+            val activeUser = FirebaseAuth.getInstance().currentUser?.takeIf { it.isEmailVerified } ?: return
+            val targetUid = accountUid ?: activeUser.uid
+            if (targetUid != activeUser.uid) return
+
             val intent = Intent(context, StudyTimerForegroundService::class.java).apply {
                 putExtra(EXTRA_END_AT_WALL_CLOCK, endAtWallClockMillis)
                 putExtra(EXTRA_PLAN_ID, planId)
                 putExtra(EXTRA_IS_BREAK, isBreak)
                 putExtra(EXTRA_SUBJECT, subject)
+                putExtra(EXTRA_ACCOUNT_UID, targetUid)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)

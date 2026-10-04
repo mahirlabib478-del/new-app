@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.aistudio.studyos.StudyApplication
 import com.aistudio.studyos.data.repository.StudyTimerBootRecovery
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,18 +19,25 @@ class StudyTimerBootReceiver : BroadcastReceiver() {
 
         StudyReminderScheduler.scheduleNext(context)
 
+        val activeUser = FirebaseAuth.getInstance().currentUser?.takeIf { it.isEmailVerified }
+            ?: return
+        val accountUid = activeUser.uid
         val pendingResult = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                val plan = StudyApplication.instance.repository.getActivePlan().firstOrNull()
-                if (StudyTimerBootRecovery.shouldResume(plan, System.currentTimeMillis())) {
+                val plan = StudyApplication.instance.repositoryFor(accountUid).getActivePlan().firstOrNull()
+                val stillSameAccount = FirebaseAuth.getInstance().currentUser?.let {
+                    it.uid == accountUid && it.isEmailVerified
+                } == true
+                if (stillSameAccount && StudyTimerBootRecovery.shouldResume(plan, System.currentTimeMillis())) {
                     plan?.let { activePlan ->
                         StudyTimerForegroundService.start(
                             context = context,
                             endAtWallClockMillis = activePlan.endAtWallClockMillis,
                             planId = activePlan.id,
                             isBreak = activePlan.isBreakPhase,
-                            subject = activePlan.subject
+                            subject = activePlan.subject,
+                            accountUid = accountUid
                         )
                     }
                 }

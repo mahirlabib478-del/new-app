@@ -1,6 +1,8 @@
 package com.aistudio.studyos.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -76,11 +79,12 @@ fun RegularStudyScreen(
             )
         }
     ) { padding ->
+        val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = horizontalContentPadding, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -102,13 +106,13 @@ fun RegularStudyScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     PRESET_SUBJECTS.take(3).forEach { sub ->
                         Card(
                             modifier = Modifier
-                                .weight(1f)
+                                .width(108.dp)
                                 .clickable { subject = sub },
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
@@ -125,6 +129,8 @@ fun RegularStudyScreen(
                             ) {
                                 Text(
                                     text = sub,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                     fontSize = 12.sp,
                                     fontWeight = if (subject == sub) FontWeight.Bold else FontWeight.Normal,
                                     color = if (subject == sub) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -282,9 +288,12 @@ fun RegularStudyScreen(
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Start Session (${selectedDuration * totalBlocks} mins total)",
+                        text = "Start • ${selectedDuration * totalBlocks} min",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
 
@@ -313,7 +322,7 @@ fun RegularStudyScreen(
                 ) {
                     Icon(Icons.Default.Bookmark, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Save to Draft Sessions", fontWeight = FontWeight.SemiBold)
+                    Text("Save Draft", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                 }
 
                 Spacer(modifier = Modifier.height(30.dp))

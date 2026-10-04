@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -46,6 +45,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.auth.FirebaseAuth
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -92,14 +93,9 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
 }
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: StudyViewModel by viewModels {
-        StudyViewModelFactory((application as StudyApplication).repository)
-    }
-
     override fun onResume() {
         super.onResume()
         StudyReminderScheduler.rescheduleAfterPermissionGrant(this)
-        viewModel.refreshTodayStats()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,11 +103,95 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val themePreset by viewModel.currentTheme.collectAsState()
+            val auth = remember { FirebaseAuth.getInstance() }
+            var currentUser by remember { mutableStateOf(auth.currentUser) }
+            var showResetPassword by remember { mutableStateOf(false) }
+            var authRefresh by remember { mutableStateOf(0) }
+            val guestPrefs = remember { getSharedPreferences("study_os_guest_session", MODE_PRIVATE) }
+            var guestMode by remember { mutableStateOf(guestPrefs.getBoolean("guest_mode", false)) }
+            val pendingAuthPrefs = remember { getSharedPreferences("study_os_auth_navigation", MODE_PRIVATE) }
+            var returnToProfileAfterAuth by remember {
+                mutableStateOf(pendingAuthPrefs.getBoolean("return_to_profile", false))
+            }
 
-            StudyOSTheme(preset = themePreset) {
-                val navController = rememberNavController()
-                MainApp(viewModel = viewModel, navController = navController)
+            DisposableEffect(auth) {
+                val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+                    currentUser = firebaseAuth.currentUser
+                    if (firebaseAuth.currentUser?.isEmailVerified == true) {
+                        guestPrefs.edit().putBoolean("guest_mode", false).apply()
+                        guestMode = false
+                    }
+                }
+                auth.addAuthStateListener(listener)
+                onDispose { auth.removeAuthStateListener(listener) }
+            }
+
+            val verifiedUid = remember(currentUser, authRefresh) {
+                auth.currentUser?.takeIf { it.isEmailVerified }?.uid
+            }
+            val canContinueAsGuest = guestMode && auth.currentUser == null
+            if (verifiedUid != null || canContinueAsGuest) {
+                if (verifiedUid != null) {
+                    LaunchedEffect(verifiedUid) {
+                        (application as StudyApplication).activateCloudSync(verifiedUid)
+                    }
+                }
+                val accountViewModel: StudyViewModel = viewModel(
+                    key = if (verifiedUid != null) "study-account-$verifiedUid" else "study-guest",
+                    factory = StudyViewModelFactory((application as StudyApplication).repositoryFor(verifiedUid))
+                )
+                val themePreset by accountViewModel.currentTheme.collectAsState()
+                StudyOSTheme(preset = themePreset) {
+                    val navController = rememberNavController()
+                    MainApp(
+                        viewModel = accountViewModel,
+                        navController = navController,
+                        startDestination = if (returnToProfileAfterAuth) Screen.Profile.route else Screen.Home.route,
+                        onStartDestinationConsumed = {
+                            if (returnToProfileAfterAuth) {
+                                pendingAuthPrefs.edit().putBoolean("return_to_profile", false).apply()
+                            }
+                        },
+                        onAccountOpened = {
+                            // Only guests need the special post-auth return path.
+                            // Authenticated users opening Account from Profile must keep
+                            // the normal app start destination on the next launch.
+                            if (auth.currentUser == null && guestMode) {
+                                pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
+                            }
+                        },
+                        onAccountVerified = {}
+                    )
+                }
+            } else {
+                StudyOSTheme {
+                    if (showResetPassword) {
+                        ResetPasswordScreen(onBack = { showResetPassword = false })
+                    } else {
+                        AccountScreen(
+                            showBackButton = false,
+                            onBack = {
+                                if (auth.currentUser != null) auth.signOut()
+                                guestPrefs.edit().putBoolean("guest_mode", true).apply()
+                                guestMode = true
+                                showResetPassword = false
+                            },
+                            onForgotPassword = { showResetPassword = true },
+                            onVerified = {
+                                currentUser = auth.currentUser
+                                authRefresh += 1
+                                guestPrefs.edit().putBoolean("guest_mode", false).apply()
+                                guestMode = false
+                                showResetPassword = false
+                            },
+                            onContinueAsGuest = {
+                                guestPrefs.edit().putBoolean("guest_mode", true).apply()
+                                guestMode = true
+                                showResetPassword = false
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -134,7 +214,11 @@ private val BOTTOM_NAV_ROUTES = setOf(
 @Composable
 fun MainApp(
     viewModel: StudyViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    startDestination: String = Screen.Home.route,
+    onStartDestinationConsumed: () -> Unit = {},
+    onAccountOpened: () -> Unit = {},
+    onAccountVerified: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -147,6 +231,7 @@ fun MainApp(
     // forceCheck bypasses the 2-hour auto-check throttle so a newly published
     // version can show its update dialog on every fresh app launch.
     LaunchedEffect(Unit) {
+        viewModel.refreshTodayStats()
         // Let the first frame settle before the network update check competes for startup resources.
         delay(1200)
         viewModel.checkAppUpdate(context, isManual = false, forceCheck = true)
@@ -177,6 +262,12 @@ fun MainApp(
     val showBottomBar = !isNavigatingToFocus && (currentRoute == null || isAtBottomNav)
     val focusState by viewModel.focusState.collectAsState()
     val showMiniBar = !isNavigatingToFocus && isAtBottomNav && currentRoute != Screen.Focus.route && focusState.planId != null
+
+    LaunchedEffect(startDestination) {
+        if (startDestination == Screen.Profile.route) {
+            onStartDestinationConsumed()
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -236,7 +327,7 @@ fun MainApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = startDestination,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding()),
@@ -337,7 +428,19 @@ fun MainApp(
                 ProfileScreen(viewModel = viewModel, onOpenAccount = { navController.navigate(Screen.Account.route) })
             }
             composable(Screen.Account.route) {
-                AccountScreen(onBack = { navController.popBackStack() }, onForgotPassword = { navController.navigate(Screen.ResetPassword.route) })
+                LaunchedEffect(Unit) {
+                    onAccountOpened()
+                }
+                AccountScreen(
+                    onBack = { navController.popBackStack() },
+                    onForgotPassword = { navController.navigate(Screen.ResetPassword.route) },
+                    onVerified = {
+                        onAccountVerified()
+                    },
+                    onContinueAsGuest = {},
+                    showBackButton = true,
+                    showContinueAsGuest = false
+                )
             }
             composable(Screen.ResetPassword.route) {
                 ResetPasswordScreen(onBack = { navController.popBackStack() })

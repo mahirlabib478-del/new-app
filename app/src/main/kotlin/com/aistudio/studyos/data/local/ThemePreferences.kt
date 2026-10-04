@@ -254,13 +254,22 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
     // 🎡 Spin Wheel
     // ==========================================
 
+    // Firebase/Firestore numeric values may be restored as Long, while SharedPreferences
+    // integer getters expect Int. Normalize either Number representation before reading.
+    private fun getCompatibleInt(key: String, defaultValue: Int): Int {
+        val raw = prefs.all[key] as? Number ?: return defaultValue
+        val normalized = raw.toInt()
+        if (raw !is Int) prefs.edit().putInt(key, normalized).apply()
+        return normalized
+    }
+
     fun getSpinWheelUnlockedAt(): Long = prefs.getLong(KEY_SPIN_WHEEL_UNLOCKED_AT, 0L)
 
     fun setSpinWheelUnlockedAt(timestamp: Long) {
         prefs.edit().putLong(KEY_SPIN_WHEEL_UNLOCKED_AT, timestamp).apply()
     }
 
-    fun getSpinWheelSpinsUsed(): Int = prefs.getInt(KEY_SPIN_WHEEL_SPINS_USED, 0).coerceIn(0, 20)
+    fun getSpinWheelSpinsUsed(): Int = getCompatibleInt(KEY_SPIN_WHEEL_SPINS_USED, 0).coerceIn(0, 20)
 
     fun setSpinWheelSpinsUsed(value: Int) {
         prefs.edit().putInt(KEY_SPIN_WHEEL_SPINS_USED, value.coerceIn(0, 20)).apply()
@@ -280,7 +289,7 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
     // ==========================================
 
     fun getStreakShieldCount(): Int {
-        return prefs.getInt(KEY_STREAK_SHIELD_COUNT, 0).coerceIn(0, 2)
+        return getCompatibleInt(KEY_STREAK_SHIELD_COUNT, 0).coerceIn(0, 2)
     }
 
     fun setStreakShieldCount(count: Int) {
@@ -348,7 +357,7 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
     }
 
     fun getXpBoosterMultiplier(): Int {
-        return prefs.getInt(KEY_XP_BOOSTER_MULTIPLIER, 2).coerceIn(2, 3)
+        return getCompatibleInt(KEY_XP_BOOSTER_MULTIPLIER, 2).coerceIn(2, 3)
     }
 
     fun setXpBoosterMultiplier(multiplier: Int) {
@@ -368,6 +377,71 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
         val elapsed = System.currentTimeMillis() - lastClaim
         val cooldownTotal = 30 * 60 * 1000L
         return (cooldownTotal - elapsed).coerceAtLeast(0L)
+    }
+
+    fun registerCloudSyncListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterCloudSyncListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+    }
+
+    /**
+     * Export account-owned preference state to the account's Firestore snapshot.
+     * Content URIs are metadata only; the underlying audio/wallpaper files need
+     * a separate Storage upload before they can be restored on another install.
+     */
+    fun exportCloudSyncPreferences(): Map<String, Any> {
+        val allowedKeys = setOf(
+            KEY_THEME, KEY_WALLPAPER_ENABLED, KEY_FOCUS_WALLPAPER_ENABLED,
+            KEY_WALLPAPER_OPACITY, KEY_CUSTOM_WALLPAPER_URI,
+            KEY_CUSTOM_AUDIO_URI, KEY_CUSTOM_AUDIO_NAME, KEY_CUSTOM_AUDIO_LIST,
+            KEY_SELECTED_AUDIO_ID, KEY_STREAK_SHIELD_COUNT, KEY_LAST_SHIELD_SAVED_DATE,
+            KEY_CUSTOM_WALLPAPER_PASS_EXPIRES, KEY_CUSTOM_AUDIO_PASS_EXPIRES,
+            KEY_DOUBLE_XP_BOOSTER_EXPIRES, KEY_XP_BOOSTER_MULTIPLIER,
+            KEY_LAST_FREE_XP_DROP_CLAIM_TIME, KEY_SPIN_WHEEL_UNLOCKED_AT,
+            KEY_SPIN_WHEEL_SPINS_USED
+        )
+        return prefs.all.filter { (key, _) ->
+            key in allowedKeys || key.startsWith("${KEY_STYLE_PREFIX}_") ||
+                key.startsWith("${KEY_PREMIUM_THEME_PASS_PREFIX}_")
+        }.mapNotNull { (key, value) ->
+            when (value) {
+                is String, is Boolean, is Int, is Long, is Float, is Double -> key to value
+                else -> null
+            }
+        }.toMap()
+    }
+
+    /** Restore only known account-owned keys; absent cloud keys do not erase local values. */
+    fun restoreCloudSyncPreferences(values: Map<String, Any?>) {
+        val allowedKeys = setOf(
+            KEY_THEME, KEY_WALLPAPER_ENABLED, KEY_FOCUS_WALLPAPER_ENABLED,
+            KEY_WALLPAPER_OPACITY, KEY_CUSTOM_WALLPAPER_URI,
+            KEY_CUSTOM_AUDIO_URI, KEY_CUSTOM_AUDIO_NAME, KEY_CUSTOM_AUDIO_LIST,
+            KEY_SELECTED_AUDIO_ID, KEY_STREAK_SHIELD_COUNT, KEY_LAST_SHIELD_SAVED_DATE,
+            KEY_CUSTOM_WALLPAPER_PASS_EXPIRES, KEY_CUSTOM_AUDIO_PASS_EXPIRES,
+            KEY_DOUBLE_XP_BOOSTER_EXPIRES, KEY_XP_BOOSTER_MULTIPLIER,
+            KEY_LAST_FREE_XP_DROP_CLAIM_TIME, KEY_SPIN_WHEEL_UNLOCKED_AT,
+            KEY_SPIN_WHEEL_SPINS_USED
+        )
+        val editor = prefs.edit()
+        values.forEach { (key, value) ->
+            if (key !in allowedKeys && !key.startsWith("${KEY_STYLE_PREFIX}_") &&
+                !key.startsWith("${KEY_PREMIUM_THEME_PASS_PREFIX}_")
+            ) return@forEach
+            when (value) {
+                is String -> editor.putString(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Double -> editor.putFloat(key, value.toFloat())
+                is Float -> editor.putFloat(key, value)
+                null -> editor.remove(key)
+            }
+        }
+        editor.apply()
     }
 
     companion object {

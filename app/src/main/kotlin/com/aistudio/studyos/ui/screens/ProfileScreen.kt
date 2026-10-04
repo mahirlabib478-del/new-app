@@ -6,6 +6,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,6 +49,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestartAlt
@@ -92,11 +97,13 @@ import androidx.compose.ui.platform.LocalContext
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import android.os.Build
 import android.provider.Settings
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import com.aistudio.studyos.service.StudyReminderScheduler
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -197,6 +204,16 @@ fun ProfileScreen(
     var resetSending by remember { mutableStateOf(false) }
     val accountRepository = remember { FirebaseAccountRepository() }
     val accountScope = androidx.compose.runtime.rememberCoroutineScope()
+    val profileAccountUser = accountRepository.currentUser
+    val profileAccountEmail = profileAccountUser?.email.orEmpty()
+    val profileAccountVerified = profileAccountUser?.isEmailVerified == true
+    val profileAvatarInitial = profileAccountEmail.firstOrNull()?.uppercaseChar()?.toString()
+    val activeAccountUid = profileAccountUser?.takeIf { it.isEmailVerified }?.uid
+    val accountCloudSync = remember(activeAccountUid) {
+        activeAccountUid?.let { (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudSyncFor(it) }
+    }
+    val accountCloudSyncState = accountCloudSync?.syncStatus?.collectAsState(initial = "Checking cloud sync…")
+    val accountCloudSyncStatus = accountCloudSyncState?.value ?: "Sign in with a verified account to sync progress"
     var accountEmail by remember { mutableStateOf(accountRepository.currentUser?.email.orEmpty()) }
     var accountPassword by remember { mutableStateOf("") }
     var accountBusy by remember { mutableStateOf(false) }
@@ -247,9 +264,11 @@ fun ProfileScreen(
     }
 
 
+    val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = bottomListPadding),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = horizontalContentPadding, end = horizontalContentPadding, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -269,19 +288,77 @@ fun ProfileScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAccount).testTag("profile_account_entry"),
-                shape = RoundedCornerShape(22.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Surface(shape = RoundedCornerShape(15.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(48.dp)) {
-                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 17.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(13.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                        modifier = Modifier.size(54.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            if (profileAvatarInitial != null) {
+                                Text(
+                                    profileAvatarInitial,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Guest profile",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
+                        }
                     }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("Account & Security", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Sign in, create account or reset password", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = if (profileAccountUser == null) "Your account" else profileAccountEmail.substringBefore("@").ifBlank { "StudyOS member" },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = when {
+                                profileAccountVerified -> profileAccountEmail
+                                profileAccountUser != null -> "Email verification pending"
+                                else -> "Guest mode · progress saved on this device"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (accountCloudSyncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                modifier = Modifier.size(7.dp)
+                            ) {}
+                            Text(
+                                text = if (profileAccountVerified) accountCloudSyncStatus else if (profileAccountUser == null) "Set up account & security" else "Verify email to enable cloud sync",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (accountCloudSyncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2
+                            )
+                        }
                     }
-                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open account settings", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = "Open account settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(19.dp)
+                    )
                 }
             }
         }
@@ -713,7 +790,9 @@ fun ProfileScreen(
                                             customWallpaperUri != null -> "Change Photo"
                                             else -> "Pick from Gallery"
                                         },
-                                        fontSize = 12.sp
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        softWrap = false
                                     )
                                 }
 
@@ -1227,11 +1306,151 @@ fun ProfileScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
+
+        // Contact Developer — placed at the very end of Profile
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("profile_contact_developer_card"),
+                shape = RoundedCornerShape(22.dp),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(9.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "Need a hand?",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "We're here to help with StudyOS",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val messageText = "Hello Developer! I need help with the StudyOS app."
+                                val whatsappUrl = "https://wa.me/8801339871504?text=" + Uri.encode(messageText)
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(whatsappUrl)))
+                                } catch (_: Exception) {
+                                    Toast.makeText(
+                                        context,
+                                        "Could not open WhatsApp. Please try again.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                            .testTag("btn_contact_developer_whatsapp"),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 13.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Canvas(modifier = Modifier.size(46.dp)) {
+                                val green = Color(0xFF25D366)
+                                drawCircle(color = green)
+                                val handset = Path().apply {
+                                    moveTo(size.width * 0.31f, size.height * 0.25f)
+                                    cubicTo(size.width * 0.26f, size.height * 0.25f, size.width * 0.23f, size.height * 0.31f, size.width * 0.25f, size.height * 0.37f)
+                                    cubicTo(size.width * 0.32f, size.height * 0.58f, size.width * 0.45f, size.height * 0.71f, size.width * 0.65f, size.height * 0.76f)
+                                    cubicTo(size.width * 0.72f, size.height * 0.78f, size.width * 0.77f, size.height * 0.72f, size.width * 0.77f, size.height * 0.66f)
+                                    lineTo(size.width * 0.76f, size.height * 0.59f)
+                                    cubicTo(size.width * 0.75f, size.height * 0.55f, size.width * 0.70f, size.height * 0.54f, size.width * 0.66f, size.height * 0.56f)
+                                    lineTo(size.width * 0.60f, size.height * 0.60f)
+                                    cubicTo(size.width * 0.51f, size.height * 0.56f, size.width * 0.44f, size.height * 0.49f, size.width * 0.40f, size.height * 0.40f)
+                                    lineTo(size.width * 0.44f, size.height * 0.34f)
+                                    cubicTo(size.width * 0.46f, size.height * 0.30f, size.width * 0.44f, size.height * 0.26f, size.width * 0.40f, size.height * 0.25f)
+                                    close()
+                                }
+                                drawPath(
+                                    path = handset,
+                                    color = Color.White,
+                                    style = Stroke(width = size.width * 0.065f, cap = StrokeCap.Round)
+                                )
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text = "Contact Developer",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Get support directly on WhatsApp",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = "Open WhatsApp",
+                                tint = Color(0xFF25D366),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Usually the quickest way to get help or share feedback.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
     }
 
-    if (pendingAccountAction != null) {
+    if (pendingAccountAction?.let { true } == true) {
         AlertDialog(
             onDismissRequest = { pendingAccountAction = null },
             title = { Text("Local study data notice") },
@@ -1249,8 +1468,15 @@ fun ProfileScreen(
                             try {
                                 if (action == "login") accountRepository.signIn(accountEmail, accountPassword)
                                 else accountRepository.createAccount(accountEmail, accountPassword)
-                                val syncResult = (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.restoreIfLocalEmpty()
-                                accountMessage = (if (action == "login") "Signed in. " else "Account created. ") + syncResult
+                                val app = context.applicationContext as com.aistudio.studyos.StudyApplication
+                                val signedInUser = accountRepository.currentUser
+                                    ?: throw IllegalStateException("Firebase session is unavailable.")
+                                if (!signedInUser.isEmailVerified) {
+                                    throw IllegalStateException("Verify your email before syncing progress.")
+                                }
+                                app.activateCloudSync(signedInUser.uid)
+                                accountMessage = (if (action == "login") "Signed in. " else "Account created. ") +
+                                    "Cloud restore/sync has started for this account. Check the Cloud sync status before uninstalling."
                             } catch (e: Exception) {
                                 accountMessage = e.localizedMessage ?: "Account action failed."
                             } finally { accountBusy = false }
@@ -1277,8 +1503,13 @@ fun ProfileScreen(
                     accountMessage = null
                     accountScope.launch {
                         try {
-                            (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.linkLocalProgressToCurrentAccount()
-                            accountMessage = "Device progress linked and backed up. Automatic sync is enabled for this account."
+                            run {
+                                val uid = accountRepository.currentUser?.takeIf { it.isEmailVerified }?.uid
+                                    ?: throw IllegalStateException("Sign in with a verified email before linking progress.")
+                                (context.applicationContext as com.aistudio.studyos.StudyApplication)
+                                    .cloudSyncFor(uid).createInitialCloudBackup()
+                            }
+                            accountMessage = "Initial cloud backup created. Existing local progress was kept."
                         } catch (e: Exception) {
                             accountMessage = e.localizedMessage ?: "Could not link progress."
                         } finally { accountBusy = false }
@@ -1295,17 +1526,29 @@ fun ProfileScreen(
             title = { Text("Sign out of StudyOS?") },
             text = {
                 Text(
-                    "Your study records will remain on this device. Account-specific local storage is not yet available, so signing into a different account on this device may expose the same local records. Cloud sync will stay paused when ownership cannot be verified."
+                    "Your account's local study database is separate. Before signing out, StudyOS will try to upload the latest progress. If sync fails, sign-out will be cancelled so you can retry."
                 )
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        accountRepository.signOut()
-                        accountEmail = ""
-                        accountPassword = ""
-                        accountMessage = "Signed out. Local study data remains on this device."
-                        showSignOutDialog = false
+                        accountBusy = true
+                        accountScope.launch {
+                            try {
+                                val app = context.applicationContext as com.aistudio.studyos.StudyApplication
+                                val uid = accountRepository.currentUser?.uid
+                                if (uid != null) app.cloudSyncFor(uid).syncNowBeforeSignOut()
+                                accountRepository.signOut()
+                                accountEmail = ""
+                                accountPassword = ""
+                                accountMessage = "Signed out. Latest progress synced when cloud sync was enabled."
+                                showSignOutDialog = false
+                            } catch (e: Exception) {
+                                accountMessage = e.localizedMessage ?: "Cloud sync failed; you are still signed in. Please retry."
+                            } finally {
+                                accountBusy = false
+                            }
+                        }
                     },
                     modifier = Modifier.testTag("btn_confirm_sign_out")
                 ) { Text("Sign Out") }
