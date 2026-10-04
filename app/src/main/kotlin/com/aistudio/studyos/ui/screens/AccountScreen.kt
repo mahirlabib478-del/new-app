@@ -51,9 +51,29 @@ fun AccountScreen(
     val syncStatus = syncStatusState?.value ?: "Cloud sync unavailable"
 
     Column(
-        Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 20.dp),
+        Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(44.dp)) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "ACCOUNT",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Spacer(Modifier.height(8.dp))
         if (!verificationPending && user == null) {
             Spacer(Modifier.height(18.dp))
             Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
