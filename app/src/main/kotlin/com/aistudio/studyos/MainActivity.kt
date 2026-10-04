@@ -106,6 +106,7 @@ class MainActivity : ComponentActivity() {
             val auth = remember { FirebaseAuth.getInstance() }
             var currentUser by remember { mutableStateOf(auth.currentUser) }
             var showResetPassword by remember { mutableStateOf(false) }
+            var authRefresh by remember { mutableStateOf(0) }
 
             DisposableEffect(auth) {
                 val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
@@ -115,7 +116,9 @@ class MainActivity : ComponentActivity() {
                 onDispose { auth.removeAuthStateListener(listener) }
             }
 
-            val verifiedUid = currentUser?.takeIf { it.isEmailVerified }?.uid
+            val verifiedUid = remember(currentUser, authRefresh) {
+                auth.currentUser?.takeIf { it.isEmailVerified }?.uid
+            }
             if (verifiedUid != null) {
                 val accountViewModel: StudyViewModel = viewModel(
                     key = "study-account-$verifiedUid",
@@ -136,6 +139,7 @@ class MainActivity : ComponentActivity() {
                             onForgotPassword = { showResetPassword = true },
                             onVerified = {
                                 currentUser = auth.currentUser
+                                authRefresh += 1
                                 showResetPassword = false
                             }
                         )
