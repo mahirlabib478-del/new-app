@@ -1,6 +1,9 @@
 package com.aistudio.studyos.data.repository
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import com.aistudio.studyos.data.local.StudyDatabase
 import androidx.room.withTransaction
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
@@ -33,6 +36,8 @@ class FirebaseProgressSyncRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    private val appContext = context.applicationContext
+    private val connectivityManager = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val ownershipPrefs = context.applicationContext.getSharedPreferences("progress_sync_ownership", Context.MODE_PRIVATE)
     @Volatile private var cloudUploadUid: String? = null
     private val _syncStatus = MutableStateFlow("Sync not enabled")
@@ -41,42 +46,36 @@ class FirebaseProgressSyncRepository(
     private var pendingUpload: Job? = null
     private var invalidationObserver: InvalidationTracker.Observer? = null
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
+    private var connectivityCallback: ConnectivityManager.NetworkCallback? = null
+    private var uploadScope: CoroutineScope? = null
 
     @Synchronized
     fun startAutomaticUpload(scope: CoroutineScope) {
         stopAutomaticUpload()
+        uploadScope = scope
         cloudUploadUid = auth.currentUser
             ?.takeIf { it.isEmailVerified && ownershipPrefs.getBoolean(ownerKey(it.uid), false) }
             ?.uid
         _syncStatus.value = if (cloudUploadUid != null) "Sync ready" else "Enable cloud sync to protect your progress"
         val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {
             override fun onInvalidated(tables: Set<String>) {
-                val active = auth.currentUser
-                if (active?.isEmailVerified != true || active.uid != cloudUploadUid) return
-                pendingUpload?.cancel()
-                pendingUpload = scope.launch {
-                    delay(500)
-                    var lastError: Throwable? = null
-                    for (attempt in 0 until 5) {
-                        if (auth.currentUser?.uid != cloudUploadUid || auth.currentUser?.isEmailVerified != true) return@launch
-                        _syncStatus.value = if (attempt == 0) "Syncing…" else "Retrying cloud sync (" + (attempt + 1) + "/5)…"
-                        try {
-                            uploadLocalSnapshot()
-                            lastSuccessfulSyncMillis = System.currentTimeMillis()
-                            _syncStatus.value = "Synced just now"
-                            lastError = null
-                            break
-                        } catch (error: Exception) {
-                            lastError = error
-                            if (attempt < 4) delay(1000L * (attempt + 1))
-                        }
-                    }
-                    if (lastError != null) _syncStatus.value = "Sync failed. Changes remain on this device; retry when online."
-                }
+                scheduleSnapshotUpload()
             }
         }
         invalidationObserver = observer
         database.invalidationTracker.addObserver(observer)
+        val networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                // Connectivity has returned: immediately retry the latest local snapshot.
+                scheduleSnapshotUpload()
+            }
+        }
+        connectivityCallback = networkCallback
+        try {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        } catch (_: Exception) {
+            _syncStatus.value = if (cloudUploadUid != null) "Waiting for network" else "Enable cloud sync to protect your progress"
+        }
         val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
             val activeUser = firebaseAuth.currentUser
             val activeUid = activeUser?.takeIf {
@@ -95,6 +94,32 @@ class FirebaseProgressSyncRepository(
         auth.addAuthStateListener(listener)
     }
 
+    private fun scheduleSnapshotUpload() {
+        val active = auth.currentUser
+        if (active?.isEmailVerified != true || active.uid != cloudUploadUid) return
+        val scope = uploadScope ?: return
+        pendingUpload?.cancel()
+        pendingUpload = scope.launch {
+            delay(500)
+            var lastError: Throwable? = null
+            for (attempt in 0 until 5) {
+                if (auth.currentUser?.uid != cloudUploadUid || auth.currentUser?.isEmailVerified != true) return@launch
+                _syncStatus.value = if (attempt == 0) "Syncing…" else "Retrying cloud sync (" + (attempt + 1) + "/5)…"
+                try {
+                    uploadLocalSnapshot()
+                    lastSuccessfulSyncMillis = System.currentTimeMillis()
+                    _syncStatus.value = "Synced just now"
+                    lastError = null
+                    break
+                } catch (error: Exception) {
+                    lastError = error
+                    if (attempt < 4) delay(1000L * (attempt + 1))
+                }
+            }
+            if (lastError != null) _syncStatus.value = "Sync failed. Changes remain on this device; waiting for network or another change."
+        }
+    }
+
     @Synchronized
     fun stopAutomaticUpload() {
         pendingUpload?.cancel()
@@ -103,6 +128,11 @@ class FirebaseProgressSyncRepository(
         invalidationObserver = null
         authStateListener?.let { auth.removeAuthStateListener(it) }
         authStateListener = null
+        connectivityCallback?.let {
+            try { connectivityManager.unregisterNetworkCallback(it) } catch (_: Exception) {}
+        }
+        connectivityCallback = null
+        uploadScope = null
         cloudUploadUid = null
         _syncStatus.value = "Cloud sync paused"
     }
