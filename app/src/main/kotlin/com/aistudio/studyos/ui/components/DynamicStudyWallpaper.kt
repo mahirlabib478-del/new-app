@@ -72,7 +72,7 @@ fun DynamicStudyWallpaper(
     modifier: Modifier = Modifier
 ) {
     val isLight = remember(themePreset) {
-        themePreset in listOf("light", "mint", "sunrise", "cyber_runner")
+        themePreset in listOf("light", "learning_green", "sunrise", "cyber_runner")
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -123,7 +123,7 @@ fun DynamicStudyWallpaper(
         val overlayColor = when (themePreset) {
             "pitch_black" -> Color.Black
             "ocean" -> Color(0xFF060E18)
-            "mint" -> Color(0xFFF0FDF4)
+            "learning_green" -> Color(0xFFFFFDF5)
             "sunrise" -> Color(0xFFFFF7ED)
             "light" -> Color(0xFFF8FAFC)
             "cyberpunk" -> Color(0xFF0F081D)
