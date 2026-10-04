@@ -13,6 +13,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.suspendCancellableCoroutine
 import com.google.android.gms.tasks.Task
@@ -32,6 +35,9 @@ class FirebaseProgressSyncRepository(
 ) {
     private val ownershipPrefs = context.applicationContext.getSharedPreferences("progress_sync_ownership", Context.MODE_PRIVATE)
     @Volatile private var cloudUploadUid: String? = null
+    private val _syncStatus = MutableStateFlow("Sync not enabled")
+    val syncStatus: StateFlow<String> = _syncStatus.asStateFlow()
+    @Volatile private var lastSuccessfulSyncMillis: Long = 0L
     private var pendingUpload: Job? = null
     private var invalidationObserver: InvalidationTracker.Observer? = null
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
@@ -42,14 +48,30 @@ class FirebaseProgressSyncRepository(
         cloudUploadUid = auth.currentUser
             ?.takeIf { it.isEmailVerified && ownershipPrefs.getBoolean(ownerKey(it.uid), false) }
             ?.uid
+        _syncStatus.value = if (cloudUploadUid != null) "Sync ready" else "Enable cloud sync to protect your progress"
         val observer = object : InvalidationTracker.Observer("study_plans", "exams", "session_logs", "user_profile") {
             override fun onInvalidated(tables: Set<String>) {
                 val active = auth.currentUser
                 if (active?.isEmailVerified != true || active.uid != cloudUploadUid) return
                 pendingUpload?.cancel()
                 pendingUpload = scope.launch {
-                    delay(1800)
-                    runCatching { uploadLocalSnapshot() }
+                    delay(500)
+                    var lastError: Throwable? = null
+                    for (attempt in 0 until 5) {
+                        if (auth.currentUser?.uid != cloudUploadUid || auth.currentUser?.isEmailVerified != true) return@launch
+                        _syncStatus.value = if (attempt == 0) "Syncing…" else "Retrying cloud sync (" + (attempt + 1) + "/5)…"
+                        try {
+                            uploadLocalSnapshot()
+                            lastSuccessfulSyncMillis = System.currentTimeMillis()
+                            _syncStatus.value = "Synced just now"
+                            lastError = null
+                            break
+                        } catch (error: Exception) {
+                            lastError = error
+                            if (attempt < 4) delay(1000L * (attempt + 1))
+                        }
+                    }
+                    if (lastError != null) _syncStatus.value = "Sync failed. Changes remain on this device; retry when online."
                 }
             }
         }
@@ -63,8 +85,10 @@ class FirebaseProgressSyncRepository(
             if (activeUid == null || activeUid != cloudUploadUid) {
                 cloudUploadUid = null
                 pendingUpload?.cancel()
+                _syncStatus.value = if (activeUser == null) "Signed out" else "Cloud sync paused"
             } else {
                 cloudUploadUid = activeUid
+                _syncStatus.value = "Sync ready"
             }
         }
         authStateListener = listener
@@ -80,6 +104,7 @@ class FirebaseProgressSyncRepository(
         authStateListener?.let { auth.removeAuthStateListener(it) }
         authStateListener = null
         cloudUploadUid = null
+        _syncStatus.value = "Cloud sync paused"
     }
 
     private fun ownerKey(uid: String) = "owner_$uid"
@@ -196,7 +221,9 @@ class FirebaseProgressSyncRepository(
         if (hasCloud && auth.currentUser?.uid == uid) {
             ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
             cloudUploadUid = uid
-            return "Cloud progress restored to this empty device."
+            lastSuccessfulSyncMillis = System.currentTimeMillis()
+            _syncStatus.value = "Synced just now"
+            return "Cloud progress restored to this empty device. Automatic cloud sync is enabled."
         }
         cloudUploadUid = null
         return "The cloud document has no progress records. Automatic sync remains paused until an explicit account-link action is completed."
@@ -270,7 +297,9 @@ class FirebaseProgressSyncRepository(
         }
         ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
         cloudUploadUid = uid
-        return "Initial cloud backup created. Existing local progress was kept."
+        lastSuccessfulSyncMillis = System.currentTimeMillis()
+        _syncStatus.value = "Synced just now"
+        return "Initial cloud backup created. Automatic cloud sync is now enabled."
     }
 
     suspend fun uploadLocalSnapshot() {
@@ -307,6 +336,9 @@ class FirebaseProgressSyncRepository(
             .collection("progress").document("current")
             .set(snapshot)
             .asSuspendUnit()
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true || cloudUploadUid != uid) {
+            throw IllegalStateException("Account changed after upload. Please check sync status.")
+        }
     }
 
     private suspend fun Task<Void>.asSuspendUnit() = suspendCancellableCoroutine { continuation ->
