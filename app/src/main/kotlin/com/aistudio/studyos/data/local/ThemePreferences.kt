@@ -2,6 +2,7 @@ package com.aistudio.studyos.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Configuration
 
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 
@@ -10,7 +11,11 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
         context.applicationContext.getSharedPreferences(storageName, Context.MODE_PRIVATE)
 
     fun getThemePreset(): String {
-        return ThemeCatalog.normalize(prefs.getString(KEY_THEME, ThemeCatalog.DEFAULT_THEME))
+        val systemDefault = if (
+            context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+            Configuration.UI_MODE_NIGHT_YES
+        ) "pitch_black" else "sunrise"
+        return ThemeCatalog.normalize(prefs.getString(KEY_THEME, systemDefault))
     }
 
     fun setThemePreset(themeKey: String) {
