@@ -31,6 +31,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
+            .statusBarsPadding()
             .padding(horizontal = 22.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -43,7 +44,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
             }
             Spacer(Modifier.width(8.dp))
             Text(
-                "ACCOUNT SECURITY",
+                "ACCOUNT & SECURITY",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
