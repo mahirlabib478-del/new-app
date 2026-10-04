@@ -51,6 +51,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -192,9 +193,13 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             } else {
-                StudyOSTheme(preset = "pitch_black") {
+                val systemIsDark = isSystemInDarkTheme()
+                StudyOSTheme(preset = if (systemIsDark) "pitch_black" else "sunrise") {
                     if (!hasStartedWelcome) {
-                        WelcomeScreen(onGetStarted = { hasStartedWelcome = true })
+                        WelcomeScreen(
+                            isDark = systemIsDark,
+                            onGetStarted = { hasStartedWelcome = true }
+                        )
                     } else if (showResetPassword) {
                         ResetPasswordScreen(onBack = { showResetPassword = false })
                     } else {
@@ -229,11 +234,20 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-private fun WelcomeScreen(onGetStarted: () -> Unit) {
-    val pitchBlack = Color(0xFF000000)
-    val green = Color(0xFF00E5FF)
-    val softGreen = Color(0xFF80F5FF)
-    val mutedText = Color(0xFFA0A0A0)
+private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
+    val pitchBlack = if (isDark) Color(0xFF000000) else Color(0xFFF6F1EA)
+    val green = if (isDark) Color(0xFF00E5FF) else Color(0xFFC2410C)
+    val softGreen = if (isDark) Color(0xFF80F5FF) else Color(0xFF9A3412)
+    val mutedText = if (isDark) Color(0xFFA0A0A0) else Color(0xFF57534E)
+    val primaryText = if (isDark) primaryText else Color(0xFF292524)
+    val orbOuter = if (isDark) orbOuter else Color(0xFFFFE8D1)
+    val orbMiddle = if (isDark) orbMiddle else Color(0xFFFFF0E0)
+    val orbInner = if (isDark) orbInner else Color(0xFFFED7AA)
+    val borderOuter = if (isDark) borderOuter else Color(0xFFE0C4A8)
+    val borderMiddle = if (isDark) borderMiddle else Color(0xFFE9B98F)
+    val borderInner = if (isDark) borderInner else Color(0xFFEA580C)
+    val panel = if (isDark) panel else Color(0xFFFFF7F1)
+    val badgeBg = if (isDark) Color(0xFF0B2024) else Color(0xFFFFEDD5)
 
     Column(
         modifier = Modifier
@@ -256,7 +270,7 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                     .size(40.dp)
                     .clip(RoundedCornerShape(13.dp))
                     .background(Color(0xFF101010))
-                    .border(1.dp, Color(0xFF16434A), RoundedCornerShape(13.dp)),
+                    .border(1.dp, borderOuter, RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -330,7 +344,7 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                     .align(Alignment.BottomEnd)
                     .padding(end = 32.dp, bottom = 15.dp),
                 shape = RoundedCornerShape(50),
-                color = Color(0xFF0B2024),
+                color = badgeBg,
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF17606A))
             ) {
                 Row(
@@ -409,7 +423,7 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
         Spacer(modifier = Modifier.height(13.dp))
         Text(
             text = "YOUR PERSONAL SPACE TO GROW",
-            color = Color(0xFF707070),
+            color = mutedText,
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
             letterSpacing = 1.05.sp
