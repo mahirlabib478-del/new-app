@@ -79,7 +79,7 @@ fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
             scope.launch {
                 try {
                     if (action == "login") repository.signIn(email, password) else repository.createAccount(email, password)
-                    message = (if (action == "login") "Signed in. " else "Account created. ") + app.cloudProgressSync.restoreIfLocalEmpty()
+                    message = if (action == "login") "Signed in. Cloud restore is paused until account-specific local storage is enabled." else "Account created. Cloud restore is paused until account-specific local storage is enabled."
                 } catch (e: Exception) { message = e.localizedMessage ?: "Account action failed." }
                 finally { busy = false }
             }
