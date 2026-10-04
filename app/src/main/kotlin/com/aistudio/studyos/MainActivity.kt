@@ -142,7 +142,11 @@ class MainActivity : ComponentActivity() {
                         ResetPasswordScreen(onBack = { showResetPassword = false })
                     } else {
                         AccountScreen(
-                            onBack = {},
+                            onBack = {
+                                if (auth.currentUser != null) auth.signOut()
+                                guestMode = true
+                                showResetPassword = false
+                            },
                             onForgotPassword = { showResetPassword = true },
                             onVerified = {
                                 currentUser = auth.currentUser
