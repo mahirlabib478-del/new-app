@@ -12,10 +12,10 @@ val PitchBlackBg = Color(0xFF000000)
 val PitchBlackSurface = Color(0xFF101010)
 val CyanAccent = Color(0xFF00E5FF)
 
-// Ocean Theme
-val OceanBg = Color(0xFF08121E)
-val OceanSurface = Color(0xFF0F1E30)
-val OceanAccent = Color(0xFF0284C7)
+// Sky Night Theme
+val SkyNightBg = Color(0xFF07111F)
+val SkyNightSurface = Color(0xFF0D1B2A)
+val SkyNightAccent = Color(0xFF38BDF8)
 
 // Light Themes
 val PaperBg = Color(0xFFF7F4EB)
