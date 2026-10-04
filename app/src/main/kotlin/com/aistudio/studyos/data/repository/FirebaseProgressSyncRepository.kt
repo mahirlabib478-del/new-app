@@ -168,8 +168,13 @@ class FirebaseProgressSyncRepository(
         }
     }
 
-    fun reportBootstrapFailure() {
-        _syncStatus.value = "Cloud sync failed. Your local progress is still on this device; check internet and retry."
+    fun reportBootstrapFailure(error: Throwable? = null) {
+        val detail = error?.localizedMessage?.takeIf { it.isNotBlank() }
+        _syncStatus.value = if (detail == null) {
+            "Cloud sync failed. Your local progress is still on this device; check internet and retry."
+        } else {
+            "Cloud sync failed: $detail"
+        }
     }
 
     private fun ownerKey(uid: String) = "owner_$uid"
