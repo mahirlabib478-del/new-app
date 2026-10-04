@@ -38,12 +38,19 @@ class FirebaseAccountRepository(
         if (!refreshedUser.isEmailVerified) {
             throw EmailNotVerifiedException()
         }
+        // Refresh the ID token so Firestore security rules see the email_verified claim.
+        refreshedUser.getIdToken(true).awaitCompletion()
         return refreshedUser
     }
 
     suspend fun refreshCurrentUser(): FirebaseUser? {
         val user = auth.currentUser ?: return null
         user.reload().awaitCompletion()
+        val refreshedUser = auth.currentUser
+        if (refreshedUser?.isEmailVerified == true) {
+            // A verified profile alone is not enough if the cached ID token still has old claims.
+            refreshedUser.getIdToken(true).awaitCompletion()
+        }
         return auth.currentUser
     }
 
