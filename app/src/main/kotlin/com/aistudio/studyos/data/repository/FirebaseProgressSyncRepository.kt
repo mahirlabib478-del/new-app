@@ -137,6 +137,37 @@ class FirebaseProgressSyncRepository(
         _syncStatus.value = "Cloud sync paused"
     }
 
+    /**
+     * Flushes the latest local snapshot before an intentional sign-out.
+     * Debounced observer uploads are otherwise cancelled by the auth listener when
+     * the user signs out immediately after an activity.
+     */
+    suspend fun syncNowBeforeSignOut(): String {
+        val user = auth.currentUser ?: return "Already signed out."
+        if (!user.isEmailVerified) return "Email is not verified; cloud sync is unavailable."
+        if (cloudUploadUid != user.uid ||
+            !ownershipPrefs.getBoolean(ownerKey(user.uid), false)
+        ) {
+            return "Cloud sync is not enabled for this account. Local progress was kept on this device."
+        }
+
+        pendingUpload?.cancel()
+        pendingUpload = null
+        _syncStatus.value = "Syncing before sign-out…"
+        return try {
+            uploadLocalSnapshot()
+            lastSuccessfulSyncMillis = System.currentTimeMillis()
+            _syncStatus.value = "Synced just now"
+            "Latest progress synced."
+        } catch (error: Exception) {
+            _syncStatus.value = "Sync failed before sign-out"
+            throw IllegalStateException(
+                "Could not sync your latest progress. Check internet and try again before signing out.",
+                error
+            )
+        }
+    }
+
     fun reportBootstrapFailure() {
         _syncStatus.value = "Cloud sync failed. Your local progress is still on this device; check internet and retry."
     }
