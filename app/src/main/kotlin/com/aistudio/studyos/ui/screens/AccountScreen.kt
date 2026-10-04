@@ -111,60 +111,6 @@ fun AccountScreen(
                     Text("You're all set. Your personal study space is ready.", style = MaterialTheme.typography.bodyMedium)
                     Text("Cloud sync: " + syncStatus, style = MaterialTheme.typography.bodySmall, color = if (syncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton(
-                        onClick = { confirmImport = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !busy
-                    ) { Text("Import old local progress") }
-                    Text(
-                        "Only import if these records belong to you. Nothing is copied unless you confirm.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    TextButton(onClick = { showAdvancedSync = !showAdvancedSync }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.CloudDone, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (showAdvancedSync) "Hide backup options" else "Backup & restore options")
-                    }
-                    if (showAdvancedSync) {
-                    Text(
-                        "Create the first backup once to enable automatic cloud uploads on this device. After that, changes to study plans, exams, sessions and profile progress are uploaded automatically; restore is only for moving to an empty device.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    OutlinedButton(
-                        onClick = {
-                            busy = true
-                            message = null
-                            scope.launch {
-                                try {
-                                    val sync = cloudSync ?: throw IllegalStateException("Account sync is unavailable.")
-                                    message = sync.restoreIfLocalEmpty()
-                                } catch (e: Exception) {
-                                    message = e.localizedMessage ?: "Cloud restore failed."
-                                } finally { busy = false }
-                            }
-                        },
-                        enabled = !busy && verified,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Restore cloud backup") }
-                    Button(
-                        onClick = {
-                            busy = true
-                            message = null
-                            scope.launch {
-                                try {
-                                    val sync = cloudSync ?: throw IllegalStateException("Account sync is unavailable.")
-                                    message = sync.createInitialCloudBackup()
-                                } catch (e: Exception) {
-                                    message = e.localizedMessage ?: "Cloud backup failed."
-                                } finally { busy = false }
-                            }
-                        },
-                        enabled = !busy && verified,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Create initial cloud backup") }
-                    }
-                    OutlinedButton(
                         onClick = { scope.launch { cloudSync?.syncNowBeforeSignOut(); repository.signOut(); message = "Signed out." } },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Sign out") }
