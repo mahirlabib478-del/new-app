@@ -153,10 +153,11 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onAccountVerified = {
-                            if (guestMode) {
-                                pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
-                                returnToProfileAfterAuth = true
-                            }
+                            // Firebase auth state flips before this callback, so do not
+                            // rely on guestMode here. The Account route itself only marks
+                            // this when a guest opened it from Profile.
+                            pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
+                            returnToProfileAfterAuth = true
                         }
                     )
                 }
