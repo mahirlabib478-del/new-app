@@ -152,13 +152,15 @@ class MainActivity : ComponentActivity() {
                                 pendingAuthPrefs.edit().putBoolean("return_to_profile", false).apply()
                             }
                         },
-                        onAccountVerified = {
-                            // Firebase auth state flips before this callback, so do not
-                            // rely on guestMode here. The Account route itself only marks
-                            // this when a guest opened it from Profile.
-                            pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
-                            returnToProfileAfterAuth = true
-                        }
+                        onAccountOpened = {
+                            // Only guests need the special post-auth return path.
+                            // Authenticated users opening Account from Profile must keep
+                            // the normal app start destination on the next launch.
+                            if (auth.currentUser == null && guestMode) {
+                                pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
+                            }
+                        },
+                        onAccountVerified = {}
                     )
                 }
             } else {
@@ -215,6 +217,7 @@ fun MainApp(
     navController: NavHostController,
     startDestination: String = Screen.Home.route,
     onStartDestinationConsumed: () -> Unit = {},
+    onAccountOpened: () -> Unit = {},
     onAccountVerified: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -425,6 +428,9 @@ fun MainApp(
                 ProfileScreen(viewModel = viewModel, onOpenAccount = { navController.navigate(Screen.Account.route) })
             }
             composable(Screen.Account.route) {
+                LaunchedEffect(Unit) {
+                    onAccountOpened()
+                }
                 AccountScreen(
                     onBack = { navController.popBackStack() },
                     onForgotPassword = { navController.navigate(Screen.ResetPassword.route) },
