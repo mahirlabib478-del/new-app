@@ -3,12 +3,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Account data is available only to the matching, email-verified owner.
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true;
 
       // Subcollection permissions are not inherited from the parent document.
-      // Progress documents are private to the matching authenticated UID.
+      // Progress documents are private to the matching, email-verified UID.
       match /progress/{progressId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null
+          && request.auth.uid == userId
+          && request.auth.token.email_verified == true;
       }
     }
   }
