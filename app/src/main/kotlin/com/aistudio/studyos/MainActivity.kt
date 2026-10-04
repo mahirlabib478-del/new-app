@@ -152,6 +152,12 @@ class MainActivity : ComponentActivity() {
                                 pendingAuthPrefs.edit().putBoolean("return_to_profile", false).apply()
                                 returnToProfileAfterAuth = false
                             }
+                        },
+                        onAccountVerified = {
+                            if (guestMode) {
+                                pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
+                                returnToProfileAfterAuth = true
+                            }
                         }
                     )
                 }
@@ -208,7 +214,8 @@ fun MainApp(
     viewModel: StudyViewModel,
     navController: NavHostController,
     startDestination: String = Screen.Home.route,
-    onStartDestinationConsumed: () -> Unit = {}
+    onStartDestinationConsumed: () -> Unit = {},
+    onAccountVerified: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -416,7 +423,7 @@ fun MainApp(
                     onBack = { navController.popBackStack() },
                     onForgotPassword = { navController.navigate(Screen.ResetPassword.route) },
                     onVerified = {
-                        onStartDestinationConsumed()
+                        onAccountVerified()
                     },
                     onContinueAsGuest = {},
                     showBackButton = true
