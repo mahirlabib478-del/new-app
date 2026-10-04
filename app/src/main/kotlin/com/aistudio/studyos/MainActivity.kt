@@ -109,6 +109,10 @@ class MainActivity : ComponentActivity() {
             var authRefresh by remember { mutableStateOf(0) }
             val guestPrefs = remember { getSharedPreferences("study_os_guest_session", MODE_PRIVATE) }
             var guestMode by remember { mutableStateOf(guestPrefs.getBoolean("guest_mode", false)) }
+            val pendingAuthPrefs = remember { getSharedPreferences("study_os_auth_navigation", MODE_PRIVATE) }
+            var returnToProfileAfterAuth by remember {
+                mutableStateOf(pendingAuthPrefs.getBoolean("return_to_profile", false))
+            }
 
             DisposableEffect(auth) {
                 val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
@@ -139,7 +143,17 @@ class MainActivity : ComponentActivity() {
                 val themePreset by accountViewModel.currentTheme.collectAsState()
                 StudyOSTheme(preset = themePreset) {
                     val navController = rememberNavController()
-                    MainApp(viewModel = accountViewModel, navController = navController)
+                    MainApp(
+                        viewModel = accountViewModel,
+                        navController = navController,
+                        startDestination = if (returnToProfileAfterAuth) Screen.Profile.route else Screen.Home.route,
+                        onStartDestinationConsumed = {
+                            if (returnToProfileAfterAuth) {
+                                pendingAuthPrefs.edit().putBoolean("return_to_profile", false).apply()
+                                returnToProfileAfterAuth = false
+                            }
+                        }
+                    )
                 }
             } else {
                 StudyOSTheme {
@@ -192,7 +206,9 @@ private val BOTTOM_NAV_ROUTES = setOf(
 @Composable
 fun MainApp(
     viewModel: StudyViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    startDestination: String = Screen.Home.route,
+    onStartDestinationConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -295,7 +311,7 @@ fun MainApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = startDestination,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding()),
@@ -396,7 +412,15 @@ fun MainApp(
                 ProfileScreen(viewModel = viewModel, onOpenAccount = { navController.navigate(Screen.Account.route) })
             }
             composable(Screen.Account.route) {
-                AccountScreen(onBack = { navController.popBackStack() }, onForgotPassword = { navController.navigate(Screen.ResetPassword.route) }, showBackButton = true)
+                AccountScreen(
+                    onBack = { navController.popBackStack() },
+                    onForgotPassword = { navController.navigate(Screen.ResetPassword.route) },
+                    onVerified = {
+                        onStartDestinationConsumed()
+                    },
+                    onContinueAsGuest = {},
+                    showBackButton = true
+                )
             }
             composable(Screen.ResetPassword.route) {
                 ResetPasswordScreen(onBack = { navController.popBackStack() })
