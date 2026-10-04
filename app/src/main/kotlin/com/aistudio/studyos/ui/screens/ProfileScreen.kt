@@ -1244,7 +1244,7 @@ fun ProfileScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
 
         // Contact Developer — placed at the very end of Profile
