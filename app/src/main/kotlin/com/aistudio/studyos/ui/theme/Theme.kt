@@ -76,24 +76,24 @@ private val SkyNightColorScheme = darkColorScheme(
 )
 
 private val LearningGreenColorScheme = lightColorScheme(
-    primary = Color(0xFF46B800),
+    primary = Color(0xFF4CAF00),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD7F8B8),
-    onPrimaryContainer = Color(0xFF1F4D00),
-    secondary = Color(0xFF7BCB2B),
+    primaryContainer = Color(0xFFDFF0D3),
+    onPrimaryContainer = Color(0xFF214D15),
+    secondary = Color(0xFF72B84A),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFEAF8D8),
-    onSecondaryContainer = Color(0xFF315500),
+    secondaryContainer = Color(0xFFE7F1DF),
+    onSecondaryContainer = Color(0xFF31502A),
     tertiary = Color(0xFFFFC800),
     onTertiary = Color(0xFF3D3000),
     background = LearningGreenBg,
     onBackground = Color(0xFF2B2B2B),
     surface = LearningGreenSurface,
     onSurface = Color(0xFF2B2B2B),
-    surfaceVariant = Color(0xFFF3F0E6),
+    surfaceVariant = Color(0xFFE7EBDD),
     onSurfaceVariant = Color(0xFF5A5A5A),
-    outline = Color(0xFFB8D99A),
-    outlineVariant = Color(0xFFE2E0D7)
+    outline = Color(0xFFBFCDB4),
+    outlineVariant = Color(0xFFDDE3D5)
 )
 
 private val SunriseColorScheme = lightColorScheme(
@@ -105,14 +105,14 @@ private val SunriseColorScheme = lightColorScheme(
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFFFEDD5),
     onSecondaryContainer = Color(0xFF9A3412),
-    background = Color(0xFFFFF9F5),
+    background = SunriseBg,
     onBackground = Color(0xFF292524),
-    surface = Color.White,
+    surface = SunriseSurface,
     onSurface = Color(0xFF292524),
-    surfaceVariant = Color(0xFFFFEDE0),
+    surfaceVariant = Color(0xFFF0E6D9),
     onSurfaceVariant = Color(0xFF57534E),
-    outline = Color(0xFFFDBA74),
-    outlineVariant = Color(0xFFFFEDD5)
+    outline = Color(0xFFE0C4A8),
+    outlineVariant = Color(0xFFE9DED1)
 )
 
 private val ObsidianGoldColorScheme = darkColorScheme(
@@ -141,14 +141,14 @@ private val LightColorScheme = lightColorScheme(
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFE0E7FF),
     onSecondaryContainer = Color(0xFF1E1B4B),
-    background = Color(0xFFF8FAFC),
-    onBackground = Color(0xFF0F172A),
-    surface = Color.White,
-    onSurface = Color(0xFF0F172A),
-    surfaceVariant = Color(0xFFF1F5F9),
-    onSurfaceVariant = Color(0xFF334155),
-    outline = Color(0xFFCBD5E1),
-    outlineVariant = Color(0xFFE2E8F0)
+    background = Color(0xFFF0F2EC),
+    onBackground = Color(0xFF242820),
+    surface = Color(0xFFF8F9F5),
+    onSurface = Color(0xFF242820),
+    surfaceVariant = Color(0xFFE7EAE3),
+    onSurfaceVariant = Color(0xFF62695F),
+    outline = Color(0xFFD0D6CB),
+    outlineVariant = Color(0xFFDEE3D9)
 )
 
 fun isLightPreset(preset: String): Boolean = preset in setOf("learning_green", "sunrise", "light", "cyber_runner")
