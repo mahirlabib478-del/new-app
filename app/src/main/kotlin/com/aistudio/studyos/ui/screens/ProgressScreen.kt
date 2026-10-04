@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -234,9 +235,11 @@ fun ProgressScreen(
         mutableIntStateOf(Calendar.getInstance().get(Calendar.DAY_OF_MONTH))
     }
 
+    val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = bottomListPadding),
+        contentPadding = PaddingValues(start = horizontalContentPadding, end = horizontalContentPadding, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
