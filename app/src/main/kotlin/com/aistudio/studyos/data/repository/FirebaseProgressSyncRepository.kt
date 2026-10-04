@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import com.aistudio.studyos.data.local.StudyDatabase
+import com.aistudio.studyos.data.local.ThemePreferences
 import androidx.room.withTransaction
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.data.local.entity.ExamEntity
@@ -33,6 +34,7 @@ import kotlin.coroutines.resumeWithException
 class FirebaseProgressSyncRepository(
     context: Context,
     private val database: StudyDatabase,
+    private val themePreferences: ThemePreferences = ThemePreferences(context),
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
@@ -227,6 +229,7 @@ class FirebaseProgressSyncRepository(
         val cloudExams = (cloud["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
         val cloudSessions = (cloud["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
         val cloudProfiles = (cloud["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
+        val cloudShopPreferences = cloud["shopPreferences"].asMap().orEmpty()
         // Revalidate after all local reads, before deciding whether this account may
         // restore or enable future automatic uploads.
         if (auth.currentUser?.uid != uid) {
@@ -239,7 +242,7 @@ class FirebaseProgressSyncRepository(
         // have diverged. Do not silently merge or overwrite either copy; keep uploads
         // disabled until the user explicitly resolves the conflict.
         val hasCloud = cloudPlans.isNotEmpty() || cloudExams.isNotEmpty() ||
-            cloudSessions.isNotEmpty() || cloudProfiles.any {
+            cloudSessions.isNotEmpty() || cloudShopPreferences.isNotEmpty() || cloudProfiles.any {
                 it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
             }
         if (hasLocal) {
@@ -293,6 +296,7 @@ class FirebaseProgressSyncRepository(
             }
         }
         if (hasCloud && auth.currentUser?.uid == uid) {
+            themePreferences.restoreCloudSyncPreferences(cloudShopPreferences)
             ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
             cloudUploadUid = uid
             lastSuccessfulSyncMillis = System.currentTimeMillis()
@@ -404,6 +408,7 @@ class FirebaseProgressSyncRepository(
             "exams" to exams.map { it.toCloudMap() },
             "sessionLogs" to sessions.map { it.toCloudMap() },
             "profiles" to profiles.map { it.toCloudMap() },
+            "shopPreferences" to themePreferences.exportCloudSyncPreferences(),
             "updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
         )
         val ref = firestore.collection("users").document(uid)
