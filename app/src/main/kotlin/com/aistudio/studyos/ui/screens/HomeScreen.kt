@@ -637,8 +637,7 @@ fun HomeScreen(
             }
         }
 
-        // Recent Completed Sessions
-           // Compact seven-day activity heatmap with current streak.
+        // Compact seven-day activity heatmap with current streak.
         item {
             val activityDays = remember(allLogs) {
                 (6 downTo 0).map { daysAgo ->
@@ -819,7 +818,8 @@ fun HomeScreen(
             }
         }
 
-er = Modifier.height(80.dp))
+        item {
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 
