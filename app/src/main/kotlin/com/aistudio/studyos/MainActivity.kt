@@ -235,60 +235,48 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
-    val pitchBlack = if (isDark) Color(0xFF000000) else Color(0xFFF6F1EA)
-    val green = if (isDark) Color(0xFF00E5FF) else Color(0xFFC2410C)
-    val softGreen = if (isDark) Color(0xFF80F5FF) else Color(0xFF9A3412)
+    val background = if (isDark) Color(0xFF000000) else Color(0xFFF6F1EA)
+    val accent = if (isDark) Color(0xFF00E5FF) else Color(0xFFC2410C)
+    val accentSoft = if (isDark) Color(0xFF80F5FF) else Color(0xFF9A3412)
     val mutedText = if (isDark) Color(0xFFA0A0A0) else Color(0xFF57534E)
-    val primaryText = if (isDark) primaryText else Color(0xFF292524)
-    val orbOuter = if (isDark) orbOuter else Color(0xFFFFE8D1)
-    val orbMiddle = if (isDark) orbMiddle else Color(0xFFFFF0E0)
-    val orbInner = if (isDark) orbInner else Color(0xFFFED7AA)
-    val borderOuter = if (isDark) borderOuter else Color(0xFFE0C4A8)
-    val borderMiddle = if (isDark) borderMiddle else Color(0xFFE9B98F)
-    val borderInner = if (isDark) borderInner else Color(0xFFEA580C)
-    val panel = if (isDark) panel else Color(0xFFFFF7F1)
-    val badgeBg = if (isDark) Color(0xFF0B2024) else Color(0xFFFFEDD5)
+    val primaryText = if (isDark) Color.White else Color(0xFF292524)
+    val outerOrb = if (isDark) Color(0xFF050B0C) else Color(0xFFFFE8D1)
+    val middleOrb = if (isDark) Color(0xFF080F10) else Color(0xFFFFF0E0)
+    val innerOrb = if (isDark) Color(0xFF0B2024) else Color(0xFFFED7AA)
+    val outerBorder = if (isDark) Color(0xFF123238) else Color(0xFFE0C4A8)
+    val middleBorder = if (isDark) Color(0xFF174047) else Color(0xFFE9B98F)
+    val innerBorder = if (isDark) Color(0xFF17606A) else Color(0xFFEA580C)
+    val logoSurface = if (isDark) Color(0xFF101010) else Color(0xFFFFF7F1)
+    val badgeSurface = if (isDark) Color(0xFF0B2024) else Color(0xFFFFEDD5)
+    val badgeBorder = if (isDark) Color(0xFF17606A) else Color(0xFFE0C4A8)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(pitchBlack)
+            .background(background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(11.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
+                modifier = Modifier.size(40.dp)
                     .clip(RoundedCornerShape(13.dp))
-                    .background(Color(0xFF101010))
-                    .border(1.dp, borderOuter, RoundedCornerShape(13.dp)),
+                    .background(logoSurface)
+                    .border(1.dp, outerBorder, RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.School,
-                    contentDescription = null,
-                    tint = softGreen,
-                    modifier = Modifier.size(23.dp)
-                )
+                Icon(Icons.Default.School, contentDescription = null, tint = accentSoft, modifier = Modifier.size(23.dp))
             }
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("Study OS", color = primaryText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(
-                    text = "Study OS",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "YOUR PERSONAL STUDY SPACE",
+                    "YOUR PERSONAL STUDY SPACE",
                     color = mutedText,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
@@ -298,96 +286,50 @@ private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
         }
 
         Spacer(modifier = Modifier.weight(0.7f))
-
-        // A clean, black-on-black focus orb: no grey panel or bulky illustration card.
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(238.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxWidth().height(238.dp), contentAlignment = Alignment.Center) {
             Box(
-                modifier = Modifier
-                    .size(224.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF050B0C))
-                    .border(1.dp, Color(0xFF123238), CircleShape),
+                modifier = Modifier.size(224.dp).clip(CircleShape).background(outerOrb)
+                    .border(1.dp, outerBorder, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(180.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF080F10))
-                        .border(1.dp, Color(0xFF174047), CircleShape),
+                    modifier = Modifier.size(180.dp).clip(CircleShape).background(middleOrb)
+                        .border(1.dp, middleBorder, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(132.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF0B2024))
-                            .border(1.dp, Color(0xFF17606A), CircleShape),
+                        modifier = Modifier.size(132.dp).clip(CircleShape).background(innerOrb)
+                            .border(1.dp, innerBorder, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Timer,
-                            contentDescription = "Focus timer",
-                            tint = softGreen,
-                            modifier = Modifier.size(68.dp)
-                        )
+                        Icon(Icons.Default.Timer, contentDescription = "Focus timer", tint = accentSoft, modifier = Modifier.size(68.dp))
                     }
                 }
             }
             Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 32.dp, bottom = 15.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 32.dp, bottom = 15.dp),
                 shape = RoundedCornerShape(50),
-                color = badgeBg,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF17606A))
+                color = badgeSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, badgeBorder)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(green)
-                    )
-                    Text(
-                        text = "FOCUS MODE",
-                        color = softGreen,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.7.sp
-                    )
+                    Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(accent))
+                    Text("FOCUS MODE", color = accentSoft, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, letterSpacing = 0.7.sp)
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = "Make Every",
-            color = Color.White,
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = "Minute Count.",
-            color = green,
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center
-        )
+        Text("Make Every", color = primaryText, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
+        Text("Minute Count.", color = accent, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
 
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Focus better. Build habits.\nReach your goals — one session at a time.",
+            "Focus better. Build habits.\nReach your goals — one session at a time.",
             color = mutedText,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
@@ -395,39 +337,22 @@ private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
         )
 
         Spacer(modifier = Modifier.weight(1f))
-
         Button(
             onClick = onGetStarted,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(58.dp),
+            modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = green,
-                contentColor = Color.Black
+                containerColor = accent,
+                contentColor = if (isDark) Color.Black else Color.White
             )
         ) {
-            Text(
-                text = "Get Started",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Get Started", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.size(10.dp))
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier.size(19.dp)
-            )
+            Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(19.dp))
         }
 
         Spacer(modifier = Modifier.height(13.dp))
-        Text(
-            text = "YOUR PERSONAL SPACE TO GROW",
-            color = mutedText,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-            letterSpacing = 1.05.sp
-        )
+        Text("YOUR PERSONAL SPACE TO GROW", color = mutedText, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, letterSpacing = 1.05.sp)
         Spacer(modifier = Modifier.height(7.dp))
     }
 }
