@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -361,7 +363,14 @@ fun AccountScreen(
                         label = { Text("Email address") },
                         placeholder = { Text("you@example.com") },
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                     )
                     OutlinedTextField(
@@ -370,7 +379,14 @@ fun AccountScreen(
                         modifier = Modifier.fillMaxWidth().testTag("account_password"),
                         label = { Text("Password") },
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        ),
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                     )
@@ -382,29 +398,29 @@ fun AccountScreen(
                         Button(
                             onClick = { confirmAction = "login" },
                             enabled = !busy && email.contains("@") && password.isNotEmpty(),
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp).testTag("btn_login"),
-                            shape = RoundedCornerShape(14.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            modifier = Modifier.fillMaxWidth().height(56.dp).testTag("btn_login"),
+                            shape = RoundedCornerShape(18.dp),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
                         ) {
                             Text("Log In", maxLines = 1, softWrap = false)
                         }
                         OutlinedButton(
                             onClick = { confirmAction = "create" },
                             enabled = !busy && email.contains("@") && password.length >= 6,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp).testTag("btn_create_account"),
-                            shape = RoundedCornerShape(14.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            modifier = Modifier.fillMaxWidth().height(56.dp).testTag("btn_create_account"),
+                            shape = RoundedCornerShape(18.dp),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
                         ) {
                             Text("Create Account", maxLines = 1, softWrap = false)
                         }
                     }
-                    Text("Password must be at least 6 characters for a new account.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Use at least 6 characters for a new password.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (showContinueAsGuest) {
                         OutlinedButton(
                             onClick = onContinueAsGuest,
                             enabled = !busy,
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            shape = RoundedCornerShape(16.dp)
+                            modifier = Modifier.fillMaxWidth().height(54.dp),
+                            shape = RoundedCornerShape(18.dp)
                         ) {
                             Text("Continue as guest", maxLines = 1, softWrap = false)
                         }
