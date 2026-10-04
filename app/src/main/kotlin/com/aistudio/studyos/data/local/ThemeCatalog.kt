@@ -14,7 +14,7 @@ object ThemeCatalog {
         "dark",
         "light",
         "ocean",
-        "mint",
+        "learning_green",
         "sunrise",
         "cyberpunk",
         "cyber_runner"
@@ -23,7 +23,8 @@ object ThemeCatalog {
     private val legacyAliases = mapOf(
         "midnight" to DEFAULT_THEME,
         "espresso" to DEFAULT_THEME,
-        "forest" to DEFAULT_THEME
+        "forest" to DEFAULT_THEME,
+        "mint" to "learning_green"
     )
 
     fun normalize(themeKey: String?): String {
