@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,11 +76,12 @@ fun AccountScreen(
             .padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (showBackButton) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 0.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(56.dp).padding(bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            if (showBackButton) {
                 IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -87,18 +89,45 @@ fun AccountScreen(
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
-                Spacer(Modifier.width(8.dp))
                 Text(
-                    "ACCOUNT & SECURITY",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "Account & Security",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.SemiBold
                 )
+            } else {
+                Surface(
+                    shape = RoundedCornerShape(13.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(42.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(25.dp)
+                        )
+                    }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        "StudyOS",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "SIGN IN OR CREATE AN ACCOUNT",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
         val guestAccountPage = !showContinueAsGuest && !verificationPending && user == null
         if (!verificationPending && user == null) {
-            Spacer(Modifier.height(if (guestAccountPage) 12.dp else 30.dp))
+            Spacer(Modifier.height(if (guestAccountPage) 12.dp else 20.dp))
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceVariant,
@@ -116,13 +145,13 @@ fun AccountScreen(
             }
             Spacer(Modifier.height(14.dp))
             Text(
-                if (guestAccountPage) "Guest profile" else "Create your account",
+                if (guestAccountPage) "Guest profile" else "Welcome to StudyOS",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                if (guestAccountPage) "Your study progress stays on this device" else "One account for your study journey",
+                if (guestAccountPage) "Your study progress stays on this device" else "Sign in or create an account to continue your study journey.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
