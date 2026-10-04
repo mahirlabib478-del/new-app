@@ -5,9 +5,9 @@ import android.content.SharedPreferences
 
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 
-class ThemePreferences(context: Context) {
+class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NAME) {
     private val prefs: SharedPreferences =
-        context.applicationContext.getSharedPreferences("study_os_theme_prefs", Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences(storageName, Context.MODE_PRIVATE)
 
     fun getThemePreset(): String {
         return ThemeCatalog.normalize(prefs.getString(KEY_THEME, ThemeCatalog.DEFAULT_THEME))
