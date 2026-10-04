@@ -101,14 +101,15 @@ fun AccountScreen(
             Spacer(Modifier.height(if (guestAccountPage) 12.dp else 30.dp))
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                 modifier = Modifier.size(76.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.Person,
                         contentDescription = if (guestAccountPage) "Guest avatar" else "Account avatar",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(42.dp)
                     )
                 }
@@ -154,7 +155,8 @@ fun AccountScreen(
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                         modifier = Modifier.size(58.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -162,7 +164,7 @@ fun AccountScreen(
                                 (user?.email ?: email).firstOrNull()?.uppercaseChar()?.toString() ?: "S",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
