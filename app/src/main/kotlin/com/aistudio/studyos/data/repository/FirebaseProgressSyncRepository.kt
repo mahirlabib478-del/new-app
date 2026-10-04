@@ -93,6 +93,9 @@ class FirebaseProgressSyncRepository(
         val user = auth.currentUser ?: throw IllegalStateException("Sign in before syncing progress.")
         if (!user.isEmailVerified) throw IllegalStateException("Verify your email before syncing progress.")
         val uid = user.uid
+        // A manual restore attempt invalidates prior upload authorization until this
+        // restore safely completes; failures must not re-enable uploads on next launch.
+        ownershipPrefs.edit().remove(ownerKey(uid)).apply()
         val ref = firestore.collection("users").document(uid).collection("progress").document("current")
         val cloud = ref.get().asSuspendResult().data ?: run {
             if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
@@ -228,6 +231,9 @@ class FirebaseProgressSyncRepository(
         val uid = user.uid
         if (!user.isEmailVerified) throw IllegalStateException("Verify your email before syncing progress.")
         cloudUploadUid = null
+        // If the initial-backup attempt fails or finds an existing cloud document,
+        // keep uploads disabled rather than letting a stale link overwrite that data.
+        ownershipPrefs.edit().remove(ownerKey(uid)).apply()
 
         val plans = database.studyPlanDao().getAllForBackup()
         val exams = database.examDao().getAllForBackup()
