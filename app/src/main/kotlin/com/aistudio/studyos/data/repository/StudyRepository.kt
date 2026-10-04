@@ -10,10 +10,9 @@ import com.aistudio.studyos.data.local.entity.StudyPlanItemCodec
 import androidx.room.withTransaction
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
 import kotlinx.coroutines.flow.Flow
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.LocalDate
 
 data class SpinWheelReward(val slotIndex: Int, val label: String, val xp: Int = 0)
 data class SpinWheelStatus(val unlocked: Boolean, val spinsUsed: Int, val remainingMs: Long)
@@ -22,6 +21,30 @@ class StudyRepository(
     private val database: StudyDatabase,
     private val themePreferences: ThemePreferences
 ) {
+    // Serializes streak reconciliation so startup and a completed session cannot
+    // consume the same shield twice.
+    private val streakMutex = Mutex()
+
+    private fun resolveStreakGap(profile: UserProfileEntity, today: LocalDate): UserProfileEntity {
+        val resolution = StreakShieldCalculator.resolve(
+            streakDays = profile.streakDays,
+            lastActiveDate = profile.lastActiveDate,
+            today = today,
+            availableShields = themePreferences.getStreakShieldCount()
+        )
+
+        if (resolution.shieldsToConsume > 0) {
+            val remaining = (themePreferences.getStreakShieldCount() - resolution.shieldsToConsume)
+                .coerceAtLeast(0)
+            themePreferences.setStreakShieldCount(remaining)
+            themePreferences.setLastShieldSavedDate(today.toString())
+        }
+
+        return profile.copy(
+            streakDays = resolution.streakDays,
+            lastActiveDate = resolution.lastActiveDate
+        )
+    }
 
     fun getInitialTheme(): String = themePreferences.getThemePreset()
 
@@ -168,59 +191,38 @@ class StudyRepository(
     fun getUserProfile(): Flow<UserProfileEntity?> = database.userProfileDao().getProfile()
 
     suspend fun ensureCleanInitialData() {
-        val profile = database.userProfileDao().getProfileSync()
         val currentSavedTheme = themePreferences.getThemePreset()
-        if (profile == null) {
-            database.userProfileDao().insertOrUpdate(
-                UserProfileEntity(
-                    id = 1,
-                    streakDays = 0,
-                    totalStudyMinutes = 0,
-                    totalXP = 0,
-                    currentLevel = 1,
-                    dailyGoalMinutes = 60,
-                    themePreset = currentSavedTheme,
-                    lastActiveDate = ""
+        streakMutex.withLock {
+            val profile = database.userProfileDao().getProfileSync()
+            if (profile == null) {
+                database.userProfileDao().insertOrUpdate(
+                    UserProfileEntity(
+                        id = 1,
+                        streakDays = 0,
+                        totalStudyMinutes = 0,
+                        totalXP = 0,
+                        currentLevel = 1,
+                        dailyGoalMinutes = 60,
+                        themePreset = currentSavedTheme,
+                        lastActiveDate = ""
+                    )
                 )
-            )
-        } else {
-            if (profile.themePreset.isNotBlank() && profile.themePreset != currentSavedTheme) {
-                themePreferences.setThemePreset(profile.themePreset)
-            }
-            // Check if streak was broken (last active date was before yesterday)
-            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            val todayStr = sdf.format(Date())
-            val cal = Calendar.getInstance()
-            cal.add(Calendar.DAY_OF_YEAR, -1)
-            val yesterdayStr = sdf.format(cal.time)
+            } else {
+                if (profile.themePreset.isNotBlank() && profile.themePreset != currentSavedTheme) {
+                    themePreferences.setThemePreset(profile.themePreset)
+                }
 
-            if (profile.lastActiveDate.isNotBlank() &&
-                profile.lastActiveDate != todayStr &&
-                profile.lastActiveDate != yesterdayStr &&
-                profile.streakDays > 0
-            ) {
-                // Check if user has an active Streak Shield
-                val currentShields = themePreferences.getStreakShieldCount()
-                if (currentShields > 0) {
-                    // Consume 1 streak shield and protect the streak!
-                    themePreferences.setStreakShieldCount(currentShields - 1)
-                    themePreferences.setLastShieldSavedDate(todayStr)
-                    // Keep streak intact, advance lastActiveDate to yesterday so it won't break again today
-                    database.userProfileDao().insertOrUpdate(
-                        profile.copy(lastActiveDate = yesterdayStr)
-                    )
-                } else {
-                    // Streak broken because more than 1 day missed without studying and no shield
-                    database.userProfileDao().insertOrUpdate(
-                        profile.copy(streakDays = 0)
-                    )
+                // Reconcile the entire missed calendar-day gap, not just a stale/today flag.
+                val resolvedProfile = resolveStreakGap(profile, LocalDate.now())
+                if (resolvedProfile != profile) {
+                    database.userProfileDao().insertOrUpdate(resolvedProfile)
                 }
             }
-
-            // Do not infer that real user data is test/seed data from numeric values.
-            // Older builds used a dummy-data cleanup heuristic here; that could erase
-            // legitimate progress after an update if a user happened to match those values.
         }
+
+        // Do not infer that real user data is test/seed data from numeric values.
+        // Older builds used a dummy-data cleanup heuristic here; that could erase
+        // legitimate progress after an update if a user happened to match those values.
     }
 
     suspend fun updatePlanProgress(planId: Long, blockIndex: Int, isCompleted: Boolean) {
@@ -476,51 +478,50 @@ class StudyRepository(
         currentCached.add(0, log.copy(id = insertedId))
         themePreferences.setCachedRecentSessions(currentCached.take(15))
 
-        val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
-            id = 1,
-            streakDays = 0,
-            totalStudyMinutes = 0,
-            totalXP = 0,
-            currentLevel = 1,
-            dailyGoalMinutes = 60,
-            themePreset = ThemeCatalog.DEFAULT_THEME
-        )
-        val newTotalMinutes = currentProfile.totalStudyMinutes + durationMinutes
-        val newTotalXP = currentProfile.totalXP + xpGained
-        val newTotalXpEarned = currentProfile.totalXpEarned + xpGained
+        streakMutex.withLock {
+            val currentProfile = database.userProfileDao().getProfileSync() ?: UserProfileEntity(
+                id = 1,
+                streakDays = 0,
+                totalStudyMinutes = 0,
+                totalXP = 0,
+                currentLevel = 1,
+                dailyGoalMinutes = 60,
+                themePreset = ThemeCatalog.DEFAULT_THEME
+            )
+            val today = LocalDate.now()
+            val todayStr = today.toString()
+            // The same gap resolver is used at startup and when a study session
+            // finishes, so keeping the app open cannot bypass shield logic.
+            val resolvedProfile = resolveStreakGap(currentProfile, today)
+            val yesterdayStr = today.minusDays(1).toString()
 
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val todayStr = sdf.format(Date())
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.DAY_OF_YEAR, -1)
-        val yesterdayStr = sdf.format(cal.time)
+            val updatedStreak = when {
+                resolvedProfile.lastActiveDate == todayStr -> {
+                    // Already studied today, maintain existing streak.
+                    if (resolvedProfile.streakDays <= 0) 1 else resolvedProfile.streakDays
+                }
+                resolvedProfile.lastActiveDate == yesterdayStr -> {
+                    // Consecutive day, including a gap protected by enough shields.
+                    resolvedProfile.streakDays + 1
+                }
+                else -> {
+                    // First study day or an unprotected gap: restart at one.
+                    1
+                }
+            }
 
-        val updatedStreak = when {
-            currentProfile.lastActiveDate == todayStr -> {
-                // Already studied today, maintain existing streak
-                if (currentProfile.streakDays <= 0) 1 else currentProfile.streakDays
-            }
-            currentProfile.lastActiveDate == yesterdayStr -> {
-                // Consecutive day! Increment streak
-                currentProfile.streakDays + 1
-            }
-            else -> {
-                // First day or streak was broken, restart at 1
-                1
-            }
+            val candidateProfile = resolvedProfile.copy(
+                totalStudyMinutes = resolvedProfile.totalStudyMinutes + durationMinutes,
+                totalXP = resolvedProfile.totalXP + xpGained,
+                totalXpEarned = resolvedProfile.totalXpEarned + xpGained,
+                currentLevel = resolvedProfile.currentLevel,
+                totalXpSpent = resolvedProfile.totalXpSpent,
+                streakDays = updatedStreak,
+                lastActiveDate = todayStr
+            )
+            val newLevel = levelAfterMissionCheck(candidateProfile)
+            saveLevelCheckedProfile(candidateProfile, newLevel)
         }
-
-        val candidateProfile = currentProfile.copy(
-            totalStudyMinutes = newTotalMinutes,
-            totalXP = newTotalXP,
-            totalXpEarned = newTotalXpEarned,
-            currentLevel = currentProfile.currentLevel,
-            totalXpSpent = currentProfile.totalXpSpent,
-            streakDays = updatedStreak,
-            lastActiveDate = todayStr
-        )
-        val newLevel = levelAfterMissionCheck(candidateProfile)
-        saveLevelCheckedProfile(candidateProfile, newLevel)
     }
 
     // ==========================================
