@@ -139,7 +139,7 @@ fun AccountScreen(
                     ) { Text("Create initial cloud backup") }
                     }
                     OutlinedButton(
-                        onClick = { repository.signOut(); message = "Signed out." },
+                        onClick = { scope.launch { cloudSync?.syncNowBeforeSignOut(); repository.signOut(); message = "Signed out." } },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Sign out") }
                     LaunchedEffect(user?.uid) { onVerified() }
