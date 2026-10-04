@@ -129,7 +129,7 @@ private val THEME_OPTIONS = listOf(
     ThemeOption("dark", "Dark", Icons.Default.DarkMode, Color(0xFF64748B)),
     ThemeOption("light", "Light", Icons.Default.WbSunny, Color(0xFF2563EB)),
     ThemeOption("ocean", "Ocean Dark", Icons.Default.Water, Color(0xFF0284C7)),
-    ThemeOption("mint", "Mint Fresh", Icons.Default.Spa, Color(0xFF0D9488)),
+    ThemeOption("learning_green", "Learning Green", Icons.Default.Eco, Color(0xFF58CC02)),
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C)),
     ThemeOption("cyberpunk", "Cyberpunk / Synthwave 80s", Icons.Default.Bolt, Color(0xFFFF2A85)),
     ThemeOption("cyber_runner", "Mirror's Edge / Cyber Runner", Icons.Default.Bolt, Color(0xFFEF4444)),
