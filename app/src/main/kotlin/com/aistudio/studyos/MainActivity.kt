@@ -150,7 +150,6 @@ class MainActivity : ComponentActivity() {
                         onStartDestinationConsumed = {
                             if (returnToProfileAfterAuth) {
                                 pendingAuthPrefs.edit().putBoolean("return_to_profile", false).apply()
-                                returnToProfileAfterAuth = false
                             }
                         },
                         onAccountVerified = {
@@ -259,6 +258,12 @@ fun MainApp(
     val showBottomBar = !isNavigatingToFocus && (currentRoute == null || isAtBottomNav)
     val focusState by viewModel.focusState.collectAsState()
     val showMiniBar = !isNavigatingToFocus && isAtBottomNav && currentRoute != Screen.Focus.route && focusState.planId != null
+
+    LaunchedEffect(startDestination) {
+        if (startDestination == Screen.Profile.route) {
+            onStartDestinationConsumed()
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
