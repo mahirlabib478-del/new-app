@@ -33,7 +33,8 @@ fun AccountScreen(
     onForgotPassword: () -> Unit,
     onVerified: () -> Unit = {},
     onContinueAsGuest: () -> Unit = {},
-    showBackButton: Boolean = true
+    showBackButton: Boolean = true,
+    showContinueAsGuest: Boolean = true
 ) {
     val context = LocalContext.current
     val repository = remember { FirebaseAccountRepository() }
@@ -61,12 +62,12 @@ fun AccountScreen(
             .imePadding()
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (showBackButton) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 0.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
@@ -241,7 +242,7 @@ fun AccountScreen(
                 message?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
             }
         }
-        if (user == null && !verificationPending) {
+        if (user == null && !verificationPending && showContinueAsGuest) {
             TextButton(
                 onClick = onForgotPassword,
                 modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")
