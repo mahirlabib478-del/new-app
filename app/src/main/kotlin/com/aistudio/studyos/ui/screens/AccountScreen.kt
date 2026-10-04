@@ -48,6 +48,7 @@ fun AccountScreen(
     var confirmAction by remember { mutableStateOf<String?>(null) }
     var confirmImport by remember { mutableStateOf(false) }
     var confirmSignOutAnyway by remember { mutableStateOf(false) }
+    var confirmProgressMerge by remember { mutableStateOf(false) }
     var signOutFailureMessage by remember { mutableStateOf<String?>(null) }
     var pendingVerifiedNavigation by remember { mutableStateOf(false) }
     var showAdvancedSync by remember { mutableStateOf(false) }
@@ -142,6 +143,27 @@ fun AccountScreen(
                     Text(user?.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                     Text("You're all set. Your personal study space is ready.", style = MaterialTheme.typography.bodyMedium)
                     Text("Cloud sync: " + syncStatus, style = MaterialTheme.typography.bodySmall, color = if (syncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(
+                        onClick = { showAdvancedSync = !showAdvancedSync },
+                        enabled = !busy,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (showAdvancedSync) "Hide progress sync options" else "Progress sync options")
+                    }
+                    if (showAdvancedSync) {
+                        Text(
+                            "If this device and the cloud both have progress, merge adds missing cloud records without replacing existing local rows. This device's theme and settings are kept. The merged progress is then uploaded to your account.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedButton(
+                            onClick = { confirmProgressMerge = true },
+                            enabled = !busy,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Review & merge progress", maxLines = 1, softWrap = false)
+                        }
+                    }
                     OutlinedButton(
                         onClick = {
                             if (!busy) {
@@ -360,6 +382,46 @@ fun AccountScreen(
                         onVerified()
                     }
                 }) { Text("Skip for now", maxLines = 1, softWrap = false, fontSize = 12.sp) }
+            }
+        )
+    }
+
+    if (confirmProgressMerge) {
+        AlertDialog(
+            onDismissRequest = { if (!busy) confirmProgressMerge = false },
+            title = { Text("Merge local and cloud progress?") },
+            text = {
+                Text(
+                    "StudyOS will add cloud study plans, exams and sessions that are not already on this device, reconcile progress totals, and upload the merged result. Existing local records will not be replaced. This device's theme and settings will be kept. If upload fails after the local merge, your merged local data remains and you can retry sync."
+                )
+            },
+            confirmButton = {
+                Button(
+                    enabled = !busy,
+                    onClick = {
+                        confirmProgressMerge = false
+                        busy = true
+                        message = null
+                        scope.launch {
+                            try {
+                                val sync = cloudSync
+                                    ?: throw IllegalStateException("Cloud sync is unavailable. Please retry later.")
+                                message = sync.mergeCloudIntoLocalAndUpload()
+                            } catch (e: Exception) {
+                                message = e.localizedMessage
+                                    ?: "Merge could not be completed. Your local progress has not been intentionally deleted."
+                            } finally {
+                                busy = false
+                            }
+                        }
+                    }
+                ) { Text(if (busy) "Merging…" else "Merge & upload") }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !busy,
+                    onClick = { confirmProgressMerge = false }
+                ) { Text("Cancel") }
             }
         )
     }
