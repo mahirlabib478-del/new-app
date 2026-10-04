@@ -56,7 +56,7 @@ private val CyberRunnerColorScheme = lightColorScheme(
     surface = CyberRunnerSurface,
     onSurface = CyberRunnerCarbon,
     surfaceVariant = Color(0xFFF4F4F5),
-    onSurfaceVariant = Color(0xFF52525B),
+    onSurfaceVariant = Color(0xFF44444B),
     outline = Color(0xFFD4D4D8),
     outlineVariant = Color(0xFFE4E4E7)
 )
@@ -91,7 +91,7 @@ private val LearningGreenColorScheme = lightColorScheme(
     surface = LearningGreenSurface,
     onSurface = Color(0xFF2B2B2B),
     surfaceVariant = Color(0xFFE7EBDD),
-    onSurfaceVariant = Color(0xFF5A5A5A),
+    onSurfaceVariant = Color(0xFF454A42),
     outline = Color(0xFFBFCDB4),
     outlineVariant = Color(0xFFDDE3D5)
 )
@@ -110,7 +110,7 @@ private val SunriseColorScheme = lightColorScheme(
     surface = SunriseSurface,
     onSurface = Color(0xFF292524),
     surfaceVariant = Color(0xFFF0E6D9),
-    onSurfaceVariant = Color(0xFF57534E),
+    onSurfaceVariant = Color(0xFF49433D),
     outline = Color(0xFFE0C4A8),
     outlineVariant = Color(0xFFE9DED1)
 )
@@ -146,7 +146,7 @@ private val LightColorScheme = lightColorScheme(
     surface = Color(0xFFF8F9F5),
     onSurface = Color(0xFF242820),
     surfaceVariant = Color(0xFFE7EAE3),
-    onSurfaceVariant = Color(0xFF62695F),
+    onSurfaceVariant = Color(0xFF454C42),
     outline = Color(0xFFD0D6CB),
     outlineVariant = Color(0xFFDEE3D9)
 )
