@@ -720,7 +720,9 @@ fun ProfileScreen(
                                             customWallpaperUri != null -> "Change Photo"
                                             else -> "Pick from Gallery"
                                         },
-                                        fontSize = 12.sp
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        softWrap = false
                                     )
                                 }
 
