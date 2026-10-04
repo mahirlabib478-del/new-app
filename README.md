@@ -14,7 +14,7 @@ Study OS is designed around three core study modes:
 
 ## Architecture
 
-- **Jetpack Compose & Material 3**: Fluid UI with dynamic theming (Pitch Black, Dark, Light, Ocean, Learning Green, Sunrise, Cyberpunk / Synthwave 80s, and Mirror's Edge / Cyber Runner).
+- **Jetpack Compose & Material 3**: Fluid UI with dynamic theming (Pitch Black, Obsidian Gold, Light, Sky Night, Learning Green, Sunrise, Cyberpunk / Synthwave 80s, and Mirror's Edge / Cyber Runner).
 - **Room SQLite Local Persistence**: 100% offline-first local storage for study plans, exams, session logs, streaks, and user profile.
 - **Synthesized Ambient Audio**: Real-time noise and binaural tone generator using Android AudioTrack (White Noise, Gentle Rain, Deep Focus 196Hz Sine wave, Forest Stream).
 - **Gamification & Habit Engine**: XP gain per study minute, scholar levels, daily study targets, and streak tracking.
