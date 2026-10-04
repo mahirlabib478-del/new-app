@@ -1,12 +1,12 @@
 package com.aistudio.studyos.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.CloudDone
@@ -55,36 +55,17 @@ fun AccountScreen(
     Column(
         Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack, modifier = Modifier.size(44.dp)) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "ACCOUNT",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        Spacer(Modifier.height(8.dp))
         if (!verificationPending && user == null) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(30.dp))
             Surface(
-                shape = RoundedCornerShape(22.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
             ) {
                 Icon(
                     Icons.Default.School,
@@ -109,8 +90,8 @@ fun AccountScreen(
             Text(if (verified) "Your StudyOS account" else "Verify your email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(if (verified) "Your study data is ready and private to your account." else "Verify once to keep your study progress linked to your account.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Spacer(Modifier.height(28.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Spacer(Modifier.height(32.dp))
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -291,9 +272,10 @@ fun AccountScreen(
             }
         }
         if (user == null && !verificationPending) {
-            TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")) {
-                Icon(Icons.Default.Security, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
+            TextButton(
+                onClick = onForgotPassword,
+                modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")
+            ) {
                 Text("Forgot password?")
             }
         }
