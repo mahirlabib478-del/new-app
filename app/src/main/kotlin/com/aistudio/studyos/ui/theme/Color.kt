@@ -20,10 +20,10 @@ val SkyNightAccent = Color(0xFF38BDF8)
 // Light Themes
 val PaperBg = Color(0xFFF7F4EB)
 val PaperSurface = Color(0xFFEFE9DB)
-val LearningGreenBg = Color(0xFFFFFDF5)
-val LearningGreenSurface = Color(0xFFFFFFFF)
-val SunriseBg = Color(0xFFFFF7ED)
-val SunriseSurface = Color(0xFFFFEDD5)
+val LearningGreenBg = Color(0xFFF1F4EB)
+val LearningGreenSurface = Color(0xFFF8FAF4)
+val SunriseBg = Color(0xFFF6F1EA)
+val SunriseSurface = Color(0xFFFBF7F1)
 val SunriseAccent = Color(0xFFEA580C)
 
 // Cyberpunk / Synthwave 80s Theme
@@ -33,8 +33,8 @@ val CyberpunkPink = Color(0xFFFF2A85)
 val CyberpunkCyan = Color(0xFF00F0FF)
 
 // Mirror's Edge / Cyber Runner Theme
-val CyberRunnerBg = Color(0xFFFAFAFA)
-val CyberRunnerSurface = Color(0xFFFFFFFF)
+val CyberRunnerBg = Color(0xFFF0F1EF)
+val CyberRunnerSurface = Color(0xFFF8F9F6)
 val CyberRunnerRed = Color(0xFFEF4444)
 val CyberRunnerCyan = Color(0xFF00F0FF)
 val CyberRunnerCarbon = Color(0xFF18181B)
