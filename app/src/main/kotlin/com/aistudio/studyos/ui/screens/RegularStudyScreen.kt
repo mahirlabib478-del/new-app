@@ -1,6 +1,8 @@
 package com.aistudio.studyos.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -104,13 +106,13 @@ fun RegularStudyScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     PRESET_SUBJECTS.take(3).forEach { sub ->
                         Card(
                             modifier = Modifier
-                                .weight(1f)
+                                .width(108.dp)
                                 .clickable { subject = sub },
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
@@ -127,6 +129,8 @@ fun RegularStudyScreen(
                             ) {
                                 Text(
                                     text = sub,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                     fontSize = 12.sp,
                                     fontWeight = if (subject == sub) FontWeight.Bold else FontWeight.Normal,
                                     color = if (subject == sub) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -286,7 +290,10 @@ fun RegularStudyScreen(
                     Text(
                         text = "Start Session (${selectedDuration * totalBlocks} mins total)",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
 
@@ -315,7 +322,7 @@ fun RegularStudyScreen(
                 ) {
                     Icon(Icons.Default.Bookmark, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Save to Draft Sessions", fontWeight = FontWeight.SemiBold)
+                    Text("Save Draft", fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                 }
 
                 Spacer(modifier = Modifier.height(30.dp))
