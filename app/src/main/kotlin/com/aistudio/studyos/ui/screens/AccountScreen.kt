@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.repository.EmailNotVerifiedException
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import com.aistudio.studyos.data.repository.LegacyProgressImportRepository
@@ -139,7 +140,9 @@ fun AccountScreen(
                     OutlinedButton(
                         onClick = { scope.launch { cloudSync?.syncNowBeforeSignOut(); repository.signOut(); message = "Signed out." } },
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Sign out") }
+                    ) {
+                        Text("Sign out", maxLines = 1, softWrap = false)
+                    }
                 } else if (verificationPending || user != null) {
                     Text(user?.email ?: email, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -177,7 +180,9 @@ fun AccountScreen(
                         },
                         enabled = !busy,
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("I've verified my email — Refresh") }
+                    ) {
+                        Text("I've verified — Refresh status", maxLines = 1, softWrap = false, fontSize = 13.sp)
+                    }
                     OutlinedButton(
                         onClick = {
                             busy = true
@@ -193,7 +198,9 @@ fun AccountScreen(
                         },
                         enabled = !busy && user != null && !verified,
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Resend verification email") }
+                    ) {
+                        Text("Resend verification email", maxLines = 1, softWrap = false, fontSize = 14.sp)
+                    }
                     TextButton(
                         onClick = { repository.signOut(); verificationPending = false; password = ""; message = "Signed out." },
                         modifier = Modifier.fillMaxWidth()
@@ -219,19 +226,29 @@ fun AccountScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Full-width actions avoid label wrapping on narrow phones and large font settings.
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         Button(
                             onClick = { confirmAction = "login" },
                             enabled = !busy && email.contains("@") && password.isNotEmpty(),
-                            modifier = Modifier.weight(1f).height(50.dp).testTag("btn_login"),
-                            shape = RoundedCornerShape(14.dp)
-                        ) { Text("Log In") }
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp).testTag("btn_login"),
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            Text("Log In", maxLines = 1, softWrap = false)
+                        }
                         OutlinedButton(
                             onClick = { confirmAction = "create" },
                             enabled = !busy && email.contains("@") && password.length >= 6,
-                            modifier = Modifier.weight(1f).height(50.dp).testTag("btn_create_account"),
-                            shape = RoundedCornerShape(14.dp)
-                        ) { Text("Create Account") }
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp).testTag("btn_create_account"),
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            Text("Create Account", maxLines = 1, softWrap = false)
+                        }
                     }
                     Text("Password must be at least 6 characters for a new account.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton(
@@ -239,7 +256,9 @@ fun AccountScreen(
                         enabled = !busy,
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(16.dp)
-                    ) { Text("Continue as guest") }
+                    ) {
+                        Text("Continue as guest", maxLines = 1, softWrap = false)
+                    }
                     Text(
                         "Start studying without an account. You can create one later and choose whether to import this device's progress.",
                         style = MaterialTheme.typography.bodySmall,
@@ -304,7 +323,7 @@ fun AccountScreen(
                             } finally { busy = false }
                         }
                     }
-                ) { Text("Import progress") }
+                ) { Text("Import progress", maxLines = 1, softWrap = false) }
             },
             dismissButton = {
                 TextButton(onClick = {
@@ -313,7 +332,7 @@ fun AccountScreen(
                         pendingVerifiedNavigation = false
                         onVerified()
                     }
-                }) { Text("Skip for now") }
+                }) { Text("Skip for now", maxLines = 1, softWrap = false, fontSize = 12.sp) }
             }
         )
     }
