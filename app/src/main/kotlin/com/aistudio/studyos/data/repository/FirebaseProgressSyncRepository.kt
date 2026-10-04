@@ -277,6 +277,62 @@ class FirebaseProgressSyncRepository(
     private fun Map<String, Any?>.toProfile() = UserProfileEntity(id=i("id",1), streakDays=i("streakDays"), totalStudyMinutes=i("totalStudyMinutes"), totalXP=i("totalXP"), totalXpSpent=i("totalXpSpent"), totalXpEarned=i("totalXpEarned"), levelStartStudyMinutes=i("levelStartStudyMinutes"), levelStartXpEarned=i("levelStartXpEarned"), levelStartXpSpent=i("levelStartXpSpent"), levelStartedAtMillis=n("levelStartedAtMillis"), currentLevel=i("currentLevel",1), dailyGoalMinutes=i("dailyGoalMinutes",60), themePreset=s("themePreset"), lastActiveDate=s("lastActiveDate"))
 
     /**
+     * Runs on every verified sign-in/app start. Existing cloud data is restored to a
+     * truly empty account database. If no cloud document exists, safely create the
+     * first snapshot automatically instead of requiring the user to find a backup button.
+     */
+    suspend fun bootstrapOnVerifiedSignIn(): String {
+        val user = auth.currentUser
+            ?: throw IllegalStateException("Sign in before syncing progress.")
+        if (!user.isEmailVerified) throw IllegalStateException("Verify your email before syncing progress.")
+        val uid = user.uid
+        val ref = firestore.collection("users").document(uid)
+            .collection("progress").document("current")
+        val remote = ref.get().asSuspendResult()
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            throw IllegalStateException("Account changed during cloud sync. Please retry.")
+        }
+        if (!remote.exists()) {
+            // createInitialCloudBackup uses a Firestore transaction and refuses to
+            // overwrite a document created by a concurrent device.
+            return createInitialCloudBackup()
+        }
+
+        val localPlans = database.studyPlanDao().getAllForBackup()
+        val localExams = database.examDao().getAllForBackup()
+        val localSessions = database.sessionLogDao().getAllForBackup()
+        val localProfiles = database.userProfileDao().getAllForBackup()
+        val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() ||
+            localSessions.isNotEmpty() || localProfiles.any {
+                it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
+            }
+        if (!hasLocal) {
+            val result = restoreIfLocalEmpty()
+            // An existing but empty cloud snapshot is still a safe account-owned
+            // starting point; enable uploads only after confirming this same UID.
+            if (auth.currentUser?.uid == uid && auth.currentUser?.isEmailVerified == true &&
+                result.startsWith("The cloud document has no progress records.")
+            ) {
+                ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
+                cloudUploadUid = uid
+                _syncStatus.value = "Sync ready"
+                return "Cloud account connected. Automatic sync is enabled."
+            }
+            return result
+        }
+
+        if (ownershipPrefs.getBoolean(ownerKey(uid), false) && auth.currentUser?.uid == uid) {
+            cloudUploadUid = uid
+            scheduleSnapshotUpload()
+            return "Cloud sync connected. Checking latest progress…"
+        }
+
+        cloudUploadUid = null
+        _syncStatus.value = "Progress needs reconciliation"
+        return "This device and cloud both contain progress. Nothing was overwritten. Use Restore only on an empty device, or explicitly resolve the copies before enabling sync."
+    }
+
+    /**
      * Creates the first cloud backup only when no cloud document exists.
      * Existing cloud data is never overwritten by this action.
      */
