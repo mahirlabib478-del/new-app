@@ -954,7 +954,10 @@ fun ProfileScreen(
                                 "Every day at %02d:%02d",
                                 reminderHour,
                                 reminderMinute
-                            )
+                            ),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
                 }
