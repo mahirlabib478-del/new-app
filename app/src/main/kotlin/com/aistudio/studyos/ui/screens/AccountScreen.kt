@@ -45,6 +45,7 @@ fun AccountScreen(
     var message by remember { mutableStateOf<String?>(null) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
     var confirmImport by remember { mutableStateOf(false) }
+    var pendingVerifiedNavigation by remember { mutableStateOf(false) }
     var showAdvancedSync by remember { mutableStateOf(false) }
     var verificationPending by remember { mutableStateOf(repository.currentUser?.isEmailVerified == false) }
     val user = repository.currentUser
@@ -139,7 +140,6 @@ fun AccountScreen(
                         onClick = { scope.launch { cloudSync?.syncNowBeforeSignOut(); repository.signOut(); message = "Signed out." } },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Sign out") }
-                    LaunchedEffect(user?.uid) { onVerified() }
                 } else if (verificationPending || user != null) {
                     Text(user?.email ?: email, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -154,9 +154,18 @@ fun AccountScreen(
                                 try {
                                     val refreshed = repository.refreshCurrentUser()
                                     if (refreshed?.isEmailVerified == true) {
-                                        verificationPending = false
-                                        message = "Email verified."
-                                        onVerified()
+                                        val importer = LegacyProgressImportRepository(context, refreshed.uid)
+                                        if (importer.hasLegacyProgress()) {
+                                            // Ask first; do not leave the account screen until the user chooses.
+                                            pendingVerifiedNavigation = true
+                                            verificationPending = false
+                                            message = "Email verified. Choose whether to import your guest progress."
+                                            confirmImport = true
+                                        } else {
+                                            verificationPending = false
+                                            message = "Email verified."
+                                            onVerified()
+                                        }
                                     } else {
                                         verificationPending = true
                                         message = "Email is not verified yet. Check your inbox and spam folder."
@@ -254,7 +263,13 @@ fun AccountScreen(
 
     if (confirmImport) {
         AlertDialog(
-            onDismissRequest = { confirmImport = false },
+            onDismissRequest = {
+                confirmImport = false
+                if (pendingVerifiedNavigation) {
+                    pendingVerifiedNavigation = false
+                    onVerified()
+                }
+            },
             title = { Text("Import old local progress?") },
             text = {
                 Text("This copies existing study plans, exams, study sessions and progress totals from this device into the currently signed-in account. The old local records will not be deleted. Import is cancelled if this account already contains study records.")
@@ -274,19 +289,31 @@ fun AccountScreen(
                                 }
                                 val summary = LegacyProgressImportRepository(context, uid).importLegacyProgress()
                                 message = if (summary.isEmpty) {
-                                    "No existing local progress was found to import."
+                                    "No existing guest progress was found to import."
                                 } else {
-                                    "Import complete: ${summary.plans} plans, ${summary.exams} exams and ${summary.sessions} study sessions copied. Old local data was kept."
+                                    "Import complete: ${summary.plans} plans, ${summary.exams} exams and ${summary.sessions} study sessions copied. Old guest data was kept."
+                                }
+                                if (pendingVerifiedNavigation) {
+                                    pendingVerifiedNavigation = false
+                                    onVerified()
                                 }
                             } catch (e: Exception) {
                                 message = e.localizedMessage ?: "Import failed. Existing data was not intentionally deleted."
+                                // Keep the decision available so the user can retry or skip safely.
+                                if (pendingVerifiedNavigation) confirmImport = true
                             } finally { busy = false }
                         }
                     }
                 ) { Text("Import progress") }
             },
             dismissButton = {
-                TextButton(onClick = { confirmImport = false }) { Text("Cancel") }
+                TextButton(onClick = {
+                    confirmImport = false
+                    if (pendingVerifiedNavigation) {
+                        pendingVerifiedNavigation = false
+                        onVerified()
+                    }
+                }) { Text("Skip for now") }
             }
         )
     }
