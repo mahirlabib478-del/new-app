@@ -73,7 +73,7 @@ private val THEME_PRESET_LIST = listOf(
     Triple("obsidian_gold", "Obsidian Gold", Color(0xFFFFD60A)),
     Triple("light", "Light", Color(0xFF2563EB)),
     Triple("sky_night", "Sky Night", Color(0xFF38BDF8)),
-    Triple("learning_green", "Learning Green", Color(0xFF46B800)),
+    Triple("learning_green", "Learning Green", Color(0xFF4CAF00)),
     Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C)),
     Triple("cyberpunk", "Cyberpunk / Synthwave 80s", Color(0xFFFF2A85)),
     Triple("cyber_runner", "Mirror's Edge / Cyber Runner", Color(0xFFEF4444)),
