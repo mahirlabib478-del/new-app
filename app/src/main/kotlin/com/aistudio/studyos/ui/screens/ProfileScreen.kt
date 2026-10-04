@@ -1249,7 +1249,14 @@ fun ProfileScreen(
                             try {
                                 if (action == "login") accountRepository.signIn(accountEmail, accountPassword)
                                 else accountRepository.createAccount(accountEmail, accountPassword)
-                                val syncResult = (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.restoreIfLocalEmpty()
+                                val app = context.applicationContext as com.aistudio.studyos.StudyApplication
+                                val signedInUser = accountRepository.currentUser
+                                    ?: throw IllegalStateException("Firebase session is unavailable.")
+                                if (!signedInUser.isEmailVerified) {
+                                    throw IllegalStateException("Verify your email before syncing progress.")
+                                }
+                                app.activateCloudSync(signedInUser.uid)
+                                val syncResult = app.cloudSyncFor(signedInUser.uid).bootstrapOnVerifiedSignIn()
                                 accountMessage = (if (action == "login") "Signed in. " else "Account created. ") + syncResult
                             } catch (e: Exception) {
                                 accountMessage = e.localizedMessage ?: "Account action failed."
@@ -1277,7 +1284,12 @@ fun ProfileScreen(
                     accountMessage = null
                     accountScope.launch {
                         try {
-                            (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.createInitialCloudBackup()
+                            run {
+                                val uid = accountRepository.currentUser?.takeIf { it.isEmailVerified }?.uid
+                                    ?: throw IllegalStateException("Sign in with a verified email before linking progress.")
+                                (context.applicationContext as com.aistudio.studyos.StudyApplication)
+                                    .cloudSyncFor(uid).createInitialCloudBackup()
+                            }
                             accountMessage = "Initial cloud backup created. Existing local progress was kept."
                         } catch (e: Exception) {
                             accountMessage = e.localizedMessage ?: "Could not link progress."
@@ -1295,17 +1307,29 @@ fun ProfileScreen(
             title = { Text("Sign out of StudyOS?") },
             text = {
                 Text(
-                    "Your study records will remain on this device. Account-specific local storage is not yet available, so signing into a different account on this device may expose the same local records. Cloud sync will stay paused when ownership cannot be verified."
+                    "Your account's local study database is separate. Before signing out, StudyOS will try to upload the latest progress. If sync fails, sign-out will be cancelled so you can retry."
                 )
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        accountRepository.signOut()
-                        accountEmail = ""
-                        accountPassword = ""
-                        accountMessage = "Signed out. Local study data remains on this device."
-                        showSignOutDialog = false
+                        accountBusy = true
+                        accountScope.launch {
+                            try {
+                                val app = context.applicationContext as com.aistudio.studyos.StudyApplication
+                                val uid = accountRepository.currentUser?.uid
+                                if (uid != null) app.cloudSyncFor(uid).syncNowBeforeSignOut()
+                                accountRepository.signOut()
+                                accountEmail = ""
+                                accountPassword = ""
+                                accountMessage = "Signed out. Latest progress synced when cloud sync was enabled."
+                                showSignOutDialog = false
+                            } catch (e: Exception) {
+                                accountMessage = e.localizedMessage ?: "Cloud sync failed; you are still signed in. Please retry."
+                            } finally {
+                                accountBusy = false
+                            }
+                        }
                     },
                     modifier = Modifier.testTag("btn_confirm_sign_out")
                 ) { Text("Sign Out") }
