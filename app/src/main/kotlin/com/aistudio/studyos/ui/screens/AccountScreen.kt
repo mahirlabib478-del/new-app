@@ -6,6 +6,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,7 +28,8 @@ import kotlinx.coroutines.launch
 fun AccountScreen(
     onBack: () -> Unit,
     onForgotPassword: () -> Unit,
-    onVerified: () -> Unit = {}
+    onVerified: () -> Unit = {},
+    onContinueAsGuest: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val repository = remember { FirebaseAccountRepository() }
@@ -37,6 +40,7 @@ fun AccountScreen(
     var message by remember { mutableStateOf<String?>(null) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
     var confirmImport by remember { mutableStateOf(false) }
+    var showAdvancedSync by remember { mutableStateOf(false) }
     var verificationPending by remember { mutableStateOf(repository.currentUser?.isEmailVerified == false) }
     val user = repository.currentUser
     val verified = user?.isEmailVerified == true
@@ -44,7 +48,10 @@ fun AccountScreen(
         user?.uid?.let { (context.applicationContext as StudyApplication).cloudSyncFor(it) }
     }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         if (!verificationPending && user == null) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
@@ -59,7 +66,7 @@ fun AccountScreen(
         }
         Spacer(Modifier.height(22.dp))
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp)) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Text(
@@ -75,21 +82,25 @@ fun AccountScreen(
 
                 if (verified) {
                     Text(user?.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
-                    Text("Your email is verified. Your account-specific study data is ready.", style = MaterialTheme.typography.bodyMedium)
+                    Text("You're all set. Your personal study space is ready.", style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(
                         onClick = { confirmImport = true },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !busy
                     ) { Text("Import old local progress") }
                     Text(
-                        "Import is optional. Your old local records remain on this device; nothing is copied until you confirm.",
+                        "Only import if these records belong to you. Nothing is copied unless you confirm.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Divider()
-                    Text("Cloud backup", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    TextButton(onClick = { showAdvancedSync = !showAdvancedSync }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.CloudDone, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(if (showAdvancedSync) "Hide backup options" else "Backup & restore options")
+                    }
+                    if (showAdvancedSync) {
                     Text(
-                        "Cloud restore only fills an empty account database. Creating a backup will not overwrite an existing cloud backup.",
+                        "Use these only when moving progress between devices. Normal account sync is handled separately.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -125,10 +136,11 @@ fun AccountScreen(
                         enabled = !busy && verified,
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Create initial cloud backup") }
+                    }
                     OutlinedButton(
                         onClick = { repository.signOut(); message = "Signed out." },
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Sign Out") }
+                    ) { Text("Sign out") }
                     LaunchedEffect(user?.uid) { onVerified() }
                 } else if (verificationPending || user != null) {
                     Text(user?.email ?: email, style = MaterialTheme.typography.bodyLarge)
@@ -214,7 +226,18 @@ fun AccountScreen(
                             shape = RoundedCornerShape(14.dp)
                         ) { Text("Create Account") }
                     }
-                    Text("New account password must contain at least 6 characters.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Password must be at least 6 characters for a new account.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    OutlinedButton(
+                        onClick = onContinueAsGuest,
+                        enabled = !busy,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) { Text("Continue as guest") }
+                    Text(
+                        "Start studying without an account. You can create one later and choose whether to import this device's progress.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 if (busy) CircularProgressIndicator(Modifier.size(22.dp))
