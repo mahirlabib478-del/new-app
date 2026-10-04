@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.aistudio.studyos.data.repository.EmailNotVerifiedException
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import com.aistudio.studyos.data.repository.LegacyProgressImportRepository
+import com.aistudio.studyos.StudyApplication
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,6 +40,9 @@ fun AccountScreen(
     var verificationPending by remember { mutableStateOf(repository.currentUser?.isEmailVerified == false) }
     val user = repository.currentUser
     val verified = user?.isEmailVerified == true
+    val cloudSync = remember(user?.uid) {
+        user?.uid?.let { (context.applicationContext as StudyApplication).cloudSyncFor(it) }
+    }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
         if (!verificationPending && user == null) {
@@ -82,6 +86,45 @@ fun AccountScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Divider()
+                    Text("Cloud backup", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Cloud restore only fills an empty account database. Creating a backup will not overwrite an existing cloud backup.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            busy = true
+                            message = null
+                            scope.launch {
+                                try {
+                                    val sync = cloudSync ?: throw IllegalStateException("Account sync is unavailable.")
+                                    message = sync.restoreIfLocalEmpty()
+                                } catch (e: Exception) {
+                                    message = e.localizedMessage ?: "Cloud restore failed."
+                                } finally { busy = false }
+                            }
+                        },
+                        enabled = !busy && verified,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Restore cloud backup") }
+                    Button(
+                        onClick = {
+                            busy = true
+                            message = null
+                            scope.launch {
+                                try {
+                                    val sync = cloudSync ?: throw IllegalStateException("Account sync is unavailable.")
+                                    message = sync.createInitialCloudBackup()
+                                } catch (e: Exception) {
+                                    message = e.localizedMessage ?: "Cloud backup failed."
+                                } finally { busy = false }
+                            }
+                        },
+                        enabled = !busy && verified,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Create initial cloud backup") }
                     OutlinedButton(
                         onClick = { repository.signOut(); message = "Signed out." },
                         modifier = Modifier.fillMaxWidth()
