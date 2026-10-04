@@ -45,6 +45,12 @@ class StudyApplication : Application() {
         }
     }
 
+    fun activateCloudSync(uid: String) {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        if (user.uid != uid || !user.isEmailVerified) return
+        cloudSyncFor(uid).startAutomaticUpload(appScope)
+    }
+
     override fun onCreate() {
         super.onCreate()
         instance = this
