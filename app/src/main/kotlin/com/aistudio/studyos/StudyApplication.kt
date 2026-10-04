@@ -63,7 +63,7 @@ class StudyApplication : Application() {
             try {
                 sync.bootstrapOnVerifiedSignIn()
             } catch (error: Exception) {
-                sync.reportBootstrapFailure()
+                sync.reportBootstrapFailure(error)
                 android.util.Log.e("StudyOSCloudSync", "Cloud bootstrap failed for the active account", error)
             } finally {
                 synchronized(this@StudyApplication) { bootstrapInFlight.remove(uid) }
