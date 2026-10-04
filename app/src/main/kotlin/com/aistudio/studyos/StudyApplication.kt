@@ -43,7 +43,7 @@ class StudyApplication : Application() {
     fun cloudSyncFor(uid: String): FirebaseProgressSyncRepository {
         require(uid.isNotBlank()) { "A verified account UID is required for cloud sync." }
         return accountCloudSyncs.getOrPut(uid) {
-            FirebaseProgressSyncRepository(this, databaseFor(uid))
+            FirebaseProgressSyncRepository(this, databaseFor(uid), preferencesFor(uid))
         }
     }
 
