@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -147,9 +148,10 @@ fun StudyPlanBuilderScreen(
             )
         }
     ) { padding ->
+        val compactScreen = LocalConfiguration.current.screenWidthDp < 360
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(18.dp),
+            contentPadding = PaddingValues(if (compactScreen) 12.dp else 18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
