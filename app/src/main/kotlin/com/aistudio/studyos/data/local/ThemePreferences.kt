@@ -370,6 +370,14 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
         return (cooldownTotal - elapsed).coerceAtLeast(0L)
     }
 
+    fun registerCloudSyncListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterCloudSyncListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+    }
+
     /**
      * Export account-owned preference state to the account's Firestore snapshot.
      * Content URIs are metadata only; the underlying audio/wallpaper files need
