@@ -179,14 +179,6 @@ class MainActivity : ComponentActivity() {
                                 pendingAuthPrefs.edit().putBoolean("return_to_profile", false).apply()
                             }
                         },
-                        onAccountOpened = {
-                            // Keep Compose state and preferences in sync. Updating only
-                            // preferences leaves this composition with a stale Home destination.
-                            if (auth.currentUser == null && guestMode) {
-                                pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
-                                returnToProfileAfterAuth = true
-                            }
-                        },
                         onAccountVerified = {
                             // Refresh the root auth state and return a guest to Profile after
                             // a successful verified sign-in, rather than leaving them on Account.
@@ -446,7 +438,6 @@ fun MainApp(
     navController: NavHostController,
     startDestination: String = Screen.Home.route,
     onStartDestinationConsumed: () -> Unit = {},
-    onAccountOpened: () -> Unit = {},
     onAccountVerified: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -657,9 +648,6 @@ fun MainApp(
                 ProfileScreen(viewModel = viewModel, onOpenAccount = { navController.navigate(Screen.Account.route) })
             }
             composable(Screen.Account.route) {
-                LaunchedEffect(Unit) {
-                    onAccountOpened()
-                }
                 AccountScreen(
                     onBack = { navController.popBackStack() },
                     onForgotPassword = { navController.navigate(Screen.ResetPassword.route) },
