@@ -298,7 +298,7 @@ fun ProgressScreen(
                         ) {
                             Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp))
                             Text(
-                                if (allLogs.isNotEmpty()) "History & Logs (${allLogs.size})" else "History & Logs",
+                                "History",
                                 fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
                             )
                         }
