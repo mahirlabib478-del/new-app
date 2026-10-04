@@ -11,12 +11,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.aistudio.studyos.data.repository.EmailNotVerifiedException
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
+import com.aistudio.studyos.data.repository.LegacyProgressImportRepository
 import kotlinx.coroutines.launch
 
 @Composable
@@ -25,6 +27,7 @@ fun AccountScreen(
     onForgotPassword: () -> Unit,
     onVerified: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val repository = remember { FirebaseAccountRepository() }
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf(repository.currentUser?.email.orEmpty()) }
@@ -32,6 +35,7 @@ fun AccountScreen(
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
+    var confirmImport by remember { mutableStateOf(false) }
     var verificationPending by remember { mutableStateOf(repository.currentUser?.isEmailVerified == false) }
     val user = repository.currentUser
     val verified = user?.isEmailVerified == true
@@ -68,6 +72,16 @@ fun AccountScreen(
                 if (verified) {
                     Text(user?.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                     Text("Your email is verified. Your account-specific study data is ready.", style = MaterialTheme.typography.bodyMedium)
+                    OutlinedButton(
+                        onClick = { confirmImport = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !busy
+                    ) { Text("Import old local progress") }
+                    Text(
+                        "Import is optional. Your old local records remain on this device; nothing is copied until you confirm.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     OutlinedButton(
                         onClick = { repository.signOut(); message = "Signed out." },
                         modifier = Modifier.fillMaxWidth()
@@ -171,6 +185,45 @@ fun AccountScreen(
                 Text("Forgot password?")
             }
         }
+    }
+
+    if (confirmImport) {
+        AlertDialog(
+            onDismissRequest = { confirmImport = false },
+            title = { Text("Import old local progress?") },
+            text = {
+                Text("This copies existing study plans, exams, study sessions and progress totals from this device into the currently signed-in account. The old local records will not be deleted. Import is cancelled if this account already contains study records.")
+            },
+            confirmButton = {
+                Button(
+                    enabled = !busy,
+                    onClick = {
+                        confirmImport = false
+                        busy = true
+                        message = null
+                        val uid = user?.uid
+                        scope.launch {
+                            try {
+                                if (uid.isNullOrBlank()) {
+                                    throw IllegalStateException("Sign in before importing progress.")
+                                }
+                                val summary = LegacyProgressImportRepository(context, uid).importLegacyProgress()
+                                message = if (summary.isEmpty) {
+                                    "No existing local progress was found to import."
+                                } else {
+                                    "Import complete: ${summary.plans} plans, ${summary.exams} exams and ${summary.sessions} study sessions copied. Old local data was kept."
+                                }
+                            } catch (e: Exception) {
+                                message = e.localizedMessage ?: "Import failed. Existing data was not intentionally deleted."
+                            } finally { busy = false }
+                        }
+                    }
+                ) { Text("Import progress") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmImport = false }) { Text("Cancel") }
+            }
+        )
     }
 
     if (confirmAction != null) {
