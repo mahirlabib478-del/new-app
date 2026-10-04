@@ -370,6 +370,63 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
         return (cooldownTotal - elapsed).coerceAtLeast(0L)
     }
 
+    /**
+     * Export account-owned preference state to the account's Firestore snapshot.
+     * Content URIs are metadata only; the underlying audio/wallpaper files need
+     * a separate Storage upload before they can be restored on another install.
+     */
+    fun exportCloudSyncPreferences(): Map<String, Any> {
+        val allowedKeys = setOf(
+            KEY_THEME, KEY_WALLPAPER_ENABLED, KEY_FOCUS_WALLPAPER_ENABLED,
+            KEY_WALLPAPER_OPACITY, KEY_CUSTOM_WALLPAPER_URI,
+            KEY_CUSTOM_AUDIO_URI, KEY_CUSTOM_AUDIO_NAME, KEY_CUSTOM_AUDIO_LIST,
+            KEY_SELECTED_AUDIO_ID, KEY_STREAK_SHIELD_COUNT, KEY_LAST_SHIELD_SAVED_DATE,
+            KEY_CUSTOM_WALLPAPER_PASS_EXPIRES, KEY_CUSTOM_AUDIO_PASS_EXPIRES,
+            KEY_DOUBLE_XP_BOOSTER_EXPIRES, KEY_XP_BOOSTER_MULTIPLIER,
+            KEY_LAST_FREE_XP_DROP_CLAIM_TIME, KEY_SPIN_WHEEL_UNLOCKED_AT,
+            KEY_SPIN_WHEEL_SPINS_USED
+        )
+        return prefs.all.filter { (key, _) ->
+            key in allowedKeys || key.startsWith("${KEY_STYLE_PREFIX}_") ||
+                key.startsWith("${KEY_PREMIUM_THEME_PASS_PREFIX}_")
+        }.mapNotNull { (key, value) ->
+            when (value) {
+                is String, is Boolean, is Int, is Long, is Float, is Double -> key to value
+                else -> null
+            }
+        }.toMap()
+    }
+
+    /** Restore only known account-owned keys; absent cloud keys do not erase local values. */
+    fun restoreCloudSyncPreferences(values: Map<String, Any?>) {
+        val allowedKeys = setOf(
+            KEY_THEME, KEY_WALLPAPER_ENABLED, KEY_FOCUS_WALLPAPER_ENABLED,
+            KEY_WALLPAPER_OPACITY, KEY_CUSTOM_WALLPAPER_URI,
+            KEY_CUSTOM_AUDIO_URI, KEY_CUSTOM_AUDIO_NAME, KEY_CUSTOM_AUDIO_LIST,
+            KEY_SELECTED_AUDIO_ID, KEY_STREAK_SHIELD_COUNT, KEY_LAST_SHIELD_SAVED_DATE,
+            KEY_CUSTOM_WALLPAPER_PASS_EXPIRES, KEY_CUSTOM_AUDIO_PASS_EXPIRES,
+            KEY_DOUBLE_XP_BOOSTER_EXPIRES, KEY_XP_BOOSTER_MULTIPLIER,
+            KEY_LAST_FREE_XP_DROP_CLAIM_TIME, KEY_SPIN_WHEEL_UNLOCKED_AT,
+            KEY_SPIN_WHEEL_SPINS_USED
+        )
+        val editor = prefs.edit()
+        values.forEach { (key, value) ->
+            if (key !in allowedKeys && !key.startsWith("${KEY_STYLE_PREFIX}_") &&
+                !key.startsWith("${KEY_PREMIUM_THEME_PASS_PREFIX}_")
+            ) return@forEach
+            when (value) {
+                is String -> editor.putString(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Double -> editor.putFloat(key, value.toFloat())
+                is Float -> editor.putFloat(key, value)
+                null -> editor.remove(key)
+            }
+        }
+        editor.apply()
+    }
+
     companion object {
         const val LEGACY_STORAGE_NAME = "study_os_theme_prefs"
 
