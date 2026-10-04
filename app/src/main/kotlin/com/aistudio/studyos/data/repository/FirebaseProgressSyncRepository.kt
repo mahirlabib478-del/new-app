@@ -403,9 +403,17 @@ class FirebaseProgressSyncRepository(
         }
 
         // Preference conflicts are deliberately not auto-merged: preserve this device's
-        // settings and make that policy clear in the confirmation UI.
-        uploadLocalSnapshot()
+        // settings and make that policy clear in the confirmation UI. Temporarily authorize
+        // only this explicit upload; revoke it again if the upload fails.
+        cloudUploadUid = uid
+        try {
+            uploadLocalSnapshot()
+        } catch (error: Exception) {
+            cloudUploadUid = null
+            throw error
+        }
         if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            cloudUploadUid = null
             throw IllegalStateException("Account changed during cloud upload. Local merged progress is preserved; please retry sync.")
         }
         ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
