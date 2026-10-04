@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +58,8 @@ fun AccountScreen(
     val syncStatusState = cloudSync?.syncStatus?.collectAsState(initial = "Checking cloud sync…")
     val syncStatus = syncStatusState?.value ?: "Cloud sync unavailable"
 
+    val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
+
     Column(
         Modifier
             .fillMaxSize()
@@ -64,7 +67,7 @@ fun AccountScreen(
             .imePadding()
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = horizontalContentPadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (showBackButton) {
