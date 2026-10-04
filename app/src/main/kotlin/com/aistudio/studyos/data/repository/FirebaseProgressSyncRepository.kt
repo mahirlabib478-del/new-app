@@ -137,6 +137,10 @@ class FirebaseProgressSyncRepository(
         _syncStatus.value = "Cloud sync paused"
     }
 
+    fun reportBootstrapFailure() {
+        _syncStatus.value = "Cloud sync failed. Your local progress is still on this device; check internet and retry."
+    }
+
     private fun ownerKey(uid: String) = "owner_$uid"
 
     /** Restores cloud data only when this device has no local progress. Never overwrites populated local data. */
