@@ -11,9 +11,9 @@ object ThemeCatalog {
 
     val supportedKeys: Set<String> = setOf(
         "pitch_black",
-        "dark",
+        "obsidian_gold",
         "light",
-        "ocean",
+        "sky_night",
         "learning_green",
         "sunrise",
         "cyberpunk",
@@ -24,6 +24,8 @@ object ThemeCatalog {
         "midnight" to DEFAULT_THEME,
         "espresso" to DEFAULT_THEME,
         "forest" to DEFAULT_THEME,
+        "dark" to "obsidian_gold",
+        "ocean" to "sky_night",
         "mint" to "learning_green"
     )
 
