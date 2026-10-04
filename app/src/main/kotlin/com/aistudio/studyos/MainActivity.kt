@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -46,6 +45,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.auth.FirebaseAuth
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -92,14 +93,9 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
 }
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: StudyViewModel by viewModels {
-        StudyViewModelFactory((application as StudyApplication).repository)
-    }
-
     override fun onResume() {
         super.onResume()
         StudyReminderScheduler.rescheduleAfterPermissionGrant(this)
-        viewModel.refreshTodayStats()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,11 +103,41 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val themePreset by viewModel.currentTheme.collectAsState()
+            val auth = remember { FirebaseAuth.getInstance() }
+            var currentUser by remember { mutableStateOf(auth.currentUser) }
+            var showResetPassword by remember { mutableStateOf(false) }
 
-            StudyOSTheme(preset = themePreset) {
-                val navController = rememberNavController()
-                MainApp(viewModel = viewModel, navController = navController)
+            DisposableEffect(auth) {
+                val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+                    currentUser = firebaseAuth.currentUser
+                }
+                auth.addAuthStateListener(listener)
+                onDispose { auth.removeAuthStateListener(listener) }
+            }
+
+            val verifiedUid = currentUser?.takeIf { it.isEmailVerified }?.uid
+            if (verifiedUid != null) {
+                val accountViewModel: StudyViewModel = viewModel(
+                    key = "study-account-$verifiedUid",
+                    factory = StudyViewModelFactory((application as StudyApplication).repositoryFor(verifiedUid))
+                )
+                val themePreset by accountViewModel.currentTheme.collectAsState()
+                StudyOSTheme(preset = themePreset) {
+                    val navController = rememberNavController()
+                    MainApp(viewModel = accountViewModel, navController = navController)
+                }
+            } else {
+                StudyOSTheme {
+                    if (showResetPassword) {
+                        ResetPasswordScreen(onBack = { showResetPassword = false })
+                    } else {
+                        AccountScreen(
+                            onBack = {},
+                            onForgotPassword = { showResetPassword = true },
+                            onVerified = { showResetPassword = false }
+                        )
+                    }
+                }
             }
         }
     }
