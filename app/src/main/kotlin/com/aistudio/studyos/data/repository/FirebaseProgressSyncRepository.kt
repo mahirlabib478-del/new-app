@@ -67,7 +67,9 @@ class FirebaseProgressSyncRepository(
         // read, validation, or restore step fails, uploads stay paused until a later
         // explicit successful sync decision re-arms this UID.
         cloudUploadUid = null
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before syncing progress.")
+        val user = auth.currentUser ?: throw IllegalStateException("Sign in before syncing progress.")
+        if (!user.isEmailVerified) throw IllegalStateException("Verify your email before syncing progress.")
+        val uid = user.uid
         val ref = firestore.collection("users").document(uid).collection("progress").document("current")
         val cloud = ref.get().asSuspendResult().data ?: run {
             if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
