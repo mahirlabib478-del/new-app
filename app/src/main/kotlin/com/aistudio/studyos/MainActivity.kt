@@ -120,6 +120,9 @@ class MainActivity : ComponentActivity() {
                 auth.currentUser?.takeIf { it.isEmailVerified }?.uid
             }
             if (verifiedUid != null) {
+                LaunchedEffect(verifiedUid) {
+                    (application as StudyApplication).activateCloudSync(verifiedUid)
+                }
                 val accountViewModel: StudyViewModel = viewModel(
                     key = "study-account-$verifiedUid",
                     factory = StudyViewModelFactory((application as StudyApplication).repositoryFor(verifiedUid))
