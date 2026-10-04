@@ -47,6 +47,8 @@ fun AccountScreen(
     val cloudSync = remember(user?.uid) {
         user?.uid?.let { (context.applicationContext as StudyApplication).cloudSyncFor(it) }
     }
+    val syncStatusState = cloudSync?.syncStatus?.collectAsState(initial = "Checking cloud sync…")
+    val syncStatus = syncStatusState?.value ?: "Cloud sync unavailable"
 
     Column(
         Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 20.dp),
@@ -81,6 +83,7 @@ fun AccountScreen(
                 if (verified) {
                     Text(user?.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                     Text("You're all set. Your personal study space is ready.", style = MaterialTheme.typography.bodyMedium)
+                    Text("Cloud sync: " + syncStatus, style = MaterialTheme.typography.bodySmall, color = if (syncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton(
                         onClick = { confirmImport = true },
                         modifier = Modifier.fillMaxWidth(),
