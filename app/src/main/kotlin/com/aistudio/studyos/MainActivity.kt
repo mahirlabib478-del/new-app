@@ -107,6 +107,7 @@ class MainActivity : ComponentActivity() {
             var currentUser by remember { mutableStateOf(auth.currentUser) }
             var showResetPassword by remember { mutableStateOf(false) }
             var authRefresh by remember { mutableStateOf(0) }
+            var guestMode by remember { mutableStateOf(false) }
 
             DisposableEffect(auth) {
                 val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
@@ -119,12 +120,15 @@ class MainActivity : ComponentActivity() {
             val verifiedUid = remember(currentUser, authRefresh) {
                 auth.currentUser?.takeIf { it.isEmailVerified }?.uid
             }
-            if (verifiedUid != null) {
-                LaunchedEffect(verifiedUid) {
-                    (application as StudyApplication).activateCloudSync(verifiedUid)
+            val canContinueAsGuest = guestMode && auth.currentUser == null
+            if (verifiedUid != null || canContinueAsGuest) {
+                if (verifiedUid != null) {
+                    LaunchedEffect(verifiedUid) {
+                        (application as StudyApplication).activateCloudSync(verifiedUid)
+                    }
                 }
                 val accountViewModel: StudyViewModel = viewModel(
-                    key = "study-account-$verifiedUid",
+                    key = if (verifiedUid != null) "study-account-$verifiedUid" else "study-guest",
                     factory = StudyViewModelFactory((application as StudyApplication).repositoryFor(verifiedUid))
                 )
                 val themePreset by accountViewModel.currentTheme.collectAsState()
@@ -143,6 +147,11 @@ class MainActivity : ComponentActivity() {
                             onVerified = {
                                 currentUser = auth.currentUser
                                 authRefresh += 1
+                                guestMode = false
+                                showResetPassword = false
+                            },
+                            onContinueAsGuest = {
+                                guestMode = true
                                 showResetPassword = false
                             }
                         )
