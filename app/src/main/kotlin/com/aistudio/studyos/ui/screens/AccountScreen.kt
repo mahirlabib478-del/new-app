@@ -1,5 +1,8 @@
 package com.aistudio.studyos.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
@@ -327,6 +330,25 @@ fun AccountScreen(
                 Text("Forgot password?")
             }
         }
+
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = {
+                val messageText = "Hello Developer! I need help with the StudyOS app."
+                val whatsappUrl = "https://wa.me/8801339871504?text=" + Uri.encode(messageText)
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(whatsappUrl)))
+                } catch (_: Exception) {
+                    Toast.makeText(context, "Could not open WhatsApp. Please try again.", Toast.LENGTH_LONG).show()
+                }
+            },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color(0xFF128C7E))
+        ) {
+            Text("💬 Contact Developer via WhatsApp", maxLines = 1, softWrap = false, fontSize = 14.sp)
+        }
+        Spacer(Modifier.height(16.dp))
     }
 
     if (confirmImport) {
