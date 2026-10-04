@@ -273,28 +273,31 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Theme-aware illustration panel; no fixed light colors that clash with Pitch Black.
+        // Larger, theme-aware study illustration with an accent-tinted backdrop (not a grey panel).
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-                .height(248.dp)
-                .clip(RoundedCornerShape(32.dp))
-                .background(colors.surfaceVariant),
+                .padding(horizontal = 2.dp)
+                .height(286.dp)
+                .clip(RoundedCornerShape(34.dp))
+                .background(colors.primary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(width = 178.dp, height = 196.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .size(width = 224.dp, height = 238.dp)
+                    .clip(RoundedCornerShape(30.dp))
                     .background(colors.surface),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(82.dp)
-                            .clip(RoundedCornerShape(26.dp))
+                            .size(104.dp)
+                            .clip(RoundedCornerShape(32.dp))
                             .background(colors.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
@@ -302,30 +305,43 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                             imageVector = Icons.Default.School,
                             contentDescription = "Study illustration",
                             tint = colors.primary,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(62.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
                     Box(
                         modifier = Modifier
-                            .size(width = 102.dp, height = 7.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .size(width = 142.dp, height = 9.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.primary.copy(alpha = 0.32f))
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(width = 104.dp, height = 8.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(colors.outlineVariant)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(width = 72.dp, height = 7.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(colors.outlineVariant.copy(alpha = 0.65f))
-                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = colors.primaryContainer
+                    ) {
+                        Text(
+                            "PLAN  •  FOCUS  •  GROW",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            color = colors.onPrimaryContainer,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(26.dp))
         Text(
-            text = "Your Goals.\nYour Growth.",
+            text = "Make Every Study\nSession Count",
             color = colors.onBackground,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.ExtraBold,
@@ -334,7 +350,7 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Build better habits, one study session at a time.",
+            text = "Plan smarter, stay focused, and see your progress grow — one session at a time.",
             color = colors.onSurfaceVariant,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
@@ -344,8 +360,8 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
         Button(
             onClick = onGetStarted,
-            modifier = Modifier.fillMaxWidth().height(58.dp),
-            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.fillMaxWidth().height(60.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colors.primary,
                 contentColor = colors.onPrimary
