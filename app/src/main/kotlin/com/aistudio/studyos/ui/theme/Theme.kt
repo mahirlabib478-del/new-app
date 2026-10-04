@@ -75,23 +75,23 @@ private val OceanColorScheme = darkColorScheme(
     onSurfaceVariant = Color(0xFF94A3B8)
 )
 
-private val MintColorScheme = lightColorScheme(
-    primary = Color(0xFF047857),
+private val LearningGreenColorScheme = lightColorScheme(
+    primary = Color(0xFF58CC02),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFA7F3D0),
-    onPrimaryContainer = Color(0xFF064E3B),
-    secondary = Color(0xFF0D9488),
+    primaryContainer = Color(0xFFD7F8B8),
+    onPrimaryContainer = Color(0xFF1F4D00),
+    secondary = Color(0xFF7BCB2B),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFCCFBF1),
-    onSecondaryContainer = Color(0xFF134E4A),
-    background = Color(0xFFF2FBF6),
-    onBackground = Color(0xFF064E3B),
-    surface = Color.White,
-    onSurface = Color(0xFF064E3B),
-    surfaceVariant = Color(0xFFE2F7EB),
-    onSurfaceVariant = Color(0xFF065F46),
-    outline = Color(0xFFA7F3D0),
-    outlineVariant = Color(0xFFD1FAE5)
+    secondaryContainer = Color(0xFFEAF8D8),
+    onSecondaryContainer = Color(0xFF315500),
+    background = LearningGreenBg,
+    onBackground = Color(0xFF2B2B2B),
+    surface = LearningGreenSurface,
+    onSurface = Color(0xFF2B2B2B),
+    surfaceVariant = Color(0xFFF3F0E6),
+    onSurfaceVariant = Color(0xFF5A5A5A),
+    outline = Color(0xFFB8D99A),
+    outlineVariant = Color(0xFFE2E0D7)
 )
 
 private val SunriseColorScheme = lightColorScheme(
@@ -105,7 +105,7 @@ private val SunriseColorScheme = lightColorScheme(
     onSecondaryContainer = Color(0xFF9A3412),
     background = Color(0xFFFFF9F5),
     onBackground = Color(0xFF292524),
-    surface = Color.White,
+    surface = LearningGreenSurface,
     onSurface = Color(0xFF292524),
     surfaceVariant = Color(0xFFFFEDE0),
     onSurfaceVariant = Color(0xFF57534E),
@@ -138,7 +138,7 @@ private val LightColorScheme = lightColorScheme(
     onSecondaryContainer = Color(0xFF1E1B4B),
     background = Color(0xFFF8FAFC),
     onBackground = Color(0xFF0F172A),
-    surface = Color.White,
+    surface = LearningGreenSurface,
     onSurface = Color(0xFF0F172A),
     surfaceVariant = Color(0xFFF1F5F9),
     onSurfaceVariant = Color(0xFF334155),
@@ -146,7 +146,7 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFE2E8F0)
 )
 
-fun isLightPreset(preset: String): Boolean = preset in setOf("mint", "sunrise", "light", "cyber_runner")
+fun isLightPreset(preset: String): Boolean = preset in setOf("learning_green", "sunrise", "light", "cyber_runner")
 
 @Composable
 fun StudyOSTheme(
@@ -160,13 +160,13 @@ fun StudyOSTheme(
         "dark" -> DarkColorScheme
         "light" -> LightColorScheme
         "ocean" -> OceanColorScheme
-        "mint" -> MintColorScheme
+        "learning_green" -> LearningGreenColorScheme
         "sunrise" -> SunriseColorScheme
         else -> PitchBlackColorScheme
     }
 
     val isDark = when (preset) {
-        "mint", "sunrise", "light", "cyber_runner" -> false
+        "learning_green", "sunrise", "light", "cyber_runner" -> false
         else -> true
     }
 
