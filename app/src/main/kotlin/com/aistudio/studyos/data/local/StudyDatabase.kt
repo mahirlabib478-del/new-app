@@ -14,6 +14,7 @@ import com.aistudio.studyos.data.local.entity.ExamEntity
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.data.local.entity.UserProfileEntity
+import java.security.MessageDigest
 
 @Database(
     entities = [
@@ -32,8 +33,12 @@ abstract class StudyDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
 
     companion object {
+        private const val LEGACY_DATABASE_NAME = "study_os_database"
+
         @Volatile
         private var INSTANCE: StudyDatabase? = null
+
+        private val accountInstances = mutableMapOf<String, StudyDatabase>()
 
         private val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -50,7 +55,6 @@ abstract class StudyDatabase : RoomDatabase() {
                 db.execSQL("UPDATE user_profile SET levelStartStudyMinutes = totalStudyMinutes, levelStartXpEarned = totalXpEarned, levelStartXpSpent = totalXpSpent, levelStartedAtMillis = CAST(strftime('%s','now') AS INTEGER) * 1000")
             }
         }
-
 
         private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -87,20 +91,43 @@ abstract class StudyDatabase : RoomDatabase() {
             }
         }
 
+        private val ALL_MIGRATIONS = arrayOf(
+            MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
+            MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9
+        )
+
+        private fun build(context: Context, name: String): StudyDatabase =
+            Room.databaseBuilder(context.applicationContext, StudyDatabase::class.java, name)
+                // Never silently destroy user data when a future migration is missing.
+                .addMigrations(*ALL_MIGRATIONS)
+                .build()
+
+        /** Opens the original database unchanged; retained for legacy/guest data. */
         fun getInstance(context: Context): StudyDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    StudyDatabase::class.java,
-                    "study_os_database"
-                )
-                    // Never silently destroy user data when a future migration is missing.
-                    // A missing migration must fail loudly so it can be implemented and verified.
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
-                    .build()
-                INSTANCE = instance
-                instance
+                INSTANCE ?: build(context, LEGACY_DATABASE_NAME).also { INSTANCE = it }
             }
+        }
+
+        /**
+         * Returns a database isolated to a Firebase UID. The UID is hashed before
+         * becoming part of a filename; raw account identifiers are never persisted
+         * in the filename. This does not migrate or import legacy data.
+         */
+        fun getAccountInstance(context: Context, uid: String): StudyDatabase {
+            require(uid.isNotBlank()) { "A non-empty authenticated UID is required" }
+            val key = accountDatabaseName(uid)
+            return synchronized(accountInstances) {
+                accountInstances.getOrPut(key) { build(context, key) }
+            }
+        }
+
+        internal fun accountDatabaseName(uid: String): String {
+            require(uid.isNotBlank())
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest(uid.toByteArray(Charsets.UTF_8))
+            val hex = digest.joinToString("") { "%02x".format(it) }
+            return "study_os_account_$hex"
         }
     }
 }
