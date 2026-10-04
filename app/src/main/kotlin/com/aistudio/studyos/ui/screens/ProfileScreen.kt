@@ -126,9 +126,9 @@ data class ThemeOption(
 
 private val THEME_OPTIONS = listOf(
     ThemeOption("pitch_black", "Pitch Black", Icons.Default.DarkMode, Color(0xFF00E5FF)),
-    ThemeOption("dark", "Dark", Icons.Default.DarkMode, Color(0xFF64748B)),
+    ThemeOption("obsidian_gold", "Obsidian Gold", Icons.Default.DarkMode, Color(0xFFFFD60A)),
     ThemeOption("light", "Light", Icons.Default.WbSunny, Color(0xFF2563EB)),
-    ThemeOption("ocean", "Ocean Dark", Icons.Default.Water, Color(0xFF0284C7)),
+    ThemeOption("sky_night", "Sky Night", Icons.Default.NightsStay, Color(0xFF38BDF8)),
     ThemeOption("learning_green", "Learning Green", Icons.Default.Eco, Color(0xFF58CC02)),
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C)),
     ThemeOption("cyberpunk", "Cyberpunk / Synthwave 80s", Icons.Default.Bolt, Color(0xFFFF2A85)),
