@@ -1256,10 +1256,10 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(22.dp),
                 border = BorderStroke(
                     1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
                 ),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
@@ -1318,10 +1318,10 @@ fun ProfileScreen(
                             }
                             .testTag("btn_contact_developer_whatsapp"),
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surface,
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
                         border = BorderStroke(
                             1.dp,
-                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
                         )
                     ) {
                         Row(
