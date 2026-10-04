@@ -171,6 +171,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            }
         }
     }
 }
