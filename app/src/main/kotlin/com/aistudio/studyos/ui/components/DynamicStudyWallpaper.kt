@@ -122,12 +122,13 @@ fun DynamicStudyWallpaper(
 
         val overlayColor = when (themePreset) {
             "pitch_black" -> Color.Black
-            "ocean" -> Color(0xFF060E18)
+            "sky_night" -> Color(0xFF07111F)
             "learning_green" -> Color(0xFFFFFDF5)
             "sunrise" -> Color(0xFFFFF7ED)
             "light" -> Color(0xFFF8FAFC)
             "cyberpunk" -> Color(0xFF0F081D)
             "cyber_runner" -> Color(0xFFFAFAFA)
+            "obsidian_gold" -> Color.Black
             else -> Color(0xFF0C0E17) // default theme & unknown values
         }
 
