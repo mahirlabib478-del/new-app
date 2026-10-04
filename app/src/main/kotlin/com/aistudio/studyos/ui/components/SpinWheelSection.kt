@@ -156,7 +156,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     shadowElevation = 5.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("SPIN", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("SPIN", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -241,7 +241,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
 
             Text(
                 "Rare odds • Theme 7% • Audio 7% • Wallpaper 5%",
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -266,7 +266,7 @@ private fun SpinWheelLabel(index: Int, text: String) {
             Text(
                 text = text,
                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF172033)
             )
