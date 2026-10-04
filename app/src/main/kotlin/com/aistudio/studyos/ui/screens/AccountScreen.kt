@@ -96,6 +96,7 @@ fun AccountScreen(
             }
         }
         if (!verificationPending && user == null) {
+            val guestAccountPage = !showContinueAsGuest
             Spacer(Modifier.height(30.dp))
             Surface(
                 shape = RoundedCornerShape(24.dp),
@@ -110,16 +111,31 @@ fun AccountScreen(
             }
             Spacer(Modifier.height(12.dp))
             Text(
-                "StudyOS",
+                if (guestAccountPage) "Guest Account" else "StudyOS",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                "Your personal study space",
+                if (guestAccountPage) "Your progress is saved on this device" else "Your personal study space",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (guestAccountPage) {
+                Spacer(Modifier.height(12.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
+                ) {
+                    Text(
+                        "Create an account to access your study progress on supported devices. You can choose whether to import this device's progress after email verification.",
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
         } else {
             Text(if (verified) "Your StudyOS account" else "Verify your email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(if (verified) "Your study data is ready and private to your account." else "Verify once to keep your study progress linked to your account.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -133,6 +149,7 @@ fun AccountScreen(
                         when {
                             verified -> "Account verified"
                             verificationPending || user != null -> "Email verification required"
+                            !showContinueAsGuest -> "Manage your account"
                             else -> "Welcome to StudyOS"
                         },
                         style = MaterialTheme.typography.titleLarge,
@@ -301,19 +318,21 @@ fun AccountScreen(
                         }
                     }
                     Text("Password must be at least 6 characters for a new account.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    OutlinedButton(
-                        onClick = onContinueAsGuest,
-                        enabled = !busy,
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Text("Continue as guest", maxLines = 1, softWrap = false)
+                    if (showContinueAsGuest) {
+                        OutlinedButton(
+                            onClick = onContinueAsGuest,
+                            enabled = !busy,
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text("Continue as guest", maxLines = 1, softWrap = false)
+                        }
+                        Text(
+                            "Start studying without an account. You can create one later and choose whether to import this device's progress.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    Text(
-                        "Start studying without an account. You can create one later and choose whether to import this device's progress.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
 
                 if (busy) CircularProgressIndicator(Modifier.size(22.dp))
