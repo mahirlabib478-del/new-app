@@ -126,7 +126,7 @@ fun UpdateDialog(
                         Column {
                             Text(
                                 text = "Current Version",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
@@ -147,7 +147,7 @@ fun UpdateDialog(
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
                                 text = "New Version",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Surface(
