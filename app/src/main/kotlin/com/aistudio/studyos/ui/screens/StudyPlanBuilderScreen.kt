@@ -526,7 +526,13 @@ fun StudyPlanBuilderScreen(
                 ) {
                     Icon(Icons.Default.PlayArrow, null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Start ${formatDuration(totalSessionMinutes)} Study Session", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Start Study • ${formatDuration(totalSessionMinutes)}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
 
                 Spacer(Modifier.height(8.dp))
