@@ -140,7 +140,7 @@ fun AccountScreen(
                 } else if (verificationPending || user != null) {
                     Text(user?.email ?: email, style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Open the verification email from Firebase and tap its verification link. Then return here and refresh the status. Your study data will not be imported from old local storage automatically.",
+                        "Open the verification email and tap its verification link. If it isn't in your inbox, check Spam/Junk and wait a few minutes. Email providers sometimes filter automated messages when the sender is unfamiliar or the message resembles bulk mail; this does not automatically mean it is unsafe. Then return here and refresh the status.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Button(
@@ -295,7 +295,7 @@ fun AccountScreen(
             text = {
                 Text(
                     if (confirmAction == "create")
-                        "A verification email will be sent. You must verify it before entering StudyOS. Existing local progress will remain untouched and will not be imported without your explicit permission."
+                        "A verification email will be sent. Check your inbox and Spam/Junk folder if it doesn't arrive; automated messages can sometimes be filtered when the sender is unfamiliar. Verify before entering StudyOS. Existing local progress will remain untouched and will not be imported without your explicit permission."
                     else
                         "Only verified email accounts can enter StudyOS. Existing local progress will remain untouched."
                 )
@@ -314,7 +314,7 @@ fun AccountScreen(
                             } else {
                                 val created = repository.createAccount(email, password)
                                 verificationPending = true
-                                message = "Verification email sent to ${created.email.orEmpty()}. Verify it before continuing."
+                                message = "Verification email sent to ${created.email.orEmpty()}. Check your inbox and Spam/Junk folder, then verify before continuing."
                             }
                         } catch (e: Exception) {
                             if (e is EmailNotVerifiedException || repository.currentUser?.isEmailVerified == false) {
