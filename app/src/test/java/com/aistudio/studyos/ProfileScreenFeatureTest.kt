@@ -108,9 +108,9 @@ class ProfileScreenFeatureTest {
     fun testThemeOptionsKeys() {
         val themeKeys = listOf(
             "pitch_black",
-            "dark",
+            "obsidian_gold",
             "light",
-            "ocean",
+            "sky_night",
             "learning_green",
             "sunrise",
             "cyberpunk",
@@ -118,9 +118,10 @@ class ProfileScreenFeatureTest {
         )
 
         assertEquals(8, themeKeys.size)
-        assertTrue(themeKeys.contains("dark"))
+        assertTrue(themeKeys.contains("obsidian_gold"))
         assertTrue(themeKeys.contains("light"))
         assertTrue(themeKeys.contains("pitch_black"))
+        assertTrue(themeKeys.contains("sky_night"))
         assertTrue(themeKeys.contains("cyberpunk"))
         assertTrue(themeKeys.contains("cyber_runner"))
     }
