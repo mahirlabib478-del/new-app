@@ -107,11 +107,16 @@ class MainActivity : ComponentActivity() {
             var currentUser by remember { mutableStateOf(auth.currentUser) }
             var showResetPassword by remember { mutableStateOf(false) }
             var authRefresh by remember { mutableStateOf(0) }
-            var guestMode by remember { mutableStateOf(false) }
+            val guestPrefs = remember { getSharedPreferences("study_os_guest_session", MODE_PRIVATE) }
+            var guestMode by remember { mutableStateOf(guestPrefs.getBoolean("guest_mode", false)) }
 
             DisposableEffect(auth) {
                 val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
                     currentUser = firebaseAuth.currentUser
+                    if (firebaseAuth.currentUser?.isEmailVerified == true) {
+                        guestPrefs.edit().putBoolean("guest_mode", false).apply()
+                        guestMode = false
+                    }
                 }
                 auth.addAuthStateListener(listener)
                 onDispose { auth.removeAuthStateListener(listener) }
@@ -142,8 +147,10 @@ class MainActivity : ComponentActivity() {
                         ResetPasswordScreen(onBack = { showResetPassword = false })
                     } else {
                         AccountScreen(
+                            showBackButton = false,
                             onBack = {
                                 if (auth.currentUser != null) auth.signOut()
+                                guestPrefs.edit().putBoolean("guest_mode", true).apply()
                                 guestMode = true
                                 showResetPassword = false
                             },
@@ -151,10 +158,12 @@ class MainActivity : ComponentActivity() {
                             onVerified = {
                                 currentUser = auth.currentUser
                                 authRefresh += 1
+                                guestPrefs.edit().putBoolean("guest_mode", false).apply()
                                 guestMode = false
                                 showResetPassword = false
                             },
                             onContinueAsGuest = {
+                                guestPrefs.edit().putBoolean("guest_mode", true).apply()
                                 guestMode = true
                                 showResetPassword = false
                             }
@@ -387,7 +396,7 @@ fun MainApp(
                 ProfileScreen(viewModel = viewModel, onOpenAccount = { navController.navigate(Screen.Account.route) })
             }
             composable(Screen.Account.route) {
-                AccountScreen(onBack = { navController.popBackStack() }, onForgotPassword = { navController.navigate(Screen.ResetPassword.route) })
+                AccountScreen(onBack = { navController.popBackStack() }, onForgotPassword = { navController.navigate(Screen.ResetPassword.route) }, showBackButton = true)
             }
             composable(Screen.ResetPassword.route) {
                 ResetPasswordScreen(onBack = { navController.popBackStack() })
