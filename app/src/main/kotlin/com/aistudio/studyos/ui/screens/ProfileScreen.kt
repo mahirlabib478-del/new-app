@@ -1277,8 +1277,8 @@ fun ProfileScreen(
                     accountMessage = null
                     accountScope.launch {
                         try {
-                            (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.linkLocalProgressToCurrentAccount()
-                            accountMessage = "Device progress linked and backed up. Automatic sync is enabled for this account."
+                            (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudProgressSync.createInitialCloudBackup()
+                            accountMessage = "Initial cloud backup created. Existing local progress was kept."
                         } catch (e: Exception) {
                             accountMessage = e.localizedMessage ?: "Could not link progress."
                         } finally { accountBusy = false }
