@@ -16,14 +16,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.aistudio.studyos.StudyApplication
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import kotlinx.coroutines.launch
 
 @Composable
 fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
     val context = LocalContext.current
-    val app = context.applicationContext as StudyApplication
     val repository = remember { FirebaseAccountRepository() }
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf(repository.currentUser?.email.orEmpty()) }
@@ -31,7 +29,6 @@ fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
-    var confirmBackup by remember { mutableStateOf(false) }
     val user = repository.currentUser
 
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
@@ -51,7 +48,7 @@ fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
                 }
                 if (user != null) {
                     Text(user.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
-                    Button(onClick = { confirmBackup = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().height(50.dp).testTag("btn_link_local_progress")) { Text("Back Up This Device") }
+                    Text("Cloud backup is paused until account-specific storage is enabled. Local records have not been uploaded.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton(onClick = { repository.signOut(); message = "Signed out."; password = "" }, modifier = Modifier.fillMaxWidth()) { Text("Sign Out") }
                 } else {
                     OutlinedTextField(email, { email = it; message = null }, Modifier.fillMaxWidth().testTag("account_email"), label = { Text("Email address") }, placeholder = { Text("you@example.com") }, singleLine = true, shape = RoundedCornerShape(14.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
@@ -85,14 +82,4 @@ fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
             }
         }) { Text("Continue") }
     }, dismissButton = { TextButton(onClick = { confirmAction = null }) { Text("Cancel") } })
-    if (confirmBackup) AlertDialog(onDismissRequest = { confirmBackup = false }, title = { Text("Back up this device?") }, text = { Text("Upload the study records currently stored on this device to the signed-in account's private cloud backup?") }, confirmButton = {
-        Button(onClick = {
-            confirmBackup = false; busy = true
-            scope.launch {
-                try { app.cloudProgressSync.linkLocalProgressToCurrentAccount(); message = "Device progress backed up and linked." }
-                catch (e: Exception) { message = e.localizedMessage ?: "Backup failed." }
-                finally { busy = false }
-            }
-        }) { Text("Upload & Link") }
-    }, dismissButton = { TextButton(onClick = { confirmBackup = false }) { Text("Cancel") } })
 }
