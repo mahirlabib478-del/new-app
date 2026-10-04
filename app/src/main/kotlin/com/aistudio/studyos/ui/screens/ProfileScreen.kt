@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestartAlt
@@ -203,7 +204,11 @@ fun ProfileScreen(
     var resetSending by remember { mutableStateOf(false) }
     val accountRepository = remember { FirebaseAccountRepository() }
     val accountScope = androidx.compose.runtime.rememberCoroutineScope()
-    val activeAccountUid = accountRepository.currentUser?.takeIf { it.isEmailVerified }?.uid
+    val profileAccountUser = accountRepository.currentUser
+    val profileAccountEmail = profileAccountUser?.email.orEmpty()
+    val profileAccountVerified = profileAccountUser?.isEmailVerified == true
+    val profileAvatarInitial = profileAccountEmail.firstOrNull()?.uppercaseChar()?.toString()
+    val activeAccountUid = profileAccountUser?.takeIf { it.isEmailVerified }?.uid
     val accountCloudSync = remember(activeAccountUid) {
         activeAccountUid?.let { (context.applicationContext as com.aistudio.studyos.StudyApplication).cloudSyncFor(it) }
     }
@@ -283,20 +288,76 @@ fun ProfileScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAccount).testTag("profile_account_entry"),
-                shape = RoundedCornerShape(22.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Surface(shape = RoundedCornerShape(15.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(48.dp)) {
-                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 17.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(13.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = if (profileAccountUser == null) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(54.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            if (profileAvatarInitial != null) {
+                                Text(
+                                    profileAvatarInitial,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Guest profile",
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
+                        }
                     }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("Account & Security", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Sign in, create account or reset password", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("Cloud sync: $accountCloudSyncStatus", style = MaterialTheme.typography.bodySmall, color = if (accountCloudSyncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = if (profileAccountUser == null) "Your account" else profileAccountEmail.substringBefore("@").ifBlank { "StudyOS member" },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = when {
+                                profileAccountVerified -> profileAccountEmail
+                                profileAccountUser != null -> "Email verification pending"
+                                else -> "Guest mode · progress saved on this device"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (accountCloudSyncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                modifier = Modifier.size(7.dp)
+                            ) {}
+                            Text(
+                                text = if (profileAccountVerified) accountCloudSyncStatus else if (profileAccountUser == null) "Set up account & security" else "Verify email to enable cloud sync",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (accountCloudSyncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2
+                            )
+                        }
                     }
-                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open account settings", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = "Open account settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(19.dp)
+                    )
                 }
             }
         }
