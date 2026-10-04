@@ -274,8 +274,12 @@ class FirebaseProgressSyncRepository(
     }
 
     suspend fun uploadLocalSnapshot() {
-        val uid = auth.currentUser?.uid
+        val user = auth.currentUser
             ?: throw IllegalStateException("Sign in before syncing progress.")
+        if (!user.isEmailVerified) {
+            throw IllegalStateException("Verify your email before syncing progress.")
+        }
+        val uid = user.uid
         if (cloudUploadUid != uid) throw IllegalStateException("Sync is paused until cloud and local progress are safely reconciled.")
         val plans = database.studyPlanDao().getAllForBackup()
         val exams = database.examDao().getAllForBackup()
@@ -284,8 +288,11 @@ class FirebaseProgressSyncRepository(
 
         // Account state may change while Room is being read. Revalidate ownership
         // immediately before writing the snapshot to the captured UID's document.
-        if (auth.currentUser?.uid != uid || cloudUploadUid != uid) {
-            throw IllegalStateException("Account changed during sync. Please retry.")
+        if (auth.currentUser?.uid != uid ||
+            auth.currentUser?.isEmailVerified != true ||
+            cloudUploadUid != uid
+        ) {
+            throw IllegalStateException("Account changed or is no longer verified during sync. Please retry.")
         }
 
         val snapshot = hashMapOf<String, Any>(
