@@ -473,6 +473,7 @@ class FirebaseProgressSyncRepository(
             "exams" to exams.map { it.toCloudMap() },
             "sessionLogs" to sessions.map { it.toCloudMap() },
             "profiles" to profiles.map { it.toCloudMap() },
+            "shopPreferences" to themePreferences.exportCloudSyncPreferences(),
             "updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
         )
         firestore.collection("users").document(uid)
