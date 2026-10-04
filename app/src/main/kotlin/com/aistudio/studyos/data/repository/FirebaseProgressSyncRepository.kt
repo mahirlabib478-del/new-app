@@ -193,18 +193,55 @@ class FirebaseProgressSyncRepository(
     private fun Map<String, Any?>.toSession() = SessionLogEntity(id=n("id"), subject=s("subject"), chapter=s("chapter"), durationMinutes=i("durationMinutes"), mode=s("mode"), xpEarned=i("xpEarned"), timestamp=n("timestamp"))
     private fun Map<String, Any?>.toProfile() = UserProfileEntity(id=i("id",1), streakDays=i("streakDays"), totalStudyMinutes=i("totalStudyMinutes"), totalXP=i("totalXP"), totalXpSpent=i("totalXpSpent"), totalXpEarned=i("totalXpEarned"), levelStartStudyMinutes=i("levelStartStudyMinutes"), levelStartXpEarned=i("levelStartXpEarned"), levelStartXpSpent=i("levelStartXpSpent"), levelStartedAtMillis=n("levelStartedAtMillis"), currentLevel=i("currentLevel",1), dailyGoalMinutes=i("dailyGoalMinutes",60), themePreset=s("themePreset"), lastActiveDate=s("lastActiveDate"))
 
-    /** Explicitly links this device's current local dataset to the currently signed-in account. */
-    suspend fun linkLocalProgressToCurrentAccount() {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("Sign in before linking progress.")
-        cloudUploadUid = uid
-        try {
-            uploadLocalSnapshot()
-            if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during linking. Please retry.")
-            ownershipPrefs.edit().putString("owner_uid", uid).apply()
-        } catch (error: Exception) {
-            cloudUploadUid = null
-            throw error
+    /**
+     * Creates the first cloud backup only when no cloud document exists.
+     * Existing cloud data is never overwritten by this action.
+     */
+    suspend fun createInitialCloudBackup(): String {
+        val user = auth.currentUser
+            ?: throw IllegalStateException("Sign in before backing up progress.")
+        val uid = user.uid
+        if (!user.isEmailVerified) throw IllegalStateException("Verify your email before syncing progress.")
+        cloudUploadUid = null
+
+        val plans = database.studyPlanDao().getAllForBackup()
+        val exams = database.examDao().getAllForBackup()
+        val sessions = database.sessionLogDao().getAllForBackup()
+        val profiles = database.userProfileDao().getAllForBackup()
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            throw IllegalStateException("Account changed during backup. Please retry.")
         }
+
+        val snapshot = hashMapOf<String, Any>(
+            "schemaVersion" to 1,
+            "studyPlans" to plans.map { it.toCloudMap() },
+            "exams" to exams.map { it.toCloudMap() },
+            "sessionLogs" to sessions.map { it.toCloudMap() },
+            "profiles" to profiles.map { it.toCloudMap() },
+            "updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+        )
+        val ref = firestore.collection("users").document(uid)
+            .collection("progress").document("current")
+
+        firestore.runTransaction { transaction ->
+            if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+                throw IllegalStateException("Account changed during backup. Please retry.")
+            }
+            val existing = transaction.get(ref)
+            if (existing.exists()) {
+                throw IllegalStateException("A cloud backup already exists. Restore it first; this action will not overwrite it.")
+            }
+            transaction.set(ref, snapshot)
+            null
+        }.asSuspendResult()
+
+        if (auth.currentUser?.uid != uid) {
+            cloudUploadUid = null
+            throw IllegalStateException("Account changed after backup. Please sign in again.")
+        }
+        ownershipPrefs.edit().putString("owner_uid", uid).apply()
+        cloudUploadUid = uid
+        return "Initial cloud backup created. Existing local progress was kept."
     }
 
     suspend fun uploadLocalSnapshot() {
