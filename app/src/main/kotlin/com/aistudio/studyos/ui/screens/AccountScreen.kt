@@ -1,6 +1,8 @@
 package com.aistudio.studyos.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -51,7 +53,11 @@ fun AccountScreen(
     val syncStatus = syncStatusState?.value ?: "Cloud sync unavailable"
 
     Column(
-        Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
+        Modifier
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
@@ -75,11 +81,30 @@ fun AccountScreen(
         }
         Spacer(Modifier.height(8.dp))
         if (!verificationPending && user == null) {
-            Spacer(Modifier.height(18.dp))
-            Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
-            Spacer(Modifier.height(10.dp))
-            Text("StudyOS", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold)
-            Text("Your personal study space", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(12.dp))
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+            ) {
+                Icon(
+                    Icons.Default.School,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(14.dp).size(38.dp)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "StudyOS",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                "Your personal study space",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         } else {
             Text(if (verified) "Your StudyOS account" else "Verify your email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(if (verified) "Your study data is ready and private to your account." else "Verify once to keep your study progress linked to your account.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
