@@ -254,13 +254,22 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
     // 🎡 Spin Wheel
     // ==========================================
 
+    // Firebase/Firestore numeric values may be restored as Long, while SharedPreferences
+    // integer getters expect Int. Normalize either Number representation before reading.
+    private fun getCompatibleInt(key: String, defaultValue: Int): Int {
+        val raw = prefs.all[key] as? Number ?: return defaultValue
+        val normalized = raw.toInt()
+        if (raw !is Int) prefs.edit().putInt(key, normalized).apply()
+        return normalized
+    }
+
     fun getSpinWheelUnlockedAt(): Long = prefs.getLong(KEY_SPIN_WHEEL_UNLOCKED_AT, 0L)
 
     fun setSpinWheelUnlockedAt(timestamp: Long) {
         prefs.edit().putLong(KEY_SPIN_WHEEL_UNLOCKED_AT, timestamp).apply()
     }
 
-    fun getSpinWheelSpinsUsed(): Int = prefs.getInt(KEY_SPIN_WHEEL_SPINS_USED, 0).coerceIn(0, 20)
+    fun getSpinWheelSpinsUsed(): Int = getCompatibleInt(KEY_SPIN_WHEEL_SPINS_USED, 0).coerceIn(0, 20)
 
     fun setSpinWheelSpinsUsed(value: Int) {
         prefs.edit().putInt(KEY_SPIN_WHEEL_SPINS_USED, value.coerceIn(0, 20)).apply()
@@ -280,7 +289,7 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
     // ==========================================
 
     fun getStreakShieldCount(): Int {
-        return prefs.getInt(KEY_STREAK_SHIELD_COUNT, 0).coerceIn(0, 2)
+        return getCompatibleInt(KEY_STREAK_SHIELD_COUNT, 0).coerceIn(0, 2)
     }
 
     fun setStreakShieldCount(count: Int) {
@@ -348,7 +357,7 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
     }
 
     fun getXpBoosterMultiplier(): Int {
-        return prefs.getInt(KEY_XP_BOOSTER_MULTIPLIER, 2).coerceIn(2, 3)
+        return getCompatibleInt(KEY_XP_BOOSTER_MULTIPLIER, 2).coerceIn(2, 3)
     }
 
     fun setXpBoosterMultiplier(multiplier: Int) {
