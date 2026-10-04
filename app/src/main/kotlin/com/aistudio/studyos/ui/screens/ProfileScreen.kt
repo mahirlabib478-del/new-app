@@ -6,6 +6,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -92,6 +96,7 @@ import androidx.compose.ui.platform.LocalContext
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import android.os.Build
 import android.provider.Settings
 import android.content.pm.PackageManager
@@ -1241,9 +1246,149 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
         }
+
+        // Contact Developer — placed at the very end of Profile
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("profile_contact_developer_card"),
+                shape = RoundedCornerShape(22.dp),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(9.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "Need a hand?",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "We're here to help with StudyOS",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val messageText = "Hello Developer! I need help with the StudyOS app."
+                                val whatsappUrl = "https://wa.me/8801339871504?text=" + Uri.encode(messageText)
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(whatsappUrl)))
+                                } catch (_: Exception) {
+                                    Toast.makeText(
+                                        context,
+                                        "Could not open WhatsApp. Please try again.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                            .testTag("btn_contact_developer_whatsapp"),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 13.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Canvas(modifier = Modifier.size(46.dp)) {
+                                val green = Color(0xFF25D366)
+                                drawCircle(color = green)
+                                val handset = Path().apply {
+                                    moveTo(size.width * 0.31f, size.height * 0.25f)
+                                    cubicTo(size.width * 0.26f, size.height * 0.25f, size.width * 0.23f, size.height * 0.31f, size.width * 0.25f, size.height * 0.37f)
+                                    cubicTo(size.width * 0.32f, size.height * 0.58f, size.width * 0.45f, size.height * 0.71f, size.width * 0.65f, size.height * 0.76f)
+                                    cubicTo(size.width * 0.72f, size.height * 0.78f, size.width * 0.77f, size.height * 0.72f, size.width * 0.77f, size.height * 0.66f)
+                                    lineTo(size.width * 0.76f, size.height * 0.59f)
+                                    cubicTo(size.width * 0.75f, size.height * 0.55f, size.width * 0.70f, size.height * 0.54f, size.width * 0.66f, size.height * 0.56f)
+                                    lineTo(size.width * 0.60f, size.height * 0.60f)
+                                    cubicTo(size.width * 0.51f, size.height * 0.56f, size.width * 0.44f, size.height * 0.49f, size.width * 0.40f, size.height * 0.40f)
+                                    lineTo(size.width * 0.44f, size.height * 0.34f)
+                                    cubicTo(size.width * 0.46f, size.height * 0.30f, size.width * 0.44f, size.height * 0.26f, size.width * 0.40f, size.height * 0.25f)
+                                    close()
+                                }
+                                drawPath(
+                                    path = handset,
+                                    color = Color.White,
+                                    style = Stroke(width = size.width * 0.065f, cap = StrokeCap.Round)
+                                )
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text = "Contact Developer",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Get support directly on WhatsApp",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = "Open WhatsApp",
+                                tint = Color(0xFF25D366),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Usually the quickest way to get help or share feedback.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
     }
 
-    if (pendingAccountAction != null) {
+    if (pendingAccountAction != null {
         AlertDialog(
             onDismissRequest = { pendingAccountAction = null },
             title = { Text("Local study data notice") },
