@@ -70,9 +70,9 @@ import java.util.Locale
 
 private val THEME_PRESET_LIST = listOf(
     Triple("pitch_black", "Pitch Black", Color(0xFF00E5FF)),
-    Triple("dark", "Dark", Color(0xFF64748B)),
+    Triple("obsidian_gold", "Obsidian Gold", Color(0xFFFFD60A)),
     Triple("light", "Light", Color(0xFF2563EB)),
-    Triple("ocean", "Ocean Deep", Color(0xFF0284C7)),
+    Triple("sky_night", "Sky Night", Color(0xFF38BDF8)),
     Triple("learning_green", "Learning Green", Color(0xFF58CC02)),
     Triple("sunrise", "Sunrise Orange", Color(0xFFEA580C)),
     Triple("cyberpunk", "Cyberpunk / Synthwave 80s", Color(0xFFFF2A85)),
