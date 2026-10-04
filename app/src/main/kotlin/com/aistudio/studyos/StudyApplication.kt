@@ -23,6 +23,8 @@ class StudyApplication : Application() {
     val repository: StudyRepository by lazy { StudyRepository(database, themePreferences) }
     val cloudProgressSync: FirebaseProgressSyncRepository by lazy { FirebaseProgressSyncRepository(this, database) }
     private val accountCloudSyncs = mutableMapOf<String, FirebaseProgressSyncRepository>()
+    private val bootstrapInFlight = mutableSetOf<String>()
+    @Volatile private var activeCloudUid: String? = null
     private val appScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
 
     @Synchronized
@@ -45,17 +47,25 @@ class StudyApplication : Application() {
         }
     }
 
+    @Synchronized
     fun activateCloudSync(uid: String) {
         val user = FirebaseAuth.getInstance().currentUser ?: return
         if (user.uid != uid || !user.isEmailVerified) return
         val sync = cloudSyncFor(uid)
-        sync.startAutomaticUpload(appScope)
+        if (activeCloudUid != uid) {
+            sync.startAutomaticUpload(appScope)
+            activeCloudUid = uid
+        }
+        // MainActivity and FirebaseAuth's listener can both announce the same sign-in.
+        // Keep only one bootstrap running per UID to avoid competing initial snapshots.
+        if (!bootstrapInFlight.add(uid)) return
         appScope.launch {
             try {
                 sync.bootstrapOnVerifiedSignIn()
             } catch (error: Exception) {
-                // Sync repository exposes the error state; keep local data untouched.
                 android.util.Log.e("StudyOSCloudSync", "Cloud bootstrap failed for the active account", error)
+            } finally {
+                synchronized(this@StudyApplication) { bootstrapInFlight.remove(uid) }
             }
         }
     }
@@ -72,6 +82,7 @@ class StudyApplication : Application() {
                 accountCloudSyncs.forEach { (uid, sync) ->
                     if (uid != user?.uid) sync.stopAutomaticUpload()
                 }
+                if (user?.uid != activeCloudUid) activeCloudUid = null
                 user?.let { activateCloudSync(it.uid) }
             }
         }
