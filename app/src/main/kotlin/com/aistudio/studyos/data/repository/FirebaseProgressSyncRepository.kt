@@ -136,11 +136,9 @@ class FirebaseProgressSyncRepository(
         }
         val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }
 
-        // The local Room database is shared across Firebase accounts. If both sides
-        // contain data, we cannot prove the local records belong to this UID. Do not
-        // merge or upload them automatically: that could leak one account's progress
-        // into another account. Keep uploads disabled until an explicit account-scoped
-        // migration/merge flow is implemented.
+        // Even in this UID-scoped database, populated local and cloud snapshots may
+        // have diverged. Do not silently merge or overwrite either copy; keep uploads
+        // disabled until the user explicitly resolves the conflict.
         val hasCloud = cloudPlans.isNotEmpty() || cloudExams.isNotEmpty() ||
             cloudSessions.isNotEmpty() || cloudProfiles.any {
                 it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
@@ -148,7 +146,7 @@ class FirebaseProgressSyncRepository(
         if (hasLocal) {
             cloudUploadUid = null
             return if (hasCloud) {
-                "Both local and cloud progress exist. Automatic merge is paused to protect account data; no records were changed."
+                "Both local and cloud progress exist. Automatic merge is paused to protect both copies; no records were changed."
             } else {
                 "This device has local progress, but the signed-in account's cloud document has no progress records. Automatic upload is paused to prevent transferring another account's data."
             }
