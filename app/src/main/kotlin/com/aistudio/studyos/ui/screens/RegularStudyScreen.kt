@@ -204,7 +204,7 @@ fun RegularStudyScreen(
                                 )
                                 Text(
                                     text = label.split(" ")[0],
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
