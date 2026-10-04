@@ -47,6 +47,8 @@ fun AccountScreen(
     var message by remember { mutableStateOf<String?>(null) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
     var confirmImport by remember { mutableStateOf(false) }
+    var confirmSignOutAnyway by remember { mutableStateOf(false) }
+    var signOutFailureMessage by remember { mutableStateOf<String?>(null) }
     var pendingVerifiedNavigation by remember { mutableStateOf(false) }
     var showAdvancedSync by remember { mutableStateOf(false) }
     var verificationPending by remember { mutableStateOf(repository.currentUser?.isEmailVerified == false) }
@@ -141,10 +143,32 @@ fun AccountScreen(
                     Text("You're all set. Your personal study space is ready.", style = MaterialTheme.typography.bodyMedium)
                     Text("Cloud sync: " + syncStatus, style = MaterialTheme.typography.bodySmall, color = if (syncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton(
-                        onClick = { scope.launch { cloudSync?.syncNowBeforeSignOut(); repository.signOut(); message = "Signed out." } },
+                        onClick = {
+                            if (!busy) {
+                                busy = true
+                                message = null
+                                signOutFailureMessage = null
+                                scope.launch {
+                                    try {
+                                        val sync = cloudSync
+                                            ?: throw IllegalStateException("Cloud sync is unavailable. Your latest progress could not be confirmed as backed up.")
+                                        sync.syncNowBeforeSignOut()
+                                        repository.signOut()
+                                        message = "Progress synced. Signed out safely."
+                                    } catch (e: Exception) {
+                                        signOutFailureMessage = e.localizedMessage
+                                            ?: "Cloud sync could not be completed."
+                                        confirmSignOutAnyway = true
+                                    } finally {
+                                        busy = false
+                                    }
+                                }
+                            }
+                        },
+                        enabled = !busy,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Sign out", maxLines = 1, softWrap = false)
+                        Text(if (busy) "Syncing before sign out…" else "Sign out", maxLines = 1, softWrap = false)
                     }
                 } else if (verificationPending || user != null) {
                     Text(user?.email ?: email, style = MaterialTheme.typography.bodyLarge)
@@ -336,6 +360,39 @@ fun AccountScreen(
                         onVerified()
                     }
                 }) { Text("Skip for now", maxLines = 1, softWrap = false, fontSize = 12.sp) }
+            }
+        )
+    }
+
+    if (confirmSignOutAnyway) {
+        AlertDialog(
+            onDismissRequest = { if (!busy) confirmSignOutAnyway = false },
+            title = { Text("Cloud backup not confirmed") },
+            text = {
+                Text(
+                    (signOutFailureMessage ?: "The latest progress could not be synced.") +
+                        "\n\nYou can stay signed in and retry. If you sign out anyway, the progress already stored on this device is not intentionally deleted, but changes not backed up to the cloud may be lost if app data is cleared or the app is reinstalled."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !busy,
+                    onClick = {
+                        confirmSignOutAnyway = false
+                        repository.signOut()
+                        message = "Signed out without a confirmed cloud backup. Local progress was not intentionally deleted; unbacked changes may not survive reinstall."
+                    }
+                ) { Text("Sign out anyway") }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !busy,
+                    onClick = {
+                        confirmSignOutAnyway = false
+                        signOutFailureMessage = null
+                        message = "Still signed in. Check the connection or cloud sync status, then retry."
+                    }
+                ) { Text("Stay signed in") }
             }
         )
     }
