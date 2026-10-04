@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
@@ -123,8 +125,9 @@ class MainActivity : ComponentActivity() {
             val auth = remember { FirebaseAuth.getInstance() }
             var currentUser by remember { mutableStateOf(auth.currentUser) }
             var showResetPassword by remember { mutableStateOf(false) }
-            val welcomePrefs = remember { getSharedPreferences("study_os_welcome", MODE_PRIVATE) }
-            var hasSeenWelcome by remember { mutableStateOf(welcomePrefs.getBoolean("has_seen_welcome", false)) }
+            // Show Welcome on every fresh launch until the user signs in or chooses guest mode.
+            // This state intentionally resets when the Activity is recreated for a new app launch.
+            var hasStartedWelcome by remember { mutableStateOf(false) }
             var authRefresh by remember { mutableStateOf(0) }
             val guestPrefs = remember { getSharedPreferences("study_os_guest_session", MODE_PRIVATE) }
             var guestMode by remember { mutableStateOf(guestPrefs.getBoolean("guest_mode", false)) }
@@ -183,14 +186,9 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             } else {
-                StudyOSTheme {
-                    if (!hasSeenWelcome) {
-                        WelcomeScreen(
-                            onGetStarted = {
-                                welcomePrefs.edit().putBoolean("has_seen_welcome", true).apply()
-                                hasSeenWelcome = true
-                            }
-                        )
+                StudyOSTheme(preset = "pitch_black") {
+                    if (!hasStartedWelcome) {
+                        WelcomeScreen(onGetStarted = { hasStartedWelcome = true })
                     } else if (showResetPassword) {
                         ResetPasswordScreen(onBack = { showResetPassword = false })
                     } else {
@@ -226,108 +224,118 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun WelcomeScreen(onGetStarted: () -> Unit) {
-    val ink = Color(0xFF202124)
-    val muted = Color(0xFF70757A)
-    val accent = Color(0xFF3559E8)
-    val page = Color(0xFFFAFAF8)
+    val colors = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(page)
-            .padding(horizontal = 28.dp, vertical = 24.dp),
+            .background(colors.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Brand header stays below the status bar and follows the active app theme.
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(52.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White),
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(colors.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.School,
                     contentDescription = null,
-                    tint = accent,
+                    tint = colors.primary,
                     modifier = Modifier.size(25.dp)
                 )
             }
-            Text(
-                text = "StudyOS",
-                modifier = Modifier.padding(start = 11.dp),
-                color = ink,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    text = "StudyOS",
+                    color = colors.onBackground,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "YOUR PERSONAL STUDY SPACE",
+                    color = colors.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
+        // Theme-aware illustration panel; no fixed light colors that clash with Pitch Black.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp)
-                .height(250.dp),
+                .padding(horizontal = 8.dp)
+                .height(248.dp)
+                .clip(RoundedCornerShape(32.dp))
+                .background(colors.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(width = 226.dp, height = 206.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(Color(0xFFECEFFE)),
+                    .size(width = 178.dp, height = 196.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(colors.surface),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 148.dp, height = 174.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(82.dp)
+                            .clip(RoundedCornerShape(26.dp))
+                            .background(colors.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             imageVector = Icons.Default.School,
                             contentDescription = "Study illustration",
-                            tint = accent,
-                            modifier = Modifier.size(66.dp)
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(width = 82.dp, height = 7.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFFDDE2FC))
-                        )
-                        Spacer(modifier = Modifier.height(7.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(width = 58.dp, height = 7.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFFE8EAF6))
+                            tint = colors.primary,
+                            modifier = Modifier.size(48.dp)
                         )
                     }
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(width = 102.dp, height = 7.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.outlineVariant)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(width = 72.dp, height = 7.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.outlineVariant.copy(alpha = 0.65f))
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         Text(
             text = "Your Goals.\nYour Growth.",
-            color = ink,
+            color = colors.onBackground,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center,
             lineHeight = MaterialTheme.typography.headlineLarge.lineHeight
         )
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = "Build better habits, one study session at a time.",
-            color = muted,
+            color = colors.onSurfaceVariant,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
@@ -336,13 +344,11 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
         Button(
             onClick = onGetStarted,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(58.dp),
+            modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = accent,
-                contentColor = Color.White
+                containerColor = colors.primary,
+                contentColor = colors.onPrimary
             )
         ) {
             Text(
@@ -357,7 +363,7 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                 modifier = Modifier.size(19.dp)
             )
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
     }
 }
 
