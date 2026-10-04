@@ -176,14 +176,23 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onAccountOpened = {
-                            // Only guests need the special post-auth return path.
-                            // Authenticated users opening Account from Profile must keep
-                            // the normal app start destination on the next launch.
+                            // Keep Compose state and preferences in sync. Updating only
+                            // preferences leaves this composition with a stale Home destination.
                             if (auth.currentUser == null && guestMode) {
                                 pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
+                                returnToProfileAfterAuth = true
                             }
                         },
-                        onAccountVerified = {}
+                        onAccountVerified = {
+                            // Refresh the root auth state and return a guest to Profile after
+                            // a successful verified sign-in, rather than leaving them on Account.
+                            pendingAuthPrefs.edit().putBoolean("return_to_profile", true).apply()
+                            returnToProfileAfterAuth = true
+                            guestPrefs.edit().putBoolean("guest_mode", false).apply()
+                            guestMode = false
+                            currentUser = auth.currentUser
+                            authRefresh += 1
+                        }
                     )
                 }
             } else {
