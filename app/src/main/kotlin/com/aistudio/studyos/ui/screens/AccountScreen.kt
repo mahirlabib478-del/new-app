@@ -98,7 +98,7 @@ fun AccountScreen(
                     }
                     if (showAdvancedSync) {
                     Text(
-                        "Use these only when moving progress between devices. Normal account sync is handled separately.",
+                        "Create the first backup once to enable automatic cloud uploads on this device. After that, changes to study plans, exams, sessions and profile progress are uploaded automatically; restore is only for moving to an empty device.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
