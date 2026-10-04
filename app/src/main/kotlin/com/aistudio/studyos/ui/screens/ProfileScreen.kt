@@ -1388,7 +1388,7 @@ fun ProfileScreen(
 
     }
 
-    if (pendingAccountAction != null {
+    if (pendingAccountAction?.let { true } == true) {
         AlertDialog(
             onDismissRequest = { pendingAccountAction = null },
             title = { Text("Local study data notice") },
