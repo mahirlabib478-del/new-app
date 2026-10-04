@@ -438,7 +438,8 @@ fun MainApp(
                         onAccountVerified()
                     },
                     onContinueAsGuest = {},
-                    showBackButton = true
+                    showBackButton = true,
+                    showContinueAsGuest = false
                 )
             }
             composable(Screen.ResetPassword.route) {
