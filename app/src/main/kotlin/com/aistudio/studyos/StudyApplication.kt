@@ -15,7 +15,7 @@ class StudyApplication : Application() {
             private set
     }
 
-    val database: StudyDatabase by lazy { StudyDatabase.getInstance(this) }
+    /** Legacy/guest store; authenticated screens must use databaseFor(uid). */\n    val database: StudyDatabase by lazy { StudyDatabase.getInstance(this) }\n\n    fun databaseFor(uid: String?): StudyDatabase =\n        if (uid.isNullOrBlank()) database else StudyDatabase.getAccountInstance(this, uid)\n\n    fun preferencesFor(uid: String?): ThemePreferences =\n        if (uid.isNullOrBlank()) themePreferences\n        else ThemePreferences(this, ThemePreferences.accountStorageName(uid))\n\n    fun repositoryFor(uid: String?): StudyRepository =\n        if (uid.isNullOrBlank()) repository\n        else StudyRepository(databaseFor(uid), preferencesFor(uid))\n\n    fun cloudSyncFor(uid: String): FirebaseProgressSyncRepository =\n        FirebaseProgressSyncRepository(this, databaseFor(uid))
     val themePreferences: ThemePreferences by lazy { ThemePreferences(this) }
     val repository: StudyRepository by lazy { StudyRepository(database, themePreferences) }
     val cloudProgressSync: FirebaseProgressSyncRepository by lazy { FirebaseProgressSyncRepository(this, database) }
