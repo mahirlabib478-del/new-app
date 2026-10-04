@@ -50,6 +50,7 @@ class FirebaseProgressSyncRepository(
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
     private var connectivityCallback: ConnectivityManager.NetworkCallback? = null
     private var uploadScope: CoroutineScope? = null
+    private var preferenceChangeListener: android.content.SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     @Synchronized
     fun startAutomaticUpload(scope: CoroutineScope) {
@@ -66,6 +67,11 @@ class FirebaseProgressSyncRepository(
         }
         invalidationObserver = observer
         database.invalidationTracker.addObserver(observer)
+        val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+            scheduleSnapshotUpload()
+        }
+        preferenceChangeListener = prefListener
+        themePreferences.registerCloudSyncListener(prefListener)
         val networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 // Connectivity has returned: immediately retry the latest local snapshot.
@@ -128,6 +134,8 @@ class FirebaseProgressSyncRepository(
         pendingUpload = null
         invalidationObserver?.let { database.invalidationTracker.removeObserver(it) }
         invalidationObserver = null
+        preferenceChangeListener?.let { themePreferences.unregisterCloudSyncListener(it) }
+        preferenceChangeListener = null
         authStateListener?.let { auth.removeAuthStateListener(it) }
         authStateListener = null
         connectivityCallback?.let {
