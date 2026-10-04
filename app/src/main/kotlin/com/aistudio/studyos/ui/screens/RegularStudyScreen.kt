@@ -288,7 +288,7 @@ fun RegularStudyScreen(
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Start Session (${selectedDuration * totalBlocks} mins total)",
+                        text = "Start • ${selectedDuration * totalBlocks} min",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         maxLines = 1,
