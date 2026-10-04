@@ -10,18 +10,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.aistudio.studyos.data.repository.EmailNotVerifiedException
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
-    val context = LocalContext.current
+fun AccountScreen(
+    onBack: () -> Unit,
+    onForgotPassword: () -> Unit,
+    onVerified: () -> Unit = {}
+) {
     val repository = remember { FirebaseAccountRepository() }
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf(repository.currentUser?.email.orEmpty()) }
@@ -29,57 +32,181 @@ fun AccountScreen(onBack: () -> Unit, onForgotPassword: () -> Unit) {
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
+    var verificationPending by remember { mutableStateOf(repository.currentUser?.isEmailVerified == false) }
     val user = repository.currentUser
+    val verified = user?.isEmailVerified == true
 
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
-            Column {
-                Text("StudyOS Account", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Sign in, create account or recover access", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (!verificationPending && user == null) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                Column {
+                    Text("StudyOS Account", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("Sign in or create your account", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
+        } else {
+            Text("Verify your email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text("StudyOS keeps each account's study progress separate.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(22.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp)) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Text(if (user == null) "Welcome back" else "Account connected", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(
+                        when {
+                            verified -> "Account verified"
+                            verificationPending || user != null -> "Email verification required"
+                            else -> "Welcome to StudyOS"
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                if (user != null) {
-                    Text(user.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
-                    Text("Cloud backup is paused until account-specific storage is enabled. Local records have not been uploaded.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    OutlinedButton(onClick = { repository.signOut(); message = "Signed out."; password = "" }, modifier = Modifier.fillMaxWidth()) { Text("Sign Out") }
+
+                if (verified) {
+                    Text(user?.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
+                    Text("Your email is verified. Opening your account…", style = MaterialTheme.typography.bodyMedium)
+                    LaunchedEffect(user?.uid) { onVerified() }
+                } else if (verificationPending || user != null) {
+                    Text(user?.email ?: email, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Open the verification email from Firebase and tap its verification link. Then return here and refresh the status. Your study data will not be imported from old local storage automatically.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Button(
+                        onClick = {
+                            busy = true
+                            message = null
+                            scope.launch {
+                                try {
+                                    val refreshed = repository.refreshCurrentUser()
+                                    if (refreshed?.isEmailVerified == true) {
+                                        verificationPending = false
+                                        message = "Email verified."
+                                        onVerified()
+                                    } else {
+                                        verificationPending = true
+                                        message = "Email is not verified yet. Check your inbox and spam folder."
+                                    }
+                                } catch (e: Exception) {
+                                    message = e.localizedMessage ?: "Could not refresh verification status."
+                                } finally { busy = false }
+                            }
+                        },
+                        enabled = !busy,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("I've verified my email — Refresh") }
+                    OutlinedButton(
+                        onClick = {
+                            busy = true
+                            message = null
+                            scope.launch {
+                                try {
+                                    repository.resendVerificationEmail()
+                                    message = "Verification email sent. Check your inbox and spam folder."
+                                } catch (e: Exception) {
+                                    message = e.localizedMessage ?: "Could not resend verification email."
+                                } finally { busy = false }
+                            }
+                        },
+                        enabled = !busy && user != null && !verified,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Resend verification email") }
+                    TextButton(
+                        onClick = { repository.signOut(); verificationPending = false; password = ""; message = "Signed out." },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Sign out") }
                 } else {
-                    OutlinedTextField(email, { email = it; message = null }, Modifier.fillMaxWidth().testTag("account_email"), label = { Text("Email address") }, placeholder = { Text("you@example.com") }, singleLine = true, shape = RoundedCornerShape(14.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
-                    OutlinedTextField(password, { password = it; message = null }, Modifier.fillMaxWidth().testTag("account_password"), label = { Text("Password") }, singleLine = true, shape = RoundedCornerShape(14.dp), visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it; message = null },
+                        modifier = Modifier.fillMaxWidth().testTag("account_email"),
+                        label = { Text("Email address") },
+                        placeholder = { Text("you@example.com") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    )
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it; message = null },
+                        modifier = Modifier.fillMaxWidth().testTag("account_password"),
+                        label = { Text("Password") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(onClick = { confirmAction = "login" }, enabled = !busy && email.contains("@") && password.isNotEmpty(), modifier = Modifier.weight(1f).height(50.dp).testTag("btn_login"), shape = RoundedCornerShape(14.dp)) { Text("Log In") }
-                        OutlinedButton(onClick = { confirmAction = "create" }, enabled = !busy && email.contains("@") && password.length >= 6, modifier = Modifier.weight(1f).height(50.dp).testTag("btn_create_account"), shape = RoundedCornerShape(14.dp)) { Text("Create Account") }
+                        Button(
+                            onClick = { confirmAction = "login" },
+                            enabled = !busy && email.contains("@") && password.isNotEmpty(),
+                            modifier = Modifier.weight(1f).height(50.dp).testTag("btn_login"),
+                            shape = RoundedCornerShape(14.dp)
+                        ) { Text("Log In") }
+                        OutlinedButton(
+                            onClick = { confirmAction = "create" },
+                            enabled = !busy && email.contains("@") && password.length >= 6,
+                            modifier = Modifier.weight(1f).height(50.dp).testTag("btn_create_account"),
+                            shape = RoundedCornerShape(14.dp)
+                        ) { Text("Create Account") }
                     }
                     Text("New account password must contain at least 6 characters.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+
                 if (busy) CircularProgressIndicator(Modifier.size(22.dp))
                 message?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
             }
         }
-        TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")) {
-            Icon(Icons.Default.Security, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Forgot password?")
+        if (user == null && !verificationPending) {
+            TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")) {
+                Icon(Icons.Default.Security, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Forgot password?")
+            }
         }
     }
-    if (confirmAction != null) AlertDialog(onDismissRequest = { confirmAction = null }, title = { Text("Local study data notice") }, text = { Text("Study records are stored locally on this device and are not yet separated by account. Continuing may leave existing records visible after sign-in.") }, confirmButton = {
-        Button(onClick = {
-            val action = confirmAction ?: return@Button
-            confirmAction = null; busy = true; message = null
-            scope.launch {
-                try {
-                    if (action == "login") repository.signIn(email, password) else repository.createAccount(email, password)
-                    message = if (action == "login") "Signed in. Cloud restore is paused until account-specific local storage is enabled." else "Account created. Cloud restore is paused until account-specific local storage is enabled."
-                } catch (e: Exception) { message = e.localizedMessage ?: "Account action failed." }
-                finally { busy = false }
-            }
-        }) { Text("Continue") }
-    }, dismissButton = { TextButton(onClick = { confirmAction = null }) { Text("Cancel") } })
+
+    if (confirmAction != null) {
+        AlertDialog(
+            onDismissRequest = { confirmAction = null },
+            title = { Text(if (confirmAction == "create") "Create account" else "Sign in") },
+            text = {
+                Text(
+                    if (confirmAction == "create")
+                        "A verification email will be sent. You must verify it before entering StudyOS. Existing local progress will remain untouched and will not be imported without your explicit permission."
+                    else
+                        "Only verified email accounts can enter StudyOS. Existing local progress will remain untouched."
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val action = confirmAction ?: return@Button
+                    confirmAction = null
+                    busy = true
+                    message = null
+                    scope.launch {
+                        try {
+                            if (action == "login") {
+                                val signedIn = repository.signIn(email, password)
+                                if (signedIn.isEmailVerified) onVerified()
+                            } else {
+                                val created = repository.createAccount(email, password)
+                                verificationPending = true
+                                message = "Verification email sent to ${created.email.orEmpty()}. Verify it before continuing."
+                            }
+                        } catch (e: Exception) {
+                            if (e is EmailNotVerifiedException || repository.currentUser?.isEmailVerified == false) {
+                                verificationPending = true
+                            }
+                            message = e.localizedMessage ?: "Account action failed."
+                        } finally { busy = false }
+                    }
+                }) { Text("Continue") }
+            },
+            dismissButton = { TextButton(onClick = { confirmAction = null }) { Text("Cancel") } }
+        )
+    }
 }
