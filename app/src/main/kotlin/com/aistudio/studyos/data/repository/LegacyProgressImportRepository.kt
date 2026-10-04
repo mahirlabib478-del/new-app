@@ -25,6 +25,25 @@ class LegacyProgressImportRepository(
 ) {
     private val appContext = context.applicationContext
 
+    /** Returns whether the guest/legacy database contains any meaningful progress to offer for import. */
+    suspend fun hasLegacyProgress(): Boolean {
+        require(uid.isNotBlank()) { "Sign in before checking local progress." }
+        require(auth.currentUser?.uid == uid && auth.currentUser?.isEmailVerified == true) {
+            "A verified account is required to check progress for import."
+        }
+
+        val legacy = StudyDatabase.getInstance(appContext)
+        val plans = legacy.studyPlanDao().getAllForBackup()
+        val exams = legacy.examDao().getAllForBackup()
+        val sessions = legacy.sessionLogDao().getAllForBackup()
+        val profiles = legacy.userProfileDao().getAllForBackup()
+        return plans.isNotEmpty() || exams.isNotEmpty() || sessions.isNotEmpty() ||
+            profiles.any {
+                it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                    it.totalXpSpent > 0 || it.streakDays > 0
+            }
+    }
+
     suspend fun importLegacyProgress(): LegacyImportSummary {
         require(uid.isNotBlank()) { "Sign in before importing local progress." }
         require(auth.currentUser?.uid == uid && auth.currentUser?.isEmailVerified == true) {
