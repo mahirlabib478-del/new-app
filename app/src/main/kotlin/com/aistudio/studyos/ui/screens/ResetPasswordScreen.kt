@@ -121,7 +121,23 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                 ) {
                     if (busy) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp) else Text("Send reset link")
                 }
-                message?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+                message?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (message != null) {
+                    Spacer(Modifier.height(2.dp))
+                    OutlinedButton(
+                        onClick = onBack,
+                        modifier = Modifier.fillMaxWidth().height(50.dp).testTag("btn_back_to_login"),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Back to login")
+                    }
+                }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 Text(
                     "Didn't receive the email? Check Spam/Junk, confirm the address is correct, and wait a few minutes before trying again.",
