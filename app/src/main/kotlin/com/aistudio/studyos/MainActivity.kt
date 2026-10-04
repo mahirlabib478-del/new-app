@@ -238,10 +238,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun WelcomeScreen(onGetStarted: () -> Unit) {
-    val pitchBlack = Color(0xFF050505)
-    val green = Color(0xFF4CAF00)
-    val softGreen = Color(0xFF9BE66B)
-    val mutedText = Color(0xFF9A9A9A)
+    val pitchBlack = Color(0xFF000000)
+    val green = Color(0xFF00E5FF)
+    val softGreen = Color(0xFF80F5FF)
+    val mutedText = Color(0xFFA0A0A0)
 
     Column(
         modifier = Modifier
@@ -263,8 +263,8 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(13.dp))
-                    .background(Color(0xFF10200C))
-                    .border(1.dp, Color(0xFF24431B), RoundedCornerShape(13.dp)),
+                    .background(Color(0xFF101010))
+                    .border(1.dp, Color(0xFF16434A), RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -304,24 +304,24 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                 modifier = Modifier
                     .size(224.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF091108))
-                    .border(1.dp, Color(0xFF1C3516), CircleShape),
+                    .background(Color(0xFF050B0C))
+                    .border(1.dp, Color(0xFF123238), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
                         .size(180.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF0D190B))
-                        .border(1.dp, Color(0xFF28451F), CircleShape),
+                        .background(Color(0xFF080F10))
+                        .border(1.dp, Color(0xFF174047), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
                             .size(132.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF142710))
-                            .border(1.dp, Color(0xFF386329), CircleShape),
+                            .background(Color(0xFF0B2024))
+                            .border(1.dp, Color(0xFF17606A), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -338,8 +338,8 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
                     .align(Alignment.BottomEnd)
                     .padding(end = 32.dp, bottom = 15.dp),
                 shape = RoundedCornerShape(50),
-                color = Color(0xFF142710),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF386329))
+                color = Color(0xFF0B2024),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF17606A))
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -398,7 +398,7 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = green,
-                contentColor = Color.White
+                contentColor = Color.Black
             )
         ) {
             Text(
@@ -417,7 +417,7 @@ private fun WelcomeScreen(onGetStarted: () -> Unit) {
         Spacer(modifier = Modifier.height(13.dp))
         Text(
             text = "YOUR PERSONAL SPACE TO GROW",
-            color = Color(0xFF686868),
+            color = Color(0xFF707070),
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
             letterSpacing = 1.05.sp
