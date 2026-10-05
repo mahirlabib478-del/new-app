@@ -350,6 +350,8 @@ fun XPShopBottomSheet(
     }
 }
 
+}
+
 @Composable
 private fun PremiumThemeSection(
     viewModel: StudyViewModel,
@@ -946,7 +948,4 @@ private fun ThemePassDurationSelectionDialog(
             OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(10.dp)) { Text("Cancel") }
         }
     )
-}
-
-
 }
