@@ -1746,11 +1746,16 @@ private fun AmbientSoundConfigDialog(
                                     Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .tactile3DButton(
+                                                backgroundColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                                bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.secondary.copy(alpha = 0.42f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.32f),
+                                                cornerRadius = 10.dp,
+                                                depth = if (isSelected) 4.dp else 2.dp
+                                            )
                                             .clip(RoundedCornerShape(10.dp))
                                             .clickable { onSelectAudio(audio) },
                                         shape = RoundedCornerShape(10.dp),
-                                        color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
-                                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                        color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                                         border = BorderStroke(
                                             width = if (isSelected) 1.5.dp else 1.dp,
                                             color = if (isSelected) MaterialTheme.colorScheme.secondary
@@ -1797,7 +1802,7 @@ private fun AmbientSoundConfigDialog(
                                                         onSelectAudio(audio)
                                                     }
                                                 },
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(32.dp).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.32f), 16.dp, 2.dp)
                                             ) {
                                                 Icon(
                                                     if (isThisPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -1810,7 +1815,7 @@ private fun AmbientSoundConfigDialog(
                                             // Delete Icon
                                             IconButton(
                                                 onClick = { onDeleteAudio(audio) },
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(32.dp).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.32f), 16.dp, 2.dp)
                                             ) {
                                                 Icon(
                                                     Icons.Default.DeleteOutline,
