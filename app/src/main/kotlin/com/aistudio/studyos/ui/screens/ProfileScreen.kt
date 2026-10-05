@@ -1645,7 +1645,9 @@ fun ProfileScreen(
                         )
                         }
                     }
-                },
+                }
+                }
+            },
             confirmButton = {
                 Button(
                     onClick = {
