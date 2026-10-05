@@ -373,7 +373,7 @@ fun AccountScreen(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary,
                                 disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                disabledContentColor = MaterialTheme.colorScheme.onSurface
                             )
                         ) {
                             Text("Log In", maxLines = 1, softWrap = false)
