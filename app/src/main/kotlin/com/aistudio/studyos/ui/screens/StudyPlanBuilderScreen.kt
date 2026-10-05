@@ -207,7 +207,7 @@ fun StudyPlanBuilderScreen(
                     if (step > 0) {
                         OutlinedButton(
                             onClick = { step-- },
-                            modifier = Modifier.weight(0.8f).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 14.dp, 4.dp),
+                            modifier = Modifier.weight(0.8f).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 14.dp, 4.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) { Text("Back") }
                     }
@@ -218,7 +218,7 @@ fun StudyPlanBuilderScreen(
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContainerColor = MaterialTheme.colorScheme.surface,
                                 disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
@@ -237,7 +237,7 @@ fun StudyPlanBuilderScreen(
                         OutlinedButton(
                             onClick = ::saveDraft,
                             enabled = draftReady,
-                            modifier = Modifier.weight(1f).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 14.dp, 4.dp),
+                            modifier = Modifier.weight(1f).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 14.dp, 4.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) { Text("Save Draft") }
                         Button(
@@ -246,7 +246,7 @@ fun StudyPlanBuilderScreen(
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContainerColor = MaterialTheme.colorScheme.surface,
                                 disabledContentColor = MaterialTheme.colorScheme.onSurface
                             ),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
@@ -254,7 +254,7 @@ fun StudyPlanBuilderScreen(
                                 .weight(1.2f)
                                 .height(48.dp)
                                 .tactile3DButton(
-                                    if (valid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    if (valid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                                     if (valid) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                                     14.dp,
                                     5.dp
@@ -322,7 +322,7 @@ fun StudyPlanBuilderScreen(
                                     )
                                 )
                             },
-                            modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp).testTag("btn_add_subject"),
+                            modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp).testTag("btn_add_subject"),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(Icons.Default.Add, null)
@@ -456,7 +456,7 @@ fun StudyPlanBuilderScreen(
                         Card(
                             Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+                            colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
                         ) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -473,7 +473,7 @@ fun StudyPlanBuilderScreen(
                                     OutlinedButton(
                                         onClick = ::applySplit,
                                         enabled = totalSessionMinutes >= topicCount && topicCount > 0,
-                                        modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 12.dp, 3.dp).testTag("btn_split_topics"),
+                                        modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 12.dp, 3.dp).testTag("btn_split_topics"),
                                         contentPadding = PaddingValues(horizontal = 12.dp)
                                     ) { Text("Auto Balance") }
                                 }
@@ -551,7 +551,7 @@ private fun StepHeader(step: Int) {
                     .tactile3DButton(
                         backgroundColor = when {
                             selected -> MaterialTheme.colorScheme.primaryContainer
-                            completed -> MaterialTheme.colorScheme.surfaceVariant
+                            completed -> MaterialTheme.colorScheme.surface
                             else -> MaterialTheme.colorScheme.surface
                         },
                         bottomEdgeColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
@@ -676,7 +676,7 @@ private fun SubjectEditor(
             }
             OutlinedButton(
                 onClick = { onSubjectChange(subject.copy(topics = subject.topics + EditableTopic(""))) },
-                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 13.dp, 3.dp),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 13.dp, 3.dp),
                 shape = RoundedCornerShape(13.dp)
             ) {
                 Icon(Icons.Default.Add, null)
@@ -694,9 +694,9 @@ private fun ReviewSubject(
     onTopicTimeChange: (Int, String) -> Unit
 ) {
     Card(
-        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
+        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Text(subject.name.ifBlank { "Unnamed Subject" }, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
@@ -731,7 +731,7 @@ private fun SummaryCard(
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),
@@ -765,7 +765,7 @@ private fun SettingCard(
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -784,9 +784,9 @@ private fun SettingCard(
 @Composable
 private fun ValidationCard(message: String, success: Boolean = false) {
     Surface(
-        Modifier.fillMaxWidth().tactile3DButton(if (success) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), 16.dp, 3.dp),
+        Modifier.fillMaxWidth().tactile3DButton(if (success) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), 16.dp, 3.dp),
         shape = RoundedCornerShape(16.dp),
-        color = if (success) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        color = if (success) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(
