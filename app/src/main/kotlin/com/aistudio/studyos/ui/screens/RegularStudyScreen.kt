@@ -299,7 +299,10 @@ fun RegularStudyScreen(
                         .testTag("btn_start_study_session"),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
@@ -334,7 +337,7 @@ fun RegularStudyScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
-                        .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
+                        .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
                         .testTag("btn_save_study_draft"),
                     shape = RoundedCornerShape(16.dp)
                 ) {
