@@ -283,7 +283,7 @@ private fun HomeHeader(
                     Icon(
                         Icons.Default.LocalFireDepartment,
                         null,
-                        Modifier.size(17.dp).scale(streakPulse),
+                        Modifier.size(17.dp).graphicsLayer { scaleX = streakPulse; scaleY = streakPulse },
                         tint = Color(0xFFF97316)
                     )
                 },
@@ -806,7 +806,11 @@ private fun JourneyNode(
 
     Column(
         modifier = modifier
-            .scale(nodeScale * todayPulse)
+            .graphicsLayer {
+                val nodeScaleValue = nodeScale * todayPulse
+                scaleX = nodeScaleValue
+                scaleY = nodeScaleValue
+            }
             .clickable(onClick = onClick)
             .testTag(
                 if (day.isToday) "journey_today_node"
