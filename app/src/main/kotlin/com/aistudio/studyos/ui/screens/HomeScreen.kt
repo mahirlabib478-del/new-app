@@ -572,7 +572,8 @@ private fun StudyJourneyCard(
             journeyDays.forEachIndexed { index, day ->
                 val isCompleted = !day.isFuture && day.minutes > 0
                 val nodeSize = if (day.isToday) 54.dp else 42.dp
-                val alignment = if (index % 2 == 0) Alignment.Start else Alignment.End
+                val rowAlignment = if (index % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd
+                val horizontalArrangement = if (index % 2 == 0) Arrangement.Start else Arrangement.End
 
                 Box(
                     modifier = Modifier
@@ -597,17 +598,15 @@ private fun StudyJourneyCard(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .align(alignment),
-                        horizontalArrangement = if (alignment == Alignment.Start) Arrangement.Start else Arrangement.End,
+                            .align(rowAlignment),
+                        horizontalArrangement = horizontalArrangement,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (alignment == Alignment.End) Spacer(modifier = Modifier.weight(1f))
                         JourneyNode(
                             day = day,
                             isCompleted = isCompleted,
                             size = nodeSize
                         )
-                        if (alignment == Alignment.Start) Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
