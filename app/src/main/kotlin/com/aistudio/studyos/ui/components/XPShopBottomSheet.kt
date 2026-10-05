@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,7 +70,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.service.AdManager
@@ -333,6 +336,8 @@ fun XPShopBottomSheet(
             // 🎡 Spin Wheel
             SpinWheelSection(viewModel = viewModel)
 
+            Spacer(modifier = Modifier.height(6.dp))
+
             // ITEM 6: ⚡ Instant Free XP Drop via Sponsor (70% +150 XP, 30% +250 XP; 30-min cooldown; 5s silent delay)
             ShopItemCard(
                 icon = Icons.Default.Bolt,
@@ -588,7 +593,7 @@ private fun ShopItemCard(
                     onClick = onAction,
                     enabled = isButtonEnabled,
                     shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -596,6 +601,8 @@ private fun ShopItemCard(
                         disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
                     ),
                     modifier = Modifier
+                        .height(40.dp)
+                        .widthIn(min = 118.dp, max = 170.dp)
                         .tactile3DButton(
                             backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
                             bottomEdgeColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
@@ -607,7 +614,11 @@ private fun ShopItemCard(
                     Text(
                         text = buttonLabel,
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -667,6 +678,8 @@ private fun PassDurationSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -790,14 +803,14 @@ private fun PassDurationSelectionDialog(
 
                 // Price and Savings Card
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
-                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), 14.dp, 4.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -807,7 +820,7 @@ private fun PassDurationSelectionDialog(
                             Text(
                                 text = "Total Price:",
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
+                                fontSize = 13.sp
                             )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -859,7 +872,7 @@ private fun PassDurationSelectionDialog(
 
                         Text(
                             text = "Your balance: $totalXP XP",
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             color = if (canAfford) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error
                         )
                     }
@@ -870,8 +883,15 @@ private fun PassDurationSelectionDialog(
             Button(
                 onClick = { onConfirmPurchase(selectedDays, finalCost) },
                 enabled = canAfford,
-                modifier = Modifier.tactile3DButton(
-                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.78f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (canAfford) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                modifier = Modifier
+                    .height(40.dp)
+                    .tactile3DButton(
+                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     bottomEdgeColor = if (canAfford) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                     cornerRadius = 10.dp,
                     depth = 4.dp
@@ -884,12 +904,19 @@ private fun PassDurationSelectionDialog(
             }
         },
         dismissButton = {
-            OutlinedButton(
+            Button(
                 onClick = onDismiss,
-                modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 10.dp, 3.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                modifier = Modifier
+                    .height(40.dp)
+                    .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 10.dp, 3.dp),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text("Cancel")
+                Text("Cancel", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
             }
         }
     )
@@ -923,6 +950,8 @@ private fun ThemePassDurationSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Bolt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
@@ -984,19 +1013,19 @@ private fun ThemePassDurationSelectionDialog(
                 }
 
                 Surface(
-                    Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f), MaterialTheme.colorScheme.primary.copy(alpha = 0.30f), 14.dp, 4.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
                 ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(Modifier.padding(horizontal = 10.dp, vertical = 9.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Total Price:", fontWeight = FontWeight.SemiBold)
+                            Text("Total Price:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 if (discountPercent > 0) {
                                     Text(rawCost.toString() + " XP", style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(finalCost.toString() + " XP", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                                Text(finalCost.toString() + " XP", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
                             }
                         }
                         if (discountPercent > 0) {
@@ -1013,7 +1042,14 @@ private fun ThemePassDurationSelectionDialog(
                     viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { _, _ -> onDismiss() }
                 },
                 enabled = canAfford,
-                modifier = Modifier.tactile3DButton(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (canAfford) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                modifier = Modifier
+                    .height(40.dp)
+                    .tactile3DButton(
                     backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     bottomEdgeColor = if (canAfford) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.40f),
                     cornerRadius = 10.dp,
@@ -1025,7 +1061,16 @@ private fun ThemePassDurationSelectionDialog(
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 10.dp, 3.dp), shape = RoundedCornerShape(10.dp)) { Text("Cancel") }
+            Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+            modifier = Modifier
+                .height(40.dp)
+                .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 10.dp, 3.dp),
+            shape = RoundedCornerShape(10.dp)
+        ) { Text("Cancel", maxLines = 1, softWrap = false, textAlign = TextAlign.Center) }
         }
     )
 }
