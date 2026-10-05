@@ -1001,7 +1001,7 @@ private fun CompactAmbientSoundBar(
             .animateContentSize(animationSpec = tween(220))
             .testTag("ambient_sound_card")
             .tactile3DButton(
-                backgroundColor = if (isWallpaperActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
+                backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.48f),
                 cornerRadius = 16.dp,
                 depth = 5.dp
@@ -1015,7 +1015,7 @@ private fun CompactAmbientSoundBar(
             else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isWallpaperActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -1168,7 +1168,7 @@ private fun AmbientSoundConfigDialog(
                     selectedTabIndex = selectedTabIndex,
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.32f), 12.dp, 3.dp).clip(RoundedCornerShape(12.dp))
+                    modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.32f), 12.dp, 3.dp).clip(RoundedCornerShape(12.dp))
                 ) {
                     Tab(
                         selected = selectedTabIndex == 0,
