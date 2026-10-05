@@ -422,7 +422,7 @@ private fun TodayFocusCard(
                 backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 24.dp,
-                depth = 8.dp
+                depth = 6.dp
             )
             .animateContentSize(animationSpec = tween(300))
             .testTag("today_engine_hero_card"),
@@ -439,7 +439,7 @@ private fun TodayFocusCard(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
@@ -475,7 +475,7 @@ private fun TodayFocusCard(
                     ) {
                         Text(
                             text = "Block " + (activePlan.currentBlockIndex + 1) + "/" + activePlan.totalBlocks,
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -585,7 +585,7 @@ private fun StudyJourneyCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(animationSpec = tween(280))
-            .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 24.dp, 6.dp)
+            .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.58f), 24.dp, 8.dp)
             .testTag("study_journey_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -1006,9 +1006,9 @@ private fun JourneyFloatingDecoration(
         }
         Text(
             label,
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
         )
     }
 }
