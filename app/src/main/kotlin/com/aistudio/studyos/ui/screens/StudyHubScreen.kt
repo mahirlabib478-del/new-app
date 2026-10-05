@@ -205,13 +205,15 @@ private fun ActivePlanCard(plan: StudyPlanEntity, onContinue: () -> Unit) {
             }
             Button(
                 onClick = onContinue,
-                modifier = Modifier.tactile3DButton(
-                    backgroundColor = MaterialTheme.colorScheme.primary,
-                    bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.62f),
-                    cornerRadius = 16.dp,
-                    depth = 5.dp
-                ),
-                modifier = Modifier.fillMaxWidth().testTag("btn_continue_current_plan"),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("btn_continue_current_plan")
+                    .tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.primary,
+                        bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.62f),
+                        cornerRadius = 16.dp,
+                        depth = 5.dp
+                    ),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Text("Continue")
