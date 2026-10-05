@@ -136,7 +136,7 @@ fun FocusScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.focusState.collectAsState()
-    val primaryColor = if (state.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
+    val primaryColor = if (state.isBreak) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
     var showEndDialog by remember { mutableStateOf(false) }
     var showAmbientDialog by remember { mutableStateOf(false) }
     var showFocusOptions by remember { mutableStateOf(false) }
@@ -713,21 +713,21 @@ private fun CurrentTopicIndicator(
     ) {
         // Phase Pill
         val pillBgColor = if (isWallpaperActive) {
-            MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
         } else if (isBreak) {
-            Color(0xFF10B981).copy(alpha = 0.12f)
+            MaterialTheme.colorScheme.tertiaryContainer
         } else {
-            primaryColor.copy(alpha = 0.10f)
+            MaterialTheme.colorScheme.primaryContainer
         }
         val pillTextColor = if (isBreak) {
-            if (isLight) Color(0xFF047857) else Color(0xFF34D399)
+            MaterialTheme.colorScheme.onTertiaryContainer
         } else {
-            primaryColor
+            MaterialTheme.colorScheme.onPrimaryContainer
         }
 
         Box(
             modifier = Modifier
-                .tactile3DButton(pillBgColor, primaryColor.copy(alpha = 0.3f), 16.dp, 3.dp)
+                .tactile3DButton(pillBgColor, primaryColor.copy(alpha = 0.42f), 16.dp, 4.dp)
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
             Text(
@@ -840,7 +840,7 @@ private fun CircularTimerDisplay(
         val transition = rememberInfiniteTransition(label = "focus_timer_pulse")
         transition.animateFloat(
             initialValue = 1f,
-            targetValue = 1.012f,
+            targetValue = 1.006f,
             animationSpec = infiniteRepeatable(
                 animation = tween(900, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Reverse
@@ -856,6 +856,7 @@ private fun CircularTimerDisplay(
                 scaleY = timerPulse
             }
             .size(292.dp)
+            .clip(CircleShape)
             .testTag("focus_timer_circle"),
         contentAlignment = Alignment.Center
     ) {
@@ -1005,6 +1006,12 @@ private fun CompactAmbientSoundBar(
             .fillMaxWidth()
             .animateContentSize(animationSpec = tween(220))
             .testTag("ambient_sound_card")
+            .tactile3DButton(
+                backgroundColor = if (isWallpaperActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.48f),
+                cornerRadius = 16.dp,
+                depth = 5.dp
+            )
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
@@ -1014,11 +1021,7 @@ private fun CompactAmbientSoundBar(
             else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isWallpaperActive) {
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
+            containerColor = if (isWallpaperActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -1036,6 +1039,12 @@ private fun CompactAmbientSoundBar(
                 Box(
                     modifier = Modifier
                         .size(38.dp)
+                        .tactile3DButton(
+                            backgroundColor = if (isAnyPlaying) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f),
+                            cornerRadius = 19.dp,
+                            depth = 2.dp
+                        )
                         .clip(CircleShape)
                         .background(
                             if (isAnyPlaying) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
@@ -1077,7 +1086,12 @@ private fun CompactAmbientSoundBar(
 
             TextButton(
                 onClick = onToggle,
-                modifier = Modifier.testTag("btn_toggle_ambient")
+                modifier = Modifier.tactile3DButton(
+                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                    bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f),
+                    cornerRadius = 10.dp,
+                    depth = 2.dp
+                ).testTag("btn_toggle_ambient")
             ) {
                 Text(
                     text = if (isAnyPlaying) "Stop" else "Play",
@@ -1156,7 +1170,7 @@ private fun AmbientSoundConfigDialog(
                 // Tab Selection Row
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clip(RoundedCornerShape(12.dp))
                 ) {
@@ -1236,11 +1250,14 @@ private fun AmbientSoundConfigDialog(
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(
-                                            if (isSelected) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.surfaceVariant
+                                        .tactile3DButton(
+                                            backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                            bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.50f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.34f),
+                                            cornerRadius = 10.dp,
+                                            depth = if (isSelected) 4.dp else 2.dp
                                         )
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                                         .clickable { onAmbientPresetChange(option) }
                                         .padding(vertical = 10.dp, horizontal = 4.dp),
                                     contentAlignment = Alignment.Center
@@ -1273,7 +1290,12 @@ private fun AmbientSoundConfigDialog(
                                     containerColor = if (isAmbientPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
                                     contentColor = if (isAmbientPlaying) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
-                                modifier = Modifier.testTag("dialog_btn_ambient_toggle")
+                                modifier = Modifier.tactile3DButton(
+                                    backgroundColor = if (isAmbientPlaying) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                                    bottomEdgeColor = if (isAmbientPlaying) MaterialTheme.colorScheme.error.copy(alpha = 0.38f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
+                                    cornerRadius = 12.dp,
+                                    depth = 3.dp
+                                ).testTag("dialog_btn_ambient_toggle")
                             ) {
                                 Icon(
                                     if (isAmbientPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -1326,9 +1348,9 @@ private fun AmbientSoundConfigDialog(
                         // 📁 Upload Audio Section inside Ambient Sound tab
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-                            modifier = Modifier.fillMaxWidth()
+                            color = MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
+                            modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 3.dp)
                         ) {
                             Column(
                                 modifier = Modifier
@@ -1433,9 +1455,9 @@ private fun AmbientSoundConfigDialog(
                         // Pass banner in library
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = if (isAudioPassActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            color = if (isAudioPassActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                             border = BorderStroke(1.dp, if (isAudioPassActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 10.dp, 3.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1485,9 +1507,9 @@ private fun AmbientSoundConfigDialog(
                             // 🎵 Mini Scrubber & Audio Transport Controls Card
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
-                                modifier = Modifier.fillMaxWidth()
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.50f)),
+                                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 4.dp)
                             ) {
                                 Column(
                                     modifier = Modifier
