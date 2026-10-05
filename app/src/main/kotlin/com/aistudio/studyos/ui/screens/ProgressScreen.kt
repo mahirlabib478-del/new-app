@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -202,6 +203,31 @@ private fun formatMinutes(minutes: Int): String {
 }
 
 @Composable
+private fun StatCell(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 11.dp)) {
+            Text(
+                value,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                label,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
 fun ProgressScreen(
     viewModel: StudyViewModel,
     onOpenHistory: () -> Unit = {}
@@ -229,6 +255,13 @@ fun ProgressScreen(
     val bestRecentSession = allLogs.maxOfOrNull { it.durationMinutes.coerceAtLeast(0) } ?: 0
     val analytics = remember(allLogs, activePlan, latestCompletedPlan) {
         ProgressAnalyticsCalculator.calculate(allLogs, activePlan, latestCompletedPlan = latestCompletedPlan)
+    }
+    val subjectTotals = remember(allLogs) {
+        allLogs
+            .groupBy { it.subject.ifBlank { "General" } }
+            .mapValues { (_, logs) -> logs.sumOf { it.durationMinutes.coerceAtLeast(0) } }
+            .entries
+            .sortedByDescending { it.value }
     }
 
     val focusState by viewModel.focusState.collectAsState()
