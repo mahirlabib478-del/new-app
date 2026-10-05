@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,7 +60,10 @@ fun AnimatedCounter(
     target: Int,
     suffix: String = "",
     durationMillis: Int = 650,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    style: TextStyle = androidx.compose.ui.text.TextStyle.Default,
+    maxLines: Int = 1,
+    overflow: TextOverflow = TextOverflow.Clip
 ) {
     val animated = remember { Animatable(0f) }
     LaunchedEffect(target) {
@@ -69,7 +74,10 @@ fun AnimatedCounter(
     }
     Text(
         text = animated.value.roundToInt().toString() + suffix,
-        modifier = modifier
+        modifier = modifier,
+        style = style,
+        maxLines = maxLines,
+        overflow = overflow
     )
 }
 
