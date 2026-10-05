@@ -513,43 +513,82 @@ private fun StudyJourneyCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Your Study Journey", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Your study, day by day", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "Your Study Journey",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "Keep moving forward, one day at a time",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Text(
                     "View all",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onOpenHistory).padding(6.dp)
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onOpenHistory)
+                        .padding(6.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            journeyDays.forEachIndexed { index, day ->
-                val isCompleted = !day.isFuture && day.minutes > 0
-                val nodeSize = if (day.isToday) 54.dp else 42.dp
-                val rowAlignment = if (index % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd
-                val horizontalArrangement = if (index % 2 == 0) Arrangement.Start else Arrangement.End
-                Box(modifier = Modifier.fillMaxWidth().height(if (index == journeyDays.lastIndex) 62.dp else 72.dp)) {
-                    if (index < journeyDays.lastIndex) {
-                        Box(
-                            modifier = Modifier.width(2.dp).height(42.dp).align(Alignment.Center)
-                                .background(
-                                    if (isCompleted || day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
-                                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(9 * 78.dp)
+            ) {
+                androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                    val leftX = size.width * 0.24f
+                    val rightX = size.width * 0.76f
+                    val stepY = size.height / 8f
+                    for (i in 0 until 8) {
+                        val fromX = if (i % 2 == 0) leftX else rightX
+                        val toX = if (i % 2 == 0) rightX else leftX
+                        drawLine(
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                            start = androidx.compose.ui.geometry.Offset(fromX, stepY * i + 34.dp.toPx()),
+                            end = androidx.compose.ui.geometry.Offset(toX, stepY * (i + 1) + 34.dp.toPx()),
+                            strokeWidth = 3.dp.toPx()
                         )
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().align(rowAlignment),
-                        horizontalArrangement = horizontalArrangement,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        JourneyNode(day, isCompleted, nodeSize) { selectedDay = day }
+                }
+
+                Column(modifier = Modifier.fillMaxSize()) {
+                    journeyDays.forEachIndexed { index, day ->
+                        val isCompleted = !day.isFuture && day.minutes > 0
+                        val nodeSize = if (day.isToday) 58.dp else 46.dp
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(78.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp),
+                                horizontalArrangement = if (index % 2 == 0) Arrangement.Start else Arrangement.End,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                JourneyNode(
+                                    day = day,
+                                    isCompleted = isCompleted,
+                                    size = nodeSize,
+                                    onClick = { selectedDay = day }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -562,8 +601,11 @@ private fun StudyJourneyCard(
             onDismissRequest = { selectedDay = null },
             title = {
                 Text(
-                    text = if (day.isToday) "Today • " + SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
-                    else SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time),
+                    text = if (day.isToday) {
+                        "Today • " + SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
+                    } else {
+                        SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
+                    },
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -572,11 +614,25 @@ private fun StudyJourneyCard(
                     when {
                         day.isToday && activePlan != null -> {
                             Text("Your active study plan is ready.")
-                            Text("Continue your current session or open the Study Plan.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "Continue your current session or open the Study Plan.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         day.isToday -> {
-                            Text(if (isCompleted) "You have already studied " + day.minutes + " minutes today." else "You haven't studied yet today.")
-                            Text("Ready to make today count?", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                if (isCompleted) {
+                                    "You have already studied " + day.minutes + " minutes today."
+                                } else {
+                                    "You haven't studied yet today."
+                                }
+                            )
+                            Text(
+                                "Ready to make today count?",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         day.isFuture -> {
                             Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary)
@@ -584,11 +640,19 @@ private fun StudyJourneyCard(
                         }
                         isCompleted -> {
                             Text(day.minutes.toString() + " minutes studied on this day.")
-                            Text("You can review the activity from History.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "You can review the activity from History.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         else -> {
                             Text("No study was recorded on this day.")
-                            Text("Every day is a fresh start. Study today to keep moving forward.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "Every day is a fresh start. Study today to keep moving forward.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -604,10 +668,14 @@ private fun StudyJourneyCard(
                         Text(if (activePlan != null) "Continue Session" else "Start a Session")
                     }
                 } else if (!day.isFuture && isCompleted) {
-                    Button(onClick = { selectedDay = null; onOpenHistory() }) { Text("View Activity") }
+                    Button(onClick = { selectedDay = null; onOpenHistory() }) {
+                        Text("View Activity")
+                    }
                 }
             },
-            dismissButton = { TextButton(onClick = { selectedDay = null }) { Text("Close") } }
+            dismissButton = {
+                TextButton(onClick = { selectedDay = null }) { Text("Close") }
+            }
         )
     }
 }
@@ -641,25 +709,39 @@ private fun JourneyNode(
     }
 
     Column(
-        modifier = Modifier.clickable(onClick = onClick).testTag(
-            if (day.isToday) "journey_today_node" else "journey_day_" + dateLabel.replace(" ", "_")
-        ),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .testTag(
+                if (day.isToday) "journey_today_node"
+                else "journey_day_" + dateLabel.replace(" ", "_")
+            ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.size(size).clip(CircleShape).background(fill).border(
-                width = if (day.isToday) 3.dp else 1.dp,
-                color = if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
-                else MaterialTheme.colorScheme.outline.copy(alpha = 0.28f),
-                shape = CircleShape
-            ),
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(fill)
+                .border(
+                    width = if (day.isToday) 3.dp else 1.dp,
+                    color = if (day.isToday) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
+                    } else {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                    },
+                    shape = CircleShape
+                ),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 icon,
-                fontSize = if (day.isToday) 22.sp else 17.sp,
+                fontSize = if (day.isToday) 23.sp else 18.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = if (day.isToday || isCompleted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (day.isToday || isCompleted) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -667,9 +749,26 @@ private fun JourneyNode(
             if (day.isToday) "TODAY" else dateLabel,
             fontSize = 10.sp,
             fontWeight = if (day.isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
-            color = if (day.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (day.isToday) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
         )
-        if (isCompleted) Text(day.minutes.toString() + "m", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (isCompleted) {
+            Text(
+                day.minutes.toString() + "m",
+                fontSize = 9.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else if (day.isToday) {
+            Text(
+                "Start",
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
