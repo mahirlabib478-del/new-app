@@ -447,7 +447,7 @@ fun MainApp(
     val isAtBottomNav = currentRoute in BOTTOM_NAV_ROUTES
     val showBottomBar = !isNavigatingToFocus && (currentRoute == null || isAtBottomNav)
     val focusState by viewModel.focusState.collectAsState()
-    val showMiniBar = !isNavigatingToFocus && isAtBottomNav && currentRoute != Screen.Focus.route && focusState.planId != null
+    val showMiniBar = !isNavigatingToFocus && isAtBottomNav && currentRoute != Screen.Focus.route && currentRoute != Screen.StudyHub.route && focusState.planId != null
 
     LaunchedEffect(startDestination) {
         if (startDestination == Screen.Profile.route) {
