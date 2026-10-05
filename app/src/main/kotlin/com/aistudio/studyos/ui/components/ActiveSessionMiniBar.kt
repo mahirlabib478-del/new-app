@@ -76,7 +76,7 @@ fun ActiveSessionMiniBar(
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(18.dp))
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
