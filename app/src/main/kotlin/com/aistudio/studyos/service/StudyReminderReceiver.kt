@@ -78,6 +78,7 @@ class StudyReminderReceiver : BroadcastReceiver() {
                 "Study today to protect your streak. Don't let it break!"
             } else {
                 "Complete a study session today and start your streak."
+            }
 
             val openIntent = android.app.PendingIntent.getActivity(
                 context,
