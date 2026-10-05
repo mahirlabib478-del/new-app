@@ -759,7 +759,7 @@ private fun PassDurationSelectionDialog(
                             IconButton(
                                 onClick = { if (selectedDays > 1) selectedDays-- },
                                 enabled = selectedDays > 1,
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(36.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 3.dp)
                             ) {
                                 Icon(Icons.Default.Remove, contentDescription = "Decrease Days")
                             }
@@ -862,6 +862,7 @@ private fun PassDurationSelectionDialog(
             Button(
                 onClick = { onConfirmPurchase(selectedDays, finalCost) },
                 enabled = canAfford,
+                modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 10.dp, 4.dp),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
@@ -872,6 +873,7 @@ private fun PassDurationSelectionDialog(
         dismissButton = {
             OutlinedButton(
                 onClick = onDismiss,
+                modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 10.dp, 3.dp),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text("Cancel")
@@ -924,7 +926,7 @@ private fun ThemePassDurationSelectionDialog(
                     listOf(3, 7, 14, 30).forEach { days ->
                         val selected = selectedDays == days
                         Surface(
-                            Modifier.weight(1f).clickable { selectedDays = days },
+                            Modifier.weight(1f).tactile3DButton(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 10.dp, 3.dp).clickable { selectedDays = days },
                             shape = RoundedCornerShape(10.dp),
                             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -998,6 +1000,7 @@ private fun ThemePassDurationSelectionDialog(
                     viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { _, _ -> onDismiss() }
                 },
                 enabled = canAfford,
+                modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 10.dp, 4.dp),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(if (canAfford) "Buy " + selectedDays + " Days" else "Need " + (finalCost - totalXP) + " More XP")
