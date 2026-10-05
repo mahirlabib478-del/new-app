@@ -422,7 +422,7 @@ private fun TodayFocusCard(
                 backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 24.dp,
-                depth = 6.dp
+                depth = 8.dp
             )
             .animateContentSize(animationSpec = tween(300))
             .testTag("today_engine_hero_card"),
@@ -439,7 +439,7 @@ private fun TodayFocusCard(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
@@ -475,7 +475,7 @@ private fun TodayFocusCard(
                     ) {
                         Text(
                             text = "Block " + (activePlan.currentBlockIndex + 1) + "/" + activePlan.totalBlocks,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -628,12 +628,12 @@ private fun StudyJourneyCard(
                 0.50f, 0.62f, 0.70f, 0.62f, 0.50f,
                 0.38f, 0.30f, 0.38f, 0.50f
             )
-            val journeyStep = 108.dp
+            val journeyStep = 112.dp
 
             androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((journeyStep.value * journeyDays.size + 8).dp)
+                    .height((journeyStep.value * journeyDays.size + 18).dp)
             ) {
                 // Floating study objects live in the open pockets of the curve.
                 JourneyFloatingDecoration(
@@ -671,7 +671,7 @@ private fun StudyJourneyCard(
 
                 journeyDays.forEachIndexed { index, day ->
                     val isCompleted = !day.isFuture && day.minutes > 0
-                    val nodeSize = if (day.isToday) 76.dp else 64.dp
+                    val nodeSize = if (day.isToday) 86.dp else 72.dp
                     JourneyNode(
                         day = day,
                         isCompleted = isCompleted,
@@ -977,7 +977,7 @@ private fun JourneyFloatingDecoration(
 
     Column(
         modifier = modifier
-            .size(72.dp)
+            .size(84.dp)
             .graphicsLayer {
                 translationY = bob.dp.toPx()
                 rotationZ = tilt
@@ -986,14 +986,14 @@ private fun JourneyFloatingDecoration(
     ) {
         Box(
             modifier = Modifier
-                .size(50.dp)
-                .shadow(10.dp, RoundedCornerShape(14.dp), clip = false)
+                .size(58.dp)
+                .shadow(12.dp, RoundedCornerShape(16.dp), clip = false)
                 .clip(RoundedCornerShape(14.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = glow),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -1001,7 +1001,7 @@ private fun JourneyFloatingDecoration(
                 icon,
                 contentDescription = label,
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
-                modifier = Modifier.size(25.dp)
+                modifier = Modifier.size(29.dp)
             )
         }
         Text(
