@@ -307,7 +307,7 @@ fun ProgressScreen(
 
     AnimatedReveal(index = 0) {
         LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = horizontalContentPadding, end = horizontalContentPadding, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -830,8 +830,8 @@ fun ProgressScreen(
         item {
             Spacer(modifier = Modifier.height(80.dp))
         }
+        }
     }
-}
 }
 
 }
