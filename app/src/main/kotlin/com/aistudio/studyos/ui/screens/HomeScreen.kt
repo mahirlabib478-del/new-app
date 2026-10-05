@@ -544,54 +544,63 @@ private fun StudyJourneyCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val journeyPathColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+            val journeyPathColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+            val journeyPositions = listOf(0.50f, 0.27f, 0.63f, 0.39f, 0.70f, 0.31f, 0.59f, 0.25f, 0.50f)
+            val journeyStep = 92.dp
 
-            Box(
+            androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((9 * 78).dp)
+                    .height(journeyStep * journeyDays.size)
             ) {
                 androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                    val leftX = size.width * 0.24f
-                    val rightX = size.width * 0.76f
-                    val stepY = size.height / 8f
-                    for (i in 0 until 8) {
-                        val fromX = if (i % 2 == 0) leftX else rightX
-                        val toX = if (i % 2 == 0) rightX else leftX
-                        drawLine(
-                            color = journeyPathColor,
-                            start = androidx.compose.ui.geometry.Offset(fromX, stepY * i + 34.dp.toPx()),
-                            end = androidx.compose.ui.geometry.Offset(toX, stepY * (i + 1) + 34.dp.toPx()),
-                            strokeWidth = 3.dp.toPx()
+                    val stepPx = journeyStep.toPx()
+                    val points = journeyPositions.mapIndexed { index, fraction ->
+                        androidx.compose.ui.geometry.Offset(
+                            x = size.width * fraction,
+                            y = index * stepPx + 30.dp.toPx()
                         )
                     }
-                }
 
-                Column(modifier = Modifier.fillMaxSize()) {
-                    journeyDays.forEachIndexed { index, day ->
-                        val isCompleted = !day.isFuture && day.minutes > 0
-                        val nodeSize = if (day.isToday) 58.dp else 46.dp
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(78.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 10.dp),
-                                horizontalArrangement = if (index % 2 == 0) Arrangement.Start else Arrangement.End,
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                JourneyNode(
-                                    day = day,
-                                    isCompleted = isCompleted,
-                                    size = nodeSize,
-                                    onClick = { selectedDay = day }
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        if (points.isNotEmpty()) {
+                            moveTo(points.first().x, points.first().y)
+                            for (i in 1 until points.size) {
+                                val previous = points[i - 1]
+                                val current = points[i]
+                                val controlX = (previous.x + current.x) / 2f
+                                quadraticBezierTo(
+                                    controlX,
+                                    previous.y + stepPx * 0.42f,
+                                    current.x,
+                                    current.y
                                 )
                             }
                         }
                     }
+
+                    drawPath(
+                        path = path,
+                        color = journeyPathColor,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            width = 5.dp.toPx()
+                        )
+                    )
+                }
+
+                journeyDays.forEachIndexed { index, day ->
+                    val isCompleted = !day.isFuture && day.minutes > 0
+                    val nodeSize = if (day.isToday) 64.dp else 52.dp
+                    JourneyNode(
+                        day = day,
+                        isCompleted = isCompleted,
+                        size = nodeSize,
+                        onClick = { selectedDay = day },
+                        modifier = Modifier.offset(
+                            x = maxWidth * journeyPositions[index] - nodeSize / 2,
+                            y = index * journeyStep
+                        )
+                    )
                 }
             }
         }
@@ -694,7 +703,8 @@ private fun JourneyNode(
     day: JourneyDay,
     isCompleted: Boolean,
     size: androidx.compose.ui.unit.Dp,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val dateLabel = SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
     val fill = when {
@@ -711,7 +721,7 @@ private fun JourneyNode(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .clickable(onClick = onClick)
             .testTag(
                 if (day.isToday) "journey_today_node"
