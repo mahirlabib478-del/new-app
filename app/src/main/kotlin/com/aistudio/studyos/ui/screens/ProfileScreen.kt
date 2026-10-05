@@ -3,6 +3,7 @@ package com.aistudio.studyos.ui.screens
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,6 +18,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -112,12 +116,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.Role
 import com.aistudio.studyos.data.update.UpdateCheckState
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedReveal
 import com.aistudio.studyos.ui.components.AnimatedSyncIndicator
 import com.aistudio.studyos.ui.components.tactile3DButton
+import com.aistudio.studyos.ui.components.tactile3D
+import com.aistudio.studyos.ui.components.inset3D
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import kotlin.math.roundToInt
 
@@ -131,7 +138,7 @@ data class ThemeOption(
 private val THEME_OPTIONS = listOf(
     ThemeOption("pitch_black", "Pitch Black", Icons.Default.DarkMode, Color(0xFF00E5FF)),
     ThemeOption("obsidian_gold", "Obsidian Gold", Icons.Default.DarkMode, Color(0xFFFFD60A)),
-    ThemeOption("light", "Light", Icons.Default.WbSunny, Color(0xFF2563EB)),
+    ThemeOption("light", "Light", Icons.Default.WbSunny, Color(0xFFC2410C)),
     ThemeOption("sky_night", "Sky Night", Icons.Default.NightsStay, Color(0xFF38BDF8)),
     ThemeOption("learning_green", "Learning Green", Icons.Default.Eco, Color(0xFF4CAF00)),
     ThemeOption("sunrise", "Sunrise", Icons.Default.WbSunny, Color(0xFFEA580C)),
@@ -140,30 +147,54 @@ private val THEME_OPTIONS = listOf(
 )
 
 @Composable
-private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Boolean, onClick: () -> Unit) {
+private fun ThemeOptionCard(
+    option: ThemeOption,
+    isSelected: Boolean,
+    locked: Boolean,
+    onClick: () -> Unit
+) {
     val iconScale by animateFloatAsState(
         targetValue = if (isSelected) 1.08f else 1f,
         animationSpec = tween(260),
         label = "theme_icon_scale"
     )
+    val warmAccent = Color(0xFFC2410C)
     Card(
-        modifier = Modifier.width(104.dp).animateContentSize(animationSpec = tween(220)).clickable(onClick = onClick).tactile3DButton(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, if (isSelected) option.color.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, if (isSelected) 4.dp else 3.dp).testTag("theme_card_" + option.key),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-        )
+        modifier = Modifier
+            .width(104.dp)
+            .animateContentSize(animationSpec = tween(220))
+            .clickable(onClick = onClick)
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = if (isSelected) warmAccent.copy(alpha = 0.55f)
+                else MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
+                cornerRadius = 16.dp,
+                depth = if (isSelected) 5.dp else 3.dp
+            )
+            .testTag("theme_card_" + option.key),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(
+            if (isSelected) 1.5.dp else 1.dp,
+            if (isSelected) warmAccent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)
+        ),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column(
-            Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+            Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp).scale(iconScale))
+            Icon(
+                option.icon,
+                contentDescription = null,
+                tint = if (isSelected) warmAccent else option.color,
+                modifier = Modifier.size(22.dp).scale(iconScale)
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 option.name,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 3
             )
             Spacer(modifier = Modifier.height(3.dp))
@@ -246,8 +277,9 @@ fun ProfileScreen(
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
-    val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
+    val bottomListPadding = if (focusState.planId != null) 176.dp else 112.dp
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
+    val profileWarmAccent = if (currentTheme == "light") Color(0xFFC2410C) else MaterialTheme.colorScheme.primary
 
     val streakShieldCount by viewModel.streakShieldCount.collectAsState()
     val isWallpaperPassActive by viewModel.isCustomWallpaperPassActive.collectAsState()
