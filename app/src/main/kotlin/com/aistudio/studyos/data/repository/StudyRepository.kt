@@ -855,6 +855,9 @@ class StudyRepository(
             database.studyPlanDao().clearAll()
         }
         themePreferences.setCachedRecentSessions(emptyList())
+        // Reset statistics without deleting purchased shop assets. The bridge marker
+        // is transient streak state and must not survive a full stats reset.
+        themePreferences.setLastShieldSavedDate(null)
         val currentProfile = database.userProfileDao().getProfileSync()
         val currentTheme = ThemeCatalog.normalize(currentProfile?.themePreset)
         val currentGoal = currentProfile?.dailyGoalMinutes ?: 60
