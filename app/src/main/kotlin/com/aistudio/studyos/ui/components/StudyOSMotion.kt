@@ -47,6 +47,42 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import kotlin.math.roundToInt
 
 
+fun Modifier.tactile3D(
+    depth: Dp = 4.dp,
+    color: Color,
+    edgeColor: Color,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(20.dp)
+): Modifier = tactile3DButton(
+    backgroundColor = color,
+    bottomEdgeColor = edgeColor,
+    cornerRadius = 20.dp,
+    depth = depth
+)
+
+fun Modifier.inset3D(
+    color: Color,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp),
+    depth: Dp = 3.dp
+): Modifier = this
+    .clip(shape)
+    .shadow(elevation = depth, shape = shape, clip = false)
+    .drawWithContent {
+        drawRoundRect(
+            color = color.copy(alpha = 0.42f),
+            size = size,
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                16.dp.toPx(), 16.dp.toPx()
+            )
+        )
+        drawContent()
+        drawLine(
+            color = Color.Black.copy(alpha = 0.16f),
+            start = androidx.compose.ui.geometry.Offset(10.dp.toPx(), size.height - 1.dp.toPx()),
+            end = androidx.compose.ui.geometry.Offset(size.width - 10.dp.toPx(), size.height - 1.dp.toPx()),
+            strokeWidth = 0.7.dp.toPx()
+        )
+    }
+
 fun Modifier.tactile3DButton(
     backgroundColor: Color,
     bottomEdgeColor: Color,
