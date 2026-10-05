@@ -2,11 +2,14 @@ package com.aistudio.studyos.ui.theme
 
 import android.app.Activity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -151,6 +154,12 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFDEE3D9)
 )
 
+private val StudyOSShapes = Shapes(
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(26.dp)
+)
+
 fun isLightPreset(preset: String): Boolean = preset in setOf("learning_green", "sunrise", "light", "cyber_runner")
 
 @Composable
@@ -190,6 +199,7 @@ fun StudyOSTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = StudyOSShapes,
         content = content
     )
 }
