@@ -494,7 +494,7 @@ private fun ShopItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.46f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
