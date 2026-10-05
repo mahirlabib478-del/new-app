@@ -872,7 +872,7 @@ private fun PassDurationSelectionDialog(
                                     text = "You save $savingsXP XP!",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF047857)
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -891,7 +891,7 @@ private fun PassDurationSelectionDialog(
                 onClick = { onConfirmPurchase(selectedDays, finalCost) },
                 enabled = canAfford,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                     contentColor = if (canAfford) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
@@ -1040,7 +1040,7 @@ private fun ThemePassDurationSelectionDialog(
                             }
                         }
                         if (discountPercent > 0) {
-                            Text("-" + discountPercent + "% DISCOUNT • You save " + savingsXP + " XP!", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF047857))
+                            Text("-" + discountPercent + "% DISCOUNT • You save " + savingsXP + " XP!", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                         }
                         Text("Your balance: " + totalXP + " XP", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -1054,7 +1054,7 @@ private fun ThemePassDurationSelectionDialog(
                 },
                 enabled = canAfford,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                     contentColor = if (canAfford) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),

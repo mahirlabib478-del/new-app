@@ -150,10 +150,10 @@ fun ExamPlannerScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 20.dp)
-                            .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f), MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), 18.dp, 4.dp),
+                            .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), 18.dp, 4.dp),
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            containerColor = MaterialTheme.colorScheme.surface
                         )
                     ) {
                         Column(
@@ -196,8 +196,8 @@ fun ExamPlannerScreen(
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (exam.isCompleted)
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                            else MaterialTheme.colorScheme.surfaceVariant
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+                            else MaterialTheme.colorScheme.surface
                         )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -231,7 +231,7 @@ fun ExamPlannerScreen(
                                         Text(
                                             text = "Due: ${exam.examDate} (${exam.daysRemaining}d remaining)",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = if (exam.daysRemaining <= 1) Color(0xFFEF4444) else MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = if (exam.daysRemaining <= 1) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -247,8 +247,8 @@ fun ExamPlannerScreen(
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = when (exam.priority) {
-                                                "High" -> Color(0xFFEF4444)
-                                                "Medium" -> Color(0xFFF59E0B)
+                                                "High" -> MaterialTheme.colorScheme.error
+                                                "Medium" -> MaterialTheme.colorScheme.tertiary
                                                 else -> MaterialTheme.colorScheme.primary
                                             }
                                         )

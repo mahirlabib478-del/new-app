@@ -115,7 +115,7 @@ fun RegularStudyScreen(
                             modifier = Modifier
                                 .width(108.dp)
                                 .tactile3DButton(
-                                    if (subject == sub) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    if (subject == sub) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                                     MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
                                     12.dp, 3.dp
                                 )
@@ -124,7 +124,7 @@ fun RegularStudyScreen(
                             colors = CardDefaults.cardColors(
                                 containerColor = if (subject == sub)
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                else MaterialTheme.colorScheme.surfaceVariant
+                                else MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Box(
@@ -187,7 +187,7 @@ fun RegularStudyScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .tactile3DButton(
-                                    if (selectedDuration == mins) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    if (selectedDuration == mins) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                                     MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
                                     14.dp, 3.dp
                                 )
@@ -196,7 +196,7 @@ fun RegularStudyScreen(
                             colors = CardDefaults.cardColors(
                                 containerColor = if (selectedDuration == mins)
                                     MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceVariant
+                                else MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Column(
@@ -241,7 +241,7 @@ fun RegularStudyScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .tactile3DButton(
-                                    if (totalBlocks == blocks) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    if (totalBlocks == blocks) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                                     MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
                                     14.dp, 3.dp
                                 )
@@ -250,7 +250,7 @@ fun RegularStudyScreen(
                             colors = CardDefaults.cardColors(
                                 containerColor = if (totalBlocks == blocks)
                                     MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceVariant
+                                else MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Box(

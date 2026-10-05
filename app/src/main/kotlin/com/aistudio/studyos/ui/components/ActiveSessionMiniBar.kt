@@ -69,7 +69,7 @@ fun ActiveSessionMiniBar(
     val seconds = focusState.secondsRemaining % 60
     val timeFormatted = String.format("%02d:%02d", minutes, seconds)
     val accentColor = if (focusState.isBreak) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
-    val miniSurface = if (focusState.isBreak) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceVariant
+    val miniSurface = if (focusState.isBreak) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surface
     val miniOnSurface = if (focusState.isBreak) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
 
     Surface(

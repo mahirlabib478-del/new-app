@@ -59,7 +59,7 @@ private fun getSavedPlanModeInfo(mode: String): Pair<String, Color> {
     return when (mode.lowercase()) {
         "regular" -> Pair("📖 Regular Study", MaterialTheme.colorScheme.primary)
         "exam" -> Pair("📝 Exam Prep", MaterialTheme.colorScheme.secondary)
-        "cram" -> Pair("⚡ Cram Session", Color(0xFFF59E0B))
+        "cram" -> Pair("⚡ Cram Session", MaterialTheme.colorScheme.tertiary)
         else -> Pair("🎯 Focus Plan", MaterialTheme.colorScheme.tertiary)
     }
 }
@@ -144,7 +144,7 @@ fun SavedSessionsScreen(
                             .padding(top = 24.dp),
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            containerColor = MaterialTheme.colorScheme.surface
                         )
                     ) {
                         Column(
@@ -191,7 +191,7 @@ fun SavedSessionsScreen(
                             .testTag("saved_plan_${plan.id}"),
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surface
                         )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -231,7 +231,7 @@ fun SavedSessionsScreen(
                                             text = if (isDraft) "Draft" else "In Progress",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = if (isDraft) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFF10B981)
+                                            color = if (isDraft) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 }

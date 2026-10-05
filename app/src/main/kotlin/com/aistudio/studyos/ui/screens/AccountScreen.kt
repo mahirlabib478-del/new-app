@@ -261,7 +261,7 @@ fun AccountScreen(
                             }
                         },
                         enabled = !busy,
-                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
                     ) {
                         Text(if (busy) "Syncing before sign out…" else "Sign out", maxLines = 1, softWrap = false)
                     }
@@ -310,7 +310,7 @@ fun AccountScreen(
                             }
                         },
                         enabled = !busy && user != null && !verified,
-                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
                     ) {
                         Text("Resend verification email", maxLines = 1, softWrap = false, fontSize = 14.sp)
                     }
@@ -362,7 +362,7 @@ fun AccountScreen(
                             onClick = { confirmAction = "login" },
                             enabled = !busy && email.contains("@") && password.isNotEmpty(),
                             modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(
-                                backgroundColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                backgroundColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                                 bottomEdgeColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                                 cornerRadius = 18.dp,
                                 depth = 5.dp
@@ -372,8 +372,8 @@ fun AccountScreen(
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                disabledContentColor = MaterialTheme.colorScheme.onSurface
+                                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) {
                             Text("Log In", maxLines = 1, softWrap = false)
