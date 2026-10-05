@@ -335,7 +335,7 @@ private fun StatPill(
         modifier = modifier
             .height(36.dp)
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 14.dp,
                 depth = 4.dp
@@ -424,7 +424,7 @@ private fun TodayFocusCard(
         modifier = Modifier
             .fillMaxWidth()
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 24.dp,
                 depth = 6.dp
@@ -433,7 +433,7 @@ private fun TodayFocusCard(
             .testTag("today_engine_hero_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -590,10 +590,10 @@ private fun StudyJourneyCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(animationSpec = tween(280))
-            .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.58f), 24.dp, 8.dp)
+            .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.58f), 24.dp, 8.dp)
             .testTag("study_journey_card"),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Row(
@@ -712,9 +712,9 @@ private fun StudyJourneyCard(
             text = {
                 AnimatedReveal(index = 1) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 14.dp, 3.dp),
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 14.dp, 3.dp),
                         shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        color = MaterialTheme.colorScheme.surface
                     ) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when {
@@ -926,7 +926,7 @@ private fun JourneyNode(
                             day.isToday -> primary
                             isCompleted -> primary.copy(alpha = 0.90f)
                             day.isFuture -> MaterialTheme.colorScheme.surface
-                            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
                         }
                     )
                     .border(
@@ -1037,7 +1037,7 @@ private fun JourneyFloatingDecoration(
                 .size(58.dp)
                 .shadow(12.dp, RoundedCornerShape(16.dp), clip = false)
                 .clip(RoundedCornerShape(14.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(MaterialTheme.colorScheme.surface)
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = glow),
@@ -1073,7 +1073,7 @@ private fun QuickActionCard(
     Card(
         modifier = modifier
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
@@ -1083,7 +1083,7 @@ private fun QuickActionCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
@@ -1120,7 +1120,7 @@ private fun NextExamCard(
         modifier = Modifier
             .fillMaxWidth()
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 20.dp,
                 depth = 5.dp
@@ -1129,7 +1129,7 @@ private fun NextExamCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(modifier = Modifier.padding(17.dp)) {
