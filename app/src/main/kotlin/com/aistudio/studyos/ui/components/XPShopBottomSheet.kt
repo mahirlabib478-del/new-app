@@ -221,9 +221,9 @@ fun XPShopBottomSheet(
 
             // XP Wallet Balance Card - Theme-aware colors
             Surface(
-                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), MaterialTheme.colorScheme.outline.copy(alpha = 0.52f), 16.dp, 6.dp),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.52f), 16.dp, 6.dp),
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Row(
@@ -378,10 +378,10 @@ private fun PremiumThemeSection(
     onSelectTheme: (String) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 18.dp, 4.dp).testTag("premium_theme_section"),
+        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 18.dp, 5.dp).testTag("premium_theme_section"),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     ) {
@@ -434,7 +434,7 @@ private fun PremiumThemeRow(
         ) {
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Icon(
                     Icons.Default.Bolt,
@@ -488,15 +488,15 @@ private fun ShopItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.46f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
             )
             .animateContentSize(animationSpec = tween(220)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     ) {
@@ -521,7 +521,9 @@ private fun ShopItemCard(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(iconColor.copy(alpha = 0.15f)),
+                            .tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), 10.dp, 2.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
