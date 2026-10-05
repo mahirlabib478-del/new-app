@@ -638,7 +638,7 @@ fun ProgressScreen(
             }
 
             item {
-                Card(Modifier.fillMaxWidth().testTag("gamification_card").tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp), shape = RoundedCornerShape(20.dp),
+                Card(Modifier.fillMaxWidth().testTag("gamification_card").tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -673,7 +673,7 @@ fun ProgressScreen(
             }
 
             item {
-                Card(Modifier.fillMaxWidth().testTag("quick_stats_card").tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp), shape = RoundedCornerShape(20.dp),
+                Card(Modifier.fillMaxWidth().testTag("quick_stats_card").tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("Quick Stats", fontSize = 16.sp, fontWeight = FontWeight.Bold)
