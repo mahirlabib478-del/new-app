@@ -3,6 +3,10 @@ package com.aistudio.studyos.ui.screens
 import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -828,7 +832,22 @@ private fun CircularTimerDisplay(
     }
 
     Box(
+        val timerPulse = if (isRunning) {
+        val transition = rememberInfiniteTransition(label = "focus_timer_pulse")
+        transition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.012f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(900, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "focus_timer_pulse_scale"
+        ).value
+    } else 1f
+
+    Box(
         modifier = modifier
+            .scale(timerPulse)
             .size(292.dp)
             .testTag("focus_timer_circle"),
         contentAlignment = Alignment.Center
@@ -931,6 +950,7 @@ private fun CompactAmbientSoundBar(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(220))
             .testTag("ambient_sound_card")
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() },
