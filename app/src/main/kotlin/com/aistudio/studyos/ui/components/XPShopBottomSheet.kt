@@ -2,6 +2,9 @@ package com.aistudio.studyos.ui.components
 
 import com.aistudio.studyos.service.CompactToast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -352,7 +355,7 @@ private fun PremiumThemeSection(
     onSelectTheme: (String) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().testTag("premium_theme_section"),
+        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).testTag("premium_theme_section"),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -452,7 +455,7 @@ private fun ShopItemCard(
     onAction: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
