@@ -225,9 +225,9 @@ private fun ActivePlanCard(plan: StudyPlanEntity, onContinue: () -> Unit) {
 @Composable
 private fun ReadyCard(onCreate: () -> Unit, onQuickFocus: () -> Unit) {
     Card(
-        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 24.dp, 6.dp),
+        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 24.dp, 6.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(19.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Ready to study?", fontWeight = FontWeight.ExtraBold, fontSize = 21.sp)
