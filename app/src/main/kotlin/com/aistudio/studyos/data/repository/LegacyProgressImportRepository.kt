@@ -3,15 +3,18 @@ package com.aistudio.studyos.data.repository
 import android.content.Context
 import androidx.room.withTransaction
 import com.aistudio.studyos.data.local.StudyDatabase
+import com.aistudio.studyos.data.local.ThemePreferences
 import com.google.firebase.auth.FirebaseAuth
 
 data class LegacyImportSummary(
     val plans: Int,
     val exams: Int,
     val sessions: Int,
-    val importedProfile: Boolean
+    val importedProfile: Boolean,
+    val importedPreferenceKeys: Int
 ) {
-    val isEmpty: Boolean get() = plans == 0 && exams == 0 && sessions == 0 && !importedProfile
+    val isEmpty: Boolean
+        get() = plans == 0 && exams == 0 && sessions == 0 && !importedProfile && importedPreferenceKeys == 0
 }
 
 /**
@@ -33,11 +36,13 @@ class LegacyProgressImportRepository(
         }
 
         val legacy = StudyDatabase.getInstance(appContext)
+        val legacyPreferences = ThemePreferences(appContext)
         val plans = legacy.studyPlanDao().getAllForBackup()
         val exams = legacy.examDao().getAllForBackup()
         val sessions = legacy.sessionLogDao().getAllForBackup()
         val profiles = legacy.userProfileDao().getAllForBackup()
-        return plans.isNotEmpty() || exams.isNotEmpty() || sessions.isNotEmpty() ||
+        val preferenceKeys = legacyPreferences.exportCloudSyncPreferences().keys
+        return plans.isNotEmpty() || exams.isNotEmpty() || sessions.isNotEmpty() || preferenceKeys.isNotEmpty() ||
             profiles.any {
                 it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
                     it.totalXpSpent > 0 || it.streakDays > 0
@@ -51,13 +56,16 @@ class LegacyProgressImportRepository(
         }
 
         val legacy = StudyDatabase.getInstance(appContext)
+        val legacyPreferences = ThemePreferences(appContext)
         val account = StudyDatabase.getAccountInstance(appContext, uid)
+        val accountPreferences = ThemePreferences(appContext, ThemePreferences.accountStorageName(uid))
 
         val plans = legacy.studyPlanDao().getAllForBackup()
         val exams = legacy.examDao().getAllForBackup()
         val sessions = legacy.sessionLogDao().getAllForBackup()
         val oldProfiles = legacy.userProfileDao().getAllForBackup()
-        if (plans.isEmpty() && exams.isEmpty() && sessions.isEmpty() &&
+        val legacyPreferenceValues = legacyPreferences.exportCloudSyncPreferences()
+        if (plans.isEmpty() && exams.isEmpty() && sessions.isEmpty() && legacyPreferenceValues.isEmpty() &&
             oldProfiles.none { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 || it.totalXpSpent > 0 || it.streakDays > 0 }
         ) {
             return LegacyImportSummary(0, 0, 0, false)
@@ -110,6 +118,13 @@ class LegacyProgressImportRepository(
             }
         }
 
+        if (legacyPreferenceValues.isNotEmpty()) {
+            require(auth.currentUser?.uid == uid && auth.currentUser?.isEmailVerified == true) {
+                "Account changed during preference import. Please try again."
+            }
+            accountPreferences.restoreCloudSyncPreferences(legacyPreferenceValues)
+        }
+
         return LegacyImportSummary(
             plans = plans.size,
             exams = exams.size,
@@ -117,7 +132,8 @@ class LegacyProgressImportRepository(
             importedProfile = oldProfiles.any {
                 it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
                     it.totalXpSpent > 0 || it.streakDays > 0
-            }
+            },
+            importedPreferenceKeys = legacyPreferenceValues.size
         )
     }
 }
