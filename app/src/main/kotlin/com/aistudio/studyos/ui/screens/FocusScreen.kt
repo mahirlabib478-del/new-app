@@ -442,7 +442,7 @@ fun FocusScreen(
                 .padding(horizontal = horizontalContentPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             if (state.sessionError != null) {
                 Card(
@@ -676,7 +676,16 @@ private fun FocusMoreOptionsDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } }
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp),
+                modifier = Modifier.height(40.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Done", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+            }
+        }
     )
 }
 
@@ -903,8 +912,8 @@ private fun CircularTimerDisplay(
                         if (animatedProgress > 0f) {
                             val angle = Math.toRadians((-90f + animatedProgress * 360f).toDouble())
                             val beadCenter = androidx.compose.ui.geometry.Offset(
-                                center.x + radius * cos(angle).toFloat(),
-                                center.y + radius * sin(angle).toFloat()
+                                center.x + (radius - 3.dp.toPx()) * cos(angle).toFloat(),
+                                center.y + (radius - 3.dp.toPx()) * sin(angle).toFloat()
                             )
                             drawCircle(
                                 color = primaryColor.copy(alpha = 0.24f),
@@ -1161,6 +1170,7 @@ private fun AmbientSoundConfigDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(max = 500.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
