@@ -581,7 +581,6 @@ fun ProgressScreen(
                     }
                 }
             }
-        }
         } else {
             // Session History Log Header & Filter
             item {
