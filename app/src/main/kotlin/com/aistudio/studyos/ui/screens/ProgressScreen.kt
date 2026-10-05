@@ -279,7 +279,7 @@ fun ProgressScreen(
     }
 
     val focusState by viewModel.focusState.collectAsState()
-    val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
+    val bottomListPadding = 24.dp
 
     // Total Time uses the same session-log source as Today/Consistency.
     // This keeps partial/skip time visible everywhere instead of depending on a
