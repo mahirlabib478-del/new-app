@@ -523,6 +523,12 @@ private fun TodayFocusCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
+                    .tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.primary,
+                        bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.48f),
+                        cornerRadius = 15.dp,
+                        depth = 5.dp
+                    )
                     .testTag("start_study_button"),
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(
