@@ -57,7 +57,7 @@ import java.util.Locale
 
 private val spinColors = listOf(
     Color(0xFF4F46E5), Color(0xFF0EA5E9), Color(0xFF8B5CF6), Color(0xFF64748B),
-    Color(0xFF14B8A6), Color(0xFF7C3AED), Color(0xFF2563EB), Color(0xFF475569)
+    Color(0xFF14B8A6), Color(0xFF7C3AED), Color(0xFFF59E0B), Color(0xFF475569)
 )
 
 @Composable
