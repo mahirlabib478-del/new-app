@@ -489,7 +489,7 @@ fun MainApp(
                                         targetValue = if (isSelected) 1.12f else 1f,
                                         animationSpec = spring(
                                             dampingRatio = Spring.DampingRatioMediumBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
+                                            stiffness = Spring.StiffnessMedium
                                         ),
                                         label = "bottom_nav_icon_scale"
                                     )
