@@ -250,15 +250,14 @@ private fun HomeHeader(
         ),
         label = "home_streak_pulse_value"
     )
-    Row(
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 4.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Column(
-            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
@@ -274,22 +273,30 @@ private fun HomeHeader(
             )
         }
 
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             StatPill(
+                modifier = Modifier.weight(1.45f),
                 icon = {
                     Icon(
                         Icons.Default.LocalFireDepartment,
                         null,
-                        Modifier.size(17.dp).graphicsLayer { scaleX = streakPulse; scaleY = streakPulse },
+                        Modifier
+                            .size(17.dp)
+                            .graphicsLayer {
+                                scaleX = streakPulse
+                                scaleY = streakPulse
+                            },
                         tint = Color(0xFFF97316)
                     )
                 },
-                text = streak.toString() + " day streak"
+                text = "$streak day streak"
             )
             StatPill(
+                modifier = Modifier.weight(0.72f),
                 icon = {
                     Text(
                         text = "Lv",
@@ -301,6 +308,7 @@ private fun HomeHeader(
                 text = level.toString()
             )
             StatPill(
+                modifier = Modifier.weight(1f),
                 icon = {
                     Icon(
                         Icons.Default.Bolt,
@@ -317,11 +325,12 @@ private fun HomeHeader(
 
 @Composable
 private fun StatPill(
+    modifier: Modifier = Modifier,
     icon: @Composable () -> Unit,
     text: String
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .tactile3DButton(
                 backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
