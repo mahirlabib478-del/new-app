@@ -59,10 +59,14 @@ object StreakShieldCalculator {
             ?: return StreakShieldResolution(0, lastActiveDate, 0, 0)
 
         val daysSinceLastStudy = ChronoUnit.DAYS.between(lastDate, today)
-        // Today or yesterday is already a valid continuous streak. Also avoid
-        // penalizing a device clock/time-zone adjustment that puts the date ahead.
+        // Today or yesterday is already a valid continuous streak.
         if (daysSinceLastStudy <= 1L) {
-            return StreakShieldResolution(safeStreak, lastActiveDate, 0, 0)
+            // A future stored date can happen after a device timezone/clock change.
+            // Normalize it to today instead of allowing the next real session to
+            // accidentally collapse a valid streak.
+            val normalizedLastActiveDate =
+                if (daysSinceLastStudy < 0L) today.toString() else lastActiveDate
+            return StreakShieldResolution(safeStreak, normalizedLastActiveDate, 0, 0)
         }
 
         val missedDays = (daysSinceLastStudy - 1L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
