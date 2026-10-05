@@ -340,7 +340,7 @@ fun ProgressScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .testTag("progress_tab_row"),
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
@@ -386,9 +386,9 @@ fun ProgressScreen(
         if (selectedTab == 0) {
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().testTag("streak_metric_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 20.dp, 4.dp),
+                    modifier = Modifier.fillMaxWidth().testTag("streak_metric_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
                     shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
