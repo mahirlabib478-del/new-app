@@ -41,7 +41,7 @@ fun StudyHubScreen(
     val activePlan by viewModel.activePlan.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
     val horizontal = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
-    val bottomPadding = if (focusState.planId != null) 150.dp else 96.dp
+    val bottomPadding = 24.dp
 
     val inProgressPlans = savedPlans.filter { !it.isDraft && !it.isCompleted && !it.isArchived }
     val draftPlans = savedPlans.filter { it.isDraft && !it.isArchived }
