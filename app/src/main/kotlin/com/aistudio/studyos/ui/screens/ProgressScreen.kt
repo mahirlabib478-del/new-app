@@ -382,7 +382,7 @@ fun ProgressScreen(
         if (selectedTab == 0) {
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().testTag("streak_metric_card"),
+                    modifier = Modifier.fillMaxWidth().testTag("streak_metric_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 20.dp, 4.dp),
                     shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
@@ -771,7 +771,7 @@ fun ProgressScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("session_log_item_${log.id}"),
+                        .testTag("session_log_item_${log.id}").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 20.dp, 4.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
