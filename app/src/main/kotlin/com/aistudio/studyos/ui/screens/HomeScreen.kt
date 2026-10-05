@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.repository.TodayRecommendationCalculator
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -121,7 +122,9 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            HomeHeader(streak = streak, level = level)
+            AnimatedReveal(index = 0) {
+                HomeHeader(streak = streak, level = level)
+            }
         }
 
         if (shieldSavedNotice != null) {
@@ -134,7 +137,8 @@ fun HomeScreen(
         }
 
         item {
-            TodayFocusCard(
+            AnimatedReveal(index = 1) {
+                TodayFocusCard(
                 activePlan = activePlan,
                 todayMinutes = todayMinutes,
                 dailyGoal = dailyGoal,
@@ -156,22 +160,25 @@ fun HomeScreen(
                     } else {
                         onOpenStudy()
                     }
-                }
-            )
+                )
+            }
         }
 
         item {
-            Text(
+            AnimatedReveal(index = 2) {
+                Text(
                 text = "Start studying",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(top = 2.dp)
-            )
+                )
+            }
         }
 
         item {
-            Row(
+            AnimatedReveal(index = 3) {
+                Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -228,6 +235,15 @@ private fun HomeHeader(
     streak: Int,
     level: Int,
 ) {
+    val streakPulse by rememberInfiniteTransition(label = "home_streak_pulse").animateFloat(
+        initialValue = 1f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(850, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "home_streak_pulse_value"
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -261,7 +277,7 @@ private fun HomeHeader(
                     Icon(
                         Icons.Default.LocalFireDepartment,
                         null,
-                        Modifier.size(17.dp),
+                        Modifier.size(17.dp).scale(streakPulse),
                         tint = Color(0xFFF97316)
                     )
                 },
