@@ -459,13 +459,13 @@ fun ProgressScreen(
                 val remaining = (dailyGoal - todayMinutes).coerceAtLeast(0)
                 Card(Modifier.fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
                             cornerRadius = 20.dp,
                             depth = 5.dp
                         )
                         .testTag("today_goal_analytics_card"), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Schedule, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
@@ -489,13 +489,13 @@ fun ProgressScreen(
                 val selectedDay = monthlyData.firstOrNull { it.dayNumber == selectedMonthDay }
                 Card(Modifier.fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
                             cornerRadius = 20.dp,
                             depth = 5.dp
                         )
                         .testTag("monthly_activity_card"), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
@@ -569,13 +569,13 @@ fun ProgressScreen(
             item {
                 Card(Modifier.fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
                             cornerRadius = 20.dp,
                             depth = 5.dp
                         )
                         .testTag("weekly_progress_card"), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Insights, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
@@ -604,13 +604,13 @@ fun ProgressScreen(
                     val maxSubjectMinutes = topSubjects.maxOfOrNull { it.value }?.coerceAtLeast(1) ?: 1
                     Card(Modifier.fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
                             cornerRadius = 20.dp,
                             depth = 5.dp
                         )
                         .testTag("subject_analytics_card"), shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text("Subjects", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(3.dp))
@@ -632,13 +632,13 @@ fun ProgressScreen(
                 item {
                     Card(Modifier.fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
                             cornerRadius = 20.dp,
                             depth = 5.dp
                         )
                         .testTag("plan_analytics_card"), shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.School, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
@@ -681,8 +681,8 @@ fun ProgressScreen(
             }
 
             item {
-                Card(Modifier.fillMaxWidth().testTag("gamification_card").tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Card(Modifier.fillMaxWidth().testTag("gamification_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.EmojiEvents, "Level", Modifier.size(27.dp), tint = MaterialTheme.colorScheme.primary)
@@ -724,8 +724,8 @@ fun ProgressScreen(
             }
 
             item {
-                Card(Modifier.fillMaxWidth().testTag("quick_stats_card").tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Card(Modifier.fillMaxWidth().testTag("quick_stats_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("Quick Stats", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -777,7 +777,7 @@ fun ProgressScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
                         )
                     ) {
                         Column(
@@ -822,10 +822,10 @@ fun ProgressScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("session_log_item_${log.id}").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 20.dp, 4.dp),
+                        .testTag("session_log_item_${log.id}").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface, 20.dp, 4.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
