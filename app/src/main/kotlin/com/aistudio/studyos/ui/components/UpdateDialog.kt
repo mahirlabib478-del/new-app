@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aistudio.studyos.ui.components.tactile3DButton
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.aistudio.studyos.data.update.AppUpdateInfo
