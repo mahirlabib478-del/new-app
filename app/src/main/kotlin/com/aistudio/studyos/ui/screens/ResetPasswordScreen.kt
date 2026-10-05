@@ -157,7 +157,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        contentColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                     ),
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
                 ) {
