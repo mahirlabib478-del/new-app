@@ -92,31 +92,33 @@ fun Modifier.tactile3DButton(
         .clip(shape)
         .drawWithContent {
             val depthPx = extrusionDepth.toPx()
+            val radiusPx = cornerRadius.toPx()
+
+            // Paint the solid lower extrusion first so it never covers text or icons.
+            drawRoundRect(
+                color = bottomEdgeColor,
+                size = size,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(radiusPx, radiusPx)
+            )
             drawRoundRect(
                 color = backgroundColor,
-                size = size,
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                    cornerRadius.toPx(),
-                    cornerRadius.toPx()
-                )
-            )
-            drawContent()
-            drawRect(
-                color = bottomEdgeColor,
-                topLeft = androidx.compose.ui.geometry.Offset(
-                    0f,
-                    (size.height - depthPx).coerceAtLeast(0f)
-                ),
+                topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
                 size = androidx.compose.ui.geometry.Size(
                     size.width,
-                    depthPx.coerceAtMost(size.height)
-                )
+                    (size.height - depthPx).coerceAtLeast(0f)
+                ),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(radiusPx, radiusPx)
             )
+
+            // Content stays above the 3D body.
+            drawContent()
+
+            // Thin specular highlight reinforces the raised top edge.
             drawLine(
                 color = Color.White.copy(alpha = 0.12f),
-                start = androidx.compose.ui.geometry.Offset(cornerRadius.toPx(), 0.7.dp.toPx()),
+                start = androidx.compose.ui.geometry.Offset(radiusPx, 0.7.dp.toPx()),
                 end = androidx.compose.ui.geometry.Offset(
-                    (size.width - cornerRadius.toPx()).coerceAtLeast(cornerRadius.toPx()),
+                    (size.width - radiusPx).coerceAtLeast(radiusPx),
                     0.7.dp.toPx()
                 ),
                 strokeWidth = 0.6.dp.toPx()
