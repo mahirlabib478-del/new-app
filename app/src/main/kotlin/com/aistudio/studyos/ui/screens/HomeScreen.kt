@@ -763,45 +763,59 @@ private fun StudyJourneyCard(
                 }
             },
             confirmButton = {
-                if (day.isToday) {
-                    Button(onClick = {
-                        selectedDay = null
-                        if (activePlan != null) onOpenFocus() else onOpenStudy()
-                    }, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp)) {
-                        Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (activePlan != null) "Continue Session" else "Start a Session")
-                    }
-                } else if (!day.isFuture && isCompleted) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (day.isToday || (!day.isFuture && isCompleted)) Arrangement.End else Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Button(
-                        onClick = { selectedDay = null; onOpenHistory() },
+                        onClick = { selectedDay = null },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                         modifier = Modifier
                             .height(40.dp)
-                            .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp),
+                            .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 4.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("View Activity", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                        Text("Close", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                    }
+
+                    if (day.isToday || (!day.isFuture && isCompleted)) {
+                        Spacer(Modifier.width(8.dp))
+                        if (day.isToday) {
+                            Button(
+                                onClick = {
+                                    selectedDay = null
+                                    if (activePlan != null) onOpenFocus() else onOpenStudy()
+                                },
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(if (activePlan != null) "Continue Session" else "Start a Session", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                            }
+                        } else {
+                            Button(
+                                onClick = { selectedDay = null; onOpenHistory() },
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("View Activity", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                            }
+                        }
                     }
                 }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { selectedDay = null },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                    modifier = Modifier
-                        .height(40.dp)
-                        .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 4.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Close", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
-                }
-            }
-        )
+            }        )
     }
 }
 
