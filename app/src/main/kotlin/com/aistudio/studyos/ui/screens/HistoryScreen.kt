@@ -63,9 +63,10 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             }
         } else {
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(days, key = { it.key }) { day ->
-                    Card(Modifier.fillMaxWidth().testTag("history_day_${day.key}"), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(days, key = { it.key }) { index, day ->
+                    AnimatedReveal(index = index) {
+                        Card(Modifier.fillMaxWidth().testTag("history_day_${day.key}"), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column { Text(day.label, fontWeight = FontWeight.Bold); Text("${day.sessions} ${if (day.sessions == 1) "session" else "sessions"}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                                 Text("${day.minutes} min", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
@@ -80,6 +81,7 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                                     }
                                     Surface(shape = RoundedCornerShape(7.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = .10f)) { Text("${log.durationMinutes.coerceAtLeast(0)}m", fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)) }
                                 }
+                            }
                             }
                         }
                     }
