@@ -48,7 +48,12 @@ class StudyRepository(
         return consecutiveDays
     }
 
-    private fun resolveStreakGap(profile: UserProfileEntity, today: LocalDate): UserProfileEntity {
+    private data class StreakGapResult(
+        val profile: UserProfileEntity,
+        val shieldsConsumed: Int
+    )
+
+    private fun resolveStreakGap(profile: UserProfileEntity, today: LocalDate): StreakGapResult {
         val resolution = StreakShieldCalculator.resolve(
             streakDays = profile.streakDays,
             lastActiveDate = profile.lastActiveDate,
@@ -63,9 +68,12 @@ class StudyRepository(
             themePreferences.setLastShieldSavedDate(today.toString())
         }
 
-        return profile.copy(
-            streakDays = resolution.streakDays,
-            lastActiveDate = resolution.lastActiveDate
+        return StreakGapResult(
+            profile = profile.copy(
+                streakDays = resolution.streakDays,
+                lastActiveDate = resolution.lastActiveDate
+            ),
+            shieldsConsumed = resolution.shieldsToConsume
         )
     }
 
@@ -236,7 +244,8 @@ class StudyRepository(
                 }
 
                 // Reconcile the entire missed calendar-day gap, not just a stale/today flag.
-                val resolvedProfile = resolveStreakGap(profile, LocalDate.now())
+                val gapResult = resolveStreakGap(profile, LocalDate.now())
+                val resolvedProfile = gapResult.profile
                 if (resolvedProfile != profile) {
                     database.userProfileDao().insertOrUpdate(resolvedProfile)
                 }
@@ -515,29 +524,22 @@ class StudyRepository(
             val todayStr = today.toString()
             // The same gap resolver is used at startup and when a study session
             // finishes, so keeping the app open cannot bypass shield logic.
-            val resolvedProfile = resolveStreakGap(currentProfile, today)
+            val gapResult = resolveStreakGap(currentProfile, today)
+            val resolvedProfile = gapResult.profile
             val yesterdayStr = today.minusDays(1).toString()
 
-            val updatedStreak = when {
-                resolvedProfile.lastActiveDate == todayStr -> {
-                    // Already studied today, maintain existing streak.
-                    if (resolvedProfile.streakDays <= 0) 1 else resolvedProfile.streakDays
-                }
-                resolvedProfile.lastActiveDate == yesterdayStr -> {
-                    // Consecutive day, including a gap protected by enough shields.
-                    resolvedProfile.streakDays + 1
-                }
-                else -> {
-                    // First study day or an unprotected gap: restart at one.
-                    1
-                }
+            // Session history is the authoritative source for real study days.
+            // UserProfileEntity only caches the value for fast UI/cloud access.
+            // The only exception is a shield-protected gap: the protected missed
+            // days do not exist in session_logs, so the shield state must bridge
+            // that gap before today's real study day is added.
+            val historyStreak = consecutiveLoggedStudyDaysEnding(today)
+            val finalStreak = when {
+                gapResult.shieldsConsumed > 0 -> resolvedProfile.streakDays + 1
+                historyStreak > 0 -> historyStreak
+                resolvedProfile.lastActiveDate == yesterdayStr -> 1
+                else -> 1
             }
-
-            // Session history is the durable source of truth for active study dates.
-            // If profile metadata stayed at "1 Day" after a consecutive-day session,
-            // recover the higher streak from the actual logged calendar days.
-            val recoveredStreak = consecutiveLoggedStudyDaysEnding(today)
-            val finalStreak = maxOf(updatedStreak, recoveredStreak)
 
             val candidateProfile = resolvedProfile.copy(
                 totalStudyMinutes = resolvedProfile.totalStudyMinutes + durationMinutes,
