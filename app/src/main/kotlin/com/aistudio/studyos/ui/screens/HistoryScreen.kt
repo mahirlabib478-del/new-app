@@ -43,8 +43,7 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
     val days = buildHistoryDays(allLogs)
     val totalMinutes = allLogs.sumOf { it.durationMinutes.coerceAtLeast(0) }
     AnimatedReveal(index = 0) {
-    Column(Modifier.fillMaxSize())
-    } {
+        Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack, modifier = Modifier.testTag("history_back")) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
             Column(Modifier.weight(1f)) {
@@ -88,5 +87,6 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 item { Spacer(Modifier.height(70.dp)) }
             }
         }
+    }
     }
 }
