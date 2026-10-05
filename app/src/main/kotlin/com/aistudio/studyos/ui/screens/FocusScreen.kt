@@ -2088,7 +2088,7 @@ private fun StudySessionCompleteScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Row(
