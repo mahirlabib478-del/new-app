@@ -2,6 +2,7 @@ package com.aistudio.studyos.ui.screens
 
 import android.app.Activity
 import android.view.WindowManager
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
