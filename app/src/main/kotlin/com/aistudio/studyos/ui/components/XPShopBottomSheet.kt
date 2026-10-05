@@ -221,7 +221,7 @@ fun XPShopBottomSheet(
 
             // XP Wallet Balance Card - Theme-aware colors
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 16.dp, 4.dp),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -378,7 +378,7 @@ private fun PremiumThemeSection(
     onSelectTheme: (String) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).testTag("premium_theme_section"),
+        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 18.dp, 4.dp).testTag("premium_theme_section"),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -423,7 +423,7 @@ private fun PremiumThemeRow(
     onClick: () -> Unit
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.32f), 14.dp, 3.dp),
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.surface
     ) {
@@ -590,13 +590,13 @@ private fun ShopItemCard(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        disabledContainerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
                     ),
                     modifier = Modifier
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.primary,
-                            bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.48f),
+                            backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
+                            bottomEdgeColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                             cornerRadius = 12.dp,
                             depth = 4.dp
                         )
