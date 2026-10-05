@@ -60,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -610,6 +611,11 @@ private fun PassDurationSelectionDialog(
     val savingsXP = rawCost - finalCost
     val canAfford = totalXP >= finalCost
 
+    var dialogAnimationStarted by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { dialogAnimationStarted = true }
+    val dialogScale by animateFloatAsState(if (dialogAnimationStarted) 1f else 0.92f, tween(360), label = "pass_dialog_scale")
+    val dialogAlpha by animateFloatAsState(if (dialogAnimationStarted) 1f else 0f, tween(300), label = "pass_dialog_alpha")
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -631,11 +637,15 @@ private fun PassDurationSelectionDialog(
             }
         },
         text = {
-            AnimatedReveal(index = 0) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .graphicsLayer {
+                        scaleX = dialogScale
+                        scaleY = dialogScale
+                        alpha = dialogAlpha
+                    },
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     
