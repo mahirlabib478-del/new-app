@@ -716,6 +716,14 @@ fun ProgressScreen(
             }
 
             item {
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                    thickness = 1.dp
+                )
+            }
+
+            item {
                 Card(Modifier.fillMaxWidth().testTag("quick_stats_card").tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
