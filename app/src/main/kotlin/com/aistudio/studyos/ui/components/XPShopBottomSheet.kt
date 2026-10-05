@@ -90,6 +90,16 @@ fun XPShopBottomSheet(
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var shopEntryStarted by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shopEntryStarted = true }
+    val shopEntryScale by animateFloatAsState(
+        targetValue = if (shopEntryStarted) 1f else 0.92f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "shop_entry_scale"
+    )
 
     val profile by viewModel.userProfile.collectAsState()
     val totalXP = profile?.totalXP ?: 0
@@ -162,7 +172,13 @@ fun XPShopBottomSheet(
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
-        AnimatedReveal(index = 0) {
+        AnimatedReveal(
+            index = 0,
+            modifier = Modifier.graphicsLayer {
+                scaleX = shopEntryScale
+                scaleY = shopEntryScale
+            }
+        ) {
             Column(
             modifier = Modifier
                 .fillMaxWidth()
