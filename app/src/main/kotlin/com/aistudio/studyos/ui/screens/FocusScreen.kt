@@ -1875,7 +1875,7 @@ private fun FocusTimerControls(
     val secondaryBtnColor = if (isWallpaperActive) {
         MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        MaterialTheme.colorScheme.surface
     }
 
     Row(
