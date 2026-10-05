@@ -174,6 +174,13 @@ fun HomeScreen(
         }
 
         item {
+            StudyJourneyCard(
+                allLogs = allLogs,
+                onOpenHistory = onOpenHistory
+            )
+        }
+
+        item {
             Text(
                 text = "Start studying",
                 style = MaterialTheme.typography.titleMedium,
@@ -487,6 +494,195 @@ private fun TodayFocusCard(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(actionLabel, fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+@Composable
+private fun StudyJourneyCard(
+    allLogs: List<com.aistudio.studyos.data.local.entity.SessionLogEntity>,
+    onOpenHistory: () -> Unit
+) {
+    val journeyDays = remember(allLogs) {
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        (-4..4).map { offset ->
+            val day = (today.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, offset) }
+            val nextDay = (day.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
+            val start = day.timeInMillis
+            val end = nextDay.timeInMillis
+            val minutes = if (offset <= 0) {
+                allLogs.filter { it.timestamp >= start && it.timestamp < end }
+                    .sumOf { it.durationMinutes }
+            } else 0
+            JourneyDay(
+                date = day,
+                minutes = minutes,
+                isToday = offset == 0,
+                isFuture = offset > 0
+            )
+        }
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("study_journey_card"),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Your Study Journey",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Every day is a step forward",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = "View all",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onOpenHistory)
+                        .padding(6.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            journeyDays.forEachIndexed { index, day ->
+                val isCompleted = !day.isFuture && day.minutes > 0
+                val nodeSize = if (day.isToday) 54.dp else 42.dp
+                val alignment = if (index % 2 == 0) Alignment.Start else Alignment.End
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(if (index == journeyDays.lastIndex) 62.dp else 72.dp)
+                ) {
+                    if (index < journeyDays.lastIndex) {
+                        Box(
+                            modifier = Modifier
+                                .width(2.dp)
+                                .height(42.dp)
+                                .align(Alignment.Center)
+                                .background(
+                                    if (isCompleted || day.isToday) {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+                                    } else {
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+                                    }
+                                )
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(alignment),
+                        horizontalArrangement = if (alignment == Alignment.Start) Arrangement.Start else Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (alignment == Alignment.End) Spacer(modifier = Modifier.weight(1f))
+                        JourneyNode(
+                            day = day,
+                            isCompleted = isCompleted,
+                            size = nodeSize
+                        )
+                        if (alignment == Alignment.Start) Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class JourneyDay(
+    val date: Calendar,
+    val minutes: Int,
+    val isToday: Boolean,
+    val isFuture: Boolean
+)
+
+@Composable
+private fun JourneyNode(
+    day: JourneyDay,
+    isCompleted: Boolean,
+    size: androidx.compose.ui.unit.Dp
+) {
+    val dateLabel = SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
+    val fill = when {
+        day.isToday -> MaterialTheme.colorScheme.primary
+        isCompleted -> MaterialTheme.colorScheme.primary.copy(alpha = 0.88f)
+        day.isFuture -> MaterialTheme.colorScheme.surface
+        else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
+    }
+    val icon = when {
+        day.isToday -> "★"
+        isCompleted -> "✓"
+        day.isFuture -> "○"
+        else -> "·"
+    }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(fill)
+                .border(
+                    width = if (day.isToday) 3.dp else 1.dp,
+                    color = if (day.isToday) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
+                    } else {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                    },
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = icon,
+                fontSize = if (day.isToday) 22.sp else 17.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (day.isToday || isCompleted) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = if (day.isToday) "TODAY" else dateLabel,
+            fontSize = 10.sp,
+            fontWeight = if (day.isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
+            color = if (day.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (isCompleted) {
+            Text(
+                text = day.minutes.toString() + "m",
+                fontSize = 9.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
