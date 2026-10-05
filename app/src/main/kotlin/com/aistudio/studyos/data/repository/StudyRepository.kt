@@ -13,8 +13,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.LocalDate
-import java.time.Instant
-import java.time.ZoneId
 
 data class SpinWheelReward(val slotIndex: Int, val label: String, val xp: Int = 0)
 data class SpinWheelStatus(val unlocked: Boolean, val spinsUsed: Int, val remainingMs: Long)
@@ -34,9 +32,8 @@ class StudyRepository(
      * streak that is legitimately protected by streak shields.
      */
     private suspend fun consecutiveLoggedStudyDaysEnding(today: LocalDate): Int {
-        val zone = ZoneId.systemDefault()
         val activeDates = database.sessionLogDao().getAllForBackup()
-            .map { log -> LocalDate.ofInstant(Instant.ofEpochMilli(log.timestamp), zone) }
+            .map { log -> StudyStreakClock.dateFromTimestamp(log.timestamp) }
             .toSet()
 
         var date = today
@@ -212,6 +209,10 @@ class StudyRepository(
         themePreferences.setCachedRecentSessions(trimmed)
         return id
     }
+    /**
+     * Clears session history only. Streak/profile statistics are intentionally
+     * preserved; use Reset Stats for a full statistics/history reset.
+     */
     suspend fun clearHistory() {
         database.sessionLogDao().clearAll()
         inMemoryCachedLogs = emptyList()
@@ -244,7 +245,7 @@ class StudyRepository(
                 }
 
                 // Reconcile the entire missed calendar-day gap, not just a stale/today flag.
-                val gapResult = resolveStreakGap(profile, LocalDate.now())
+                val gapResult = resolveStreakGap(profile, StudyStreakClock.today())
                 val resolvedProfile = gapResult.profile
                 if (resolvedProfile != profile) {
                     database.userProfileDao().insertOrUpdate(resolvedProfile)
@@ -520,7 +521,7 @@ class StudyRepository(
                 dailyGoalMinutes = 60,
                 themePreset = ThemeCatalog.DEFAULT_THEME
             )
-            val today = LocalDate.now()
+            val today = StudyStreakClock.today()
             val todayStr = today.toString()
             // The same gap resolver is used at startup and when a study session
             // finishes, so keeping the app open cannot bypass shield logic.
