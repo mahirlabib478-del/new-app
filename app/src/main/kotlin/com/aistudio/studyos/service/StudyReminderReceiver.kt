@@ -12,27 +12,73 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.aistudio.studyos.MainActivity
 import com.aistudio.studyos.R
+import com.aistudio.studyos.StudyApplication
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class StudyReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (!StudyReminderScheduler.isEnabled(context)) return
 
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val application = context.applicationContext as StudyApplication
+                val uid = FirebaseAuth.getInstance().currentUser?.uid
+                val repository = application.repositoryFor(uid)
+
+                // A reminder should only protect the current calendar day's streak.
+                // If the user already studied today, do not send a stale/duplicate
+                // streak notification.
+                val todayMinutes = repository.getTodayMinutesNow()
+                if (todayMinutes <= 0) {
+                    showNotification(context, repository.getUserProfileSnapshot())
+                }
+            } catch (_: Exception) {
+                // Reminder delivery must never crash the receiver or prevent the
+                // next day's reminder from being scheduled.
+            } finally {
+                StudyReminderScheduler.scheduleNext(context)
+                pendingResult.finish()
+            }
+        }
+    }
+
+    private suspend fun showNotification(
+        context: Context,
+        profile: com.aistudio.studyos.data.local.entity.UserProfileEntity?
+    ) {
         val manager = context.getSystemService(NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID,
-                    "Study reminders",
+                    "Streak reminders",
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Daily reminders to start studying"
+                    description = "Daily reminders to protect your study streak"
                 }
             )
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        if (
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
         ) {
+            val streak = profile?.streakDays?.coerceAtLeast(0) ?: 0
+            val title = if (streak > 0) {
+                "Keep your $streak-day streak alive 🔥"
+            } else {
+                "Start your study streak 🔥"
+            }
+            val text = if (streak > 0) {
+                "Study today to protect your streak. Don't let it break!"
+            } else {
+                "Complete a study session today and start your streak."
+
             val openIntent = android.app.PendingIntent.getActivity(
                 context,
                 5202,
@@ -46,22 +92,20 @@ class StudyReminderReceiver : BroadcastReceiver() {
                 NOTIFICATION_ID,
                 NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_notification_reminder)
-                    .setContentTitle("Study reminder")
-                    .setContentText("It's time to focus. Start your next study session.")
+                    .setContentTitle(title)
+                    .setContentText(text)
                     .setCategory(NotificationCompat.CATEGORY_REMINDER)
-                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setDefaults(android.app.Notification.DEFAULT_ALL)
                     .setAutoCancel(true)
                     .setContentIntent(openIntent)
                     .build()
             )
         }
-
-        StudyReminderScheduler.scheduleNext(context)
     }
 
     companion object {
-        private const val CHANNEL_ID = "study_reminders"
+        private const val CHANNEL_ID = "streak_reminders"
         private const val NOTIFICATION_ID = 5203
     }
 }
