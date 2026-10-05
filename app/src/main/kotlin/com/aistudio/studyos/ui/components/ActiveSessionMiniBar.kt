@@ -75,10 +75,10 @@ fun ActiveSessionMiniBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(18.dp))
             .tactile3DButton(
-                backgroundColor = miniSurface,
+                backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = accentColor.copy(alpha = 0.38f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
@@ -86,7 +86,7 @@ fun ActiveSessionMiniBar(
             .clickable { onOpenFocus() }
             .testTag("active_session_mini_bar"),
         shape = RoundedCornerShape(18.dp),
-        color = miniSurface,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 5.dp
     ) {
         Row(
@@ -97,7 +97,7 @@ fun ActiveSessionMiniBar(
                     color = accentColor.copy(alpha = 0.35f),
                     shape = RoundedCornerShape(18.dp)
                 )
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -108,7 +108,7 @@ fun ActiveSessionMiniBar(
                 // Pulsing Active Indicator
                 Box(
                     modifier = Modifier
-                        .size(14.dp)
+                        .size(12.dp)
                         .graphicsLayer {
                             val scaleValue = if (focusState.isRunning) pulseScale else 1f
                             scaleX = scaleValue
@@ -162,7 +162,7 @@ fun ActiveSessionMiniBar(
                 FilledIconButton(
                     onClick = onToggleTimer,
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(34.dp)
                         .tactile3DButton(
                             backgroundColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = accentColor.copy(alpha = 0.42f),
@@ -178,7 +178,7 @@ fun ActiveSessionMiniBar(
                     Icon(
                         imageVector = if (focusState.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = if (focusState.isRunning) "Pause" else "Play",
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
