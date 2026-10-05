@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.StudyPlanItem
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.AnimatedReveal
 
 private data class EditableTopic(val name: String, val minutesText: String = "")
 private data class EditableSubject(val name: String, val topics: List<EditableTopic>)
@@ -244,7 +245,9 @@ fun StudyPlanBuilderScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                StepHeader(step)
+                AnimatedReveal(index = step) {
+                    StepHeader(step)
+                }
             }
 
             when (step) {
