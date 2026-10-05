@@ -1,5 +1,6 @@
 package com.aistudio.studyos.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
