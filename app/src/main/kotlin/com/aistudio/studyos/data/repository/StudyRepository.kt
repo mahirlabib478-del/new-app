@@ -221,6 +221,7 @@ class StudyRepository(
 
     // Profile & Gamification
     fun getUserProfile(): Flow<UserProfileEntity?> = database.userProfileDao().getProfile()
+    suspend fun getUserProfileSnapshot(): UserProfileEntity? = database.userProfileDao().getProfileSync()
 
     suspend fun ensureCleanInitialData() {
         val currentSavedTheme = themePreferences.getThemePreset()
