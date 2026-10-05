@@ -27,7 +27,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.composed
-import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,15 +52,7 @@ fun Modifier.tactile3DButton(
     bottomEdgeColor: Color,
     cornerRadius: Dp = 18.dp,
     depth: Dp = 5.dp
-): Modifier = composed(
-    inspectorInfo = debugInspectorInfo {
-        name = "tactile3DButton"
-        properties["backgroundColor"] = backgroundColor
-        properties["bottomEdgeColor"] = bottomEdgeColor
-        properties["cornerRadius"] = cornerRadius
-        properties["depth"] = depth
-    }
-) {
+): Modifier = composed {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val pressOffset by animateDpAsState(
