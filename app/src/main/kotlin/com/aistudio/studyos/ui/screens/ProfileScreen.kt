@@ -46,9 +46,7 @@ import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NightsStay
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
@@ -114,7 +112,6 @@ import com.aistudio.studyos.data.update.UpdateCheckState
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 data class ThemeOption(
@@ -172,6 +169,29 @@ private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Bo
     }
 }
 
+private fun ProfileSectionHeader(title: String, subtitle: String? = null) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp, vertical = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
 private fun formatDailyGoal(minutes: Int): String = when {
     minutes >= 60 && minutes % 60 == 0 -> "${minutes / 60}h"
     minutes >= 60 -> "${minutes / 60}h ${minutes % 60}m"
@@ -199,11 +219,7 @@ fun ProfileScreen(
     var isCleaningCache by remember { mutableStateOf(false) }
     var cacheCleanedSuccess by remember { mutableStateOf(false) }
     var showXPShop by remember { mutableStateOf(false) }
-    var resetEmail by remember { mutableStateOf("") }
-    var resetMessage by remember { mutableStateOf<String?>(null) }
-    var resetSending by remember { mutableStateOf(false) }
     val accountRepository = remember { FirebaseAccountRepository() }
-    val accountScope = androidx.compose.runtime.rememberCoroutineScope()
     val profileAccountUser = accountRepository.currentUser
     val profileAccountEmail = profileAccountUser?.email.orEmpty()
     val profileAccountVerified = profileAccountUser?.isEmailVerified == true
@@ -214,13 +230,6 @@ fun ProfileScreen(
     }
     val accountCloudSyncState = accountCloudSync?.syncStatus?.collectAsState(initial = "Checking cloud sync…")
     val accountCloudSyncStatus = accountCloudSyncState?.value ?: "Sign in with a verified account to sync progress"
-    var accountEmail by remember { mutableStateOf(accountRepository.currentUser?.email.orEmpty()) }
-    var accountPassword by remember { mutableStateOf("") }
-    var accountBusy by remember { mutableStateOf(false) }
-    var showSignOutDialog by remember { mutableStateOf(false) }
-    var showLinkProgressDialog by remember { mutableStateOf(false) }
-    var accountMessage by remember { mutableStateOf<String?>(null) }
-    var pendingAccountAction by remember { mutableStateOf<String?>(null) }
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
@@ -274,15 +283,23 @@ fun ProfileScreen(
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Settings & Profile",
+                text = "Profile & Settings",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Themes, study goals, and local storage",
+                text = "Account, rewards, preferences, and support",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+
+        item {
+            ProfileSectionHeader("Account", "Identity and cloud sync")
+        }
+
+        item {
+            ProfileSectionHeader("Appearance", "Choose your theme and personalize the study space")
         }
 
         item {
@@ -361,6 +378,10 @@ fun ProfileScreen(
                     )
                 }
             }
+        }
+
+        item {
+            ProfileSectionHeader("Rewards", "XP perks and power-ups")
         }
 
         // XP Perks & Power-ups Shop Card
@@ -851,6 +872,10 @@ fun ProfileScreen(
             }
         }
 
+        item {
+            ProfileSectionHeader("Study Routine", "Set your daily target and reminder")
+        }
+
         // Daily Study Target — intentionally simple: one manual value.
         item {
             Card(
@@ -962,6 +987,10 @@ fun ProfileScreen(
                     }
                 }
             }
+        }
+
+        item {
+            ProfileSectionHeader("App & Data", "Updates, privacy, and local storage")
         }
 
         // Offline-First Privacy Card
@@ -1285,6 +1314,10 @@ fun ProfileScreen(
             }
         }
 
+        item {
+            ProfileSectionHeader("Danger Zone", "Irreversible actions")
+        }
+
         // Reset Data Action
         item {
             OutlinedButton(
@@ -1451,115 +1484,6 @@ fun ProfileScreen(
             }
         }
 
-    }
-
-    if (pendingAccountAction?.let { true } == true) {
-        AlertDialog(
-            onDismissRequest = { pendingAccountAction = null },
-            title = { Text("Local study data notice") },
-            text = {
-                Text("StudyOS local records are not yet separated by account on this device. Continuing may leave existing study records visible after sign-in. Continue only if you understand this.")
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val action = pendingAccountAction ?: return@Button
-                        pendingAccountAction = null
-                        accountBusy = true
-                        accountMessage = null
-                        accountScope.launch {
-                            try {
-                                if (action == "login") accountRepository.signIn(accountEmail, accountPassword)
-                                else accountRepository.createAccount(accountEmail, accountPassword)
-                                val app = context.applicationContext as com.aistudio.studyos.StudyApplication
-                                val signedInUser = accountRepository.currentUser
-                                    ?: throw IllegalStateException("Firebase session is unavailable.")
-                                if (!signedInUser.isEmailVerified) {
-                                    throw IllegalStateException("Verify your email before syncing progress.")
-                                }
-                                app.activateCloudSync(signedInUser.uid)
-                                accountMessage = (if (action == "login") "Signed in. " else "Account created. ") +
-                                    "Cloud restore/sync has started for this account. Check the Cloud sync status before uninstalling."
-                            } catch (e: Exception) {
-                                accountMessage = e.localizedMessage ?: "Account action failed."
-                            } finally { accountBusy = false }
-                        }
-                    },
-                    modifier = Modifier.testTag("btn_confirm_account_action")
-                ) { Text("Continue") }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingAccountAction = null }) { Text("Cancel") }
-            }
-        )
-    }
-
-    if (showLinkProgressDialog) {
-        AlertDialog(
-            onDismissRequest = { showLinkProgressDialog = false },
-            title = { Text("Link local study data?") },
-            text = { Text("This will upload the study records currently stored on this device to the signed-in account's private cloud backup. Continue only if these records belong to you. No local records will be deleted.") },
-            confirmButton = {
-                Button(onClick = {
-                    showLinkProgressDialog = false
-                    accountBusy = true
-                    accountMessage = null
-                    accountScope.launch {
-                        try {
-                            run {
-                                val uid = accountRepository.currentUser?.takeIf { it.isEmailVerified }?.uid
-                                    ?: throw IllegalStateException("Sign in with a verified email before linking progress.")
-                                (context.applicationContext as com.aistudio.studyos.StudyApplication)
-                                    .cloudSyncFor(uid).createInitialCloudBackup()
-                            }
-                            accountMessage = "Initial cloud backup created. Existing local progress was kept."
-                        } catch (e: Exception) {
-                            accountMessage = e.localizedMessage ?: "Could not link progress."
-                        } finally { accountBusy = false }
-                    }
-                }, modifier = Modifier.testTag("btn_confirm_link_progress")) { Text("Upload & Link") }
-            },
-            dismissButton = { TextButton(onClick = { showLinkProgressDialog = false }) { Text("Cancel") } }
-        )
-    }
-
-    if (showSignOutDialog) {
-        AlertDialog(
-            onDismissRequest = { showSignOutDialog = false },
-            title = { Text("Sign out of StudyOS?") },
-            text = {
-                Text(
-                    "Your account's local study database is separate. Before signing out, StudyOS will try to upload the latest progress. If sync fails, sign-out will be cancelled so you can retry."
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        accountBusy = true
-                        accountScope.launch {
-                            try {
-                                val app = context.applicationContext as com.aistudio.studyos.StudyApplication
-                                val uid = accountRepository.currentUser?.uid
-                                if (uid != null) app.cloudSyncFor(uid).syncNowBeforeSignOut()
-                                accountRepository.signOut()
-                                accountEmail = ""
-                                accountPassword = ""
-                                accountMessage = "Signed out. Latest progress synced when cloud sync was enabled."
-                                showSignOutDialog = false
-                            } catch (e: Exception) {
-                                accountMessage = e.localizedMessage ?: "Cloud sync failed; you are still signed in. Please retry."
-                            } finally {
-                                accountBusy = false
-                            }
-                        }
-                    },
-                    modifier = Modifier.testTag("btn_confirm_sign_out")
-                ) { Text("Sign Out") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSignOutDialog = false }) { Text("Cancel") }
-            }
-        )
     }
 
     if (showReminderTimeDialog) {
