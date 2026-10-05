@@ -592,7 +592,9 @@ class StudyRepository(
     suspend fun spinWheel(): SpinWheelReward? {
         if (!themePreferences.isSpinWheelUnlocked()) return null
         val profile = database.userProfileDao().getProfileSync() ?: return null
-        val spinNumber = themePreferences.getSpinWheelSpinsUsed() + 1
+        val spinsUsed = themePreferences.getSpinWheelSpinsUsed()
+        if (spinsUsed >= 20) return null
+        val spinNumber = spinsUsed + 1
         val cost = 50 + (spinNumber - 1) * 20
         if (profile.totalXP < cost) return null
 
