@@ -225,7 +225,7 @@ private fun ActivePlanCard(plan: StudyPlanEntity, onContinue: () -> Unit) {
 @Composable
 private fun ReadyCard(onCreate: () -> Unit, onQuickFocus: () -> Unit) {
     Card(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 24.dp, 6.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
     ) {
