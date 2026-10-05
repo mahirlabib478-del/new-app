@@ -404,6 +404,7 @@ fun AccountScreen(
             }
         }
         if (user == null && !verificationPending) {
+            Spacer(Modifier.height(12.dp))
             TextButton(
                 onClick = onForgotPassword,
                 modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 3.dp).testTag("btn_forgot_password")
