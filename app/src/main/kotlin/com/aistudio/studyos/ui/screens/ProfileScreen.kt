@@ -299,10 +299,6 @@ fun ProfileScreen(
         }
 
         item {
-            ProfileSectionHeader("Appearance", "Choose your theme and personalize the study space")
-        }
-
-        item {
             Card(
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAccount).testTag("profile_account_entry"),
                 shape = RoundedCornerShape(24.dp),
@@ -497,6 +493,10 @@ fun ProfileScreen(
                     }
                 }
             }
+        }
+
+        item {
+            ProfileSectionHeader("Appearance", "Choose your theme and personalize the study space")
         }
 
         // Theme Palette Selector
@@ -1346,6 +1346,10 @@ fun ProfileScreen(
         }
 
         // Contact Developer — placed at the very end of Profile
+        item {
+            ProfileSectionHeader("Support")
+        }
+
         item {
             Card(
                 modifier = Modifier
