@@ -114,6 +114,11 @@ fun RegularStudyScreen(
                         Card(
                             modifier = Modifier
                                 .width(108.dp)
+                                .tactile3DButton(
+                                    if (subject == sub) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                                    12.dp, 3.dp
+                                )
                                 .clickable { subject = sub },
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
@@ -181,6 +186,11 @@ fun RegularStudyScreen(
                         Card(
                             modifier = Modifier
                                 .weight(1f)
+                                .tactile3DButton(
+                                    if (selectedDuration == mins) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                                    14.dp, 3.dp
+                                )
                                 .clickable { selectedDuration = mins },
                             shape = RoundedCornerShape(14.dp),
                             colors = CardDefaults.cardColors(
@@ -230,6 +240,11 @@ fun RegularStudyScreen(
                         Card(
                             modifier = Modifier
                                 .weight(1f)
+                                .tactile3DButton(
+                                    if (totalBlocks == blocks) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                                    14.dp, 3.dp
+                                )
                                 .clickable { totalBlocks = blocks },
                             shape = RoundedCornerShape(14.dp),
                             colors = CardDefaults.cardColors(
