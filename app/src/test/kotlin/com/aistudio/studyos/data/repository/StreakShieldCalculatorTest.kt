@@ -56,4 +56,34 @@ class StreakShieldCalculatorTest {
         assertEquals(0, result.shieldsToConsume)
         assertEquals("not-a-date", result.lastActiveDate)
     }
+
+    @Test
+    fun timestampUsesExplicitUserTimezone() {
+        val timestamp = java.time.Instant.parse("2026-10-04T23:30:00Z").toEpochMilli()
+
+        assertEquals(
+            LocalDate.parse("2026-10-04"),
+            StudyStreakClock.dateFromTimestamp(timestamp, java.time.ZoneId.of("America/New_York"))
+        )
+        assertEquals(
+            LocalDate.parse("2026-10-05"),
+            StudyStreakClock.dateFromTimestamp(timestamp, java.time.ZoneId.of("Asia/Dhaka"))
+        )
+    }
+
+    @Test
+    fun todayUsesConfiguredDeviceTimezoneInsteadOfDhakaConstant() {
+        val original = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
+            assertEquals(
+                LocalDate.now(java.time.ZoneId.of("America/New_York")),
+                StudyStreakClock.today()
+            )
+        } finally {
+            java.util.TimeZone.setDefault(original)
+        }
+    }
+
 }
+
