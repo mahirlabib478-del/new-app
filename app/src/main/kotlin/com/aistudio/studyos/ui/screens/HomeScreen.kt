@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Timer
@@ -69,7 +70,8 @@ fun HomeScreen(
     onOpenQuickFocus: () -> Unit,
     onOpenExamPlanner: () -> Unit,
     onOpenSavedSessions: () -> Unit,
-    onOpenHistory: () -> Unit = {}
+    onOpenHistory: () -> Unit = {},
+    onOpenProfile: () -> Unit = {}
 ) {
     val profile by viewModel.userProfile.collectAsState()
     val upcomingExams by viewModel.upcomingExams.collectAsState()
@@ -134,7 +136,7 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            HomeHeader(streak = streak, level = level)
+            HomeHeader(streak = streak, level = level, onOpenProfile = onOpenProfile)
         }
 
         if (shieldSavedNotice != null) {
@@ -246,7 +248,8 @@ fun HomeScreen(
 @Composable
 private fun HomeHeader(
     streak: Int,
-    level: Int
+    level: Int,
+    onOpenProfile: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -254,12 +257,40 @@ private fun HomeHeader(
             .padding(top = 4.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(
-            text = greetingForCurrentTime(),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = greetingForCurrentTime(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Let's make today count",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f)
+                )
+            }
+            IconButton(
+                onClick = onOpenProfile,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .testTag("home_profile_button")
+            ) {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = "Profile",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
