@@ -149,7 +149,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                     },
                     enabled = email.contains("@") && !busy,
                     modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(
-                        backgroundColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        backgroundColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                         bottomEdgeColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
                         cornerRadius = 18.dp,
                         depth = if (email.contains("@") && !busy) 5.dp else 2.dp
