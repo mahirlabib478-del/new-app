@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aistudio.studyos.ui.components.tactile3DButton
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
@@ -279,6 +280,7 @@ fun RegularStudyScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
+                        .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 14.dp, 4.dp)
                         .testTag("btn_start_study_session"),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -317,6 +319,7 @@ fun RegularStudyScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
+                        .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
                         .testTag("btn_save_study_draft"),
                     shape = RoundedCornerShape(16.dp)
                 ) {
