@@ -549,7 +549,7 @@ private fun StudyJourneyCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(9 * 78.dp)
+                    .height((9 * 78).dp)
             ) {
                 androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                     val leftX = size.width * 0.24f
