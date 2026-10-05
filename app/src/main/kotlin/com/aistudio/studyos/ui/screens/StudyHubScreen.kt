@@ -106,7 +106,7 @@ fun StudyHubScreen(
 
         item {
             Card(
-                Modifier.fillMaxWidth().testTag("saved_sessions_card").clickable { onOpenSavedSessions() },
+                Modifier.fillMaxWidth().testTag("saved_sessions_card").clickable { onOpenSavedSessions() }.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
             ) {
@@ -178,7 +178,7 @@ private fun ActivePlanCard(plan: StudyPlanEntity, onContinue: () -> Unit) {
     val remaining = (total - studied).coerceAtLeast(0)
 
     Card(
-        Modifier.fillMaxWidth().clickable(onClick = onContinue),
+        Modifier.fillMaxWidth().clickable(onClick = onContinue).tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 24.dp, 5.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -267,7 +267,7 @@ private fun ActionCard(
     onClick: () -> Unit
 ) {
     Card(
-        Modifier.fillMaxWidth().testTag(testTag).clickable(onClick = onClick),
+        Modifier.fillMaxWidth().testTag(testTag).clickable(onClick = onClick).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -289,7 +289,7 @@ private fun PlanPreviewCard(plan: StudyPlanEntity, status: String, onClick: () -
     val total = plan.totalDurationMinutes.coerceAtLeast(1)
     val progress = if (plan.isCompleted) 1f else (plan.accumulatedBillableMinutes.toFloat() / total).coerceIn(0f, 1f)
     Card(
-        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        Modifier.fillMaxWidth().clickable(onClick = onClick).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 18.dp, 4.dp),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
     ) {
