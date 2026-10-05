@@ -452,13 +452,15 @@ fun AccountScreen(
             text = {
                 Text(
                     if (confirmAction == "create")
-                        "A verification email will be sent. Check your inbox and Spam/Junk folder if it doesn't arrive; automated messages can sometimes be filtered when the sender is unfamiliar. Verify before entering StudyOS. Existing local progress will remain untouched and will not be imported without your explicit permission."
+                        "A verification email will be sent. Check your inbox and Spam/Junk folder if it doesn't arrive; automated messages can sometimes be filtered when the sender is unfamiliar. Verify before entering StudyOS. Your local study data remains on this device."
                     else
                         "Only verified email accounts can enter StudyOS. Existing local progress will remain untouched."
                 )
             },
             confirmButton = {
-                Button(onClick = {
+                Button(
+                    modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 10.dp, 4.dp),
+                    onClick = {
                     val action = confirmAction ?: return@Button
                     confirmAction = null
                     busy = true
