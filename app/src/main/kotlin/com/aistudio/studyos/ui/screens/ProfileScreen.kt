@@ -212,7 +212,7 @@ private fun ThemeOptionCard(
         animationSpec = tween(260),
         label = "theme_icon_scale"
     )
-    val warmAccent = Color(0xFFC2410C)
+    val selectedAccent = MaterialTheme.colorScheme.primary
     Card(
         modifier = Modifier
             .width(104.dp)
@@ -220,7 +220,7 @@ private fun ThemeOptionCard(
             .clickable(onClick = onClick)
             .tactile3DButton(
                 backgroundColor = MaterialTheme.colorScheme.surface,
-                bottomEdgeColor = if (isSelected) warmAccent.copy(alpha = 0.55f)
+                bottomEdgeColor = if (isSelected) selectedAccent.copy(alpha = 0.55f)
                 else MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
                 cornerRadius = 16.dp,
                 depth = if (isSelected) 5.dp else 3.dp
@@ -229,7 +229,7 @@ private fun ThemeOptionCard(
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(
             if (isSelected) 1.5.dp else 1.dp,
-            if (isSelected) warmAccent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)
+            if (isSelected) selectedAccent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)
         ),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
@@ -240,7 +240,7 @@ private fun ThemeOptionCard(
             Icon(
                 option.icon,
                 contentDescription = null,
-                tint = if (isSelected) warmAccent else option.color,
+                tint = if (isSelected) selectedAccent else option.color,
                 modifier = Modifier.size(22.dp).scale(iconScale)
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -830,6 +830,12 @@ fun ProfileScreen(
                                     modifier = Modifier
                                         .width(130.dp)
                                         .clickable { viewModel.setThemeWallpaperStyle(currentTheme, style.id) }
+                                        .tactile3DButton(
+                                            backgroundColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                            bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                                            cornerRadius = 12.dp,
+                                            depth = if (isSelected) 4.dp else 3.dp
+                                        )
                                         .testTag("wallpaper_style_${style.id}"),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(
