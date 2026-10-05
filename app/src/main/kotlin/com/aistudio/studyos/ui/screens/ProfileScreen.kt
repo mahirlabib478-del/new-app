@@ -157,7 +157,7 @@ private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Bo
             Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp).scale(iconScale).graphicsLayer { translationZ = 2.dp.toPx() })
+            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp).scale(iconScale))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 option.name,
