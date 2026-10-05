@@ -476,7 +476,10 @@ fun AccountScreen(
             },
             confirmButton = {
                 Button(
-                    modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 10.dp, 4.dp),
+                    modifier = Modifier
+                        .height(40.dp)
+                        .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 10.dp, 4.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                     onClick = {
                     val action = confirmAction ?: return@Button
                     confirmAction = null
@@ -499,9 +502,24 @@ fun AccountScreen(
                             message = e.localizedMessage ?: "Account action failed."
                         } finally { busy = false }
                     }
-                }) { Text("Continue") }
+                }) { Text("Continue", maxLines = 1, softWrap = false, textAlign = TextAlign.Center) }
             },
-            dismissButton = { TextButton(onClick = { confirmAction = null }) { Text("Cancel") } }
+            dismissButton = {
+                Button(
+                    onClick = { confirmAction = null },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                    modifier = Modifier
+                        .height(40.dp)
+                        .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 10.dp, 3.dp),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Cancel", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                }
+            }
         )
     }
 }
