@@ -290,7 +290,7 @@ fun StudyPlanBuilderScreen(
                                     )
                                 )
                             },
-                            modifier = Modifier.fillMaxWidth().testTag("btn_add_subject"),
+                            modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp).testTag("btn_add_subject"),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(Icons.Default.Add, null)
@@ -431,7 +431,7 @@ fun StudyPlanBuilderScreen(
                                     OutlinedButton(
                                         onClick = ::applySplit,
                                         enabled = totalSessionMinutes >= topicCount && topicCount > 0,
-                                        modifier = Modifier.testTag("btn_split_topics"),
+                                        modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 12.dp, 3.dp).testTag("btn_split_topics"),
                                         contentPadding = PaddingValues(horizontal = 12.dp)
                                     ) { Text("Auto Balance") }
                                 }
@@ -518,7 +518,7 @@ private fun StepHeader(step: Int) {
 @Composable
 private fun PlanIntroCard(title: String, subtitle: String) {
     Card(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), 22.dp, 4.dp),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -538,7 +538,7 @@ private fun SubjectEditor(
     onDelete: () -> Unit
 ) {
     Card(
-        Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)),
+        Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -601,7 +601,7 @@ private fun SubjectEditor(
             }
             OutlinedButton(
                 onClick = { onSubjectChange(subject.copy(topics = subject.topics + EditableTopic(""))) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 13.dp, 3.dp),
                 shape = RoundedCornerShape(13.dp)
             ) {
                 Icon(Icons.Default.Add, null)
@@ -619,7 +619,7 @@ private fun ReviewSubject(
     onTopicTimeChange: (Int, String) -> Unit
 ) {
     Card(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -709,7 +709,7 @@ private fun SettingCard(
 @Composable
 private fun ValidationCard(message: String, success: Boolean = false) {
     Surface(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().tactile3DButton(if (success) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), 16.dp, 3.dp),
         shape = RoundedCornerShape(16.dp),
         color = if (success) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
     ) {
