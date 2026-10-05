@@ -1377,7 +1377,7 @@ private fun AmbientSoundConfigDialog(
                                     )
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
-                                        color = if (isAudioPassActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant,
+                                        color = if (isAudioPassActive) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface,
                                         border = BorderStroke(1.dp, if (isAudioPassActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                     ) {
                                         Text(
@@ -1758,7 +1758,7 @@ private fun AmbientSoundConfigDialog(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .tactile3DButton(
-                                                backgroundColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                                backgroundColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
                                                 bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.secondary.copy(alpha = 0.42f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.32f),
                                                 cornerRadius = 10.dp,
                                                 depth = if (isSelected) 4.dp else 2.dp
