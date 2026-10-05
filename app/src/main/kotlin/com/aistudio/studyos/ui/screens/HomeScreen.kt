@@ -551,7 +551,7 @@ private fun StudyJourneyCard(
             androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(journeyStep * journeyDays.size)
+                    .height((92 * journeyDays.size).dp)
             ) {
                 androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                     val stepPx = journeyStep.toPx()
@@ -596,9 +596,9 @@ private fun StudyJourneyCard(
                         isCompleted = isCompleted,
                         size = nodeSize,
                         onClick = { selectedDay = day },
-                        modifier = Modifier.offset(
+                        modifier = androidx.compose.ui.Modifier.offset(
                             x = maxWidth * journeyPositions[index] - nodeSize / 2,
-                            y = index * journeyStep
+                            y = (index * 92).dp
                         )
                     )
                 }
