@@ -216,7 +216,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                 Surface(
                     modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.30f), 10.dp, 2.dp),
                     shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Text(
                     "20 spins • " + status.spinsUsed + "/20 used • " + timer,
@@ -259,7 +259,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = if (!isSpinning && totalXP >= cost) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.78f),
+                            backgroundColor = if (!isSpinning && totalXP >= cost) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                             bottomEdgeColor = if (!isSpinning && totalXP >= cost) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                             cornerRadius = 14.dp,
                             depth = 5.dp
@@ -315,7 +315,7 @@ private fun SpinWheelLabel(index: Int, text: String) {
         Surface(
             modifier = Modifier.offset(x = positions[index].first, y = positions[index].second),
             shape = CircleShape,
-            color = Color.White.copy(alpha = 0.88f),
+            color = MaterialTheme.colorScheme.surface,
             shadowElevation = 3.dp
         ) {
             Text(
@@ -323,7 +323,7 @@ private fun SpinWheelLabel(index: Int, text: String) {
                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF172033)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
