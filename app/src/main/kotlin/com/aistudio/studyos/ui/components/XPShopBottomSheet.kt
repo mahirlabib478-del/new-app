@@ -502,7 +502,7 @@ private fun ShopItemCard(
             .animateContentSize(animationSpec = tween(220)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     ) {
@@ -548,7 +548,7 @@ private fun ShopItemCard(
                 }
 
                 Surface(
-                    modifier = Modifier.widthIn(max = 145.dp),
+                    modifier = Modifier.widthIn(min = 72.dp, max = 138.dp),
                     shape = RoundedCornerShape(8.dp),
                     color = badgeColor.copy(alpha = 0.15f),
                     border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.3f))
@@ -602,14 +602,14 @@ private fun ShopItemCard(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
                         disabledContentColor = MaterialTheme.colorScheme.onSurface
                     ),
                     modifier = Modifier
                         .height(40.dp)
                         .widthIn(min = 112.dp, max = 166.dp)
                         .tactile3DButton(
-                            backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                             cornerRadius = 12.dp,
                             depth = 4.dp
