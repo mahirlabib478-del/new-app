@@ -541,9 +541,11 @@ class StudyRepository(
             // then keep the already-resolved streak for any additional sessions today.
             val yesterdayStr = today.minusDays(1).toString()
             val shieldProtectedContinuation =
-                themePreferences.getLastShieldSavedDate() == todayStr &&
-                    currentProfile.lastActiveDate == yesterdayStr &&
-                    gapResult.shieldsConsumed == 0
+                gapResult.shieldsConsumed > 0 ||
+                    (
+                        themePreferences.getLastShieldSavedDate() == todayStr &&
+                            currentProfile.lastActiveDate == yesterdayStr
+                    )
 
             // Profile streak is the durable continuity state. Session history is
             // evidence that can repair stale/low profile values, but clearing history
