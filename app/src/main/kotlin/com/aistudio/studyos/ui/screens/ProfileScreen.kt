@@ -333,7 +333,7 @@ fun ProfileScreen(
     val focusState by viewModel.focusState.collectAsState()
     val bottomListPadding = 24.dp
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
-    val profileWarmAccent = if (currentTheme == "light") Color(0xFFC2410C) else MaterialTheme.colorScheme.primary
+    val profileWarmAccent = MaterialTheme.colorScheme.primary
 
     val streakShieldCount by viewModel.streakShieldCount.collectAsState()
     val isWallpaperPassActive by viewModel.isCustomWallpaperPassActive.collectAsState()
@@ -490,6 +490,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showXPShop = true }
+                    .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp)
                     .testTag("profile_xp_perks_shop_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -606,7 +607,7 @@ fun ProfileScreen(
         // Theme Palette Selector
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
@@ -640,6 +641,12 @@ fun ProfileScreen(
                                     .clickable {
                                         if (active) viewModel.setTheme(option.key) else showXPShop = true
                                     }
+                                    .tactile3DButton(
+                                        backgroundColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.40f),
+                                        cornerRadius = 12.dp,
+                                        depth = if (isSelected) 4.dp else 3.dp
+                                    )
                                     .testTag("profile_premium_theme_" + option.key),
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
@@ -688,6 +695,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 20.dp, 4.dp)
                     .testTag("wallpaper_settings_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -984,7 +992,7 @@ fun ProfileScreen(
         // Daily Study Target — intentionally simple: one manual value.
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().testTag("daily_goal_card"),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 20.dp, 4.dp).testTag("daily_goal_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
@@ -1021,7 +1029,7 @@ fun ProfileScreen(
         // Daily study reminder
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().testTag("study_reminder_card"),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 20.dp, 4.dp).testTag("study_reminder_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
@@ -1101,7 +1109,7 @@ fun ProfileScreen(
         // Offline-First Privacy Card
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 20.dp, 4.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -1138,7 +1146,7 @@ fun ProfileScreen(
         // App Version & Updates Card
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().testTag("app_updates_card"),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 20.dp, 4.dp).testTag("app_updates_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -1354,7 +1362,7 @@ fun ProfileScreen(
         // Storage & Cache Management
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().testTag("storage_cache_card"),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 20.dp, 4.dp).testTag("storage_cache_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
@@ -1460,6 +1468,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 22.dp, 4.dp)
                     .testTag("profile_contact_developer_card"),
                 shape = RoundedCornerShape(22.dp),
                 border = BorderStroke(
