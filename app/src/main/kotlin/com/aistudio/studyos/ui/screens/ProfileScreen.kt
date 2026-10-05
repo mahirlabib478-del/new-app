@@ -147,7 +147,7 @@ private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Bo
         label = "theme_icon_scale"
     )
     Card(
-        modifier = Modifier.width(104.dp).animateContentSize(animationSpec = tween(220)).clickable(onClick = onClick).testTag("theme_card_" + option.key),
+        modifier = Modifier.width(104.dp).animateContentSize(animationSpec = tween(220)).clickable(onClick = onClick).tactile3DButton(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, if (isSelected) option.color.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, if (isSelected) 4.dp else 3.dp).testTag("theme_card_" + option.key),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
@@ -157,7 +157,7 @@ private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Bo
             Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp).scale(iconScale))
+            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp).scale(iconScale).graphicsLayer { translationZ = 2.dp.toPx() })
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 option.name,
