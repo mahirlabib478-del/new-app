@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.repository.TodayRecommendationCalculator
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedReveal
+import com.aistudio.studyos.ui.components.tactile3DButton
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -125,7 +126,7 @@ fun HomeScreen(
     ) {
         item {
             AnimatedReveal(index = 0) {
-                HomeHeader(streak = streak, level = level)
+                HomeHeader(streak = streak, level = level, totalXP = profile?.totalXP ?: 0)
             }
         }
 
@@ -238,6 +239,7 @@ fun HomeScreen(
 private fun HomeHeader(
     streak: Int,
     level: Int,
+    totalXP: Int,
 ) {
     val streakPulse by rememberInfiniteTransition(label = "home_streak_pulse").animateFloat(
         initialValue = 1f,
@@ -298,6 +300,17 @@ private fun HomeHeader(
                 },
                 text = level.toString()
             )
+            StatPill(
+                icon = {
+                    Icon(
+                        Icons.Default.Bolt,
+                        null,
+                        Modifier.size(15.dp),
+                        tint = Color(0xFFFACC15)
+                    )
+                },
+                text = "$totalXP XP"
+            )
         }
     }
 }
@@ -309,8 +322,12 @@ private fun StatPill(
 ) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                cornerRadius = 14.dp,
+                depth = 4.dp
+            )
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp)
@@ -392,6 +409,12 @@ private fun TodayFocusCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                cornerRadius = 24.dp,
+                depth = 6.dp
+            )
             .animateContentSize(animationSpec = tween(300))
             .testTag("today_engine_hero_card"),
         shape = RoundedCornerShape(24.dp),
@@ -978,6 +1001,12 @@ private fun QuickActionCard(
 ) {
     Card(
         modifier = modifier
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                cornerRadius = 18.dp,
+                depth = 5.dp
+            )
             .animateContentSize(animationSpec = tween(220))
             .testTag(testTag)
             .clickable(onClick = onClick),
@@ -1019,6 +1048,12 @@ private fun NextExamCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                cornerRadius = 20.dp,
+                depth = 5.dp
+            )
             .testTag("spotlight_upcoming_exam_card")
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
