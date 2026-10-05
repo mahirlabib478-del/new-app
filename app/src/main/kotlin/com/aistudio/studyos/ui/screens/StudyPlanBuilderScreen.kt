@@ -380,9 +380,9 @@ fun StudyPlanBuilderScreen(
                         ) {
                             Spacer(Modifier.height(2.dp))
                             LazyRow(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(vertical = 4.dp)
+                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
                             ) {
                                 items(listOf(25, 30, 45, 50)) { minutes ->
                                     FilterChip(
@@ -539,8 +539,8 @@ private fun StepHeader(step: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         labels.forEachIndexed { index, label ->
             val selected = index == step
@@ -563,7 +563,7 @@ private fun StepHeader(step: Int) {
                 color = Color.Transparent
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 9.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -613,9 +613,9 @@ private fun SubjectEditor(
     onDelete: () -> Unit
 ) {
     Card(
-        Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
+        Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
