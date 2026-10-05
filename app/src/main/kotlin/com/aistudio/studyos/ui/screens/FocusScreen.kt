@@ -293,8 +293,8 @@ fun FocusScreen(
 
     if (showFocusOptions) {
         FocusMoreOptionsDialog(
-            isWallpaperActive = showWallpaperPreview(isLight, isWallpaperMasterEnabled, isFocusWallpaperEnabled),
-            wallpaperAvailable = isWallpaperMasterEnabled && !isLight,
+            isWallpaperActive = isWallpaperMasterEnabled && isFocusWallpaperEnabled,
+            wallpaperAvailable = isWallpaperMasterEnabled,
             onToggleWallpaper = { viewModel.toggleFocusWallpaperEnabled() },
             onOpenShop = { showFocusOptions = false; showXPShopFromFocus = true },
             onOpenSound = { showFocusOptions = false; showAmbientDialog = true },
