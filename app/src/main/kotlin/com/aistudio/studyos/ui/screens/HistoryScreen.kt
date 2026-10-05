@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -41,7 +42,9 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
     val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val days = buildHistoryDays(allLogs)
     val totalMinutes = allLogs.sumOf { it.durationMinutes.coerceAtLeast(0) }
-    Column(Modifier.fillMaxSize()) {
+    AnimatedReveal(index = 0) {
+    Column(Modifier.fillMaxSize())
+    } {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack, modifier = Modifier.testTag("history_back")) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
             Column(Modifier.weight(1f)) {
