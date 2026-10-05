@@ -1610,11 +1610,13 @@ fun ProfileScreen(
             title = { Text("Set Custom Daily Target", fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text(
-                        text = "Enter your desired daily study target in minutes (e.g. 180 for 3 hours, 360 for 6 hours, or up to 1440 for all-day prep):",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    AnimatedReveal(index = 0) {
+                        Text(
+                            text = "Enter your desired daily study target in minutes (e.g. 180 for 3 hours, 360 for 6 hours, or up to 1440 for all-day prep):",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Spacer(modifier = Modifier.height(14.dp))
                     OutlinedTextField(
                         value = customGoalInput,
