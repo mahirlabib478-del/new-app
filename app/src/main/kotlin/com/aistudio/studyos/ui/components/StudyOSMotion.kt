@@ -8,12 +8,15 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sync
@@ -27,10 +30,85 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import kotlin.math.roundToInt
+
+
+@Composable
+fun Modifier.tactile3DButton(
+    backgroundColor: Color,
+    bottomEdgeColor: Color,
+    cornerRadius: Dp = 18.dp,
+    depth: Dp = 5.dp
+): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val pressOffset by animateDpAsState(
+        targetValue = if (pressed) depth else 0.dp,
+        animationSpec = tween(115, easing = FastOutSlowInEasing),
+        label = "tactile_press_offset"
+    )
+    val shape = RoundedCornerShape(cornerRadius)
+    val extrusionDepth = if (pressed) depth * 0.22f else depth.value
+    return this
+        .pointerInput(interactionSource) {
+            awaitPointerEventScope {
+                while (true) {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val press = PressInteraction.Press(down.position)
+                    interactionSource.emit(press)
+                    val up = waitForUpOrCancellation()
+                    if (up == null) {
+                        interactionSource.emit(PressInteraction.Cancel(press))
+                    } else {
+                        interactionSource.emit(PressInteraction.Release(press))
+                    }
+                }
+            }
+        }
+        .graphicsLayer {
+            translationY = pressOffset.toPx()
+        }
+        .shadow(
+            elevation = (depth + 3.dp),
+            shape = shape,
+            clip = false
+        )
+        .clip(shape)
+        .drawBehind {
+            val depthPx = extrusionDepth.dp.toPx()
+            drawRoundRect(
+                color = bottomEdgeColor,
+                topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - depthPx),
+                size = androidx.compose.ui.geometry.Size(size.width, depthPx),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx())
+            )
+            drawRoundRect(
+                color = backgroundColor,
+                topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
+                size = androidx.compose.ui.geometry.Size(size.width, size.height - depthPx),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx())
+            )
+            drawLine(
+                color = Color.White.copy(alpha = 0.12f),
+                start = androidx.compose.ui.geometry.Offset(cornerRadius.toPx(), 0.7.dp.toPx()),
+                end = androidx.compose.ui.geometry.Offset(size.width - cornerRadius.toPx(), 0.7.dp.toPx()),
+                strokeWidth = 0.6.dp.toPx()
+            )
+        }
+}
 
 @Composable
 fun AnimatedReveal(
