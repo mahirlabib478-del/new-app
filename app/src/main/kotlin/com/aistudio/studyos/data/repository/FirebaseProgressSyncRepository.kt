@@ -636,19 +636,55 @@ class FirebaseProgressSyncRepository(
             throw IllegalStateException("Account changed or is no longer verified during sync. Please retry.")
         }
 
-        val snapshot = hashMapOf<String, Any>(
-            "schemaVersion" to 1,
-            "studyPlans" to plans.map { it.toCloudMap() },
-            "exams" to exams.map { it.toCloudMap() },
-            "sessionLogs" to sessions.map { it.toCloudMap() },
-            "profiles" to profiles.map { it.toCloudMap() },
-            "shopPreferences" to themePreferences.exportCloudSyncPreferences(),
-            "updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
-        )
-        firestore.collection("users").document(uid)
+        val ref = firestore.collection("users").document(uid)
             .collection("progress").document("current")
-            .set(snapshot)
-            .asSuspendUnit()
+
+        // Safe multi-device sync: never replace a parallel device snapshot with a
+        // stale full snapshot. Firestore transaction retries when the document changes.
+        firestore.runTransaction { transaction ->
+            if (auth.currentUser?.uid != uid ||
+                auth.currentUser?.isEmailVerified != true ||
+                cloudUploadUid != uid
+            ) {
+                throw IllegalStateException("Account changed during sync. Please retry.")
+            }
+
+            val remote = transaction.get(ref).data.orEmpty()
+            val remotePlans = (remote["studyPlans"] as? List<*>)?.mapNotNull { it.asMap()?.toStudyPlan() }.orEmpty()
+            val remoteExams = (remote["exams"] as? List<*>)?.mapNotNull { it.asMap()?.toExam() }.orEmpty()
+            val remoteSessions = (remote["sessionLogs"] as? List<*>)?.mapNotNull { it.asMap()?.toSession() }.orEmpty()
+            val remoteProfiles = (remote["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
+            val localPrefs = themePreferences.exportCloudSyncPreferences()
+            val remotePrefs = remote["shopPreferences"].asMap().orEmpty()
+
+            val mergedPlans = (remotePlans + plans).groupBy {
+                "${it.createdAt}|${it.title}|${it.subject}"
+            }.values.map { candidates ->
+                candidates.maxByOrNull { it.lastUpdated } ?: candidates.first()
+            }
+            val mergedExams = (remoteExams + exams).groupBy {
+                "${it.createdAt}|${it.subject}|${it.examDate}"
+            }.values.map { candidates ->
+                candidates.maxByOrNull { it.createdAt } ?: candidates.first()
+            }
+            val mergedSessions = (remoteSessions + sessions).distinctBy {
+                "${it.timestamp}|${it.subject}|${it.chapter}|${it.durationMinutes}|${it.mode}|${it.xpEarned}"
+            }
+            val mergedProfile = mergeProfiles(remoteProfiles.firstOrNull(), profiles.firstOrNull())
+            val mergedPrefs = remotePrefs.toMutableMap().apply { putAll(localPrefs) }
+
+            val mergedSnapshot = hashMapOf<String, Any>(
+                "schemaVersion" to maxOf((remote["schemaVersion"] as? Number)?.toInt() ?: 1, 1),
+                "studyPlans" to mergedPlans.map { it.toCloudMap() },
+                "exams" to mergedExams.map { it.toCloudMap() },
+                "sessionLogs" to mergedSessions.map { it.toCloudMap() },
+                "profiles" to listOfNotNull(mergedProfile?.toCloudMap()),
+                "shopPreferences" to mergedPrefs,
+                "updatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            transaction.set(ref, mergedSnapshot)
+            null
+        }.asSuspendResult()
         if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true || cloudUploadUid != uid) {
             throw IllegalStateException("Account changed after upload. Please check sync status.")
         }
@@ -660,6 +696,30 @@ class FirebaseProgressSyncRepository(
             if (task.isSuccessful) continuation.resume(Unit)
             else continuation.resumeWithException(task.exception ?: IllegalStateException("Cloud progress upload failed."))
         }
+    }
+
+    private fun mergeProfiles(
+        remote: UserProfileEntity?,
+        local: UserProfileEntity?
+    ): UserProfileEntity? {
+        if (remote == null) return local
+        if (local == null) return remote
+        return local.copy(
+            id = local.id,
+            streakDays = maxOf(local.streakDays, remote.streakDays),
+            totalStudyMinutes = maxOf(local.totalStudyMinutes, remote.totalStudyMinutes),
+            totalXP = maxOf(local.totalXP, remote.totalXP),
+            totalXpSpent = maxOf(local.totalXpSpent, remote.totalXpSpent),
+            totalXpEarned = maxOf(local.totalXpEarned, remote.totalXpEarned),
+            currentLevel = maxOf(local.currentLevel, remote.currentLevel),
+            levelStartStudyMinutes = maxOf(local.levelStartStudyMinutes, remote.levelStartStudyMinutes),
+            levelStartXpEarned = maxOf(local.levelStartXpEarned, remote.levelStartXpEarned),
+            levelStartXpSpent = maxOf(local.levelStartXpSpent, remote.levelStartXpSpent),
+            levelStartedAtMillis = maxOf(local.levelStartedAtMillis, remote.levelStartedAtMillis),
+            dailyGoalMinutes = local.dailyGoalMinutes,
+            themePreset = local.themePreset.ifBlank { remote.themePreset },
+            lastActiveDate = maxOf(local.lastActiveDate, remote.lastActiveDate)
+        )
     }
 
     private fun com.aistudio.studyos.data.local.entity.StudyPlanEntity.toCloudMap() = mapOf(
