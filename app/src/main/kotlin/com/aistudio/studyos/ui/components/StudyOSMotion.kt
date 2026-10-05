@@ -87,18 +87,19 @@ fun Modifier.tactile3DButton(
             clip = false
         )
         .clip(shape)
-        .drawBehind {
-            val depthPx = extrusionDepth.dp.toPx()
+        .drawWithContent {
+            val depthPx = extrusionDepth.toPx()
+            drawRoundRect(
+                color = backgroundColor,
+                topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
+                size = androidx.compose.ui.geometry.Size(size.width, size.height),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx())
+            )
+            drawContent()
             drawRoundRect(
                 color = bottomEdgeColor,
                 topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - depthPx),
                 size = androidx.compose.ui.geometry.Size(size.width, depthPx),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx())
-            )
-            drawRoundRect(
-                color = backgroundColor,
-                topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
-                size = androidx.compose.ui.geometry.Size(size.width, size.height - depthPx),
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx())
             )
             drawLine(
