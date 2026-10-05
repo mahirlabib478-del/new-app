@@ -63,12 +63,13 @@ data class FocusTimerState(
     val sessionError: String? = null
 )
 
-private fun splitStudyItem(item: StudyPlanItem): List<StudyPlanItem> {
+private fun splitStudyItem(item: StudyPlanItem, blockMinutes: Int = 25): List<StudyPlanItem> {
     var remaining = item.minutes.coerceIn(1, 720)
+    val safeBlock = blockMinutes.coerceIn(25, 50)
     val result = mutableListOf<StudyPlanItem>()
-    while (remaining > 25) {
-        result += item.copy(minutes = 25)
-        remaining -= 25
+    while (remaining > safeBlock) {
+        result += item.copy(minutes = safeBlock)
+        remaining -= safeBlock
     }
     result += item.copy(minutes = remaining)
     return result
@@ -1421,10 +1422,10 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             )
         }.getOrDefault(-1)
 
-    private fun normalizePlanItems(items: List<StudyPlanItem>): List<StudyPlanItem> {
+    private fun normalizePlanItems(items: List<StudyPlanItem>, blockMinutes: Int = 25): List<StudyPlanItem> {
         val normalized = items
             .filter { it.subject.isNotBlank() && it.topic.isNotBlank() && it.minutes in 1..720 }
-            .flatMap(::splitStudyItem)
+            .flatMap { splitStudyItem(it, blockMinutes) }
         return if (normalized.size <= 720) normalized else emptyList()
     }
 
