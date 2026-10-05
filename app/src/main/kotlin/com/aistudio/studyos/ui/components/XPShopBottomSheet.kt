@@ -4,6 +4,8 @@ import com.aistudio.studyos.service.CompactToast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -437,7 +439,14 @@ private fun PremiumThemeRow(
                 onClick = onClick,
                 shape = RoundedCornerShape(10.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp),
-                modifier = Modifier.testTag(testTag)
+                modifier = Modifier
+                    .tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                        bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.40f),
+                        cornerRadius = 10.dp,
+                        depth = 4.dp
+                    )
+                    .testTag(testTag)
             ) {
                 Text("Select", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
@@ -460,7 +469,15 @@ private fun ShopItemCard(
     onAction: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                cornerRadius = 18.dp,
+                depth = 5.dp
+            )
+            .animateContentSize(animationSpec = tween(220)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -560,7 +577,14 @@ private fun ShopItemCard(
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     ),
-                    modifier = Modifier.testTag(testTag)
+                    modifier = Modifier
+                        .tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.primary,
+                            bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.48f),
+                            cornerRadius = 12.dp,
+                            depth = 4.dp
+                        )
+                        .testTag(testTag)
                 ) {
                     Text(
                         text = buttonLabel,
@@ -613,7 +637,14 @@ private fun PassDurationSelectionDialog(
 
     var dialogAnimationStarted by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { dialogAnimationStarted = true }
-    val dialogScale by animateFloatAsState(if (dialogAnimationStarted) 1f else 0.92f, tween(360), label = "pass_dialog_scale")
+    val dialogScale by animateFloatAsState(
+        if (dialogAnimationStarted) 1f else 0.90f,
+        spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "pass_dialog_scale"
+    )
     val dialogAlpha by animateFloatAsState(if (dialogAnimationStarted) 1f else 0f, tween(300), label = "pass_dialog_alpha")
 
     AlertDialog(
