@@ -838,7 +838,7 @@ private fun PassDurationSelectionDialog(
                                 Text(
                                     text = "$finalCost XP",
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
+                                    fontSize = 16.sp,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -899,7 +899,11 @@ private fun PassDurationSelectionDialog(
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
-                    text = if (canAfford) "Buy $selectedDays Days ($finalCost XP)" else "Need ${finalCost - totalXP} More XP"
+                    text = if (canAfford) "Buy $selectedDays Days ($finalCost XP)" else "Need ${finalCost - totalXP} More XP",
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
                 )
             }
         },
@@ -1031,7 +1035,7 @@ private fun ThemePassDurationSelectionDialog(
                         if (discountPercent > 0) {
                             Text("-" + discountPercent + "% DISCOUNT • You save " + savingsXP + " XP!", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF047857))
                         }
-                        Text("Your balance: " + totalXP + " XP", fontSize = 12.sp)
+                        Text("Your balance: " + totalXP + " XP", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -1057,7 +1061,13 @@ private fun ThemePassDurationSelectionDialog(
                 ),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text(if (canAfford) "Buy " + selectedDays + " Days" else "Need " + (finalCost - totalXP) + " More XP")
+                Text(
+                    if (canAfford) "Buy " + selectedDays + " Days" else "Need " + (finalCost - totalXP) + " More XP",
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
             }
         },
         dismissButton = {
