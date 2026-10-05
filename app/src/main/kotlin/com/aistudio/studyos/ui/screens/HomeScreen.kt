@@ -691,6 +691,8 @@ private fun StudyJourneyCard(
         val isCompleted = !day.isFuture && day.minutes > 0
         AlertDialog(
             onDismissRequest = { selectedDay = null },
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
             title = {
                 Text(
                     text = if (day.isToday) {
@@ -703,7 +705,12 @@ private fun StudyJourneyCard(
             },
             text = {
                 AnimatedReveal(index = 1) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 14.dp, 3.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when {
                         day.isToday && activePlan != null -> {
                             Text("Your active study plan is ready.")
@@ -749,6 +756,7 @@ private fun StudyJourneyCard(
                         }
                     }
                     }
+                    }
                 }
             },
             confirmButton = {
@@ -768,7 +776,7 @@ private fun StudyJourneyCard(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { selectedDay = null }) { Text("Close") }
+                TextButton(onClick = { selectedDay = null }, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 10.dp, 2.dp)) { Text("Close") }
             }
         )
     }
