@@ -653,7 +653,8 @@ private fun StudyJourneyCard(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AnimatedReveal(index = 1) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when {
                         day.isToday && activePlan != null -> {
                             Text("Your active study plan is ready.")
@@ -697,6 +698,7 @@ private fun StudyJourneyCard(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
                     }
                 }
             },
