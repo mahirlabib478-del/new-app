@@ -395,7 +395,14 @@ fun ProgressScreen(
                             Spacer(Modifier.width(9.dp))
                             Column(Modifier.weight(1f)) {
                                 Text("STREAK", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(if (streak == 1) "1 Day" else "${streak} Days", fontSize = 28.sp, fontWeight = FontWeight.Black)
+                                Text(
+                                     if (streak == 1) "1 Day" else "${streak} Days",
+                                     fontSize = 26.sp,
+                                     fontWeight = FontWeight.Black,
+                                     maxLines = 1,
+                                     softWrap = false,
+                                     overflow = TextOverflow.Clip
+                                 )
                             }
                             if (streakShieldCount > 0) {
                                 Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
@@ -533,7 +540,8 @@ fun ProgressScreen(
                             }
                         }
                         selectedDay?.let { day ->
-                            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)) {
+                            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface,
+                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))) {
                                 Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
                                     Text("Day ${day.dayNumber}${if (day.isToday) " • Today" else ""}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                     Text("${formatMinutes(day.minutes)} studied", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
