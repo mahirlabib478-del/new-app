@@ -545,16 +545,32 @@ fun MainApp(
                     bottom = if (isAtBottomNav) innerPadding.calculateBottomPadding() else 0.dp
                 ),
             enterTransition = {
-                fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing))
+                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
+                    slideInHorizontally(
+                        animationSpec = tween(260, easing = FastOutSlowInEasing),
+                        initialOffsetX = { fullWidth -> (fullWidth * 0.08f).toInt() }
+                    )
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(160, easing = FastOutSlowInEasing))
+                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing)) +
+                    slideOutHorizontally(
+                        animationSpec = tween(220, easing = FastOutSlowInEasing),
+                        targetOffsetX = { fullWidth -> -(fullWidth * 0.05f).toInt() }
+                    )
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing))
+                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
+                    slideInHorizontally(
+                        animationSpec = tween(260, easing = FastOutSlowInEasing),
+                        initialOffsetX = { fullWidth -> -(fullWidth * 0.08f).toInt() }
+                    )
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(160, easing = FastOutSlowInEasing))
+                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing)) +
+                    slideOutHorizontally(
+                        animationSpec = tween(220, easing = FastOutSlowInEasing),
+                        targetOffsetX = { fullWidth -> (fullWidth * 0.05f).toInt() }
+                    )
             }
         ) {
             composable(Screen.Home.route) {
