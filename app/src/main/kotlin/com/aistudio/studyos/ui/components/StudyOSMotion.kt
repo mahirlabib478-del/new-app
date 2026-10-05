@@ -48,7 +48,6 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import kotlin.math.roundToInt
 
 
-@Composable
 fun Modifier.tactile3DButton(
     backgroundColor: Color,
     bottomEdgeColor: Color,
