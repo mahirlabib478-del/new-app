@@ -374,7 +374,7 @@ fun AccountScreen(
                         OutlinedButton(
                             onClick = { confirmAction = "create" },
                             enabled = !busy && email.contains("@") && password.length >= 6,
-                            modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 18.dp, 4.dp).testTag("btn_create_account"),
+                            modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 18.dp, 4.dp).testTag("btn_create_account"),
                             shape = RoundedCornerShape(18.dp),
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
                         ) {
@@ -386,7 +386,7 @@ fun AccountScreen(
                         OutlinedButton(
                             onClick = onContinueAsGuest,
                             enabled = !busy,
-                            modifier = Modifier.fillMaxWidth().height(54.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 18.dp, 4.dp),
+                            modifier = Modifier.fillMaxWidth().height(54.dp).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 18.dp, 4.dp),
                             shape = RoundedCornerShape(18.dp)
                         ) {
                             Text("Continue as guest", maxLines = 1, softWrap = false)
@@ -407,7 +407,7 @@ fun AccountScreen(
             Spacer(Modifier.height(12.dp))
             TextButton(
                 onClick = onForgotPassword,
-                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 3.dp).testTag("btn_forgot_password")
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 3.dp).testTag("btn_forgot_password")
             ) {
                 Text("Forgot password?")
             }
