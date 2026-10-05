@@ -26,6 +26,8 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.composed
+import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -52,7 +54,15 @@ fun Modifier.tactile3DButton(
     bottomEdgeColor: Color,
     cornerRadius: Dp = 18.dp,
     depth: Dp = 5.dp
-): Modifier {
+): Modifier = composed(
+    inspectorInfo = debugInspectorInfo {
+        name = "tactile3DButton"
+        properties["backgroundColor"] = backgroundColor
+        properties["bottomEdgeColor"] = bottomEdgeColor
+        properties["cornerRadius"] = cornerRadius
+        properties["depth"] = depth
+    }
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val pressOffset by animateDpAsState(
@@ -62,8 +72,9 @@ fun Modifier.tactile3DButton(
     )
     val shape = RoundedCornerShape(cornerRadius)
     val extrusionDepth = if (pressed) depth * 0.22f else depth
-    return this
-        .pointerInput(interactionSource) {
+
+    this
+        .pointerInput(Unit) {
             awaitPointerEventScope {
                 while (true) {
                     val down = awaitFirstDown(requireUnconsumed = false)
@@ -82,7 +93,7 @@ fun Modifier.tactile3DButton(
             translationY = pressOffset.toPx()
         }
         .shadow(
-            elevation = (depth + 3.dp),
+            elevation = depth + 3.dp,
             shape = shape,
             clip = false
         )
@@ -91,26 +102,35 @@ fun Modifier.tactile3DButton(
             val depthPx = extrusionDepth.toPx()
             drawRoundRect(
                 color = backgroundColor,
-                topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
-                size = androidx.compose.ui.geometry.Size(size.width, size.height),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx())
+                size = size,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                    cornerRadius.toPx(),
+                    cornerRadius.toPx()
+                )
             )
             drawContent()
-            drawRoundRect(
+            drawRect(
                 color = bottomEdgeColor,
-                topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - depthPx),
-                size = androidx.compose.ui.geometry.Size(size.width, depthPx),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx(), cornerRadius.toPx())
+                topLeft = androidx.compose.ui.geometry.Offset(
+                    0f,
+                    (size.height - depthPx).coerceAtLeast(0f)
+                ),
+                size = androidx.compose.ui.geometry.Size(
+                    size.width,
+                    depthPx.coerceAtMost(size.height)
+                )
             )
             drawLine(
                 color = Color.White.copy(alpha = 0.12f),
                 start = androidx.compose.ui.geometry.Offset(cornerRadius.toPx(), 0.7.dp.toPx()),
-                end = androidx.compose.ui.geometry.Offset(size.width - cornerRadius.toPx(), 0.7.dp.toPx()),
+                end = androidx.compose.ui.geometry.Offset(
+                    (size.width - cornerRadius.toPx()).coerceAtLeast(cornerRadius.toPx()),
+                    0.7.dp.toPx()
+                ),
                 strokeWidth = 0.6.dp.toPx()
             )
         }
 }
-
 @Composable
 fun AnimatedReveal(
     index: Int = 0,
