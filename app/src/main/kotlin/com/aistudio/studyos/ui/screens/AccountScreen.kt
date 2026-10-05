@@ -367,7 +367,13 @@ fun AccountScreen(
                                 depth = 5.dp
                             ).testTag("btn_login"),
                             shape = RoundedCornerShape(18.dp),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         ) {
                             Text("Log In", maxLines = 1, softWrap = false)
                         }
