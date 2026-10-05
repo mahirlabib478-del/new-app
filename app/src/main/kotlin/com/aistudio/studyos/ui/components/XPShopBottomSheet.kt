@@ -221,7 +221,7 @@ fun XPShopBottomSheet(
 
             // XP Wallet Balance Card - Theme-aware colors
             Surface(
-                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 16.dp, 4.dp),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), MaterialTheme.colorScheme.outline.copy(alpha = 0.52f), 16.dp, 6.dp),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -713,7 +713,13 @@ private fun PassDurationSelectionDialog(
                         Surface(
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { selectedDays = days },
+                                .clickable { selectedDays = days }
+                                .tactile3DButton(
+                                    backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
+                                    cornerRadius = 10.dp,
+                                    depth = if (isSelected) 4.dp else 2.dp
+                                ),
                             shape = RoundedCornerShape(10.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -737,7 +743,7 @@ private fun PassDurationSelectionDialog(
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.50f), MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 14.dp, 4.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -862,7 +868,12 @@ private fun PassDurationSelectionDialog(
             Button(
                 onClick = { onConfirmPurchase(selectedDays, finalCost) },
                 enabled = canAfford,
-                modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 10.dp, 4.dp),
+                modifier = Modifier.tactile3DButton(
+                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.78f),
+                    bottomEdgeColor = if (canAfford) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                    cornerRadius = 10.dp,
+                    depth = 4.dp
+                ),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
@@ -971,7 +982,7 @@ private fun ThemePassDurationSelectionDialog(
                 }
 
                 Surface(
-                    Modifier.fillMaxWidth(),
+                    Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f), MaterialTheme.colorScheme.primary.copy(alpha = 0.30f), 14.dp, 4.dp),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
