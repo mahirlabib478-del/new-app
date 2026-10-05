@@ -8,15 +8,22 @@ import java.time.temporal.ChronoUnit
 /**
  * Calendar used by streak logic.
  *
- * Study OS is currently Bangladesh-focused, so streak calendar days are anchored
- * to Bangladesh time instead of the device's mutable system timezone.
+ * Streak calendar days follow the user's device timezone. This keeps the
+ * calculation correct for Bangladesh and international users alike.
+ *
+ * The zone is resolved when the date is calculated, so the app follows the
+ * device timezone currently configured by the user.
  */
 object StudyStreakClock {
-    val zone: ZoneId = ZoneId.of("Asia/Dhaka")
+    val zone: ZoneId
+        get() = ZoneId.systemDefault()
 
     fun today(): LocalDate = LocalDate.now(zone)
 
     fun dateFromTimestamp(timestampMillis: Long): LocalDate =
+        dateFromTimestamp(timestampMillis, zone)
+
+    fun dateFromTimestamp(timestampMillis: Long, zone: ZoneId): LocalDate =
         Instant.ofEpochMilli(timestampMillis).atZone(zone).toLocalDate()
 }
 
