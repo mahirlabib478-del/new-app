@@ -239,7 +239,6 @@ fun AccountScreen(
                             if (!busy) {
                                 busy = true
                                 message = null
-                                signOutFailureMessage = null
                                 scope.launch {
                                     try {
                                         val sync = cloudSync
