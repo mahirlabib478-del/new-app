@@ -124,6 +124,9 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.service.AmbientSoundManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedReveal
+import com.aistudio.studyos.ui.components.tactile3DButton
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -848,7 +851,10 @@ private fun CircularTimerDisplay(
 
     Box(
         modifier = modifier
-            .scale(timerPulse)
+            .graphicsLayer {
+                scaleX = timerPulse
+                scaleY = timerPulse
+            }
             .size(292.dp)
             .testTag("focus_timer_circle"),
         contentAlignment = Alignment.Center
@@ -862,12 +868,29 @@ private fun CircularTimerDisplay(
                     val activeStroke = Stroke(width = strokeWidth, cap = StrokeCap.Round)
 
                     onDrawBehind {
-                        // Background track
+                        val bevelStroke = Stroke(width = 24.dp.toPx())
+                        val innerHighlight = Stroke(width = 3.dp.toPx())
+                        val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+                        val radius = (size.minDimension - 24.dp.toPx()) / 2f
+                        drawCircle(
+                            color = Color.Black.copy(alpha = if (isLight) 0.10f else 0.34f),
+                            radius = radius,
+                            center = center,
+                            style = bevelStroke
+                        )
                         drawCircle(
                             color = trackColor,
+                            radius = radius,
+                            center = center,
                             style = backgroundStroke
                         )
-                        // Smooth active progress sweep
+                        drawArc(
+                            color = primaryColor.copy(alpha = 0.20f),
+                            startAngle = -90f,
+                            sweepAngle = animatedProgress * 360f,
+                            useCenter = false,
+                            style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
+                        )
                         drawArc(
                             color = primaryColor,
                             startAngle = -90f,
@@ -875,6 +898,35 @@ private fun CircularTimerDisplay(
                             useCenter = false,
                             style = activeStroke
                         )
+                        drawArc(
+                            color = Color.White.copy(alpha = 0.16f),
+                            startAngle = -90f,
+                            sweepAngle = (animatedProgress * 220f).coerceAtLeast(0f),
+                            useCenter = false,
+                            style = innerHighlight
+                        )
+                        if (animatedProgress > 0f) {
+                            val angle = Math.toRadians((-90f + animatedProgress * 360f).toDouble())
+                            val beadCenter = androidx.compose.ui.geometry.Offset(
+                                center.x + radius * cos(angle).toFloat(),
+                                center.y + radius * sin(angle).toFloat()
+                            )
+                            drawCircle(
+                                color = primaryColor.copy(alpha = 0.24f),
+                                radius = 10.dp.toPx(),
+                                center = beadCenter
+                            )
+                            drawCircle(
+                                color = primaryColor,
+                                radius = 5.dp.toPx(),
+                                center = beadCenter
+                            )
+                            drawCircle(
+                                color = Color.White.copy(alpha = 0.78f),
+                                radius = 1.7.dp.toPx(),
+                                center = beadCenter
+                            )
+                        }
                     }
                 }
         ) {}
@@ -1799,7 +1851,14 @@ private fun FocusTimerControls(
     ) {
         FilledIconButton(
             onClick = onReset,
-            modifier = Modifier.size(52.dp),
+            modifier = Modifier
+                .size(52.dp)
+                .tactile3DButton(
+                    backgroundColor = secondaryBtnColor,
+                    bottomEdgeColor = secondaryBtnColor.copy(alpha = 0.55f),
+                    cornerRadius = 50.dp,
+                    depth = 5.dp
+                ),
             shape = CircleShape,
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = secondaryBtnColor
@@ -1816,6 +1875,12 @@ private fun FocusTimerControls(
             onClick = onToggle,
             modifier = Modifier
                 .size(76.dp)
+                .tactile3DButton(
+                    backgroundColor = primaryColor,
+                    bottomEdgeColor = primaryColor.copy(alpha = 0.48f),
+                    cornerRadius = 50.dp,
+                    depth = 6.dp
+                )
                 .testTag("btn_toggle_focus_timer"),
             shape = CircleShape,
             colors = IconButtonDefaults.filledIconButtonColors(
@@ -1832,7 +1897,14 @@ private fun FocusTimerControls(
 
         FilledIconButton(
             onClick = onSkip,
-            modifier = Modifier.size(52.dp),
+            modifier = Modifier
+                .size(52.dp)
+                .tactile3DButton(
+                    backgroundColor = secondaryBtnColor,
+                    bottomEdgeColor = secondaryBtnColor.copy(alpha = 0.55f),
+                    cornerRadius = 50.dp,
+                    depth = 5.dp
+                ),
             shape = CircleShape,
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = secondaryBtnColor
