@@ -147,6 +147,60 @@ private val THEME_OPTIONS = listOf(
 )
 
 @Composable
+private fun TactileRockerSwitch(
+    checked: Boolean,
+    enabled: Boolean = true,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) 24.dp else 0.dp,
+        animationSpec = tween(180),
+        label = "tactile_rocker_thumb"
+    )
+    val trackColor = if (enabled) {
+        if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+    }
+    val edgeColor = if (checked) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
+    }
+
+    Box(
+        modifier = modifier
+            .size(width = 58.dp, height = 34.dp)
+            .tactile3D(
+                depth = 4.dp,
+                color = trackColor,
+                edgeColor = edgeColor,
+                shape = RoundedCornerShape(17.dp)
+            )
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            )
+            .padding(3.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = thumbOffset)
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(
+                    if (checked) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.92f)
+                )
+        )
+    }
+}
+
+@Composable
 private fun ThemeOptionCard(
     option: ThemeOption,
     isSelected: Boolean,
@@ -983,7 +1037,7 @@ fun ProfileScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Switch(
+                        TactileRockerSwitch(
                             checked = reminderEnabled,
                             onCheckedChange = { enabled ->
                                 reminderEnabled = enabled
