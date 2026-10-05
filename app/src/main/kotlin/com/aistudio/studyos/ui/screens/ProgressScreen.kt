@@ -71,6 +71,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.AnimatedCounter
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import com.aistudio.studyos.data.repository.ProgressAnalyticsCalculator
 import com.aistudio.studyos.data.repository.LevelMissionCalculator
 import com.aistudio.studyos.data.repository.LevelMissionProgress
@@ -303,7 +305,8 @@ fun ProgressScreen(
 
     val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
 
-    LazyColumn(
+    AnimatedReveal(index = 0) {
+        LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = horizontalContentPadding, end = horizontalContentPadding, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -591,7 +594,12 @@ fun ProgressScreen(
                                 Text("Level ${currentLevel}", fontSize = 19.sp, fontWeight = FontWeight.Black)
                                 Text(currentRankTitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Text("${profile?.totalXpEarned ?: 0} XP", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            AnimatedCounter(
+                                target = profile?.totalXpEarned ?: 0,
+                                suffix = " XP",
+                                durationMillis = 700,
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            )
                         }
                         missionProgress?.let { mission ->
                             Text("${mission.completedCount}/5 promotion quests complete", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
