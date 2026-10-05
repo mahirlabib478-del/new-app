@@ -459,8 +459,9 @@ private fun PremiumThemeRow(
             FilledTonalButton(
                 onClick = onClick,
                 shape = RoundedCornerShape(10.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                 modifier = Modifier
+                    .height(38.dp)
                     .tactile3DButton(
                         backgroundColor = MaterialTheme.colorScheme.primaryContainer,
                         bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.40f),
@@ -469,7 +470,7 @@ private fun PremiumThemeRow(
                     )
                     .testTag(testTag)
             ) {
-                Text("Select", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Select", fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
             }
         }
     }
