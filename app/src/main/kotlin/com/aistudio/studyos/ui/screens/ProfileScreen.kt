@@ -331,7 +331,7 @@ fun ProfileScreen(
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
-    val bottomListPadding = if (focusState.planId != null) 176.dp else 112.dp
+    val bottomListPadding = 24.dp
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
     val profileWarmAccent = if (currentTheme == "light") Color(0xFFC2410C) else MaterialTheme.colorScheme.primary
 
