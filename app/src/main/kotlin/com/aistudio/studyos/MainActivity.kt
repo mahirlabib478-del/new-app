@@ -10,6 +10,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -68,6 +69,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -471,8 +473,17 @@ fun MainApp(
                                     }
                                 },
                                 icon = {
+                                    val iconScale by animateFloatAsState(
+                                        targetValue = if (isSelected) 1.12f else 1f,
+                                        animationSpec = tween(180, easing = FastOutSlowInEasing),
+                                        label = "bottom_nav_icon_scale"
+                                    )
                                     screen.icon?.let {
-                                        Icon(imageVector = it, contentDescription = screen.title)
+                                        Icon(
+                                            imageVector = it,
+                                            contentDescription = screen.title,
+                                            modifier = Modifier.scale(iconScale)
+                                        )
                                     }
                                 },
                                 label = { Text(screen.title) },
