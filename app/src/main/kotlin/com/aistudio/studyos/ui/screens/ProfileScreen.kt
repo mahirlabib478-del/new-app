@@ -169,6 +169,7 @@ private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Bo
     }
 }
 
+@Composable
 private fun ProfileSectionHeader(title: String, subtitle: String? = null) {
     Column(
         modifier = Modifier
