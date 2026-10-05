@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.service.AdManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -158,7 +159,8 @@ fun XPShopBottomSheet(
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
-        Column(
+        AnimatedReveal(index = 0) {
+            Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
@@ -344,6 +346,7 @@ fun XPShopBottomSheet(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            )
         }
     }
 }
