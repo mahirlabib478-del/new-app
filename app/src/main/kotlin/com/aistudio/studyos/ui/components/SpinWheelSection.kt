@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -256,11 +257,33 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                         }
                     },
                     enabled = !isSpinning && totalXP >= cost,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = if (isSpinning) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.82f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                        disabledContentColor = if (isSpinning) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = if (!isSpinning && totalXP >= cost) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                            bottomEdgeColor = if (!isSpinning && totalXP >= cost) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                            backgroundColor = when {
+                                isSpinning -> MaterialTheme.colorScheme.primary.copy(alpha = 0.82f)
+                                totalXP >= cost -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            bottomEdgeColor = when {
+                                isSpinning -> MaterialTheme.colorScheme.primary.copy(alpha = 0.58f)
+                                totalXP >= cost -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.42f)
+                            },
                             cornerRadius = 14.dp,
                             depth = 5.dp
                         )
