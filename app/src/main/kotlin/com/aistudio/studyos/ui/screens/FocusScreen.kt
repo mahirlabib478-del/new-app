@@ -123,6 +123,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.service.AmbientSoundManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.AnimatedReveal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,6 +133,11 @@ fun FocusScreen(
 ) {
     val state by viewModel.focusState.collectAsState()
     val primaryColor = if (state.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
+    val completionScale by animateFloatAsState(
+        targetValue = if (state.isSessionCompleted) 1f else 0.92f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "focus_completion_scale"
+    )
     var showEndDialog by remember { mutableStateOf(false) }
     var showAmbientDialog by remember { mutableStateOf(false) }
     var showFocusOptions by remember { mutableStateOf(false) }
@@ -1959,6 +1965,7 @@ private fun StudySessionCompleteScreen(
                     fontWeight = FontWeight.Black,
                     fontSize = 15.sp,
                     letterSpacing = 1.sp,
+                    modifier = Modifier.scale(completionScale),
                     color = Color.White
                 )
             }
