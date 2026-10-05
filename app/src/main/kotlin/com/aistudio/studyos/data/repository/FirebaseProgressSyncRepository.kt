@@ -553,6 +553,45 @@ class FirebaseProgressSyncRepository(
         return "Initial cloud backup created. Automatic cloud sync is now enabled."
     }
 
+    /**
+     * Uploads an imported guest snapshot only when the account's cloud document
+     * is empty or absent. This prevents guest migration from overwriting an
+     * existing account's cloud progress.
+     */
+    suspend fun uploadImportedGuestSnapshot(): String {
+        val user = auth.currentUser
+            ?: throw IllegalStateException("Sign in before syncing progress.")
+        if (!user.isEmailVerified) {
+            throw IllegalStateException("Verify your email before syncing progress.")
+        }
+        val uid = user.uid
+        val ref = firestore.collection("users").document(uid)
+            .collection("progress").document("current")
+        val existing = ref.get().asSuspendResult().data
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            throw IllegalStateException("Account changed during guest import. Please retry.")
+        }
+
+        if (existing != null) {
+            val cloudPlans = (existing["studyPlans"] as? List<*>)?.filterNotNull().orEmpty()
+            val cloudExams = (existing["exams"] as? List<*>)?.filterNotNull().orEmpty()
+            val cloudSessions = (existing["sessionLogs"] as? List<*>)?.filterNotNull().orEmpty()
+            val cloudProfiles = (existing["profiles"] as? List<*>)?.filterNotNull().orEmpty()
+            val cloudPreferences = existing["shopPreferences"].asMap().orEmpty()
+            val cloudHasMeaningfulData =
+                cloudPlans.isNotEmpty() || cloudExams.isNotEmpty() || cloudSessions.isNotEmpty() ||
+                    cloudPreferences.isNotEmpty() || cloudProfiles.isNotEmpty()
+            if (cloudHasMeaningfulData) {
+                throw IllegalStateException(
+                    "This account already has cloud progress. Guest import was cancelled to protect the existing cloud data."
+                )
+            }
+        }
+
+        uploadLocalSnapshot()
+        return "Guest progress imported and synced to the cloud."
+    }
+
     suspend fun uploadLocalSnapshot() {
         val user = auth.currentUser
             ?: throw IllegalStateException("Sign in before syncing progress.")
