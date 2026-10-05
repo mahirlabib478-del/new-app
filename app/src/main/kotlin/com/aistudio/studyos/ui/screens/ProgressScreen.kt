@@ -209,19 +209,24 @@ fun ProgressScreen(
     val profile by viewModel.userProfile.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
     val allLogs by viewModel.allLogs.collectAsState()
-    val currentMonthLogs by viewModel.currentMonthLogs.collectAsState()\n    val streakShieldCount by viewModel.streakShieldCount.collectAsState()
+    val currentMonthLogs by viewModel.currentMonthLogs.collectAsState()
+    val streakShieldCount by viewModel.streakShieldCount.collectAsState()
     val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val todayMinutes by viewModel.todayMinutes.collectAsState()
-    val monthlyData = remember(currentMonthLogs) { calculateMonthlyActivity(currentMonthLogs) }\n    val totalMonthMinutes = monthlyData.sumOf { it.minutes }\n    val activeMonthDays = monthlyData.count { it.minutes > 0 }\n    val peakMonthDay = monthlyData.maxByOrNull { it.minutes }\n    val weeklyTotal = weeklyData.sumOf { it.minutes }\n    val maxWeekMinutes = weeklyData.maxOfOrNull { it.minutes }?.coerceAtLeast(1) ?: 1\n    val bestRecentSession = allLogs.maxOfOrNull { it.durationMinutes.coerceAtLeast(0) } ?: 0
-    val totalMonthMinutes = remember(monthlyData) { monthlyData.sumOf { it.minutes } }
-    val activeMonthDays = remember(monthlyData) { monthlyData.count { it.minutes > 0 } }
-    val peakMonthDay = remember(monthlyData) { monthlyData.maxByOrNull { it.minutes } }
+    val monthlyData = remember(currentMonthLogs) { calculateMonthlyActivity(currentMonthLogs) }
+    val totalMonthMinutes = monthlyData.sumOf { it.minutes }
+    val activeMonthDays = monthlyData.count { it.minutes > 0 }
+    val peakMonthDay = monthlyData.maxByOrNull { it.minutes }
+    val weeklyTotal = weeklyData.sumOf { it.minutes }
+    val maxWeekMinutes = weeklyData.maxOfOrNull { it.minutes }?.coerceAtLeast(1) ?: 1
+    val bestRecentSession = allLogs.maxOfOrNull { it.durationMinutes.coerceAtLeast(0) } ?: 0
     val currentYearMinutes by viewModel.currentYearMinutes.collectAsState()
     val currentYearSessionCount by viewModel.currentYearSessionCount.collectAsState()
     val topicCount by viewModel.levelMissionTopicCount.collectAsState()
     val peakDailyFocusMinutes by viewModel.levelMissionPeakFocusMinutes.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
-    val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()\n    val weeklyData = remember(allLogs) { calculateCurrentWeek(allLogs) }
+    val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()
+    val weeklyData = remember(allLogs) { calculateCurrentWeek(allLogs) }
     val analytics = remember(allLogs, activePlan, latestCompletedPlan) {
         ProgressAnalyticsCalculator.calculate(allLogs, activePlan, latestCompletedPlan = latestCompletedPlan)
     }
