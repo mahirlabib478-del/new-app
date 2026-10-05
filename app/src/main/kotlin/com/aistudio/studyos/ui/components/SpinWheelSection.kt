@@ -162,16 +162,18 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
             }
 
             if (lastReward != null) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = "🎉 " + lastReward,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                AnimatedReveal(index = 0) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "🎉 " + lastReward,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
 
