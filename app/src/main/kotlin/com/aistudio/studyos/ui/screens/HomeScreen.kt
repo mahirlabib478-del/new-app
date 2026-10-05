@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -596,7 +597,7 @@ private fun StudyJourneyCard(
                         isCompleted = isCompleted,
                         size = nodeSize,
                         onClick = { selectedDay = day },
-                        modifier = androidx.compose.ui.Modifier.offset(
+                        modifier = Modifier.offset(
                             x = maxWidth * journeyPositions[index] - nodeSize / 2,
                             y = (index * 92).dp
                         )
