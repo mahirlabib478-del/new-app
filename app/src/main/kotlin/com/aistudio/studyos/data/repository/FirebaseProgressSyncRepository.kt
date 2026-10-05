@@ -284,7 +284,8 @@ class FirebaseProgressSyncRepository(
                 totalXpSpent = maxOf(local.totalXpSpent, remote.totalXpSpent),
                 totalXpEarned = maxOf(local.totalXpEarned, remote.totalXpEarned),
                 currentLevel = maxOf(local.currentLevel, remote.currentLevel),
-                dailyGoalMinutes = local.dailyGoalMinutes
+                dailyGoalMinutes = local.dailyGoalMinutes,
+                lastActiveDate = selectStreakDate(local, remote)
             )
         }
         if (auth.currentUser?.uid != uid) throw IllegalStateException("Account changed during sync. Please retry.")
@@ -421,6 +422,17 @@ class FirebaseProgressSyncRepository(
         lastSuccessfulSyncMillis = System.currentTimeMillis()
         _syncStatus.value = "Synced just now"
         return "Merge complete: added ${newPlans.size} plans, ${newExams.size} exams and ${newSessions.size} study sessions. Progress totals were reconciled. This device's theme/settings were kept, and the merged progress was uploaded."
+    }
+
+    private fun selectStreakDate(local: UserProfileEntity, remote: UserProfileEntity): String {
+        return when {
+            remote.streakDays > local.streakDays && remote.lastActiveDate.isNotBlank() ->
+                remote.lastActiveDate
+            local.streakDays > remote.streakDays && local.lastActiveDate.isNotBlank() ->
+                local.lastActiveDate
+            remote.lastActiveDate.isNotBlank() -> remote.lastActiveDate
+            else -> local.lastActiveDate
+        }
     }
 
     private suspend fun <T> Task<T>.asSuspendResult(): T = suspendCancellableCoroutine { continuation ->
