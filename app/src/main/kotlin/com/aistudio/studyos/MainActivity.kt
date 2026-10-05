@@ -273,7 +273,7 @@ private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
         ) {
             Box(
                 modifier = Modifier.size(40.dp)
-                    .clip(RoundedCornerShape(13.dp))
+                    .tactile3DButton(logoSurface, outerBorder.copy(alpha = 0.55f), 13.dp, 3.dp)
                     .background(logoSurface)
                     .border(1.dp, outerBorder, RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center
@@ -314,7 +314,10 @@ private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
                 }
             }
             Surface(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 32.dp, bottom = 15.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 32.dp, bottom = 15.dp)
+                    .tactile3DButton(badgeSurface, badgeBorder.copy(alpha = 0.55f), 50.dp, 3.dp),
                 shape = RoundedCornerShape(50),
                 color = badgeSurface,
                 border = androidx.compose.foundation.BorderStroke(1.dp, badgeBorder)
