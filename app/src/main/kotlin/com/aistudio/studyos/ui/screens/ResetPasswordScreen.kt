@@ -154,9 +154,14 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                         cornerRadius = 18.dp,
                         depth = if (email.contains("@") && !busy) 5.dp else 2.dp
                     ).testTag("btn_send_password_reset"),
-                    shape = RoundedCornerShape(18.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
                 ) {
-                    if (busy) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp) else Text("Send reset link")
+                    if (busy) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp) else Text("Send reset link", maxLines = 1, softWrap = false)
                 }
                 message?.let {
                     Text(
