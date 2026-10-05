@@ -129,6 +129,7 @@ fun FocusScreen(
     val primaryColor = if (state.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
     var showEndDialog by remember { mutableStateOf(false) }
     var showAmbientDialog by remember { mutableStateOf(false) }
+    var showFocusOptions by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
 
@@ -290,6 +291,17 @@ fun FocusScreen(
         )
     }
 
+    if (showFocusOptions) {
+        FocusMoreOptionsDialog(
+            isWallpaperActive = showWallpaperPreview(isLight, isWallpaperMasterEnabled, isFocusWallpaperEnabled),
+            wallpaperAvailable = isWallpaperMasterEnabled && !isLight,
+            onToggleWallpaper = { viewModel.toggleFocusWallpaperEnabled() },
+            onOpenShop = { showFocusOptions = false; showXPShopFromFocus = true },
+            onOpenSound = { showFocusOptions = false; showAmbientDialog = true },
+            onDismiss = { showFocusOptions = false }
+        )
+    }
+
     if (showAmbientDialog) {
         AmbientSoundConfigDialog(
             preset = ambientPreset,
@@ -403,7 +415,7 @@ fun FocusScreen(
                     isWallpaperActive = showWallpaper,
                     isWallpaperMasterEnabled = isWallpaperMasterEnabled,
                     isLight = isLight,
-                    onToggleWallpaper = { viewModel.toggleFocusWallpaperEnabled() },
+                    onMore = { showFocusOptions = true },
                     onBack = {
                         // Allow continuous audio playback (lectures / audiobooks / ambient) in background when minimizing
                         onBack()
@@ -528,7 +540,7 @@ private fun FocusTopBar(
     isWallpaperActive: Boolean,
     isWallpaperMasterEnabled: Boolean,
     isLight: Boolean,
-    onToggleWallpaper: () -> Unit,
+    onMore: () -> Unit,
     onBack: () -> Unit,
     onEndSession: () -> Unit
 ) {
@@ -558,17 +570,14 @@ private fun FocusTopBar(
             }
         },
         actions = {
-            if (isWallpaperMasterEnabled && !isLight) {
-                IconButton(
-                    onClick = onToggleWallpaper,
-                    modifier = Modifier.testTag("focus_wallpaper_toggle_button")
-                ) {
-                    Icon(
-                        imageVector = if (isWallpaperActive) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                        contentDescription = if (isWallpaperActive) "Hide Wallpaper" else "Show Wallpaper",
-                        tint = if (isWallpaperActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            IconButton(
+                onClick = onMore,
+                modifier = Modifier.testTag("focus_more_options_button")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Tune,
+                    contentDescription = "Focus options"
+                )
             }
             TextButton(onClick = onEndSession) {
                 Text(
@@ -581,6 +590,83 @@ private fun FocusTopBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent
         )
+    )
+}
+
+private fun showWallpaperPreview(
+    isLight: Boolean,
+    isWallpaperMasterEnabled: Boolean,
+    isFocusWallpaperEnabled: Boolean
+): Boolean = !isLight && isWallpaperMasterEnabled && isFocusWallpaperEnabled
+
+/**
+ * ⚙️ Focus secondary controls.
+ * Keeps wallpaper, sound and XP Shop available without competing with the timer.
+ */
+@Composable
+private fun FocusMoreOptionsDialog(
+    isWallpaperActive: Boolean,
+    wallpaperAvailable: Boolean,
+    onToggleWallpaper: () -> Unit,
+    onOpenShop: () -> Unit,
+    onOpenSound: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.Tune, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text("Focus Options", fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onOpenSound),
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Headphones, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Sound & Audio", fontWeight = FontWeight.SemiBold)
+                            Text("Ambient sound, custom audio and library", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(enabled = wallpaperAvailable, onClick = onToggleWallpaper),
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(if (isWallpaperActive) Icons.Default.Visibility else Icons.Default.VisibilityOff, contentDescription = null, tint = if (wallpaperAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Focus Wallpaper", fontWeight = FontWeight.SemiBold)
+                            Text(if (!wallpaperAvailable) "Unavailable for this theme" else if (isWallpaperActive) "Visible • tap to hide" else "Hidden • tap to show", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onOpenShop),
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("🛍️", fontSize = 22.sp)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("XP Shop", fontWeight = FontWeight.SemiBold)
+                            Text("Boosters, Audio Pass and rewards", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } }
     )
 }
 
@@ -1901,7 +1987,7 @@ private fun StudySessionCompleteScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "topics completed",
+                        text = "focus blocks completed",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
