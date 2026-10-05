@@ -633,7 +633,7 @@ private fun FocusMoreOptionsDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onOpenSound),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(onClick = onOpenSound),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
                 ) {
@@ -647,7 +647,7 @@ private fun FocusMoreOptionsDialog(
                     }
                 }
                 Surface(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(enabled = wallpaperAvailable, onClick = onToggleWallpaper),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(enabled = wallpaperAvailable, onClick = onToggleWallpaper),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
                 ) {
@@ -661,7 +661,7 @@ private fun FocusMoreOptionsDialog(
                     }
                 }
                 Surface(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onOpenShop),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(onClick = onOpenShop),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
                 ) {
@@ -727,8 +727,7 @@ private fun CurrentTopicIndicator(
 
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(pillBgColor)
+                .tactile3DButton(pillBgColor, primaryColor.copy(alpha = 0.3f), 16.dp, 3.dp)
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
             Text(
