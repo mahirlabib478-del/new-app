@@ -336,7 +336,7 @@ fun XPShopBottomSheet(
             // 🎡 Spin Wheel
             SpinWheelSection(viewModel = viewModel)
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // ITEM 6: ⚡ Instant Free XP Drop via Sponsor (70% +150 XP, 30% +250 XP; 30-min cooldown; 5s silent delay)
             ShopItemCard(
