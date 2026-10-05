@@ -70,13 +70,13 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                             Modifier
                                 .fillMaxWidth()
                                 .tactile3DButton(
-                                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    backgroundColor = MaterialTheme.colorScheme.surface,
                                     bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                                     cornerRadius = 18.dp,
                                     depth = 5.dp
                                 )
                                 .testTag("history_day_${day.key}"),
-                            shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                            shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column { Text(day.label, fontWeight = FontWeight.Bold); Text("${day.sessions} ${if (day.sessions == 1) "session" else "sessions"}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
