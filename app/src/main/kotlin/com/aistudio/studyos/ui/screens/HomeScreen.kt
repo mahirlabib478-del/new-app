@@ -279,7 +279,7 @@ private fun HomeHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             StatPill(
-                modifier = Modifier.weight(1.45f),
+                modifier = Modifier.weight(1f),
                 icon = {
                     Icon(
                         Icons.Default.LocalFireDepartment,
@@ -296,7 +296,7 @@ private fun HomeHeader(
                 text = "$streak day streak"
             )
             StatPill(
-                modifier = Modifier.weight(0.72f),
+                modifier = Modifier.weight(0.82f),
                 icon = {
                     Text(
                         text = "Lv",
@@ -628,12 +628,12 @@ private fun StudyJourneyCard(
                 0.50f, 0.62f, 0.70f, 0.62f, 0.50f,
                 0.38f, 0.30f, 0.38f, 0.50f
             )
-            val journeyStep = 112.dp
+            val journeyStep = 124.dp
 
             androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((journeyStep.value * journeyDays.size + 18).dp)
+                    .height((journeyStep.value * journeyDays.size + 30).dp)
             ) {
                 // Floating study objects live in the open pockets of the curve.
                 JourneyFloatingDecoration(
@@ -832,7 +832,7 @@ private fun JourneyNode(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.size(size + 8.dp),
+            modifier = Modifier.size(size + 12.dp),
             contentAlignment = Alignment.TopCenter
         ) {
             // Thick lower plate = the physical depth of the coin/button.
@@ -916,7 +916,7 @@ private fun JourneyNode(
             isCompleted -> {
                 Text(
                     day.minutes.toString() + "m studied",
-                    fontSize = 9.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     color = inactive.copy(alpha = 0.82f)
                 )
@@ -924,7 +924,7 @@ private fun JourneyNode(
             day.isToday -> {
                 Text(
                     "Your next step",
-                    fontSize = 9.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = primary.copy(alpha = 0.92f)
                 )
@@ -932,7 +932,7 @@ private fun JourneyNode(
             day.isFuture -> {
                 Text(
                     "Locked",
-                    fontSize = 9.sp,
+                    fontSize = 10.sp,
                     color = inactive.copy(alpha = 0.58f)
                 )
             }
