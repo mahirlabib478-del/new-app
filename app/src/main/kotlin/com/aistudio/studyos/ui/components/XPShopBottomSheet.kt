@@ -547,6 +547,7 @@ private fun ShopItemCard(
                 }
 
                 Surface(
+                    modifier = Modifier.widthIn(max = 145.dp),
                     shape = RoundedCornerShape(8.dp),
                     color = badgeColor.copy(alpha = 0.15f),
                     border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.3f))
@@ -556,7 +557,10 @@ private fun ShopItemCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = badgeColor,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
