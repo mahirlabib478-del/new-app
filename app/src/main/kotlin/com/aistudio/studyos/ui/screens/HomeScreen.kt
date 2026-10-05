@@ -198,7 +198,7 @@ fun HomeScreen(
                 )
                 QuickActionCard(
                     modifier = Modifier.weight(1f),
-                    icon = { Icon(Icons.Default.Bolt, null, Modifier.size(28.dp), tint = Color(0xFFF59E0B)) },
+                    icon = { Icon(Icons.Default.Bolt, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.tertiary) },
                     title = "Quick Focus",
                     subtitle = "Start instantly",
                     testTag = "btn_quick_focus",
@@ -292,7 +292,7 @@ private fun HomeHeader(
                                 scaleX = streakPulse
                                 scaleY = streakPulse
                             },
-                        tint = Color(0xFFF97316)
+                        tint = MaterialTheme.colorScheme.tertiary
                     )
                 },
                 text = "$streak day streak"
@@ -316,7 +316,7 @@ private fun HomeHeader(
                         Icons.Default.Bolt,
                         null,
                         Modifier.size(15.dp),
-                        tint = Color(0xFFFACC15)
+                        tint = MaterialTheme.colorScheme.secondary
                     )
                 },
                 text = "$totalXP XP"
@@ -1141,13 +1141,13 @@ private fun NextExamCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFEF4444).copy(alpha = 0.13f)),
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Timer,
                         null,
-                        tint = Color(0xFFEF4444),
+                        tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -1172,7 +1172,7 @@ private fun NextExamCard(
                     text = if (daysRemaining > 0) daysRemaining.toString() + "d left" else examDate,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFFEF4444)
+                    color = MaterialTheme.colorScheme.error
                 )
             }
 

@@ -114,7 +114,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                 }
                 Surface(
                     modifier = Modifier.tactile3DButton(
-                        backgroundColor = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        backgroundColor = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.48f),
                         cornerRadius = 22.dp,
                         depth = 3.dp
@@ -136,7 +136,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                          .size(276.dp)
                         .clip(CircleShape)
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
                             cornerRadius = 138.dp,
                             depth = 6.dp
@@ -312,7 +312,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            backgroundColor = MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                             cornerRadius = 14.dp,
                             depth = 4.dp

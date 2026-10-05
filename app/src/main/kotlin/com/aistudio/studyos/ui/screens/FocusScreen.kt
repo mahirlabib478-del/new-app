@@ -565,7 +565,7 @@ private fun FocusTopBar(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (isRunning) Color(0xFF10B981) else MaterialTheme.colorScheme.outlineVariant)
+                        .background(if (isRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
                 )
                 Text(
                     text = if (isRunning) "Active Session" else "Session Paused",
@@ -2010,8 +2010,8 @@ private fun StudySessionCompleteScreen(
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0xFFF59E0B).copy(alpha = 0.25f),
-                            Color(0xFFF59E0B).copy(alpha = 0.05f)
+                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f),
+                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.05f)
                         )
                     )
                 ),
@@ -2020,7 +2020,7 @@ private fun StudySessionCompleteScreen(
             Icon(
                 imageVector = Icons.Default.Celebration,
                 contentDescription = "Celebration",
-                tint = Color(0xFFF59E0B),
+                tint = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.size(68.dp)
             )
         }
@@ -2075,7 +2075,7 @@ private fun StudySessionCompleteScreen(
                         fontSize = 15.sp,
                         letterSpacing = 1.sp,
                         modifier = Modifier.scale(completionScale),
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

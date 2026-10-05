@@ -393,7 +393,7 @@ fun ProgressScreen(
                 ) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.LocalFireDepartment, "Streak", Modifier.size(28.dp), tint = Color(0xFFFF6D00))
+                            Icon(Icons.Default.LocalFireDepartment, "Streak", Modifier.size(28.dp), tint = MaterialTheme.colorScheme.tertiary)
                             Spacer(Modifier.width(9.dp))
                             Column(Modifier.weight(1f)) {
                                 Text("STREAK", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
