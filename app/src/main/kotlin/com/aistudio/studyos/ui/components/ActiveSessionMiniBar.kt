@@ -68,7 +68,7 @@ fun ActiveSessionMiniBar(
     val minutes = focusState.secondsRemaining / 60
     val seconds = focusState.secondsRemaining % 60
     val timeFormatted = String.format("%02d:%02d", minutes, seconds)
-    val accentColor = if (focusState.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
+    val accentColor = if (focusState.isBreak) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
 
     Surface(
         modifier = modifier
@@ -76,15 +76,15 @@ fun ActiveSessionMiniBar(
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(18.dp))
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.50f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
             )
             .clickable { onOpenFocus() }
             .testTag("active_session_mini_bar"),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp
     ) {
         Row(
@@ -162,15 +162,15 @@ fun ActiveSessionMiniBar(
                     modifier = Modifier
                         .size(36.dp)
                         .tactile3DButton(
-                            backgroundColor = accentColor.copy(alpha = 0.18f),
+                            backgroundColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                             bottomEdgeColor = accentColor.copy(alpha = 0.42f),
                             cornerRadius = 50.dp,
                             depth = 4.dp
                         )
                         .testTag("mini_bar_toggle_timer"),
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = accentColor.copy(alpha = 0.15f),
-                        contentColor = accentColor
+                        containerColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (focusState.isRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 ) {
                     Icon(
