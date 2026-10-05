@@ -547,20 +547,13 @@ class StudyRepository(
                             currentProfile.lastActiveDate == yesterdayStr
                     )
 
-            // Profile streak is the durable continuity state. Session history is
-            // evidence that can repair stale/low profile values, but clearing history
-            // must never turn a valid consecutive profile streak into a new 1-day streak.
-            val profileContinuation =
-                currentProfile.lastActiveDate == yesterdayStr &&
-                    gapResult.shieldsConsumed == 0
-
+            // Session history is the single source of truth for real study days.
+            // Profile streak metadata is only a cache. A shield is the sole exception:
+            // its protected missed day is intentionally absent from session_logs, so the
+            // shield bridge must extend the previously resolved streak for this session.
             val finalStreak = when {
-                currentProfile.lastActiveDate == todayStr ->
-                    maxOf(currentProfile.streakDays, historyStreak.coerceAtLeast(1))
                 shieldProtectedContinuation ->
-                    maxOf(resolvedProfile.streakDays + 1, historyStreak.coerceAtLeast(1))
-                profileContinuation ->
-                    maxOf(resolvedProfile.streakDays + 1, historyStreak.coerceAtLeast(1))
+                    (resolvedProfile.streakDays + 1).coerceAtLeast(1)
                 else ->
                     historyStreak.coerceAtLeast(1)
             }
