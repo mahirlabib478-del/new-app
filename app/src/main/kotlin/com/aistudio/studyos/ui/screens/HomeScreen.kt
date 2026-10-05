@@ -112,7 +112,7 @@ fun HomeScreen(
     )
 
     val horizontalPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
-    val bottomPadding = if (focusState.planId != null) 150.dp else 96.dp
+    val bottomPadding = 24.dp
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
