@@ -1,7 +1,24 @@
 package com.aistudio.studyos.data.repository
 
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+
+/**
+ * Calendar used by streak logic.
+ *
+ * Study OS is currently Bangladesh-focused, so streak calendar days are anchored
+ * to Bangladesh time instead of the device's mutable system timezone.
+ */
+object StudyStreakClock {
+    val zone: ZoneId = ZoneId.of("Asia/Dhaka")
+
+    fun today(): LocalDate = LocalDate.now(zone)
+
+    fun dateFromTimestamp(timestampMillis: Long): LocalDate =
+        Instant.ofEpochMilli(timestampMillis).atZone(zone).toLocalDate()
+}
 
 /**
  * Resolves whether the streak can survive the gap between the last study day
