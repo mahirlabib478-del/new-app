@@ -78,7 +78,7 @@ fun ActiveSessionMiniBar(
              .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(18.dp))
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surface,
+                backgroundColor = miniSurface,
                 bottomEdgeColor = accentColor.copy(alpha = 0.38f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
@@ -86,7 +86,7 @@ fun ActiveSessionMiniBar(
             .clickable { onOpenFocus() }
             .testTag("active_session_mini_bar"),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = miniSurface,
         shadowElevation = 5.dp
     ) {
         Row(
@@ -138,7 +138,7 @@ fun ActiveSessionMiniBar(
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = miniOnSurface.copy(alpha = 0.78f)
                     )
                 }
             }
