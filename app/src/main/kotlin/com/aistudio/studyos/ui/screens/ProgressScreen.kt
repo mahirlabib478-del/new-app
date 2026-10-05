@@ -214,12 +214,6 @@ fun ProgressScreen(
     val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val todayMinutes by viewModel.todayMinutes.collectAsState()
     val monthlyData = remember(currentMonthLogs) { calculateMonthlyActivity(currentMonthLogs) }
-    val totalMonthMinutes = monthlyData.sumOf { it.minutes }
-    val activeMonthDays = monthlyData.count { it.minutes > 0 }
-    val peakMonthDay = monthlyData.maxByOrNull { it.minutes }
-    val weeklyTotal = weeklyData.sumOf { it.minutes }
-    val maxWeekMinutes = weeklyData.maxOfOrNull { it.minutes }?.coerceAtLeast(1) ?: 1
-    val bestRecentSession = allLogs.maxOfOrNull { it.durationMinutes.coerceAtLeast(0) } ?: 0
     val currentYearMinutes by viewModel.currentYearMinutes.collectAsState()
     val currentYearSessionCount by viewModel.currentYearSessionCount.collectAsState()
     val topicCount by viewModel.levelMissionTopicCount.collectAsState()
@@ -227,6 +221,12 @@ fun ProgressScreen(
     val activePlan by viewModel.activePlan.collectAsState()
     val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()
     val weeklyData = remember(allLogs) { calculateCurrentWeek(allLogs) }
+    val totalMonthMinutes = monthlyData.sumOf { it.minutes }
+    val activeMonthDays = monthlyData.count { it.minutes > 0 }
+    val peakMonthDay = monthlyData.maxByOrNull { it.minutes }
+    val weeklyTotal = weeklyData.sumOf { it.minutes }
+    val maxWeekMinutes = weeklyData.maxOfOrNull { it.minutes }?.coerceAtLeast(1) ?: 1
+    val bestRecentSession = allLogs.maxOfOrNull { it.durationMinutes.coerceAtLeast(0) } ?: 0
     val analytics = remember(allLogs, activePlan, latestCompletedPlan) {
         ProgressAnalyticsCalculator.calculate(allLogs, activePlan, latestCompletedPlan = latestCompletedPlan)
     }
