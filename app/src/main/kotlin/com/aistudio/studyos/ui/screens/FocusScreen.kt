@@ -1177,7 +1177,7 @@ private fun AmbientSoundConfigDialog(
                 // Tab Selection Row
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.32f), 12.dp, 3.dp).clip(RoundedCornerShape(12.dp))
                 ) {
