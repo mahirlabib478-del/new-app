@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +75,12 @@ fun ActiveSessionMiniBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(18.dp))
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
+                cornerRadius = 18.dp,
+                depth = 5.dp
+            )
             .clickable { onOpenFocus() }
             .testTag("active_session_mini_bar"),
         shape = RoundedCornerShape(18.dp),
@@ -100,7 +107,11 @@ fun ActiveSessionMiniBar(
                 Box(
                     modifier = Modifier
                         .size(14.dp)
-                        .scale(if (focusState.isRunning) pulseScale else 1f)
+                        .graphicsLayer {
+                            val scaleValue = if (focusState.isRunning) pulseScale else 1f
+                            scaleX = scaleValue
+                            scaleY = scaleValue
+                        }
                         .clip(CircleShape)
                         .background(accentColor)
                 )
@@ -150,6 +161,12 @@ fun ActiveSessionMiniBar(
                     onClick = onToggleTimer,
                     modifier = Modifier
                         .size(36.dp)
+                        .tactile3DButton(
+                            backgroundColor = accentColor.copy(alpha = 0.18f),
+                            bottomEdgeColor = accentColor.copy(alpha = 0.42f),
+                            cornerRadius = 50.dp,
+                            depth = 4.dp
+                        )
                         .testTag("mini_bar_toggle_timer"),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = accentColor.copy(alpha = 0.15f),
