@@ -228,7 +228,10 @@ private fun StatCell(label: String, value: String, modifier: Modifier = Modifier
                 fontSize = 17.sp,
                 modifier = Modifier.scale(valueScale),
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 label,
