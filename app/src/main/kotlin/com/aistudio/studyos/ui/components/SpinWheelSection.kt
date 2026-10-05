@@ -112,6 +112,12 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     )
                 }
                 Surface(
+                    modifier = Modifier.tactile3DButton(
+                        backgroundColor = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.48f),
+                        cornerRadius = 22.dp,
+                        depth = 3.dp
+                    ),
                     shape = CircleShape,
                     color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                 ) {
@@ -207,11 +213,18 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                 val seconds = (status.remainingMs / 1000L) % 60L
                 val timer = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
 
-                Text(
+                Surface(
+                    modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.30f), 10.dp, 2.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
+                ) {
+                    Text(
                     "20 spins • " + status.spinsUsed + "/20 used • " + timer,
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
 
                 Button(
                     onClick = {
@@ -246,8 +259,8 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.primary,
-                            bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            backgroundColor = if (!isSpinning && totalXP >= cost) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.78f),
+                            bottomEdgeColor = if (!isSpinning && totalXP >= cost) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                             cornerRadius = 14.dp,
                             depth = 5.dp
                         )
