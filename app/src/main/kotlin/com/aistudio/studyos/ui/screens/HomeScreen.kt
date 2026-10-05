@@ -1,5 +1,13 @@
 package com.aistudio.studyos.ui.screens
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -51,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
@@ -363,6 +372,7 @@ private fun TodayFocusCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(300))
             .testTag("today_engine_hero_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
@@ -449,8 +459,13 @@ private fun TodayFocusCard(
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
+            val animatedGoalProgress by animateFloatAsState(
+                targetValue = progressFraction,
+                animationSpec = tween(700, easing = FastOutSlowInEasing),
+                label = "daily_goal_progress"
+            )
             LinearProgressIndicator(
-                progress = { progressFraction },
+                progress = { animatedGoalProgress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
@@ -509,7 +524,7 @@ private fun StudyJourneyCard(
     var selectedDay by remember { mutableStateOf<JourneyDay?>(null) }
 
     Card(
-        modifier = Modifier.fillMaxWidth().testTag("study_journey_card"),
+        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(280)).testTag("study_journey_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -714,6 +729,24 @@ private fun JourneyNode(
         day.isFuture -> MaterialTheme.colorScheme.surface
         else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
     }
+    val nodeScale by animateFloatAsState(
+        targetValue = if (isCompleted || day.isToday) 1f else 0.92f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "journey_node_scale"
+    )
+    val todayPulse = if (day.isToday) {
+        val transition = rememberInfiniteTransition(label = "journey_today_pulse")
+        transition.animateFloat(
+            initialValue = 0.98f,
+            targetValue = 1.035f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(900, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "journey_today_pulse_scale"
+        ).value
+    } else 1f
+
     val icon = when {
         day.isToday -> "★"
         isCompleted -> "✓"
@@ -723,6 +756,7 @@ private fun JourneyNode(
 
     Column(
         modifier = modifier
+            .scale(nodeScale * todayPulse)
             .clickable(onClick = onClick)
             .testTag(
                 if (day.isToday) "journey_today_node"
@@ -796,6 +830,7 @@ private fun QuickActionCard(
 ) {
     Card(
         modifier = modifier
+            .animateContentSize(animationSpec = tween(220))
             .testTag(testTag)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
