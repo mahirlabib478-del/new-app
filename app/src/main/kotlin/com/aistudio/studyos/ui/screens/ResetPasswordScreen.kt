@@ -84,7 +84,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                 Icons.Default.MarkEmailRead,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(18.dp).size(42.dp).tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), 20.dp, 3.dp)
+                modifier = Modifier.size(76.dp).tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f), 38.dp, 4.dp)
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -148,7 +148,12 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                         }
                     },
                     enabled = email.contains("@") && !busy,
-                    modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 18.dp, 5.dp).testTag("btn_send_password_reset"),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(
+                        backgroundColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        bottomEdgeColor = if (email.contains("@") && !busy) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
+                        cornerRadius = 18.dp,
+                        depth = if (email.contains("@") && !busy) 5.dp else 2.dp
+                    ).testTag("btn_send_password_reset"),
                     shape = RoundedCornerShape(18.dp)
                 ) {
                     if (busy) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp) else Text("Send reset link")
