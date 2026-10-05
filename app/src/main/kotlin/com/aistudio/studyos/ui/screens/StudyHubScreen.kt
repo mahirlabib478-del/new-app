@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aistudio.studyos.ui.components.tactile3DButton
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
@@ -204,6 +205,12 @@ private fun ActivePlanCard(plan: StudyPlanEntity, onContinue: () -> Unit) {
             }
             Button(
                 onClick = onContinue,
+                modifier = Modifier.tactile3DButton(
+                    backgroundColor = MaterialTheme.colorScheme.primary,
+                    bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.62f),
+                    cornerRadius = 16.dp,
+                    depth = 5.dp
+                ),
                 modifier = Modifier.fillMaxWidth().testTag("btn_continue_current_plan"),
                 shape = RoundedCornerShape(14.dp)
             ) {
@@ -224,10 +231,24 @@ private fun ReadyCard(onCreate: () -> Unit, onQuickFocus: () -> Unit) {
             Text("Ready to study?", fontWeight = FontWeight.ExtraBold, fontSize = 21.sp)
             Text("Create a plan or jump straight into focus.", style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = onCreate, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                Button(onClick = onCreate, modifier = Modifier
+                    .weight(1f)
+                    .tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.primary,
+                        bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.62f),
+                        cornerRadius = 14.dp,
+                        depth = 4.dp
+                    ), shape = RoundedCornerShape(14.dp)) {
                     Text("Create Plan")
                 }
-                OutlinedButton(onClick = onQuickFocus, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                OutlinedButton(onClick = onQuickFocus, modifier = Modifier
+                    .weight(1f)
+                    .tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                        bottomEdgeColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+                        cornerRadius = 14.dp,
+                        depth = 4.dp
+                    ), shape = RoundedCornerShape(14.dp)) {
                     Text("Quick Focus")
                 }
             }
