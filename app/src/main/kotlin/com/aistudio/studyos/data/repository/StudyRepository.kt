@@ -526,19 +526,16 @@ class StudyRepository(
             // finishes, so keeping the app open cannot bypass shield logic.
             val gapResult = resolveStreakGap(currentProfile, today)
             val resolvedProfile = gapResult.profile
-            val yesterdayStr = today.minusDays(1).toString()
-
             // Session history is the authoritative source for real study days.
             // UserProfileEntity only caches the value for fast UI/cloud access.
             // The only exception is a shield-protected gap: the protected missed
             // days do not exist in session_logs, so the shield state must bridge
             // that gap before today's real study day is added.
             val historyStreak = consecutiveLoggedStudyDaysEnding(today)
-            val finalStreak = when {
-                gapResult.shieldsConsumed > 0 -> resolvedProfile.streakDays + 1
-                historyStreak > 0 -> historyStreak
-                resolvedProfile.lastActiveDate == yesterdayStr -> 1
-                else -> 1
+            val finalStreak = if (gapResult.shieldsConsumed > 0) {
+                resolvedProfile.streakDays + 1
+            } else {
+                historyStreak.coerceAtLeast(1)
             }
 
             val candidateProfile = resolvedProfile.copy(
