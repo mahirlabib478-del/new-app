@@ -631,12 +631,14 @@ private fun PassDurationSelectionDialog(
             }
         },
         text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
+            AnimatedReveal(index = 0) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    
                 Text(
                     text = "Select duration:",
                     style = MaterialTheme.typography.bodyMedium,
