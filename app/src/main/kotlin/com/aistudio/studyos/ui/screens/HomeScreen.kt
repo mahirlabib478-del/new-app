@@ -544,6 +544,8 @@ private fun StudyJourneyCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val journeyPathColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -557,7 +559,7 @@ private fun StudyJourneyCard(
                         val fromX = if (i % 2 == 0) leftX else rightX
                         val toX = if (i % 2 == 0) rightX else leftX
                         drawLine(
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                            color = journeyPathColor,
                             start = androidx.compose.ui.geometry.Offset(fromX, stepY * i + 34.dp.toPx()),
                             end = androidx.compose.ui.geometry.Offset(toX, stepY * (i + 1) + 34.dp.toPx()),
                             strokeWidth = 3.dp.toPx()
