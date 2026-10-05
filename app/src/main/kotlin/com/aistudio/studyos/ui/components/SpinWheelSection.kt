@@ -86,7 +86,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
     val labels = spinLabels(nextSpin)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f), MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 18.dp, 5.dp),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
@@ -126,7 +126,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
 
             Box(
                     modifier = Modifier
-                        .size(276.dp)
+                        .size(292.dp)
                         .clip(CircleShape)
                         .tactile3DButton(
                             backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -139,12 +139,12 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                 ) {
                 Box(
                     modifier = Modifier
-                        .size(250.dp)
+                        .size(266.dp)
                         .clip(CircleShape)
                         .graphicsLayer { rotationZ = rotation.value }
                         .shadow(10.dp, CircleShape)
                 ) {
-                    Canvas(modifier = Modifier.size(250.dp).clip(CircleShape)) {
+                    Canvas(modifier = Modifier.size(266.dp).clip(CircleShape)) {
                         val sweep = 360f / 8f
                         for (i in 0 until 8) {
                             drawArc(
