@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
@@ -345,7 +346,15 @@ private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
         Button(
             onClick = onGetStarted,
-            modifier = Modifier.fillMaxWidth().height(58.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(58.dp)
+                .tactile3DButton(
+                    backgroundColor = accent,
+                    bottomEdgeColor = accent.copy(alpha = 0.55f),
+                    cornerRadius = 18.dp,
+                    depth = 5.dp
+                ),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = accent,
@@ -519,7 +528,10 @@ fun MainApp(
             startDestination = startDestination,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = innerPadding.calculateTopPadding()),
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = if (isAtBottomNav) innerPadding.calculateBottomPadding() else 0.dp
+                ),
             enterTransition = {
                 fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing))
             },
