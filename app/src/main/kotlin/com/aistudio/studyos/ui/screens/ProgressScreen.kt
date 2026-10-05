@@ -156,31 +156,49 @@ fun getModeBadgeLabel(mode: String): String {
 
 private fun calculateMonthlyActivity(logs: List<SessionLogEntity>): List<DayActivityData> {
     val today = Calendar.getInstance()
-    val todayDay = today.get(Calendar.DAY_OF_MONTH)
-    val cal = Calendar.getInstance().apply {
-        set(Calendar.DAY_OF_MONTH, 1)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
+    val month = today.get(Calendar.MONTH)
+    val year = today.get(Calendar.YEAR)
+    val daysInMonth = today.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val minutesByDay = IntArray(daysInMonth)
+    logs.forEach { log ->
+        val c = Calendar.getInstance().apply { timeInMillis = log.timestamp }
+        if (c.get(Calendar.YEAR) == year && c.get(Calendar.MONTH) == month) {
+            minutesByDay[c.get(Calendar.DAY_OF_MONTH) - 1] += log.durationMinutes.coerceAtLeast(0)
+        }
     }
-    val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
-    val result = mutableListOf<DayActivityData>()
-    repeat(daysInMonth) {
-        val startMillis = cal.timeInMillis
-        val dayNumber = cal.get(Calendar.DAY_OF_MONTH)
-        cal.add(Calendar.DAY_OF_MONTH, 1)
-        val endMillis = cal.timeInMillis
-        val minutes = logs.filter { it.timestamp in startMillis until endMillis }
+    return minutesByDay.mapIndexed { index, minutes ->
+        DayActivityData("", index + 1, minutes, index + 1 == today.get(Calendar.DAY_OF_MONTH))
+    }
+}
+
+private data class WeekDay(val label: String, val minutes: Int, val isToday: Boolean)
+
+private fun calculateCurrentWeek(logs: List<SessionLogEntity>): List<WeekDay> {
+    val today = Calendar.getInstance()
+    val monday = Calendar.getInstance().apply {
+        timeInMillis = today.timeInMillis
+        set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        val day = get(Calendar.DAY_OF_WEEK)
+        add(Calendar.DAY_OF_YEAR, -(if (day == Calendar.SUNDAY) 6 else day - Calendar.MONDAY))
+    }
+    return (0 until 7).map { offset ->
+        val start = Calendar.getInstance().apply { timeInMillis = monday.timeInMillis; add(Calendar.DAY_OF_YEAR, offset) }
+        val end = Calendar.getInstance().apply { timeInMillis = start.timeInMillis; add(Calendar.DAY_OF_YEAR, 1) }
+        val minutes = logs.filter { it.timestamp in start.timeInMillis until end.timeInMillis }
             .sumOf { it.durationMinutes.coerceAtLeast(0) }
-        result += DayActivityData(
-            dayName = "",
-            dayNumber = dayNumber,
-            minutes = minutes,
-            isToday = dayNumber == todayDay
+        WeekDay(
+            SimpleDateFormat("EEE", Locale.getDefault()).format(start.time),
+            minutes,
+            start.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                start.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
         )
     }
-    return result
+}
+
+private fun formatMinutes(minutes: Int): String {
+    val safe = minutes.coerceAtLeast(0)
+    return if (safe >= 60) "${safe / 60}h ${safe % 60}m" else "${safe}m"
 }
 
 @Composable
@@ -191,10 +209,10 @@ fun ProgressScreen(
     val profile by viewModel.userProfile.collectAsState()
     val recentLogs by viewModel.recentLogs.collectAsState()
     val allLogs by viewModel.allLogs.collectAsState()
-    val currentMonthLogs by viewModel.currentMonthLogs.collectAsState()
+    val currentMonthLogs by viewModel.currentMonthLogs.collectAsState()\n    val streakShieldCount by viewModel.streakShieldCount.collectAsState()
     val isAllLogsLoaded by viewModel.isAllLogsLoaded.collectAsState()
     val todayMinutes by viewModel.todayMinutes.collectAsState()
-    val monthlyData = remember(currentMonthLogs) { calculateMonthlyActivity(currentMonthLogs) }
+    val monthlyData = remember(currentMonthLogs) { calculateMonthlyActivity(currentMonthLogs) }\n    val totalMonthMinutes = monthlyData.sumOf { it.minutes }\n    val activeMonthDays = monthlyData.count { it.minutes > 0 }\n    val peakMonthDay = monthlyData.maxByOrNull { it.minutes }\n    val weeklyTotal = weeklyData.sumOf { it.minutes }\n    val maxWeekMinutes = weeklyData.maxOfOrNull { it.minutes }?.coerceAtLeast(1) ?: 1\n    val bestRecentSession = allLogs.maxOfOrNull { it.durationMinutes.coerceAtLeast(0) } ?: 0
     val totalMonthMinutes = remember(monthlyData) { monthlyData.sumOf { it.minutes } }
     val activeMonthDays = remember(monthlyData) { monthlyData.count { it.minutes > 0 } }
     val peakMonthDay = remember(monthlyData) { monthlyData.maxByOrNull { it.minutes } }
@@ -203,7 +221,7 @@ fun ProgressScreen(
     val topicCount by viewModel.levelMissionTopicCount.collectAsState()
     val peakDailyFocusMinutes by viewModel.levelMissionPeakFocusMinutes.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
-    val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()
+    val latestCompletedPlan by viewModel.latestCompletedPlan.collectAsState()\n    val weeklyData = remember(allLogs) { calculateCurrentWeek(allLogs) }
     val analytics = remember(allLogs, activePlan, latestCompletedPlan) {
         ProgressAnalyticsCalculator.calculate(allLogs, activePlan, latestCompletedPlan = latestCompletedPlan)
     }
@@ -223,7 +241,7 @@ fun ProgressScreen(
         }
     }
 
-    val streak = profile?.streakDays ?: 0
+    val streak = profile?.streakDays?.coerceAtLeast(0) ?: 0
     val streakText = if (streak == 1) "1 Day" else "$streak Days"
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val todayDateStr = remember { sdf.format(Date()) }
@@ -245,13 +263,13 @@ fun ProgressScreen(
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Progress & Analytics",
+                text = "Your Progress",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Track your learning consistency, rankings, and daily habits",
+                text = "See how your study is building up.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -309,509 +327,256 @@ fun ProgressScreen(
         }
 
         if (selectedTab == 0) {
-            // Summary Metric Cards: Streak & Total Time
             item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Streak Card
                 Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(136.dp)
-                        .testTag("streak_metric_card"),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.LocalFireDepartment,
-                                contentDescription = "Streak Fire",
-                                tint = Color(0xFFF97316),
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Streak",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = streakText,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 22.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = when {
-                                isStreakDoneToday -> "🔥 Maintained today"
-                                streak > 0 -> "⚡ Study today to keep"
-                                else -> "🌱 Start streak today"
-                            },
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isStreakDoneToday) Color(0xFFF97316) else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                // Total Study Time Card
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(136.dp)
-                        .testTag("total_time_metric_card"),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule,
-                                contentDescription = "Total Time",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Total Time (" + Calendar.getInstance().get(Calendar.YEAR) + ")",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = if (currentYearMinutes / 60 > 0) (currentYearMinutes / 60).toString() + "h " + (currentYearMinutes % 60) + "m" else currentYearMinutes.toString() + "m",
-                            fontWeight = FontWeight.Black,
-                            fontSize = 22.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Jan 1–Present • " + currentYearSessionCount + " Sessions",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            val dailyGoal = profile?.dailyGoalMinutes ?: 60
-            val todayProgress = (todayMinutes.toFloat() / dailyGoal.coerceAtLeast(1)).coerceIn(0f, 1f)
-            val remaining = (dailyGoal - todayMinutes).coerceAtLeast(0)
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("today_goal_analytics_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Today",
-                                modifier = Modifier.fillMaxWidth(),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                if (remaining > 0) "${todayMinutes}m studied • ${remaining}m remaining" else "${todayMinutes}m studied • Daily target reached",
-                                modifier = Modifier.fillMaxWidth(),
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Text(
-                            "${(todayProgress * 100).toInt()}%",
-                            modifier = Modifier.widthIn(min = 36.dp),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    LinearProgressIndicator(
-                        progress = { todayProgress },
-                        modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = .35f)
-                    )
-                    Text(
-                        "Daily target: " + if (dailyGoal >= 60) (dailyGoal / 60).toString() + "h " + (dailyGoal % 60).toString() + "m" else dailyGoal.toString() + "m",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        item {
-            val subjectTotals = allLogs.groupBy { it.subject.ifBlank { "Other" } }
-                .mapValues { (_, logs) -> logs.sumOf { it.durationMinutes } }
-                .entries.sortedByDescending { it.value }.take(4)
-            if (subjectTotals.isNotEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().testTag("subject_analytics_card"),
-                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth().testTag("streak_metric_card"),
+                    shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Subject Breakdown", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        subjectTotals.forEach { entry ->
-                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                Text(entry.key, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 13.sp)
-                                Text(
-                                    if (entry.value >= 60) "${entry.value / 60}h ${entry.value % 60}m" else "${entry.value}m",
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("plan_analytics_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(
-                    Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Text(
-                        "Plan & Consistency",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-
-                    // 1. Study Plan Progress Section
-                    if (analytics.activePlanTitle != null && analytics.plannedMinutes > 0) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        analytics.activePlanTitle,
-                                        fontWeight = FontWeight.SemiBold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        "Actual: ${analytics.actualMinutes}m • Plan target: ${analytics.plannedMinutes}m",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        "${analytics.activePlanRemainingMinutes}m left to target",
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Text(
-                                    "${analytics.planCompletionPercent}%",
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            LinearProgressIndicator(
-                                progress = { analytics.planCompletionPercent / 100f },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(RoundedCornerShape(5.dp)),
-                                color = MaterialTheme.colorScheme.primary,
-                                trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f)
-                            )
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    "Plan vs Actual",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    "${analytics.planCompletionPercent}% complete",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = "No active study plan • Focus blocks still fuel your consistency!",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 2.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                    )
-
-                                        // 2. Monthly consistency snapshot
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    activeMonthDays.toString() + "/" + monthlyData.size + " Active Days",
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 15.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    "study activity in the last 30 days",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    "Last 7 days: ${analytics.consistencyDays}/7 active • ${analytics.consistencyPercent}% consistency",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    "Weekly study time: ${analytics.weeklyStudyMinutes}m • ${analytics.averageMinutesOnStudyDays}m per active day",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    if (totalMonthMinutes >= 60) (totalMonthMinutes / 60).toString() + "h " + (totalMonthMinutes % 60) + "m" else totalMonthMinutes.toString() + "m",
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 15.sp,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    "monthly total",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        Text(
-                            "Peak day: " + (peakMonthDay?.let { it.dayName + " " + it.dayNumber + " • " + it.minutes + "m" } ?: "No study yet"),
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    }
-                }
-            }
-        item {
-            val mission = missionProgress
-            if (mission != null) {
-                val rank = LevelMissionCalculator.rankTitle(currentLevel)
-                Card(
-                    modifier = Modifier.fillMaxWidth().testTag("current_level_missions_card"),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(13.dp)) {
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocalFireDepartment, "Streak", Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(9.dp))
                             Column(Modifier.weight(1f)) {
-                                Text("Level " + currentLevel + " Promotion Quests", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                                Text(rank + " • " + mission.completedCount + "/5 missions complete", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("STREAK", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(if (streak == 1) "1 Day" else "${streak} Days", fontSize = 28.sp, fontWeight = FontWeight.Black)
+                            }
+                            if (streakShieldCount > 0) {
+                                Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
+                                    Text("🛡️ ${streakShieldCount}", fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp))
+                                }
+                            }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            weeklyData.forEach { day ->
+                                val active = day.minutes > 0
+                                Surface(
+                                    Modifier.weight(1f).height(44.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                                        Text(day.label.take(1), fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                                            color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(if (active) "✓" else if (day.isToday) "•" else "○", fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                                            color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                        Text(
+                            when {
+                                isStreakDoneToday -> "🔥 Streak maintained today"
+                                streak > 0 -> "Study today to keep your streak alive"
+                                else -> "Complete a study session today to start your streak"
+                            },
+                            fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                            color = if (isStreakDoneToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            item {
+                val dailyGoal = (profile?.dailyGoalMinutes ?: 60).coerceAtLeast(1)
+                val progress = (todayMinutes.toFloat() / dailyGoal).coerceIn(0f, 1f)
+                val remaining = (dailyGoal - todayMinutes).coerceAtLeast(0)
+                Card(Modifier.fillMaxWidth().testTag("today_goal_analytics_card"), shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Schedule, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(8.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("TODAY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${formatMinutes(todayMinutes)} / ${formatMinutes(dailyGoal)}", fontSize = 22.sp, fontWeight = FontWeight.Black)
+                            }
+                            Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                        }
+                        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)))
+                        Text(if (remaining > 0) "${remaining} min remaining" else "Daily target reached 🎉", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+
+            item {
+                val maxMinutes = monthlyData.maxOfOrNull { it.minutes } ?: 0
+                val firstDayOffset = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK) - 1
+                val cells: List<DayActivityData?> = List(firstDayOffset) { null } + monthlyData
+                val selectedDay = monthlyData.firstOrNull { it.dayNumber == selectedMonthDay }
+                Card(Modifier.fillMaxWidth().testTag("monthly_activity_card"), shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Study Activity", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "${SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())} • ${activeMonthDays}/${monthlyData.size} active days",
+                                    fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                             Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                                Text("Lv " + currentLevel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp))
+                                Text("${activeMonthDays}/${monthlyData.size}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
                             }
                         }
-                        MissionProgressRow("📘", "Total Focus", mission.studyMinutes.toString() + "m / " + mission.targets.studyMinutesRequired + "m", mission.studyMinutes.toFloat() / mission.targets.studyMinutesRequired, mission.studyTimeComplete)
-                        MissionProgressRow("⭐", "Total XP", mission.xpEarned.toString() + " / " + mission.targets.xpRequired + " XP", mission.xpEarned.toFloat() / mission.targets.xpRequired, mission.xpComplete)
-                        MissionProgressRow("📚", "Topic Breadth", mission.topicCount.toString() + " / " + mission.targets.topicCountRequired + " Topics Studied", mission.topicCount.toFloat() / mission.targets.topicCountRequired, mission.topicBreadthComplete)
-                        MissionProgressRow("🔥", "Day Peak Focus", mission.peakFocusMinutes.toString() + "m / " + mission.targets.peakFocusMinutesRequired + "m", mission.peakFocusMinutes.toFloat() / mission.targets.peakFocusMinutesRequired, mission.peakFocusComplete)
-                        MissionProgressRow("🛍️", "Shop Investment", mission.xpSpent.toString() + " / " + mission.targets.xpSpentRequired + " XP Spent", mission.xpSpent.toFloat() / mission.targets.xpSpentRequired, mission.shopInvestmentComplete)
-                        if (mission.allComplete && currentLevel < 100) {
-                            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary) {
-                                Row(Modifier.padding(horizontal = 14.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                    Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Level " + (currentLevel + 1) + " unlocked!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("gamification_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.EmojiEvents, contentDescription = "Level", tint = Color(0xFFFFC107), modifier = Modifier.size(28.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("Level " + currentLevel + " • " + currentRankTitle, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Text(
-                            (profile?.totalXpEarned ?: 0).toString() + " lifetime XP earned • " + (profile?.totalXpSpent ?: 0) + " XP invested",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-
-// Monthly Activity Visualizer
-        item {
-            val maxMinutes = monthlyData.maxOfOrNull { it.minutes } ?: 0
-            val monthHours = totalMonthMinutes / 60
-            val monthMinutes = totalMonthMinutes % 60
-            val firstDayOffset = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK) - 1
-            val cells: List<DayActivityData?> = List(firstDayOffset) { null } + monthlyData
-            val selectedDay = monthlyData.firstOrNull { it.dayNumber == selectedMonthDay }
-            val selectedDayStart = Calendar.getInstance().apply {
-                set(Calendar.DAY_OF_MONTH, selectedMonthDay.coerceIn(1, monthlyData.size))
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            val selectedDayEnd = Calendar.getInstance().apply {
-                timeInMillis = selectedDayStart
-                add(Calendar.DAY_OF_MONTH, 1)
-            }.timeInMillis
-            val selectedDaySessionCount = currentMonthLogs.count {
-                it.timestamp in selectedDayStart until selectedDayEnd
-            }
-            val monthLabel = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.time)
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).testTag("monthly_activity_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text("Monthly Activity Pattern", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text(
-                                monthLabel + " • " + activeMonthDays + "/" + monthlyData.size + " active days",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                            Text(activeMonthDays.toString() + "/" + monthlyData.size, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
-                        }
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        cells.chunked(7).forEach { week ->
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                                week.forEach { day ->
-                                    if (day == null) {
-                                        Box(Modifier.weight(1f).size(26.dp))
-                                    } else {
-                                        val intensity = if (maxMinutes > 0 && day.minutes > 0) (day.minutes.toFloat() / maxMinutes).coerceIn(0.15f, 1f) else 0f
-                                        Box(
-                                            Modifier.weight(1f).size(26.dp).clip(RoundedCornerShape(6.dp))
-                                                .clickable { selectedMonthDay = day.dayNumber }
-                                                .background(if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity) else MaterialTheme.colorScheme.surface)
-                                                .border(
-                                                    width = if (day.dayNumber == selectedMonthDay) 2.dp else if (day.isToday) 2.dp else 1.dp,
-                                                    color = if (day.dayNumber == selectedMonthDay) MaterialTheme.colorScheme.primary else if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
-                                                    shape = RoundedCornerShape(6.dp)
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(day.dayNumber.toString(), fontSize = 8.sp, fontWeight = if (day.dayNumber == selectedMonthDay || day.isToday) FontWeight.Bold else FontWeight.Normal, color = if (intensity > 0.55f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            cells.chunked(7).forEach { week ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                    week.forEach { day ->
+                                        if (day == null) Box(Modifier.weight(1f).size(28.dp))
+                                        else {
+                                            val intensity = if (maxMinutes > 0 && day.minutes > 0) (day.minutes.toFloat() / maxMinutes).coerceIn(0.15f, 1f) else 0f
+                                            Box(
+                                                Modifier.weight(1f).size(28.dp).clip(RoundedCornerShape(7.dp)).clickable { selectedMonthDay = day.dayNumber }
+                                                    .background(if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity) else MaterialTheme.colorScheme.surface)
+                                                    .border(
+                                                        width = if (day.dayNumber == selectedMonthDay || day.isToday) 2.dp else 1.dp,
+                                                        color = if (day.dayNumber == selectedMonthDay) MaterialTheme.colorScheme.primary else if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                                        shape = RoundedCornerShape(7.dp)
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(day.dayNumber.toString(), fontSize = 9.sp,
+                                                    fontWeight = if (day.dayNumber == selectedMonthDay || day.isToday) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (intensity > 0.55f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
+                        selectedDay?.let { day ->
+                            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)) {
+                                Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                                    Text("Day ${day.dayNumber}${if (day.isToday) " • Today" else ""}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    Text("${formatMinutes(day.minutes)} studied", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Month total: ${formatMinutes(totalMonthMinutes)}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Peak: ${formatMinutes(peakMonthDay?.minutes ?: 0)}", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                        }
                     }
-                    selectedDay?.let { day ->
-                        val selectedLabel = SimpleDateFormat("MMM d", Locale.getDefault()).format(
-                            Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, day.dayNumber) }.time
-                        )
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-                        ) {
-                            Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
-                                Text(
-                                    selectedLabel + if (day.isToday) " • Today" else "",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    (if (day.minutes >= 60) (day.minutes / 60).toString() + "h " + (day.minutes % 60) + "m" else day.minutes.toString() + "m") +
-                                            " studied • " + selectedDaySessionCount + if (selectedDaySessionCount == 1) " session" else " sessions",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                }
+            }
+
+            item {
+                Card(Modifier.fillMaxWidth().testTag("weekly_progress_card"), shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Insights, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(8.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("This Week", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text("${formatMinutes(weeklyTotal)} total • ${analytics.averageMinutesOnStudyDays} min / active day", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        weeklyData.forEach { day ->
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Text(day.label, Modifier.width(34.dp), fontSize = 11.sp, fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal)
+                                Box(Modifier.weight(1f).height(9.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.surface)) {
+                                    if (day.minutes > 0) Box(Modifier.fillMaxWidth(day.minutes.toFloat() / maxWeekMinutes).height(9.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.primary))
+                                }
+                                Text(formatMinutes(day.minutes), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(
-                            "Peak: " + (peakMonthDay?.let { if (it.minutes >= 60) (it.minutes / 60).toString() + "h " + (it.minutes % 60) + "m" else it.minutes.toString() + "m" } ?: "0m"),
-                            fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text("Selected: " + (selectedDay?.dayNumber ?: Calendar.getInstance().get(Calendar.DAY_OF_MONTH)), fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            if (subjectTotals.isNotEmpty()) {
+                item {
+                    val topSubjects = subjectTotals.take(4)
+                    val maxSubjectMinutes = topSubjects.maxOfOrNull { it.value }?.coerceAtLeast(1) ?: 1
+                    Card(Modifier.fillMaxWidth().testTag("subject_analytics_card"), shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Subjects", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            topSubjects.forEach { entry ->
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(entry.key, Modifier.width(78.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp)
+                                    Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surface)) {
+                                        Box(Modifier.fillMaxWidth(entry.value.toFloat() / maxSubjectMinutes).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary))
+                                    }
+                                    Text(formatMinutes(entry.value), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (analytics.plannedMinutes > 0) {
+                item {
+                    Card(Modifier.fillMaxWidth().testTag("plan_analytics_card"), shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.School, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
+                                Spacer(Modifier.width(8.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text("Study Plan", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(analytics.activePlanTitle ?: "Study plan", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                                Text("${analytics.planCompletionPercent}%", fontSize = 17.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+                            }
+                            LinearProgressIndicator(progress = { analytics.planCompletionPercent / 100f }, modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("${formatMinutes(analytics.actualMinutes)} completed", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${formatMinutes(analytics.activePlanRemainingMinutes)} remaining", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(Modifier.fillMaxWidth().testTag("gamification_card"), shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.EmojiEvents, "Level", Modifier.size(27.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Level ${currentLevel}", fontSize = 19.sp, fontWeight = FontWeight.Black)
+                                Text(currentRankTitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Text("${profile?.totalXpEarned ?: 0} XP", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
+                        missionProgress?.let { mission ->
+                            Text("${mission.completedCount}/5 promotion quests complete", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            MissionProgressRow("📘", "Focus", "${mission.studyMinutes} / ${mission.targets.studyMinutesRequired}m", mission.studyMinutes.toFloat() / mission.targets.studyMinutesRequired, mission.studyTimeComplete)
+                            MissionProgressRow("⭐", "XP", "${mission.xpEarned} / ${mission.targets.xpRequired}", mission.xpEarned.toFloat() / mission.targets.xpRequired, mission.xpComplete)
+                            MissionProgressRow("📚", "Topics", "${mission.topicCount} / ${mission.targets.topicCountRequired}", mission.topicCount.toFloat() / mission.targets.topicCountRequired, mission.topicBreadthComplete)
+                            if (mission.allComplete && currentLevel < 100) {
+                                Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary) {
+                                    Text("Level ${currentLevel + 1} unlocked! 🎉", Modifier.padding(vertical = 10.dp).fillMaxWidth(), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(Modifier.fillMaxWidth().testTag("quick_stats_card"), shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Quick Stats", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            StatCell("Study Time", formatMinutes(currentYearMinutes), Modifier.weight(1f))
+                            StatCell("Sessions", currentYearSessionCount.toString(), Modifier.weight(1f))
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            StatCell("Current Streak", if (streak == 1) "1 day" else "${streak} days", Modifier.weight(1f))
+                            StatCell("Best Session", formatMinutes(bestRecentSession), Modifier.weight(1f))
+                        }
                     }
                 }
             }
         }
-
-
         } else {
             // Session History Log Header & Filter
             item {
