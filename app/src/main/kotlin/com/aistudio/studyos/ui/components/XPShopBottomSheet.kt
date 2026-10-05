@@ -763,7 +763,7 @@ private fun PassDurationSelectionDialog(
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.50f), MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 14.dp, 4.dp)
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 14.dp, 4.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -898,7 +898,7 @@ private fun PassDurationSelectionDialog(
                 modifier = Modifier
                     .height(40.dp)
                     .tactile3DButton(
-                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                     bottomEdgeColor = if (canAfford) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                     cornerRadius = 10.dp,
                     depth = 4.dp
@@ -1061,7 +1061,7 @@ private fun ThemePassDurationSelectionDialog(
                 modifier = Modifier
                     .height(40.dp)
                     .tactile3DButton(
-                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                     bottomEdgeColor = if (canAfford) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.40f),
                     cornerRadius = 10.dp,
                     depth = if (canAfford) 4.dp else 2.dp
