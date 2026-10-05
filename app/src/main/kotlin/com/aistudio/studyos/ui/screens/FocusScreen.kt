@@ -831,8 +831,7 @@ private fun CircularTimerDisplay(
         else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
     }
 
-    Box(
-        val timerPulse = if (isRunning) {
+    val timerPulse = if (isRunning) {
         val transition = rememberInfiniteTransition(label = "focus_timer_pulse")
         transition.animateFloat(
             initialValue = 1f,
