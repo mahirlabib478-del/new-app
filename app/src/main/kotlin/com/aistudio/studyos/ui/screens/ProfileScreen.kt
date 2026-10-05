@@ -115,6 +115,8 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.update.UpdateCheckState
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.AnimatedReveal
+import com.aistudio.studyos.ui.components.AnimatedSyncIndicator
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import kotlin.math.roundToInt
 
@@ -285,11 +287,13 @@ fun ProfileScreen(
 
     val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
 
+    AnimatedReveal(index = 0) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(start = horizontalContentPadding, end = horizontalContentPadding, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    )
+    } {
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
@@ -363,6 +367,10 @@ fun ProfileScreen(
                             maxLines = 2
                         )
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            AnimatedSyncIndicator(
+                                status = accountCloudSyncStatus,
+                                modifier = Modifier.size(18.dp)
+                            )
                             Surface(
                                 shape = CircleShape,
                                 color = if (accountCloudSyncStatus.startsWith("Synced")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
