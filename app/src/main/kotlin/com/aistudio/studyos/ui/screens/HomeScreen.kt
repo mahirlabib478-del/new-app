@@ -60,6 +60,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
@@ -578,53 +580,56 @@ private fun StudyJourneyCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val journeyPathColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
-            val journeyPositions = listOf(0.50f, 0.27f, 0.63f, 0.39f, 0.70f, 0.31f, 0.59f, 0.25f, 0.50f)
-            val journeyStep = 92.dp
+            // A broad S-curve layout keeps the journey playful without relying on
+            // connector lines. Each node gently drifts left/right instead of zig-zagging.
+            val journeyPositions = listOf(
+                0.50f, 0.62f, 0.70f, 0.62f, 0.50f,
+                0.38f, 0.30f, 0.38f, 0.50f
+            )
+            val journeyStep = 108.dp
 
             androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((92 * journeyDays.size).dp)
+                    .height((journeyStep.value * journeyDays.size + 8).dp)
             ) {
-                androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                    val stepPx = journeyStep.toPx()
-                    val points = journeyPositions.mapIndexed { index, fraction ->
-                        androidx.compose.ui.geometry.Offset(
-                            x = size.width * fraction,
-                            y = index * stepPx + 30.dp.toPx()
-                        )
-                    }
-
-                    val path = androidx.compose.ui.graphics.Path().apply {
-                        if (points.isNotEmpty()) {
-                            moveTo(points.first().x, points.first().y)
-                            for (i in 1 until points.size) {
-                                val previous = points[i - 1]
-                                val current = points[i]
-                                val controlX = (previous.x + current.x) / 2f
-                                quadraticBezierTo(
-                                    controlX,
-                                    previous.y + stepPx * 0.42f,
-                                    current.x,
-                                    current.y
-                                )
-                            }
-                        }
-                    }
-
-                    drawPath(
-                        path = path,
-                        color = journeyPathColor,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(
-                            width = 5.dp.toPx()
-                        )
+                // Floating study objects live in the open pockets of the curve.
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.School,
+                    label = "LEARN",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.12f,
+                        y = 30.dp
                     )
-                }
+                )
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.TrackChanges,
+                    label = "FOCUS",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.73f,
+                        y = 138.dp
+                    )
+                )
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.Bolt,
+                    label = "XP",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.10f,
+                        y = 354.dp
+                    )
+                )
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.Timer,
+                    label = "TIME",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.74f,
+                        y = 570.dp
+                    )
+                )
 
                 journeyDays.forEachIndexed { index, day ->
                     val isCompleted = !day.isFuture && day.minutes > 0
-                    val nodeSize = if (day.isToday) 64.dp else 52.dp
+                    val nodeSize = if (day.isToday) 68.dp else 56.dp
                     JourneyNode(
                         day = day,
                         isCompleted = isCompleted,
@@ -632,7 +637,7 @@ private fun StudyJourneyCard(
                         onClick = { selectedDay = day },
                         modifier = Modifier.offset(
                             x = maxWidth * journeyPositions[index] - nodeSize / 2,
-                            y = (index * 92).dp
+                            y = (index * journeyStep.value).dp
                         )
                     )
                 }
@@ -743,22 +748,18 @@ private fun JourneyNode(
     modifier: Modifier = Modifier
 ) {
     val dateLabel = SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
-    val fill = when {
-        day.isToday -> MaterialTheme.colorScheme.primary
-        isCompleted -> MaterialTheme.colorScheme.primary.copy(alpha = 0.88f)
-        day.isFuture -> MaterialTheme.colorScheme.surface
-        else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
-    }
+    val primary = MaterialTheme.colorScheme.primary
+    val inactive = MaterialTheme.colorScheme.onSurfaceVariant
     val nodeScale by animateFloatAsState(
-        targetValue = if (isCompleted || day.isToday) 1f else 0.92f,
+        targetValue = if (isCompleted || day.isToday) 1f else 0.94f,
         animationSpec = tween(420, easing = FastOutSlowInEasing),
         label = "journey_node_scale"
     )
     val todayPulse = if (day.isToday) {
         val transition = rememberInfiniteTransition(label = "journey_today_pulse")
         transition.animateFloat(
-            initialValue = 0.98f,
-            targetValue = 1.035f,
+            initialValue = 0.985f,
+            targetValue = 1.045f,
             animationSpec = infiniteRepeatable(
                 animation = tween(900, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Reverse
@@ -785,57 +786,184 @@ private fun JourneyNode(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .background(fill)
-                .border(
-                    width = if (day.isToday) 3.dp else 1.dp,
-                    color = if (day.isToday) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
-                    } else {
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
-                    },
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.size(size + 8.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                icon,
-                fontSize = if (day.isToday) 23.sp else 18.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (day.isToday || isCompleted) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+            // Thick lower plate = the physical depth of the coin/button.
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .offset(y = 7.dp)
+                    .clip(CircleShape)
+                    .background(
+                        when {
+                            day.isToday -> primary.copy(alpha = 0.48f)
+                            isCompleted -> primary.copy(alpha = 0.42f)
+                            day.isFuture -> MaterialTheme.colorScheme.outline.copy(alpha = 0.20f)
+                            else -> Color.Black.copy(alpha = 0.28f)
+                        }
+                    )
             )
+
+            if (day.isToday) {
+                Box(
+                    modifier = Modifier
+                        .size(size + 10.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 2.dp,
+                            color = primary.copy(alpha = 0.22f),
+                            shape = CircleShape
+                        )
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .shadow(
+                        elevation = if (day.isToday) 12.dp else 7.dp,
+                        shape = CircleShape,
+                        clip = false
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        when {
+                            day.isToday -> primary
+                            isCompleted -> primary.copy(alpha = 0.90f)
+                            day.isFuture -> MaterialTheme.colorScheme.surface
+                            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                        }
+                    )
+                    .border(
+                        width = if (day.isToday) 2.dp else 1.dp,
+                        color = when {
+                            day.isToday -> primary.copy(alpha = 0.90f)
+                            isCompleted -> primary.copy(alpha = 0.45f)
+                            else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                        },
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    icon,
+                    fontSize = if (day.isToday) 25.sp else 19.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = when {
+                        day.isToday || isCompleted -> MaterialTheme.colorScheme.onPrimary
+                        else -> inactive.copy(alpha = if (day.isFuture) 0.62f else 0.72f)
+                    }
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(4.dp))
+
+        Spacer(modifier = Modifier.height(1.dp))
         Text(
             if (day.isToday) "TODAY" else dateLabel,
             fontSize = 10.sp,
             fontWeight = if (day.isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
-            color = if (day.isToday) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
+            color = if (day.isToday) primary else inactive
         )
-        if (isCompleted) {
-            Text(
-                day.minutes.toString() + "m",
-                fontSize = 9.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else if (day.isToday) {
-            Text(
-                "Start",
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+
+        when {
+            isCompleted -> {
+                Text(
+                    day.minutes.toString() + "m studied",
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = inactive.copy(alpha = 0.82f)
+                )
+            }
+            day.isToday -> {
+                Text(
+                    "Your next step",
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = primary.copy(alpha = 0.92f)
+                )
+            }
+            day.isFuture -> {
+                Text(
+                    "Locked",
+                    fontSize = 9.sp,
+                    color = inactive.copy(alpha = 0.58f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun JourneyFloatingDecoration(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    val transition = rememberInfiniteTransition(label = "journey_decor_$label")
+    val bob by transition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "journey_decor_bob_$label"
+    )
+    val tilt by transition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "journey_decor_tilt_$label"
+    )
+    val glow by transition.animateFloat(
+        initialValue = 0.10f,
+        targetValue = 0.22f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "journey_decor_glow_$label"
+    )
+
+    Column(
+        modifier = modifier
+            .size(54.dp)
+            .graphicsLayer {
+                translationY = bob.dp.toPx()
+                rotationZ = tilt
+            },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .shadow(8.dp, RoundedCornerShape(14.dp), clip = false)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = glow),
+                    shape = RoundedCornerShape(14.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
+                modifier = Modifier.size(21.dp)
             )
         }
+        Text(
+            label,
+            fontSize = 7.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+        )
     }
 }
 
