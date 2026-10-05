@@ -58,6 +58,22 @@ class StreakShieldCalculatorTest {
     }
 
     @Test
+    fun futureStoredDateIsNormalizedWithoutSpendingShield() {
+        val result = StreakShieldCalculator.resolve(12, "2026-10-06", today, 2)
+        assertEquals(12, result.streakDays)
+        assertEquals(0, result.shieldsToConsume)
+        assertEquals("2026-10-04", result.lastActiveDate)
+        assertEquals(0, result.missedDays)
+    }
+
+    @Test
+    fun zeroStreakDoesNotInventAStreakOrConsumeShield() {
+        val result = StreakShieldCalculator.resolve(0, "2026-10-01", today, 2)
+        assertEquals(0, result.streakDays)
+        assertEquals(0, result.shieldsToConsume)
+    }
+
+    @Test
     fun timestampUsesExplicitUserTimezone() {
         val timestamp = java.time.Instant.parse("2026-10-04T23:30:00Z").toEpochMilli()
 
