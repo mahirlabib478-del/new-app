@@ -351,6 +351,8 @@ fun XPShopBottomSheet(
 }
 
 @Composable
+}
+
 private fun PremiumThemeSection(
     viewModel: StudyViewModel,
     passTimeTick: Long,
