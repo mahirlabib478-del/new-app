@@ -101,7 +101,7 @@ fun AccountScreen(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                modifier = Modifier.size(76.dp)
+                modifier = Modifier.size(76.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 38.dp, 4.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -127,7 +127,7 @@ fun AccountScreen(
             if (guestAccountPage) {
                 Spacer(Modifier.height(12.dp))
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 14.dp, 3.dp),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
@@ -142,7 +142,7 @@ fun AccountScreen(
         } else {
             Spacer(Modifier.height(16.dp))
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.46f), 22.dp, 5.dp),
                 shape = RoundedCornerShape(22.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant
             ) {
@@ -396,7 +396,7 @@ fun AccountScreen(
         if (user == null && !verificationPending) {
             TextButton(
                 onClick = onForgotPassword,
-                modifier = Modifier.fillMaxWidth().testTag("btn_forgot_password")
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 3.dp).testTag("btn_forgot_password")
             ) {
                 Text("Forgot password?")
             }
