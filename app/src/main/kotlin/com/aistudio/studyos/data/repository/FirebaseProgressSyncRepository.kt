@@ -588,8 +588,18 @@ class FirebaseProgressSyncRepository(
             }
         }
 
-        uploadLocalSnapshot()
-        return "Guest progress imported and synced to the cloud."
+        ownershipPrefs.edit().putBoolean(ownerKey(uid), true).apply()
+        cloudUploadUid = uid
+        return try {
+            uploadLocalSnapshot()
+            lastSuccessfulSyncMillis = System.currentTimeMillis()
+            _syncStatus.value = "Synced just now"
+            "Guest progress imported and synced to the cloud."
+        } catch (error: Exception) {
+            ownershipPrefs.edit().remove(ownerKey(uid)).apply()
+            cloudUploadUid = null
+            throw error
+        }
     }
 
     suspend fun uploadLocalSnapshot() {
