@@ -219,9 +219,9 @@ private fun StatCell(label: String, value: String, modifier: Modifier = Modifier
         label = "progress_stat_scale"
     )
     Surface(
-        modifier = modifier.animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 14.dp, 3.dp),
+        modifier = modifier.animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 14.dp, 3.dp),
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 11.dp)) {
