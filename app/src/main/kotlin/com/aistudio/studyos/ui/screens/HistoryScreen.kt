@@ -63,8 +63,8 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             }
         } else {
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(days, key = { it.key }) { index, day ->
-                    AnimatedReveal(index = index) {
+                items(days, key = { it.key }) { day ->
+                    AnimatedReveal(index = days.indexOf(day)) {
                         Card(Modifier.fillMaxWidth().testTag("history_day_${day.key}"), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
