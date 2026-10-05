@@ -37,7 +37,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f), 18.dp, 2.dp),
             color = MaterialTheme.colorScheme.background
         ) {
             Row(
@@ -49,7 +49,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
             ) {
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.size(48.dp).testTag("btn_reset_back")
+                    modifier = Modifier.size(48.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.30f), 24.dp, 3.dp).testTag("btn_reset_back")
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
