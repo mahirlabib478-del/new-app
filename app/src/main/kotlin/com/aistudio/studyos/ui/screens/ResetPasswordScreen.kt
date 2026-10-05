@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
+import com.aistudio.studyos.ui.components.tactile3DButton
 
 @Composable
 fun ResetPasswordScreen(onBack: () -> Unit) {
@@ -83,7 +84,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                 Icons.Default.MarkEmailRead,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(18.dp).size(42.dp)
+                modifier = Modifier.padding(18.dp).size(42.dp).tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), 20.dp, 3.dp)
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -101,7 +102,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
         )
         Spacer(Modifier.height(28.dp))
         Card(
-            Modifier.fillMaxWidth(),
+            Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), 28.dp, 4.dp),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
@@ -147,7 +148,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                         }
                     },
                     enabled = email.contains("@") && !busy,
-                    modifier = Modifier.fillMaxWidth().height(56.dp).testTag("btn_send_password_reset"),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 18.dp, 5.dp).testTag("btn_send_password_reset"),
                     shape = RoundedCornerShape(18.dp)
                 ) {
                     if (busy) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp) else Text("Send reset link")
@@ -163,7 +164,7 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                     Spacer(Modifier.height(2.dp))
                     OutlinedButton(
                         onClick = onBack,
-                        modifier = Modifier.fillMaxWidth().height(54.dp).testTag("btn_back_to_login"),
+                        modifier = Modifier.fillMaxWidth().height(54.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 4.dp).testTag("btn_back_to_login"),
                         shape = RoundedCornerShape(18.dp)
                     ) {
                         Text("Back to login")
