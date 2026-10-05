@@ -1131,6 +1131,7 @@ private fun AmbientSoundConfigDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 10.dp,
         title = {
