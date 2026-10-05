@@ -628,7 +628,11 @@ fun ProfileScreen(
                     }
 
                     Text("FREE THEMES", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         items(items = THEME_OPTIONS.filter { !viewModel.isPremiumTheme(it.key) }, key = { it.key }) { option ->
                             val isSelected = currentTheme == option.key
                             ThemeOptionCard(option, isSelected, false) { viewModel.setTheme(option.key) }
