@@ -648,7 +648,7 @@ private fun FocusMoreOptionsDialog(
                     }
                 }
                 Surface(
-                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(enabled = wallpaperAvailable, onClick = onToggleWallpaper),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(enabled = wallpaperAvailable, onClick = onToggleWallpaper),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
                 ) {
@@ -662,7 +662,7 @@ private fun FocusMoreOptionsDialog(
                     }
                 }
                 Surface(
-                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(onClick = onOpenShop),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(onClick = onOpenShop),
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
                 ) {
@@ -1258,7 +1258,7 @@ private fun AmbientSoundConfigDialog(
                                     modifier = Modifier
                                         .weight(1f)
                                         .tactile3DButton(
-                                            backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                            backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                                             bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.50f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.34f),
                                             cornerRadius = 10.dp,
                                             depth = if (isSelected) 4.dp else 2.dp
