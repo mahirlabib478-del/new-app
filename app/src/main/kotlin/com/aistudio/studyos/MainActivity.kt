@@ -295,17 +295,26 @@ private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
         Spacer(modifier = Modifier.weight(0.7f))
         Box(modifier = Modifier.fillMaxWidth().height(238.dp), contentAlignment = Alignment.Center) {
             Box(
-                modifier = Modifier.size(224.dp).clip(CircleShape).background(outerOrb)
+                modifier = Modifier.size(224.dp)
+                    .tactile3DButton(outerOrb, outerBorder.copy(alpha = 0.48f), 112.dp, 7.dp)
+                    .clip(CircleShape)
+                    .background(outerOrb)
                     .border(1.dp, outerBorder, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
-                    modifier = Modifier.size(180.dp).clip(CircleShape).background(middleOrb)
+                    modifier = Modifier.size(180.dp)
+                        .tactile3DButton(middleOrb, middleBorder.copy(alpha = 0.42f), 90.dp, 5.dp)
+                        .clip(CircleShape)
+                        .background(middleOrb)
                         .border(1.dp, middleBorder, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
-                        modifier = Modifier.size(132.dp).clip(CircleShape).background(innerOrb)
+                        modifier = Modifier.size(132.dp)
+                            .tactile3DButton(innerOrb, innerBorder.copy(alpha = 0.38f), 66.dp, 4.dp)
+                            .clip(CircleShape)
+                            .background(innerOrb)
                             .border(1.dp, innerBorder, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
