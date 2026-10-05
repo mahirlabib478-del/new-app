@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
