@@ -831,4 +831,5 @@ fun ProgressScreen(
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
+    }
 }
