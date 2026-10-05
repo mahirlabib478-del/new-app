@@ -474,7 +474,7 @@ fun ProfileScreen(
                             onClick = { showXPShop = true },
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            modifier = Modifier.testTag("btn_open_shop_from_profile")
+                            modifier = Modifier.tactile3D(depth = 4.dp, color = profileWarmAccent, edgeColor = profileWarmAccent.copy(alpha = 0.58f), shape = RoundedCornerShape(12.dp)).testTag("btn_open_shop_from_profile")
                         ) {
                             Text(
                                 text = "Open Shop",
@@ -494,7 +494,7 @@ fun ProfileScreen(
                         Surface(
                             shape = RoundedCornerShape(10.dp),
                             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f).inset3D(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp), 3.dp)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
@@ -561,7 +561,7 @@ fun ProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Palette, contentDescription = null, tint = profileWarmAccent, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Color Theme & Aesthetics", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                     }
@@ -675,7 +675,7 @@ fun ProfileScreen(
                                 )
                             }
                         }
-                        Switch(
+                        TactileRockerSwitch(
                             checked = isWallpaperEnabled && !isLight,
                             enabled = !isLight,
                             onCheckedChange = { viewModel.toggleWallpaperEnabled() },
@@ -688,11 +688,11 @@ fun ProfileScreen(
                             shape = RoundedCornerShape(12.dp),
                             color = MaterialTheme.colorScheme.surface,
                             border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().wrapContentHeight()
                         ) {
                             Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.Top
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Info,
@@ -703,6 +703,7 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = "Wallpapers are disabled in Light themes to ensure maximum text sharpness and timer visibility. Switch to a supported Dark theme to use wallpapers.",
+                                    modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
