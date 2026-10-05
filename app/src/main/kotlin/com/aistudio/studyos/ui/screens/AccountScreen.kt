@@ -188,7 +188,12 @@ fun AccountScreen(
             }
         }
         Spacer(Modifier.height(if (guestAccountPage) 18.dp else 32.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
+        Card(
+            Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 28.dp, 6.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        ) {
             Column(
                 Modifier.padding(if (guestAccountPage) 20.dp else 24.dp),
                 verticalArrangement = Arrangement.spacedBy(if (guestAccountPage) 14.dp else 18.dp)
@@ -316,7 +321,7 @@ fun AccountScreen(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it; message = null },
-                        modifier = Modifier.fillMaxWidth().testTag("account_email"),
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.24f), 18.dp, 2.dp).testTag("account_email"),
                         label = { Text("Email address") },
                         placeholder = { Text("you@example.com") },
                         singleLine = true,
@@ -333,7 +338,7 @@ fun AccountScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it; message = null },
-                        modifier = Modifier.fillMaxWidth().testTag("account_password"),
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.24f), 18.dp, 2.dp).testTag("account_password"),
                         label = { Text("Password") },
                         singleLine = true,
                         shape = RoundedCornerShape(18.dp),
@@ -355,7 +360,12 @@ fun AccountScreen(
                         Button(
                             onClick = { confirmAction = "login" },
                             enabled = !busy && email.contains("@") && password.isNotEmpty(),
-                            modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 18.dp, 5.dp).testTag("btn_login"),
+                            modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(
+                                backgroundColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.78f),
+                                bottomEdgeColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                                cornerRadius = 18.dp,
+                                depth = 5.dp
+                            ).testTag("btn_login"),
                             shape = RoundedCornerShape(18.dp),
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
                         ) {
