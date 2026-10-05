@@ -1609,10 +1609,9 @@ fun ProfileScreen(
             onDismissRequest = { showCustomGoalDialog = false },
             title = { Text("Set Custom Daily Target", fontWeight = FontWeight.Bold) },
             text = {
-                AnimatedReveal(index = 0) {
-                    Column {
-                        Text(
-                            text = "Enter your desired daily study target in minutes (e.g. 180 for 3 hours, 360 for 6 hours, or up to 1440 for all-day prep):",
+                Column {
+                    Text(
+                        text = "Enter your desired daily study target in minutes (e.g. 180 for 3 hours, 360 for 6 hours, or up to 1440 for all-day prep):",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1643,9 +1642,7 @@ fun ProfileScreen(
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.error
                         )
-                        }
                     }
-                }
                 }
             },
             confirmButton = {
