@@ -1561,6 +1561,7 @@ fun ProfileScreen(
             }
         )
     }
+    }
 
     if (showResetDialog) {
         AlertDialog(
