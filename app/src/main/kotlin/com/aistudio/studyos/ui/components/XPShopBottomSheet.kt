@@ -817,7 +817,9 @@ private fun PassDurationSelectionDialog(
             }
         }
     )
-}@Composable
+}
+
+@Composable
 private fun ThemePassDurationSelectionDialog(
     viewModel: StudyViewModel,
     themeKey: String,
