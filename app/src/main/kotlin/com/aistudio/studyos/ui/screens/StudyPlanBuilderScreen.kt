@@ -494,26 +494,54 @@ fun StudyPlanBuilderScreen(
 @Composable
 private fun StepHeader(step: Int) {
     val labels = listOf("Topics", "Time", "Review")
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            labels.forEachIndexed { index, label ->
-                val selected = index == step
-                Text(
-                    "${index + 1}. $label",
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (selected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp
-                )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        labels.forEachIndexed { index, label ->
+            val selected = index == step
+            val completed = index < step
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .tactile3DButton(
+                        backgroundColor = when {
+                            selected -> MaterialTheme.colorScheme.primaryContainer
+                            completed -> MaterialTheme.colorScheme.surfaceVariant
+                            else -> MaterialTheme.colorScheme.surface
+                        },
+                        bottomEdgeColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                        cornerRadius = 14.dp,
+                        depth = if (selected) 4.dp else 3.dp
+                    ),
+                shape = RoundedCornerShape(14.dp),
+                color = Color.Transparent
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        if (completed) "✓" else "${index + 1}",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(
+                        label,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
             }
         }
-        LinearProgressIndicator(
-            progress = { (step + 1) / 3f },
-            modifier = Modifier.fillMaxWidth().height(6.dp),
-            trackColor = MaterialTheme.colorScheme.surfaceVariant
-        )
     }
 }
+
 
 @Composable
 private fun PlanIntroCard(title: String, subtitle: String) {
