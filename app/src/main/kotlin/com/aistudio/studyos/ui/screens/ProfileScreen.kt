@@ -292,8 +292,7 @@ fun ProfileScreen(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(start = horizontalContentPadding, end = horizontalContentPadding, top = 12.dp, bottom = bottomListPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp)
-    )
-    } {
+    ) {
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
