@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.StudyPlanItem
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedReveal
+import com.aistudio.studyos.ui.components.tactile3DButton
 
 private data class EditableTopic(val name: String, val minutesText: String = "")
 private data class EditableSubject(val name: String, val topics: List<EditableTopic>)
@@ -205,7 +206,7 @@ fun StudyPlanBuilderScreen(
                     if (step > 0) {
                         OutlinedButton(
                             onClick = { step-- },
-                            modifier = Modifier.weight(0.8f),
+                            modifier = Modifier.weight(0.8f).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 14.dp, 4.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) { Text("Back") }
                     }
@@ -213,20 +214,20 @@ fun StudyPlanBuilderScreen(
                         Button(
                             onClick = ::goNext,
                             enabled = if (step == 0) namesValid else totalSessionMinutes in 30..720,
-                            modifier = Modifier.weight(1.2f),
+                            modifier = Modifier.weight(1.2f).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), 14.dp, 5.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) { Text("Next") }
                     } else {
                         OutlinedButton(
                             onClick = ::saveDraft,
                             enabled = draftReady,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), 14.dp, 4.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) { Text("Save Draft") }
                         Button(
                             onClick = ::startPlan,
                             enabled = valid,
-                            modifier = Modifier.weight(1.2f).testTag("btn_start_study_plan"),
+                            modifier = Modifier.weight(1.2f).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), 14.dp, 5.dp).testTag("btn_start_study_plan"),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
@@ -351,7 +352,7 @@ fun StudyPlanBuilderScreen(
                                         selected = focusMinutes == minutes,
                                         onClick = { focusMinutes = minutes },
                                         label = { Text("${minutes}m") },
-                                        modifier = Modifier.testTag("focus_block_${minutes}")
+                                        modifier = Modifier.tactile3DButton(if (focusMinutes == minutes) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, if (focusMinutes == minutes) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 12.dp, 3.dp).testTag("focus_block_${minutes}")
                                     )
                                 }
                             }
@@ -368,7 +369,8 @@ fun StudyPlanBuilderScreen(
                                     FilterChip(
                                         selected = breakMinutes == minutes,
                                         onClick = { breakMinutes = minutes },
-                                        label = { Text("${minutes} min") }
+                                        label = { Text("${minutes} min") },
+                                        modifier = Modifier.tactile3DButton(if (breakMinutes == minutes) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, if (breakMinutes == minutes) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 12.dp, 3.dp)
                                     )
                                 }
                             }
@@ -507,7 +509,8 @@ private fun StepHeader(step: Int) {
         }
         LinearProgressIndicator(
             progress = { (step + 1) / 3f },
-            modifier = Modifier.fillMaxWidth().height(5.dp)
+            modifier = Modifier.fillMaxWidth().height(6.dp),
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
     }
 }
