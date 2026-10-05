@@ -255,7 +255,7 @@ fun XPShopBottomSheet(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
@@ -593,7 +593,7 @@ private fun ShopItemCard(
                     onClick = onAction,
                     enabled = isButtonEnabled,
                     shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -602,7 +602,7 @@ private fun ShopItemCard(
                     ),
                     modifier = Modifier
                         .height(40.dp)
-                        .widthIn(min = 118.dp, max = 170.dp)
+                        .widthIn(min = 112.dp, max = 166.dp)
                         .tactile3DButton(
                             backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
                             bottomEdgeColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
@@ -771,16 +771,18 @@ private fun PassDurationSelectionDialog(
                             text = "Custom Days:",
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f)
                         )
                         Row(
+                            modifier = Modifier.widthIn(max = 180.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             IconButton(
                                 onClick = { if (selectedDays > 1) selectedDays-- },
                                 enabled = selectedDays > 1,
-                                modifier = Modifier.size(36.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 3.dp)
+                                modifier = Modifier.size(34.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 3.dp)
                             ) {
                                 Icon(Icons.Default.Remove, contentDescription = "Decrease Days")
                             }
@@ -793,7 +795,7 @@ private fun PassDurationSelectionDialog(
                             IconButton(
                                 onClick = { if (selectedDays < 60) selectedDays++ },
                                 enabled = selectedDays < 60,
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(34.dp)
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = "Increase Days")
                             }
