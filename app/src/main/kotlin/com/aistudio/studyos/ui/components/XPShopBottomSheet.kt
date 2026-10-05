@@ -597,14 +597,14 @@ private fun ShopItemCard(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface
                     ),
                     modifier = Modifier
                         .height(40.dp)
                         .widthIn(min = 112.dp, max = 166.dp)
                         .tactile3DButton(
-                            backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
+                            backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                             bottomEdgeColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                             cornerRadius = 12.dp,
                             depth = 4.dp
