@@ -68,7 +68,7 @@ class LegacyProgressImportRepository(
         if (plans.isEmpty() && exams.isEmpty() && sessions.isEmpty() && legacyPreferenceValues.isEmpty() &&
             oldProfiles.none { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 || it.totalXpSpent > 0 || it.streakDays > 0 }
         ) {
-            return LegacyImportSummary(0, 0, 0, false)
+            return LegacyImportSummary(0, 0, 0, false, 0)
         }
 
         require(auth.currentUser?.uid == uid && auth.currentUser?.isEmailVerified == true) {
