@@ -30,6 +30,7 @@ import com.aistudio.studyos.data.repository.EmailNotVerifiedException
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import com.aistudio.studyos.data.repository.LegacyProgressImportRepository
 import com.aistudio.studyos.StudyApplication
+import com.aistudio.studyos.ui.components.tactile3DButton
 import kotlinx.coroutines.launch
 
 @Composable
@@ -257,7 +258,7 @@ fun AccountScreen(
                             }
                         },
                         enabled = !busy,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
                     ) {
                         Text(if (busy) "Syncing before sign out…" else "Sign out", maxLines = 1, softWrap = false)
                     }
@@ -297,7 +298,7 @@ fun AccountScreen(
                             }
                         },
                         enabled = !busy,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 14.dp, 4.dp)
                     ) {
                         Text("I've verified — Refresh status", maxLines = 1, softWrap = false, fontSize = 13.sp)
                     }
@@ -315,7 +316,7 @@ fun AccountScreen(
                             }
                         },
                         enabled = !busy && user != null && !verified,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 14.dp, 4.dp)
                     ) {
                         Text("Resend verification email", maxLines = 1, softWrap = false, fontSize = 14.sp)
                     }
@@ -366,7 +367,7 @@ fun AccountScreen(
                         Button(
                             onClick = { confirmAction = "login" },
                             enabled = !busy && email.contains("@") && password.isNotEmpty(),
-                            modifier = Modifier.fillMaxWidth().height(56.dp).testTag("btn_login"),
+                            modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 18.dp, 5.dp).testTag("btn_login"),
                             shape = RoundedCornerShape(18.dp),
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
                         ) {
@@ -375,7 +376,7 @@ fun AccountScreen(
                         OutlinedButton(
                             onClick = { confirmAction = "create" },
                             enabled = !busy && email.contains("@") && password.length >= 6,
-                            modifier = Modifier.fillMaxWidth().height(56.dp).testTag("btn_create_account"),
+                            modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 18.dp, 4.dp).testTag("btn_create_account"),
                             shape = RoundedCornerShape(18.dp),
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
                         ) {
@@ -387,7 +388,7 @@ fun AccountScreen(
                         OutlinedButton(
                             onClick = onContinueAsGuest,
                             enabled = !busy,
-                            modifier = Modifier.fillMaxWidth().height(54.dp),
+                            modifier = Modifier.fillMaxWidth().height(54.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 18.dp, 4.dp),
                             shape = RoundedCornerShape(18.dp)
                         ) {
                             Text("Continue as guest", maxLines = 1, softWrap = false)
