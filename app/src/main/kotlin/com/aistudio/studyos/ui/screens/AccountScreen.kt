@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.repository.EmailNotVerifiedException
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
-import com.aistudio.studyos.data.repository.LegacyProgressImportRepository
 import com.aistudio.studyos.StudyApplication
 import com.aistudio.studyos.ui.components.tactile3DButton
 import kotlinx.coroutines.launch
@@ -50,9 +49,7 @@ fun AccountScreen(
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var confirmAction by remember { mutableStateOf<String?>(null) }
-    var confirmImport by remember { mutableStateOf(false) }
     var confirmProgressMerge by remember { mutableStateOf(false) }
-    var pendingVerifiedNavigation by remember { mutableStateOf(false) }
     var showAdvancedSync by remember { mutableStateOf(false) }
     var verificationPending by remember { mutableStateOf(repository.currentUser?.isEmailVerified == false) }
     val user = repository.currentUser
@@ -276,18 +273,9 @@ fun AccountScreen(
                                 try {
                                     val refreshed = repository.refreshCurrentUser()
                                     if (refreshed?.isEmailVerified == true) {
-                                        val importer = LegacyProgressImportRepository(context, refreshed.uid)
-                                        if (importer.hasLegacyProgress()) {
-                                            // Ask first; do not leave the account screen until the user chooses.
-                                            pendingVerifiedNavigation = true
-                                            verificationPending = false
-                                            message = "Email verified. Choose whether to import your guest progress."
-                                            confirmImport = true
-                                        } else {
-                                            verificationPending = false
-                                            message = "Email verified."
-                                            onVerified()
-                                        }
+                                        verificationPending = false
+                                        message = "Email verified."
+                                        onVerified()
                                     } else {
                                         verificationPending = true
                                         message = "Email is not verified yet. Check your inbox and spam folder."
@@ -416,72 +404,6 @@ fun AccountScreen(
 
     }
 
-    if (confirmImport) {
-        AlertDialog(
-            onDismissRequest = {
-                confirmImport = false
-                if (pendingVerifiedNavigation) {
-                    pendingVerifiedNavigation = false
-                    onVerified()
-                }
-            },
-            title = { Text("Import old local progress?") },
-            text = {
-                Text("This copies your guest study data and account-owned settings from this device into the currently signed-in account, including plans, exams, sessions, progress totals, theme/shop state, timers, streak shields, XP boosters and other saved account preferences. Guest data is not deleted. Import is cancelled if the account already contains local or cloud progress.")
-            },
-            confirmButton = {
-                Button(
-                    enabled = !busy,
-                    onClick = {
-                        confirmImport = false
-                        busy = true
-                        message = null
-                        val uid = user?.uid
-                        scope.launch {
-                            try {
-                                if (uid.isNullOrBlank()) {
-                                    throw IllegalStateException("Sign in before importing progress.")
-                                }
-                                val app = context.applicationContext as StudyApplication
-                                val sync = app.cloudSyncFor(uid)
-                                sync.stopAutomaticUpload()
-                                try {
-                                    val summary = LegacyProgressImportRepository(context, uid).importLegacyProgress()
-                                    if (!summary.isEmpty) {
-                                        sync.uploadImportedGuestSnapshot()
-                                        message = "Import complete: ${summary.plans} plans, ${summary.exams} exams, ${summary.sessions} sessions and ${summary.importedPreferenceKeys} account settings copied. Guest data was kept."
-                                    } else {
-                                        message = "No existing guest progress was found to import."
-                                    }
-                                    if (pendingVerifiedNavigation) {
-                                        pendingVerifiedNavigation = false
-                                        onVerified()
-                                    }
-                                } finally {
-                                    if (repository.currentUser?.uid == uid && repository.currentUser?.isEmailVerified == true) {
-                                        sync.startAutomaticUpload(scope)
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                message = e.localizedMessage ?: "Import failed. Existing data was not intentionally deleted."
-                                // Keep the decision available so the user can retry or skip safely.
-                                if (pendingVerifiedNavigation) confirmImport = true
-                            } finally { busy = false }
-                        }
-                    }
-                ) { Text("Import progress", maxLines = 1, softWrap = false) }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    confirmImport = false
-                    if (pendingVerifiedNavigation) {
-                        pendingVerifiedNavigation = false
-                        onVerified()
-                    }
-                }) { Text("Skip for now", maxLines = 1, softWrap = false, fontSize = 12.sp) }
-            }
-        )
-    }
 
     if (confirmProgressMerge) {
         AlertDialog(
