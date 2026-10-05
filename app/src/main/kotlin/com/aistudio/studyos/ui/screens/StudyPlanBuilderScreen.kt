@@ -215,9 +215,24 @@ fun StudyPlanBuilderScreen(
                         Button(
                             onClick = ::goNext,
                             enabled = if (step == 0) namesValid else totalSessionMinutes in 30..720,
-                            modifier = Modifier.weight(1.2f).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), 14.dp, 5.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(48.dp)
+                                .tactile3DButton(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                    14.dp,
+                                    5.dp
+                                ),
                             shape = RoundedCornerShape(14.dp)
-                        ) { Text("Next") }
+                        ) { Text("Next", maxLines = 1, softWrap = false) }
                     } else {
                         OutlinedButton(
                             onClick = ::saveDraft,
@@ -347,7 +362,12 @@ fun StudyPlanBuilderScreen(
                             subtitle = "Each topic is split into blocks no longer than your selected duration.",
                             icon = Icons.Default.Timer
                         ) {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Spacer(Modifier.height(2.dp))
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(vertical = 4.dp)
+                            ) {
                                 items(listOf(25, 30, 45, 50)) { minutes ->
                                     FilterChip(
                                         selected = focusMinutes == minutes,
@@ -365,7 +385,12 @@ fun StudyPlanBuilderScreen(
                             subtitle = "A break starts after each completed focus block. The final focus block ends the session.",
                             icon = Icons.Default.Schedule
                         ) {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Spacer(Modifier.height(2.dp))
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(vertical = 4.dp)
+                            ) {
                                 items(listOf(5, 10)) { minutes ->
                                     FilterChip(
                                         selected = breakMinutes == minutes,
@@ -496,7 +521,9 @@ fun StudyPlanBuilderScreen(
 private fun StepHeader(step: Int) {
     val labels = listOf("Topics", "Time", "Review")
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         labels.forEachIndexed { index, label ->
