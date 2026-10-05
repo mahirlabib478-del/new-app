@@ -439,7 +439,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                         }
                     }
 
-                    val normalizedItems = normalizePlanItems(sourceItems)
+                    val normalizedItems = normalizePlanItems(sourceItems, blockMinutes)
                     val allocatedMinutes = normalizedItems.sumOf { it.minutes }
                     if (
                         normalizedItems.isEmpty() ||
@@ -538,7 +538,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
                     StudyPlanItem(subject, chapter, blockMinutes.coerceIn(1, 25))
                 }
             }
-            val boundedItems = normalizePlanItems(sourceItems)
+            val boundedItems = normalizePlanItems(sourceItems, blockMinutes)
             if (boundedItems.isEmpty() || boundedItems.size > 720 || boundedItems.sumOf { it.minutes } > 720) {
                 return@launch
             }
@@ -623,7 +623,7 @@ class StudyViewModel(private val repository: StudyRepository) : ViewModel() {
             return
         }
 
-        currentPlanItems = normalizePlanItems(decodedItems)
+        currentPlanItems = normalizePlanItems(decodedItems, plan.durationPerBlockMinutes)
         if (currentPlanItems.isEmpty()) {
             _focusState.value = FocusTimerState(
                 currentSubject = plan.subject,
