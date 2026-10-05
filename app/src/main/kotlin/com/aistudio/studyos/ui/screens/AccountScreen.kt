@@ -444,15 +444,25 @@ fun AccountScreen(
                                 if (uid.isNullOrBlank()) {
                                     throw IllegalStateException("Sign in before importing progress.")
                                 }
-                                val summary = LegacyProgressImportRepository(context, uid).importLegacyProgress()
-                                message = if (summary.isEmpty) {
-                                    "No existing guest progress was found to import."
-                                } else {
-                                    "Import complete: ${summary.plans} plans, ${summary.exams} exams and ${summary.sessions} study sessions copied. Old guest data was kept."
-                                }
-                                if (pendingVerifiedNavigation) {
-                                    pendingVerifiedNavigation = false
-                                    onVerified()
+                                val app = context.applicationContext as StudyApplication
+                                val sync = app.cloudSyncFor(uid)
+                                sync.stopAutomaticUpload()
+                                try {
+                                    val summary = LegacyProgressImportRepository(context, uid).importLegacyProgress()
+                                    if (!summary.isEmpty) {
+                                        sync.uploadImportedGuestSnapshot()
+                                        message = "Import complete: ${summary.plans} plans, ${summary.exams} exams, ${summary.sessions} sessions and ${summary.importedPreferenceKeys} account settings copied. Guest data was kept."
+                                    } else {
+                                        message = "No existing guest progress was found to import."
+                                    }
+                                    if (pendingVerifiedNavigation) {
+                                        pendingVerifiedNavigation = false
+                                        onVerified()
+                                    }
+                                } finally {
+                                    if (auth.currentUser?.uid == uid && auth.currentUser?.isEmailVerified == true) {
+                                        sync.startAutomaticUpload(scope)
+                                    }
                                 }
                             } catch (e: Exception) {
                                 message = e.localizedMessage ?: "Import failed. Existing data was not intentionally deleted."
