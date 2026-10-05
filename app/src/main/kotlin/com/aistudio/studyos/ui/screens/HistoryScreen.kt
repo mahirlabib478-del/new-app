@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedReveal
+import com.aistudio.studyos.ui.components.tactile3DButton
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -65,7 +66,17 @@ fun HistoryScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(days, key = { it.key }) { day ->
                     AnimatedReveal(index = days.indexOf(day)) {
-                        Card(Modifier.fillMaxWidth().testTag("history_day_${day.key}"), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Card(
+                            Modifier
+                                .fillMaxWidth()
+                                .tactile3DButton(
+                                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                                    cornerRadius = 18.dp,
+                                    depth = 5.dp
+                                )
+                                .testTag("history_day_${day.key}"),
+                            shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column { Text(day.label, fontWeight = FontWeight.Bold); Text("${day.sessions} ${if (day.sessions == 1) "session" else "sessions"}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
