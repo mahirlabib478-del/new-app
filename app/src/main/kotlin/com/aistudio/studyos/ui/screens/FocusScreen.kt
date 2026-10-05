@@ -1963,6 +1963,7 @@ private fun StudySessionCompleteScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 28.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -2114,7 +2115,9 @@ private fun StudySessionCompleteScreen(
             val calculatedBonusXP = if (bonusMultiplier == 3) earnedXP * 2 else earnedXP
 
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                .fillMaxWidth()
+                .tactile3DButton(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f), MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f), 18.dp, 4.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (bonusClaimed)
@@ -2191,7 +2194,8 @@ private fun StudySessionCompleteScreen(
             onClick = onDone,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
+                .height(50.dp)
+                .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 14.dp, 5.dp),
             shape = RoundedCornerShape(14.dp)
         ) {
             Text("Done", fontSize = 16.sp, fontWeight = FontWeight.Bold)
