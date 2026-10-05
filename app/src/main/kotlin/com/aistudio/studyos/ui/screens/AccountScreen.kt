@@ -247,9 +247,9 @@ fun AccountScreen(
                                         repository.signOut()
                                         message = "Progress synced. Signed out safely."
                                     } catch (e: Exception) {
-                                        signOutFailureMessage = e.localizedMessage
-                                            ?: "Cloud sync could not be completed."
-                                        confirmSignOutAnyway = true
+                                         message = e.localizedMessage
+                                             ?: "Cloud sync could not be completed. You are still signed in."
+
                                     } finally {
                                         busy = false
                                     }
