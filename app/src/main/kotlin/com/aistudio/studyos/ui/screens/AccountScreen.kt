@@ -132,7 +132,7 @@ fun AccountScreen(
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Text(
-                        "Create an account to access your study progress on supported devices. You can choose whether to import this device's progress after email verification.",
+                        "Create an account to access your study progress on supported devices. Your guest data stays on this device until you choose how to proceed.",
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -382,7 +382,7 @@ fun AccountScreen(
                             Text("Continue as guest", maxLines = 1, softWrap = false)
                         }
                         Text(
-                            "Start studying without an account. You can create one later and choose whether to import this device's progress.",
+                            "Start studying without an account. You can create an account later and continue with your account-backed study space.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
