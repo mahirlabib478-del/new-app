@@ -629,12 +629,12 @@ private fun StudyJourneyCard(
                 0.50f, 0.62f, 0.70f, 0.62f, 0.50f,
                 0.38f, 0.30f, 0.38f, 0.50f
             )
-            val journeyStep = 124.dp
+            val journeyStep = 132.dp
 
             androidx.compose.foundation.layout.BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((journeyStep.value * journeyDays.size + 30).dp)
+                    .height((journeyStep.value * journeyDays.size + 44).dp)
             ) {
                 // Floating study objects live in the open pockets of the curve.
                 JourneyFloatingDecoration(
