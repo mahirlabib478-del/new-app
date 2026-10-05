@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aistudio.studyos.ui.components.tactile3DButton
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
@@ -113,7 +114,7 @@ fun ExamPlannerScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                modifier = Modifier.testTag("fab_add_exam"),
+                modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 18.dp, 5.dp).testTag("fab_add_exam"),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -294,7 +295,7 @@ fun ExamPlannerScreen(
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary
                                     ),
-                                    modifier = Modifier.height(36.dp)
+                                    modifier = Modifier.height(36.dp).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), 12.dp, 3.dp)
                                 ) {
                                     Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
