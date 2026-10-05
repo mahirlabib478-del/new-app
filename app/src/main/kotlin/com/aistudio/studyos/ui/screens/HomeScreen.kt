@@ -765,13 +765,13 @@ private fun StudyJourneyCard(
                     Button(onClick = {
                         selectedDay = null
                         if (activePlan != null) onOpenFocus() else onOpenStudy()
-                    }) {
+                    }, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp)) {
                         Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(if (activePlan != null) "Continue Session" else "Start a Session")
                     }
                 } else if (!day.isFuture && isCompleted) {
-                    Button(onClick = { selectedDay = null; onOpenHistory() }) {
+                    Button(onClick = { selectedDay = null; onOpenHistory() }, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp)) {
                         Text("View Activity")
                     }
                 }
