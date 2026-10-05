@@ -160,6 +160,7 @@ fun HomeScreen(
                     } else {
                         onOpenStudy()
                     }
+                }
                 )
             }
         }
@@ -199,7 +200,8 @@ fun HomeScreen(
                     onClick = onOpenQuickFocus
                 )
             }
-        }
+                }
+            }
 
         item {
             StudyJourneyCard(
