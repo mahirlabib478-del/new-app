@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.service.AdManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
+import com.aistudio.studyos.ui.components.tactile3DButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -122,9 +123,25 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                 }
             }
 
-            Box(modifier = Modifier.size(276.dp), contentAlignment = Alignment.Center) {
+            Box(
+                    modifier = Modifier
+                        .size(276.dp)
+                        .clip(CircleShape)
+                        .tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
+                            cornerRadius = 138.dp,
+                            depth = 6.dp
+                        )
+                        .padding(13.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                 Box(
-                    modifier = Modifier.size(250.dp).graphicsLayer { rotationZ = rotation.value }
+                    modifier = Modifier
+                        .size(250.dp)
+                        .clip(CircleShape)
+                        .graphicsLayer { rotationZ = rotation.value }
+                        .shadow(10.dp, CircleShape)
                 ) {
                     Canvas(modifier = Modifier.size(250.dp).clip(CircleShape)) {
                         val sweep = 360f / 8f
@@ -150,10 +167,17 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Surface(
-                    modifier = Modifier.size(54.dp),
+                    modifier = Modifier
+                        .size(62.dp)
+                        .tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
+                            cornerRadius = 31.dp,
+                            depth = 6.dp
+                        ),
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 5.dp
+                    shadowElevation = 8.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text("SPIN", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
@@ -218,7 +242,14 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                         }
                     },
                     enabled = !isSpinning && totalXP >= cost,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.primary,
+                            bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            cornerRadius = 14.dp,
+                            depth = 5.dp
+                        )
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(Modifier.size(6.dp))
@@ -235,7 +266,14 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                             viewModel.unlockSpinWheel()
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                            cornerRadius = 14.dp,
+                            depth = 4.dp
+                        )
                 ) {
                     Text("Watch Ad to Unlock • 20 Spins")
                 }
@@ -263,7 +301,8 @@ private fun SpinWheelLabel(index: Int, text: String) {
         Surface(
             modifier = Modifier.offset(x = positions[index].first, y = positions[index].second),
             shape = CircleShape,
-            color = Color.White.copy(alpha = 0.88f)
+            color = Color.White.copy(alpha = 0.88f),
+            shadowElevation = 3.dp
         ) {
             Text(
                 text = text,
