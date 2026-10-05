@@ -11,6 +11,8 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -66,6 +68,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
@@ -85,6 +88,7 @@ import androidx.navigation.navArgument
 import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.service.StudyReminderScheduler
 import com.aistudio.studyos.ui.components.ActiveSessionMiniBar
+import com.aistudio.studyos.ui.components.tactile3DButton
 import com.aistudio.studyos.ui.components.UpdateDialog
 import com.aistudio.studyos.ui.screens.ExamPlannerScreen
 import com.aistudio.studyos.ui.screens.FocusScreen
@@ -452,8 +456,16 @@ fun MainApp(
                     }
 
                     NavigationBar(
-                        modifier = Modifier.testTag("bottom_nav_bar"),
-                        containerColor = MaterialTheme.colorScheme.background,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                            .tactile3DButton(
+                                backgroundColor = MaterialTheme.colorScheme.surface,
+                                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                                cornerRadius = 28.dp,
+                                depth = 5.dp
+                            )
+                            .testTag("bottom_nav_bar"),
+                        containerColor = Color.Transparent,
                         contentColor = MaterialTheme.colorScheme.onBackground,
                         tonalElevation = 0.dp
                     ) {
@@ -475,14 +487,21 @@ fun MainApp(
                                 icon = {
                                     val iconScale by animateFloatAsState(
                                         targetValue = if (isSelected) 1.12f else 1f,
-                                        animationSpec = tween(180, easing = FastOutSlowInEasing),
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        ),
                                         label = "bottom_nav_icon_scale"
                                     )
                                     screen.icon?.let {
                                         Icon(
                                             imageVector = it,
                                             contentDescription = screen.title,
-                                            modifier = Modifier.scale(iconScale)
+                                            modifier = Modifier.graphicsLayer {
+                                                scaleX = iconScale
+                                                scaleY = iconScale
+                                                translationY = if (isSelected) -2.dp.toPx() else 0f
+                                            }
                                         )
                                     }
                                 },
