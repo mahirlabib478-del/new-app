@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -694,6 +695,7 @@ private fun StudyJourneyCard(
             onDismissRequest = { selectedDay = null },
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 8.dp,
+            shape = RoundedCornerShape(24.dp),
             title = {
                 Text(
                     text = if (day.isToday) {
@@ -771,13 +773,33 @@ private fun StudyJourneyCard(
                         Text(if (activePlan != null) "Continue Session" else "Start a Session")
                     }
                 } else if (!day.isFuture && isCompleted) {
-                    Button(onClick = { selectedDay = null; onOpenHistory() }, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp)) {
-                        Text("View Activity")
+                    Button(
+                        onClick = { selectedDay = null; onOpenHistory() },
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .height(40.dp)
+                            .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("View Activity", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
                     }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { selectedDay = null }, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 10.dp, 2.dp)) { Text("Close") }
+                Button(
+                    onClick = { selectedDay = null },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                    modifier = Modifier
+                        .height(40.dp)
+                        .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 4.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Close", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                }
             }
         )
     }
