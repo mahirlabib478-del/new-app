@@ -588,6 +588,8 @@ fun ProgressScreen(
                             MissionProgressRow("📘", "Focus", "${mission.studyMinutes} / ${mission.targets.studyMinutesRequired}m", mission.studyMinutes.toFloat() / mission.targets.studyMinutesRequired, mission.studyTimeComplete)
                             MissionProgressRow("⭐", "XP", "${mission.xpEarned} / ${mission.targets.xpRequired}", mission.xpEarned.toFloat() / mission.targets.xpRequired, mission.xpComplete)
                             MissionProgressRow("📚", "Topics", "${mission.topicCount} / ${mission.targets.topicCountRequired}", mission.topicCount.toFloat() / mission.targets.topicCountRequired, mission.topicBreadthComplete)
+                            MissionProgressRow("🎯", "Peak Focus", "${mission.peakFocusMinutes} / ${mission.targets.peakFocusMinutesRequired}m", mission.peakFocusMinutes.toFloat() / mission.targets.peakFocusMinutesRequired, mission.peakFocusComplete)
+                            MissionProgressRow("🛍️", "Shop Investment", "${mission.xpSpent} / ${mission.targets.xpSpentRequired} XP", mission.xpSpent.toFloat() / mission.targets.xpSpentRequired, mission.shopInvestmentComplete)
                             if (mission.allComplete && currentLevel < 100) {
                                 Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary) {
                                     Text("Level ${currentLevel + 1} unlocked! 🎉", Modifier.padding(vertical = 10.dp).fillMaxWidth(), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
