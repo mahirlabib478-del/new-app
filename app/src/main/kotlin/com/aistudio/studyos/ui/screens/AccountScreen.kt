@@ -361,7 +361,7 @@ fun AccountScreen(
                             onClick = { confirmAction = "login" },
                             enabled = !busy && email.contains("@") && password.isNotEmpty(),
                             modifier = Modifier.fillMaxWidth().height(56.dp).tactile3DButton(
-                                backgroundColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.78f),
+                                backgroundColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                                 bottomEdgeColor = if (!busy && email.contains("@") && password.isNotEmpty()) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
                                 cornerRadius = 18.dp,
                                 depth = 5.dp
