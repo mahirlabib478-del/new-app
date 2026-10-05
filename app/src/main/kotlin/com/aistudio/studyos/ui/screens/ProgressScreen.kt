@@ -412,7 +412,8 @@ fun ProgressScreen(
                             }
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            weeklyData.forEach { day ->
+                            Spacer(Modifier.height(3.dp))
+                        weeklyData.forEach { day ->
                                 val active = day.minutes > 0
                                 Surface(
                                     Modifier.weight(1f).height(44.dp)
@@ -515,19 +516,27 @@ fun ProgressScreen(
                                         if (day == null) Box(Modifier.weight(1f).size(28.dp))
                                         else {
                                             val intensity = if (maxMinutes > 0 && day.minutes > 0) (day.minutes.toFloat() / maxMinutes).coerceIn(0.15f, 1f) else 0f
+                                            val isSelected = day.dayNumber == selectedMonthDay
+                                            val dayFill = when {
+                                                isSelected -> MaterialTheme.colorScheme.primary
+                                                intensity > 0f -> MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity)
+                                                else -> MaterialTheme.colorScheme.surface
+                                            }
                                             Box(
-                                                Modifier.weight(1f).size(28.dp)
+                                                Modifier
+                                                    .weight(1f)
+                                                    .size(30.dp)
                                                     .tactile3DButton(
-                                                        backgroundColor = if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity) else MaterialTheme.colorScheme.surface,
-                                                        bottomEdgeColor = if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.28f),
-                                                        cornerRadius = 7.dp,
-                                                        depth = 3.dp
+                                                        backgroundColor = dayFill,
+                                                        bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.28f),
+                                                        cornerRadius = 15.dp,
+                                                        depth = if (isSelected) 3.dp else 2.dp
                                                     )
                                                     .clickable { selectedMonthDay = day.dayNumber }
                                                     .border(
-                                                        width = if (day.dayNumber == selectedMonthDay || day.isToday) 2.dp else 1.dp,
-                                                        color = if (day.dayNumber == selectedMonthDay) MaterialTheme.colorScheme.primary else if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
-                                                        shape = RoundedCornerShape(7.dp)
+                                                        width = if (isSelected || day.isToday) 1.5.dp else 1.dp,
+                                                        color = if (isSelected) MaterialTheme.colorScheme.primary else if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                                        shape = CircleShape
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -604,6 +613,7 @@ fun ProgressScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text("Subjects", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(3.dp))
                             topSubjects.forEach { entry ->
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     Text(entry.key, Modifier.width(78.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp)
@@ -639,7 +649,28 @@ fun ProgressScreen(
                                 }
                                 Text("${analytics.planCompletionPercent}%", fontSize = 17.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                             }
-                            LinearProgressIndicator(progress = { analytics.planCompletionPercent / 100f }, modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(11.dp)
+                                    .tactile3DButton(
+                                        backgroundColor = MaterialTheme.colorScheme.surface,
+                                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
+                                        cornerRadius = 6.dp,
+                                        depth = 3.dp
+                                    )
+                            ) {
+                                if (analytics.planCompletionPercent > 0) {
+                                    Box(
+                                        Modifier
+                                            .fillMaxWidth(analytics.planCompletionPercent / 100f)
+                                            .height(7.dp)
+                                            .align(Alignment.CenterStart)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(MaterialTheme.colorScheme.primary)
+                                    )
+                                }
+                            }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("${formatMinutes(analytics.actualMinutes)} completed", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text("${formatMinutes(analytics.activePlanRemainingMinutes)} remaining", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
