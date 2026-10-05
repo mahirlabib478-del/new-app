@@ -1960,14 +1960,16 @@ private fun StudySessionCompleteScreen(
                     text = "✨",
                     fontSize = 18.sp
                 )
-                Text(
-                    text = "+$earnedXP XP EARNED",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 15.sp,
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.scale(completionScale),
-                    color = Color.White
-                )
+                AnimatedReveal(index = 1) {
+                    Text(
+                        text = "+$earnedXP XP EARNED",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 15.sp,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.scale(completionScale),
+                        color = Color.White
+                    )
+                }
             }
         }
 
