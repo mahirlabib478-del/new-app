@@ -2139,13 +2139,10 @@ private fun StudySessionCompleteScreen(
             Card(
                 modifier = Modifier
                 .fillMaxWidth()
-                .tactile3DButton(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f), MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f), 18.dp, 4.dp),
+                .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), 18.dp, 4.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (bonusClaimed)
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    else
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 border = BorderStroke(
                     1.dp,
