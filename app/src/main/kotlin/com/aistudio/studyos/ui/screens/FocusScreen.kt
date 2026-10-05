@@ -633,9 +633,9 @@ private fun FocusMoreOptionsDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f), MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(onClick = onOpenSound),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), 14.dp, 4.dp).clickable(onClick = onOpenSound),
                     shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Headphones, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -712,13 +712,7 @@ private fun CurrentTopicIndicator(
         modifier = Modifier.fillMaxWidth()
     ) {
         // Phase Pill
-        val pillBgColor = if (isWallpaperActive) {
-            MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
-        } else if (isBreak) {
-            MaterialTheme.colorScheme.tertiaryContainer
-        } else {
-            MaterialTheme.colorScheme.primaryContainer
-        }
+        val pillBgColor = if (isWallpaperActive) MaterialTheme.colorScheme.surface else if (isBreak) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer
         val pillTextColor = if (isBreak) {
             MaterialTheme.colorScheme.onTertiaryContainer
         } else {
@@ -840,7 +834,7 @@ private fun CircularTimerDisplay(
         val transition = rememberInfiniteTransition(label = "focus_timer_pulse")
         transition.animateFloat(
             initialValue = 1f,
-            targetValue = 1.006f,
+            targetValue = 1.0f,
             animationSpec = infiniteRepeatable(
                 animation = tween(900, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Reverse
@@ -872,7 +866,7 @@ private fun CircularTimerDisplay(
                         val bevelStroke = Stroke(width = 24.dp.toPx())
                         val innerHighlight = Stroke(width = 3.dp.toPx())
                         val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
-                        val radius = (size.minDimension - 24.dp.toPx()) / 2f
+                        val radius = (size.minDimension - 40.dp.toPx()) / 2f
                         drawCircle(
                             color = Color.Black.copy(alpha = if (isLight) 0.10f else 0.34f),
                             radius = radius,
