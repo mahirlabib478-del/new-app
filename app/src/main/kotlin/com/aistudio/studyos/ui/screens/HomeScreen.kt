@@ -208,16 +208,6 @@ fun HomeScreen(
         }
 
         item {
-            StudyActivityCard(
-                activityDays = activityDays,
-                selectedActivityDay = selectedActivityDay,
-                selectedDay = selectedDay,
-                onSelectDay = { selectedActivityDay = it },
-                onOpenHistory = onOpenHistory
-            )
-        }
-
-        item {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
