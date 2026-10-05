@@ -1520,20 +1520,22 @@ fun ProfileScreen(
                 Text("Study Reminder Time", fontWeight = FontWeight.Bold)
             },
             text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                AnimatedReveal(index = 0) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                     Text(
                         "Choose your daily reminder time.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(8.dp))
-                    androidx.compose.material3.TimePicker(
-                        state = timePickerState,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        androidx.compose.material3.TimePicker(
+                            state = timePickerState,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -1567,7 +1569,9 @@ fun ProfileScreen(
             onDismissRequest = { showResetDialog = false },
             title = { Text("Reset All Statistics?", fontWeight = FontWeight.Bold) },
             text = {
-                Text("This will clear your study session logs, XP, and streaks back to zero. This cannot be undone.")
+                AnimatedReveal(index = 0) {
+                    Text("This will clear your study session logs, XP, and streaks back to zero. This cannot be undone.")
+                }
             },
             confirmButton = {
                 Button(
@@ -1605,9 +1609,10 @@ fun ProfileScreen(
             onDismissRequest = { showCustomGoalDialog = false },
             title = { Text("Set Custom Daily Target", fontWeight = FontWeight.Bold) },
             text = {
-                Column {
-                    Text(
-                        text = "Enter your desired daily study target in minutes (e.g. 180 for 3 hours, 360 for 6 hours, or up to 1440 for all-day prep):",
+                AnimatedReveal(index = 0) {
+                    Column {
+                        Text(
+                            text = "Enter your desired daily study target in minutes (e.g. 180 for 3 hours, 360 for 6 hours, or up to 1440 for all-day prep):",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1638,9 +1643,9 @@ fun ProfileScreen(
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.error
                         )
+                        }
                     }
-                }
-            },
+                },
             confirmButton = {
                 Button(
                     onClick = {
