@@ -133,11 +133,6 @@ fun FocusScreen(
 ) {
     val state by viewModel.focusState.collectAsState()
     val primaryColor = if (state.isBreak) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
-    val completionScale by animateFloatAsState(
-        targetValue = if (state.isSessionCompleted) 1f else 0.92f,
-        animationSpec = tween(420, easing = FastOutSlowInEasing),
-        label = "focus_completion_scale"
-    )
     var showEndDialog by remember { mutableStateOf(false) }
     var showAmbientDialog by remember { mutableStateOf(false) }
     var showFocusOptions by remember { mutableStateOf(false) }
@@ -1876,6 +1871,12 @@ private fun StudySessionCompleteScreen(
             stiffness = Spring.StiffnessLow
         ),
         label = "celebration_icon_scale"
+    )
+
+    val completionScale by animateFloatAsState(
+        targetValue = if (animationTriggered) 1f else 0.92f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "focus_completion_scale"
     )
 
     val earnedXP = remember(completedMinutes) {
