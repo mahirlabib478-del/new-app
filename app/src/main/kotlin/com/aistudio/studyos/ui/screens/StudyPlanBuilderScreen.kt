@@ -92,7 +92,7 @@ fun StudyPlanBuilderScreen(
     var breakMinutes by remember { mutableIntStateOf(5) }
 
     val initialTopicsList = remember(initialTopics) {
-        initialTopics.split(",", "\\n")
+        initialTopics.split(",", "\n")
             .map { it.trim() }
             .filter { it.isNotBlank() }
     }
