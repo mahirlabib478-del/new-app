@@ -56,10 +56,10 @@ import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
 private fun getSavedPlanModeInfo(mode: String): Pair<String, Color> {
     return when (mode.lowercase()) {
-        "regular" -> Pair("📖 Regular Study", Color(0xFF3B82F6))
-        "exam" -> Pair("📝 Exam Prep", Color(0xFFEC4899))
+        "regular" -> Pair("📖 Regular Study", MaterialTheme.colorScheme.primary)
+        "exam" -> Pair("📝 Exam Prep", MaterialTheme.colorScheme.secondary)
         "cram" -> Pair("⚡ Cram Session", Color(0xFFF59E0B))
-        else -> Pair("🎯 Focus Plan", Color(0xFF6366F1))
+        else -> Pair("🎯 Focus Plan", MaterialTheme.colorScheme.tertiary)
     }
 }
 
@@ -222,7 +222,7 @@ fun SavedSessionsScreen(
                                                 if (isDraft)
                                                     MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
                                                 else
-                                                    Color(0xFF10B981).copy(alpha = 0.15f)
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                                             )
                                             .padding(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
