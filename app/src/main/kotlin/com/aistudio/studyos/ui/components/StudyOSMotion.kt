@@ -65,17 +65,19 @@ fun Modifier.tactile3DButton(
 
     this
         .pointerInput(Unit) {
-            awaitPointerEventScope {
-                while (true) {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val press = PressInteraction.Press(down.position)
-                    interactionSource.emit(press)
-                    val up = waitForUpOrCancellation()
-                    if (up == null) {
-                        interactionSource.emit(PressInteraction.Cancel(press))
-                    } else {
-                        interactionSource.emit(PressInteraction.Release(press))
-                    }
+            while (true) {
+                val down = awaitPointerEventScope {
+                    awaitFirstDown(requireUnconsumed = false)
+                }
+                val press = PressInteraction.Press(down.position)
+                interactionSource.emit(press)
+                val up = awaitPointerEventScope {
+                    waitForUpOrCancellation()
+                }
+                if (up == null) {
+                    interactionSource.emit(PressInteraction.Cancel(press))
+                } else {
+                    interactionSource.emit(PressInteraction.Release(press))
                 }
             }
         }
