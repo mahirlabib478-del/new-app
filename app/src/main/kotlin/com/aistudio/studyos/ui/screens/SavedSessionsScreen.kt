@@ -54,6 +54,7 @@ import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.data.local.entity.StudyPlanItemCodec
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
+@Composable
 private fun getSavedPlanModeInfo(mode: String): Pair<String, Color> {
     return when (mode.lowercase()) {
         "regular" -> Pair("📖 Regular Study", MaterialTheme.colorScheme.primary)
