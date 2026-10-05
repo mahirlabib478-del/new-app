@@ -94,7 +94,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
         )
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -133,7 +133,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
 
             Box(
                     modifier = Modifier
-                        .size(292.dp)
+                         .size(276.dp)
                         .clip(CircleShape)
                         .tactile3DButton(
                             backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -146,12 +146,12 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                 ) {
                 Box(
                     modifier = Modifier
-                        .size(266.dp)
+                         .size(250.dp)
                         .clip(CircleShape)
                         .graphicsLayer { rotationZ = rotation.value }
                         .shadow(10.dp, CircleShape)
                 ) {
-                    Canvas(modifier = Modifier.size(266.dp).clip(CircleShape)) {
+                    Canvas(modifier = Modifier.size(250.dp).clip(CircleShape)) {
                         val sweep = 360f / 8f
                         for (i in 0 until 8) {
                             drawArc(
@@ -290,7 +290,13 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(Modifier.size(6.dp))
-                    Text(if (isSpinning) "Spinning…" else "Spin for " + cost + " XP")
+                    Text(
+                        if (isSpinning) "Spinning…" else "Spin for " + cost + " XP",
+                        maxLines = 1,
+                        softWrap = false,
+                        color = if (isSpinning || totalXP >= cost) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             } else {
                 OutlinedButton(
