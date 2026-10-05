@@ -1,11 +1,15 @@
 package com.aistudio.studyos.ui.screens
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -134,8 +138,13 @@ private val THEME_OPTIONS = listOf(
 
 @Composable
 private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Boolean, onClick: () -> Unit) {
+    val iconScale by animateFloatAsState(
+        targetValue = if (isSelected) 1.08f else 1f,
+        animationSpec = tween(260),
+        label = "theme_icon_scale"
+    )
     Card(
-        modifier = Modifier.width(104.dp).clickable(onClick = onClick).testTag("theme_card_" + option.key),
+        modifier = Modifier.width(104.dp).animateContentSize(animationSpec = tween(220)).clickable(onClick = onClick).testTag("theme_card_" + option.key),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
@@ -145,7 +154,7 @@ private fun ThemeOptionCard(option: ThemeOption, isSelected: Boolean, locked: Bo
             Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp))
+            Icon(option.icon, contentDescription = null, tint = option.color, modifier = Modifier.size(22.dp).scale(iconScale))
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 option.name,
