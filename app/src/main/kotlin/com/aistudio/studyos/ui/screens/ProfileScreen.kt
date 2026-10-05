@@ -490,11 +490,11 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showXPShop = true }
-                    .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp)
+                    .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp)
                     .testTag("profile_xp_perks_shop_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(
@@ -528,8 +528,11 @@ fun ProfileScreen(
                         Button(
                             onClick = { showXPShop = true },
                             shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            modifier = Modifier.tactile3D(depth = 4.dp, color = profileWarmAccent, edgeColor = profileWarmAccent.copy(alpha = 0.58f), shape = RoundedCornerShape(12.dp)).testTag("btn_open_shop_from_profile")
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                            modifier = Modifier
+                                .height(40.dp)
+                                .tactile3D(depth = 4.dp, color = profileWarmAccent, edgeColor = profileWarmAccent.copy(alpha = 0.58f), shape = RoundedCornerShape(12.dp))
+                                .testTag("btn_open_shop_from_profile")
                         ) {
                             Text(
                                 text = "Open Shop",
@@ -548,8 +551,8 @@ fun ProfileScreen(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.weight(1f).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 10.dp, 3.dp)
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier.weight(1f).height(46.dp).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 10.dp, 3.dp)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
@@ -576,8 +579,8 @@ fun ProfileScreen(
 
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                            modifier = Modifier.weight(1f).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 10.dp, 3.dp)
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier.weight(1f).height(46.dp).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 10.dp, 3.dp)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
