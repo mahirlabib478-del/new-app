@@ -41,14 +41,14 @@ fun AnimatedReveal(
     AnimatedVisibility(
         visible = true,
         modifier = modifier,
-        enter = fadeIn(tween(320, delayMillis = index * 55, easing = FastOutSlowInEasing)) +
+        enter = fadeIn(tween(430, delayMillis = index * 55, easing = FastOutSlowInEasing)) +
             slideInVertically(
-                animationSpec = tween(380, delayMillis = index * 55, easing = FastOutSlowInEasing),
-                initialOffsetY = { it / 12 }
+                animationSpec = tween(480, delayMillis = index * 55, easing = FastOutSlowInEasing),
+                initialOffsetY = { it / 8 }
             ) +
             scaleIn(
-                animationSpec = tween(380, delayMillis = index * 55, easing = FastOutSlowInEasing),
-                initialScale = 0.96f
+                animationSpec = tween(480, delayMillis = index * 55, easing = FastOutSlowInEasing),
+                initialScale = 0.93f
             ),
         exit = fadeOut(tween(150)) + scaleOut(tween(150))
     ) {
