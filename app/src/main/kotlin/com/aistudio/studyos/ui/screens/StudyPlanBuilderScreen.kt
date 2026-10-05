@@ -657,7 +657,7 @@ private fun SummaryCard(
             SummaryMetric("Session", if (totalMinutes > 0) formatDuration(totalMinutes) else "—")
             SummaryMetric("Topics", topicCount.toString())
             SummaryMetric("Blocks", if (focusMinutes > 0) {
-                (allocatedMinutes + focusMinutes - 1) / focusMinutes
+                ((allocatedMinutes + focusMinutes - 1) / focusMinutes).toString()
             } else "—")
             SummaryMetric("Break", "${breakMinutes}m")
         }
