@@ -590,7 +590,10 @@ private fun StepHeader(step: Int) {
 @Composable
 private fun PlanIntroCard(title: String, subtitle: String) {
     Card(
-        Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), 22.dp, 4.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+            .tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), 22.dp, 4.dp),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -764,7 +767,7 @@ private fun SettingCard(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
