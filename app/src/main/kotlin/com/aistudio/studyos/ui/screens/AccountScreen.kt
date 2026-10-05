@@ -429,7 +429,7 @@ fun AccountScreen(
             },
             title = { Text("Import old local progress?") },
             text = {
-                Text("This copies existing study plans, exams, study sessions and progress totals from this device into the currently signed-in account. The old local records will not be deleted. Import is cancelled if this account already contains study records.")
+                Text("This copies your guest study data and account-owned settings from this device into the currently signed-in account, including plans, exams, sessions, progress totals, theme/shop state, timers, streak shields, XP boosters and other saved account preferences. Guest data is not deleted. Import is cancelled if the account already contains local or cloud progress.")
             },
             confirmButton = {
                 Button(
