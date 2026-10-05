@@ -151,16 +151,6 @@ fun HomeScreen(
         }
 
         item {
-            StudyJourneyCard(
-                allLogs = allLogs,
-                activePlan = activePlan,
-                onOpenFocus = onOpenFocus,
-                onOpenStudy = onOpenStudy,
-                onOpenHistory = onOpenHistory
-            )
-        }
-
-        item {
             Text(
                 text = "Start studying",
                 style = MaterialTheme.typography.titleMedium,
@@ -194,6 +184,16 @@ fun HomeScreen(
             }
         }
 
+        item {
+            StudyJourneyCard(
+                allLogs = allLogs,
+                activePlan = activePlan,
+                onOpenFocus = onOpenFocus,
+                onOpenStudy = onOpenStudy,
+                onOpenHistory = onOpenHistory
+            )
+        }
+
         val nextExam = upcomingExams.firstOrNull()
         if (nextExam != null) {
             item {
@@ -218,35 +218,33 @@ private fun HomeHeader(
     streak: Int,
     level: Int,
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = greetingForCurrentTime(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Let's make today count",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f)
-                )
-            }
+            Text(
+                text = greetingForCurrentTime(),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "Let's make today count",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f)
+            )
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             StatPill(
                 icon = {
