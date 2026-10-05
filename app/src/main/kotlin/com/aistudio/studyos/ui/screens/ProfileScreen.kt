@@ -1406,7 +1406,7 @@ fun ProfileScreen(
                             }
                         },
                         enabled = !isCleaningCache,
-                        modifier = Modifier.fillMaxWidth().testTag("btn_clean_cache").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 13.dp, 4.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("btn_clean_cache").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 13.dp, 4.dp),
                         shape = RoundedCornerShape(13.dp)
                     ) {
                         if (isCleaningCache) {
@@ -1448,7 +1448,7 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .height(48.dp)
                     .testTag("btn_reset_stats")
-                    .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.error.copy(alpha = 0.55f), 14.dp, 4.dp),
+                    .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 14.dp, 4.dp),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Icon(
