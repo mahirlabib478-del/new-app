@@ -221,9 +221,9 @@ fun XPShopBottomSheet(
 
             // XP Wallet Balance Card - Theme-aware colors
             Surface(
-                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.52f), 16.dp, 6.dp),
+                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 16.dp, 6.dp),
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = MaterialTheme.colorScheme.surface,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Row(
@@ -378,10 +378,10 @@ private fun PremiumThemeSection(
     onSelectTheme: (String) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 18.dp, 5.dp).testTag("premium_theme_section"),
+        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 18.dp, 5.dp).testTag("premium_theme_section"),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     ) {
