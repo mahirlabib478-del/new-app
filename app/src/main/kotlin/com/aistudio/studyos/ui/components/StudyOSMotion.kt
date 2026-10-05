@@ -61,7 +61,7 @@ fun Modifier.tactile3DButton(
         label = "tactile_press_offset"
     )
     val shape = RoundedCornerShape(cornerRadius)
-    val extrusionDepth = if (pressed) depth * 0.22f else depth.value
+    val extrusionDepth = if (pressed) depth * 0.22f else depth
     return this
         .pointerInput(interactionSource) {
             awaitPointerEventScope {
