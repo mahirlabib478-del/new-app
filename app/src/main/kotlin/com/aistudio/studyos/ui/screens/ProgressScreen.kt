@@ -431,6 +431,11 @@ fun ProgressScreen(
             item {
                 val dailyGoal = (profile?.dailyGoalMinutes ?: 60).coerceAtLeast(1)
                 val progress = (todayMinutes.toFloat() / dailyGoal).coerceIn(0f, 1f)
+                val animatedDailyProgress by animateFloatAsState(
+                    targetValue = progress,
+                    animationSpec = tween(750, easing = FastOutSlowInEasing),
+                    label = "daily_goal_progress"
+                )
                 val remaining = (dailyGoal - todayMinutes).coerceAtLeast(0)
                 Card(Modifier.fillMaxWidth().testTag("today_goal_analytics_card"), shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -444,7 +449,7 @@ fun ProgressScreen(
                             }
                             Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                         }
-                        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)))
+                        LinearProgressIndicator(progress = { animatedDailyProgress }, modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)))
                         Text(if (remaining > 0) "${remaining} min remaining" else "Daily target reached 🎉", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
