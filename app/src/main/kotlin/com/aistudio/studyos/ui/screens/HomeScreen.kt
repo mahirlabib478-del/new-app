@@ -375,7 +375,7 @@ private fun ShieldSavedBanner(
             .fillMaxWidth()
             .testTag("shield_saved_streak_card"),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Row(
             modifier = Modifier.padding(13.dp),
@@ -385,7 +385,7 @@ private fun ShieldSavedBanner(
             Icon(
                 Icons.Default.Shield,
                 contentDescription = "Streak shield",
-                tint = Color(0xFF93C5FD),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.size(24.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
@@ -393,16 +393,16 @@ private fun ShieldSavedBanner(
                     text = "Streak saved",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "Your " + streak + "-day streak was protected. Study today to keep it going.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFDBEAFE)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f)
                 )
             }
             IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
-                Icon(Icons.Default.Close, "Dismiss", tint = Color.White)
+                Icon(Icons.Default.Close, "Dismiss", tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
     }
