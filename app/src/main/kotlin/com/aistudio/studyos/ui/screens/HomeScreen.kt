@@ -298,7 +298,7 @@ private fun HomeHeader(
                 text = "$streak day streak"
             )
             StatPill(
-                modifier = Modifier.weight(0.82f),
+                modifier = Modifier.weight(1f),
                 icon = {
                     Text(
                         text = "Lv",
@@ -333,6 +333,7 @@ private fun StatPill(
 ) {
     Row(
         modifier = modifier
+            .height(36.dp)
             .tactile3DButton(
                 backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
@@ -348,6 +349,8 @@ private fun StatPill(
             text = text,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false,
             color = MaterialTheme.colorScheme.onSurface
         )
     }
