@@ -1137,6 +1137,8 @@ private fun AmbientSoundConfigDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 10.dp,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1172,7 +1174,7 @@ private fun AmbientSoundConfigDialog(
                     selectedTabIndex = selectedTabIndex,
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clip(RoundedCornerShape(12.dp))
+                    modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.32f), 12.dp, 3.dp).clip(RoundedCornerShape(12.dp))
                 ) {
                     Tab(
                         selected = selectedTabIndex == 0,
