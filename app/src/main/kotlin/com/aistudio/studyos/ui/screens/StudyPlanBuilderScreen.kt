@@ -243,12 +243,28 @@ fun StudyPlanBuilderScreen(
                         Button(
                             onClick = ::startPlan,
                             enabled = valid,
-                            modifier = Modifier.weight(1.2f).tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), 14.dp, 5.dp).testTag("btn_start_study_plan"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(48.dp)
+                                .tactile3DButton(
+                                    if (valid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    if (valid) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                                    14.dp,
+                                    5.dp
+                                )
+                                .testTag("btn_start_study_plan"),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
                             Spacer(Modifier.width(5.dp))
-                            Text("Start • ${formatDuration(totalSessionMinutes)}")
+                            Text("Start • ${formatDuration(totalSessionMinutes)}", maxLines = 1, softWrap = false)
                         }
                     }
                 }
