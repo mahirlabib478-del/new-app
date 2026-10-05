@@ -789,9 +789,9 @@ private fun PassDurationSelectionDialog(
                 // Price and Savings Card
                 Surface(
                     shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
-                    modifier = Modifier.fillMaxWidth()
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
+                    modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), 14.dp, 4.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -836,11 +836,11 @@ private fun PassDurationSelectionDialog(
                             ) {
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
-                                    color = Color(0xFF10B981).copy(alpha = 0.15f)
+                                    color = MaterialTheme.colorScheme.primaryContainer
                                 ) {
                                     Text(
                                         text = "-$discountPercent% DISCOUNT",
-                                        color = Color(0xFF047857),
+                                        color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1011,14 +1011,19 @@ private fun ThemePassDurationSelectionDialog(
                     viewModel.buyPremiumThemePass(themeKey, selectedDays, finalCost) { _, _ -> onDismiss() }
                 },
                 enabled = canAfford,
-                modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), 10.dp, 4.dp),
+                modifier = Modifier.tactile3DButton(
+                    backgroundColor = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    bottomEdgeColor = if (canAfford) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.40f),
+                    cornerRadius = 10.dp,
+                    depth = if (canAfford) 4.dp else 2.dp
+                ),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(if (canAfford) "Buy " + selectedDays + " Days" else "Need " + (finalCost - totalXP) + " More XP")
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(10.dp)) { Text("Cancel") }
+            OutlinedButton(onClick = onDismiss, modifier = Modifier.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 10.dp, 3.dp), shape = RoundedCornerShape(10.dp)) { Text("Cancel") }
         }
     )
 }
