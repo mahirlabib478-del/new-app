@@ -532,10 +532,23 @@ class StudyRepository(
             // days do not exist in session_logs, so the shield state must bridge
             // that gap before today's real study day is added.
             val historyStreak = consecutiveLoggedStudyDaysEnding(today)
-            val finalStreak = if (gapResult.shieldsConsumed > 0) {
-                resolvedProfile.streakDays + 1
-            } else {
-                historyStreak.coerceAtLeast(1)
+
+            // A shield-protected missed day is intentionally absent from session_logs,
+            // so history alone cannot reconstruct the continuation on the first session
+            // after the shield was consumed. Keep the protected bridge for that session,
+            // then keep the already-resolved streak for any additional sessions today.
+            val shieldProtectedContinuation =
+                themePreferences.getLastShieldSavedDate() == todayStr &&
+                    currentProfile.lastActiveDate == today.minusDays(1).toString() &&
+                    gapResult.shieldsConsumed == 0
+
+            val finalStreak = when {
+                currentProfile.lastActiveDate == todayStr ->
+                    currentProfile.streakDays.coerceAtLeast(historyStreak)
+                shieldProtectedContinuation ->
+                    resolvedProfile.streakDays + 1
+                else ->
+                    historyStreak.coerceAtLeast(1)
             }
 
             val candidateProfile = resolvedProfile.copy(
