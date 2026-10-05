@@ -117,6 +117,7 @@ import com.aistudio.studyos.data.update.UpdateManager
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedReveal
 import com.aistudio.studyos.ui.components.AnimatedSyncIndicator
+import com.aistudio.studyos.ui.components.tactile3DButton
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import kotlin.math.roundToInt
 
@@ -313,7 +314,7 @@ fun ProfileScreen(
 
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAccount).testTag("profile_account_entry"),
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAccount).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 24.dp, 5.dp).testTag("profile_account_entry"),
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -1301,7 +1302,7 @@ fun ProfileScreen(
                             }
                         },
                         enabled = !isCleaningCache,
-                        modifier = Modifier.fillMaxWidth().testTag("btn_clean_cache"),
+                        modifier = Modifier.fillMaxWidth().testTag("btn_clean_cache").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 13.dp, 4.dp),
                         shape = RoundedCornerShape(13.dp)
                     ) {
                         if (isCleaningCache) {
@@ -1342,7 +1343,8 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-                    .testTag("btn_reset_stats"),
+                    .testTag("btn_reset_stats")
+                    .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.error.copy(alpha = 0.55f), 14.dp, 4.dp),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Icon(
@@ -1582,7 +1584,7 @@ fun ProfileScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     ),
-                    modifier = Modifier.testTag("btn_confirm_reset_everything")
+                    modifier = Modifier.testTag("btn_confirm_reset_everything").tactile3DButton(MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.error.copy(alpha = 0.58f), 10.dp, 4.dp)
                 ) {
                     Text("Reset Everything")
                 }
@@ -1655,7 +1657,7 @@ fun ProfileScreen(
                         showCustomGoalDialog = false
                     },
                     enabled = (customGoalInput.toIntOrNull() ?: 0) in 15..1440,
-                    modifier = Modifier.testTag("save_custom_goal_btn")
+                    modifier = Modifier.testTag("save_custom_goal_btn").tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.58f), 10.dp, 4.dp)
                 ) {
                     Text("Save Target", maxLines = 1, softWrap = false)
                 }
