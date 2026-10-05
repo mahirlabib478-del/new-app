@@ -582,7 +582,11 @@ private fun StudyJourneyCard(
     var selectedDay by remember { mutableStateOf<JourneyDay?>(null) }
 
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(280)).testTag("study_journey_card"),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(280))
+            .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 24.dp, 6.dp)
+            .testTag("study_journey_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -667,7 +671,7 @@ private fun StudyJourneyCard(
 
                 journeyDays.forEachIndexed { index, day ->
                     val isCompleted = !day.isFuture && day.minutes > 0
-                    val nodeSize = if (day.isToday) 68.dp else 56.dp
+                    val nodeSize = if (day.isToday) 76.dp else 64.dp
                     JourneyNode(
                         day = day,
                         isCompleted = isCompleted,
@@ -973,7 +977,7 @@ private fun JourneyFloatingDecoration(
 
     Column(
         modifier = modifier
-            .size(54.dp)
+            .size(72.dp)
             .graphicsLayer {
                 translationY = bob.dp.toPx()
                 rotationZ = tilt
@@ -982,8 +986,8 @@ private fun JourneyFloatingDecoration(
     ) {
         Box(
             modifier = Modifier
-                .size(42.dp)
-                .shadow(8.dp, RoundedCornerShape(14.dp), clip = false)
+                .size(50.dp)
+                .shadow(10.dp, RoundedCornerShape(14.dp), clip = false)
                 .clip(RoundedCornerShape(14.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .border(
@@ -997,12 +1001,12 @@ private fun JourneyFloatingDecoration(
                 icon,
                 contentDescription = label,
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
-                modifier = Modifier.size(21.dp)
+                modifier = Modifier.size(25.dp)
             )
         }
         Text(
             label,
-            fontSize = 7.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
         )
