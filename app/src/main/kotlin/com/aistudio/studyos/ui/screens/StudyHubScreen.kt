@@ -106,9 +106,9 @@ fun StudyHubScreen(
 
         item {
             Card(
-                Modifier.fillMaxWidth().testTag("saved_sessions_card").clickable { onOpenSavedSessions() }.tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp),
+                Modifier.fillMaxWidth().testTag("saved_sessions_card").clickable { onOpenSavedSessions() }.tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     Modifier.fillMaxWidth().padding(17.dp),
@@ -246,8 +246,8 @@ private fun ReadyCard(onCreate: () -> Unit, onQuickFocus: () -> Unit) {
                 OutlinedButton(onClick = onQuickFocus, modifier = Modifier
                     .weight(1f)
                     .tactile3DButton(
-                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                        bottomEdgeColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
                         cornerRadius = 14.dp,
                         depth = 4.dp
                     ), shape = RoundedCornerShape(14.dp)) {
@@ -267,9 +267,9 @@ private fun ActionCard(
     onClick: () -> Unit
 ) {
     Card(
-        Modifier.fillMaxWidth().testTag(testTag).clickable(onClick = onClick).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp),
+        Modifier.fillMaxWidth().testTag(testTag).clickable(onClick = onClick).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
         Row(Modifier.fillMaxWidth().padding(17.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
@@ -289,9 +289,9 @@ private fun PlanPreviewCard(plan: StudyPlanEntity, status: String, onClick: () -
     val total = plan.totalDurationMinutes.coerceAtLeast(1)
     val progress = if (plan.isCompleted) 1f else (plan.accumulatedBillableMinutes.toFloat() / total).coerceIn(0f, 1f)
     Card(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 18.dp, 4.dp),
+        Modifier.fillMaxWidth().clickable(onClick = onClick).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 18.dp, 4.dp),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
