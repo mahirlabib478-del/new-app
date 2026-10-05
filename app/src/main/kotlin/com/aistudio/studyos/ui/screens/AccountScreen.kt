@@ -460,7 +460,7 @@ fun AccountScreen(
                                         onVerified()
                                     }
                                 } finally {
-                                    if (auth.currentUser?.uid == uid && auth.currentUser?.isEmailVerified == true) {
+                                    if (repository.currentUser?.uid == uid && repository.currentUser?.isEmailVerified == true) {
                                         sync.startAutomaticUpload(scope)
                                     }
                                 }
