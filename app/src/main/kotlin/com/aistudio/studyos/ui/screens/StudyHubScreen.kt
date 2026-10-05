@@ -1,18 +1,7 @@
 package com.aistudio.studyos.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,13 +9,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +24,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aistudio.studyos.data.local.entity.StudyPlanEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 
 @Composable
@@ -51,230 +38,284 @@ fun StudyHubScreen(
     val savedPlans by viewModel.savedPlans.collectAsState()
     val activePlan by viewModel.activePlan.collectAsState()
     val focusState by viewModel.focusState.collectAsState()
-    val bottomListPadding = if (focusState.planId != null) 150.dp else 96.dp
+    val horizontal = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
+    val bottomPadding = if (focusState.planId != null) 150.dp else 96.dp
 
-    val horizontalContentPadding = if (LocalConfiguration.current.screenWidthDp < 360) 12.dp else 20.dp
+    val inProgressPlans = savedPlans.filter { !it.isDraft && !it.isCompleted && !it.isArchived }
+    val draftPlans = savedPlans.filter { it.isDraft && !it.isArchived }
+    val completedPlans = savedPlans.filter { it.isCompleted && !it.isArchived }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = horizontalContentPadding, end = horizontalContentPadding, top = 12.dp, bottom = bottomListPadding),
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal, 14.dp, horizontal, bottomPadding),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(4.dp))
+            Text("Study", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold)
             Text(
-                text = "Study",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "Choose how you want to focus.",
+                "Plan your session, focus, and track what you actually studied.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        // Active Session Shortcut if available
-        if (activePlan != null) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            viewModel.continueActiveSession(activePlan!!)
-                            onOpenFocus()
-                        },
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(RoundedCornerShape(14.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Resume Current Plan",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = "${activePlan?.subject} • Block ${(activePlan?.currentBlockIndex ?: 0) + 1}/${activePlan?.totalBlocks}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-        }
-
-        // Saved Sessions Card (Always visible and accessible)
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("saved_sessions_card")
-                    .clickable { onOpenSavedSessions() },
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+            if (activePlan != null) {
+                ActivePlanCard(
+                    plan = activePlan!!,
+                    onContinue = {
+                        viewModel.continueActiveSession(activePlan!!)
+                        onOpenFocus()
+                    }
                 )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Bookmark,
-                            contentDescription = "Saved Sessions",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Saved Sessions",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (savedPlans.isNotEmpty())
-                                "${savedPlans.size} session(s) waiting • Tap to resume"
-                            else
-                                "No drafts saved • Tap to manage or view drafts",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            } else {
+                ReadyCard(onCreate = onOpenStudy, onQuickFocus = onOpenQuickFocus)
             }
         }
 
         item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Tune,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Study",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            SectionTitle("Start studying")
         }
 
         item {
-            StudyModeCard(
+            ActionCard(
                 icon = Icons.AutoMirrored.Filled.MenuBook,
-                title = "Study",
-                subtitle = "Build a simple plan with multiple subjects, topics, and Pomodoro focus blocks.",
+                title = "Create Study Plan",
+                subtitle = "Choose subjects, set your time, balance topics, and start.",
                 testTag = "mode_study",
                 onClick = onOpenStudy
             )
         }
 
         item {
-            StudyModeCard(
+            ActionCard(
                 icon = Icons.Default.Bolt,
                 title = "Quick Focus",
-                subtitle = "Start a 25-minute Pomodoro instantly without building a plan.",
+                subtitle = "Start a 25-minute focus session instantly.",
                 testTag = "mode_quick_focus",
                 onClick = onOpenQuickFocus
             )
         }
 
         item {
-            Spacer(modifier = Modifier.height(80.dp))
+            SectionTitle("Your plans")
+        }
+
+        item {
+            Card(
+                Modifier.fillMaxWidth().testTag("saved_sessions_card").clickable { onOpenSavedSessions() },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(17.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Bookmark, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Saved Sessions", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        Text(
+                            when {
+                                draftPlans.isNotEmpty() -> "${draftPlans.size} draft${if (draftPlans.size == 1) "" else "s"} ready"
+                                inProgressPlans.isNotEmpty() -> "${inProgressPlans.size} plan${if (inProgressPlans.size == 1) "" else "s"} in progress"
+                                else -> "View and manage your saved plans"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        if (inProgressPlans.isNotEmpty()) {
+            item { SectionTitle("Continue") }
+            items(inProgressPlans.take(3).size) { index ->
+                PlanPreviewCard(
+                    plan = inProgressPlans[index],
+                    status = "In Progress",
+                    onClick = {
+                        viewModel.resumeSavedPlan(inProgressPlans[index], onOpenFocus)
+                    }
+                )
+            }
+        }
+
+        if (draftPlans.isNotEmpty()) {
+            item { SectionTitle("Drafts") }
+            items(draftPlans.take(3).size) { index ->
+                PlanPreviewCard(
+                    plan = draftPlans[index],
+                    status = "Draft",
+                    onClick = onOpenSavedSessions
+                )
+            }
+        }
+
+        if (completedPlans.isNotEmpty()) {
+            item { SectionTitle("Recently completed") }
+            items(completedPlans.take(2).size) { index ->
+                PlanPreviewCard(
+                    plan = completedPlans[index],
+                    status = "Completed",
+                    onClick = onOpenSavedSessions
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun StudyModeCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+private fun ActivePlanCard(plan: StudyPlanEntity, onContinue: () -> Unit) {
+    val total = plan.totalDurationMinutes.coerceAtLeast(1)
+    val studied = plan.accumulatedBillableMinutes.coerceIn(0, total)
+    val progress = studied.toFloat() / total.toFloat()
+    val remaining = (total - studied).coerceAtLeast(0)
+
+    Card(
+        Modifier.fillMaxWidth().clickable(onClick = onContinue),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PlayArrow, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                Spacer(Modifier.width(9.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Continue studying", fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
+                    Text(plan.title, style = MaterialTheme.typography.bodySmall)
+                }
+                Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.ExtraBold)
+            }
+            LinearProgressIndicator(
+                progress = { progress },
+                Modifier.fillMaxWidth().height(8.dp)
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    "Block ${(plan.currentBlockIndex + 1).coerceAtMost(plan.totalBlocks)}/${plan.totalBlocks}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text("${formatPlanMinutes(remaining)} remaining", style = MaterialTheme.typography.bodySmall)
+            }
+            Button(
+                onClick = onContinue,
+                modifier = Modifier.fillMaxWidth().testTag("btn_continue_current_plan"),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("Continue")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReadyCard(onCreate: () -> Unit, onQuickFocus: () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Column(Modifier.padding(19.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Ready to study?", fontWeight = FontWeight.ExtraBold, fontSize = 21.sp)
+            Text("Create a plan or jump straight into focus.", style = MaterialTheme.typography.bodyMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(onClick = onCreate, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Text("Create Plan")
+                }
+                OutlinedButton(onClick = onQuickFocus, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Text("Quick Focus")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActionCard(
+    icon: ImageVector,
     title: String,
     subtitle: String,
     testTag: String,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().testTag(testTag).clickable(onClick = onClick),
+        Modifier.fillMaxWidth().testTag(testTag).clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(30.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
+        Row(Modifier.fillMaxWidth().padding(17.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
+            Spacer(Modifier.width(13.dp))
+            Column(Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(Modifier.height(3.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun PlanPreviewCard(plan: StudyPlanEntity, status: String, onClick: () -> Unit) {
+    val total = plan.totalDurationMinutes.coerceAtLeast(1)
+    val progress = if (plan.isCompleted) 1f else (plan.accumulatedBillableMinutes.toFloat() / total).coerceIn(0f, 1f)
+    Card(
+        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(plan.title, fontWeight = FontWeight.Bold)
+                    Text(
+                        "${formatPlanMinutes(total)} • ${plan.totalBlocks} blocks",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    status,
+                    color = if (status == "Completed") MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
                 )
             }
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            LinearProgressIndicator(
+                progress = { progress },
+                Modifier.fillMaxWidth().height(6.dp)
+            )
+            Text(
+                when {
+                    status == "Completed" -> "✓ Completed"
+                    progress > 0f -> "${(progress * 100).toInt()}% complete • ${formatPlanMinutes((total * (1f - progress)).toInt())} remaining"
+                    else -> "Not started"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+}
+
+private fun formatPlanMinutes(minutes: Int): String {
+    val safe = minutes.coerceAtLeast(0)
+    val hours = safe / 60
+    val mins = safe % 60
+    return when {
+        hours > 0 && mins > 0 -> "${hours}h ${mins}m"
+        hours > 0 -> "${hours}h"
+        else -> "${mins}m"
     }
 }
