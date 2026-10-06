@@ -574,12 +574,21 @@ fun ProfileScreen(
                                         Icon(Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                     }
                                 }
-                                Text(
-                                    text = "Shields: $streakShieldCount/2",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+                                AnimatedContent(
+                                    targetState = streakShieldCount,
+                                    transitionSpec = {
+                                        fadeIn(animationSpec = tween(160)) togetherWith
+                                            fadeOut(animationSpec = tween(120))
+                                    },
+                                    label = "profile_shield_count"
+                                ) { shieldCount ->
+                                    Text(
+                                        text = "Shields: $shieldCount/2",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
                         }
 
