@@ -400,7 +400,7 @@ fun ProfileScreen(
 
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAccount).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant, 24.dp, 5.dp).testTag("profile_account_entry"),
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenAccount).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 24.dp, 5.dp).testTag("profile_account_entry"),
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
