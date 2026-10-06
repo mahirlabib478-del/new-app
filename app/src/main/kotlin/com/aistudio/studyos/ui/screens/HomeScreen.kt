@@ -520,4 +520,39 @@ private fun TodayFocusCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
             val animatedGoalProgress by animateFloatAsState(
-                targetValue = progressFraction,
+                targetValue = progressFraction,    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                label = "today_goal_progress"
+            )
+            LinearProgressIndicator(
+                progress = { animatedGoalProgress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .testTag("today_goal_progress"),
+                color = if (goalComplete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onAction,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = actionLabel,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        }
+    }
+}
+
