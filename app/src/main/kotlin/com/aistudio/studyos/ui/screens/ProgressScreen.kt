@@ -419,7 +419,11 @@ fun ProgressScreen(
                                     overflow = TextOverflow.Clip
                                 )
                             }
-                            if (streakShieldCount > 0) {
+                            AnimatedVisibility(
+                                visible = streakShieldCount > 0,
+                                enter = fadeIn(animationSpec = tween(180)),
+                                exit = fadeOut(animationSpec = tween(120))
+                            ) {
                                 Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
                                     Text("🛡️ ${streakShieldCount}", fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp))
                                 }
