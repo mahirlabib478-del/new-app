@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.MaterialTheme
@@ -106,6 +107,8 @@ import com.aistudio.studyos.ui.theme.StudyOSTheme
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.viewmodel.StudyViewModelFactory
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
     object Home : Screen("home", "Home", Icons.Default.Home)
@@ -148,6 +151,10 @@ class MainActivity : ComponentActivity() {
             var returnToProfileAfterAuth by remember {
                 mutableStateOf(pendingAuthPrefs.getBoolean("return_to_profile", false))
             }
+            var guestImportPendingUid by remember { mutableStateOf<String?>(null) }
+            var guestImportBusy by remember { mutableStateOf(false) }
+            var guestImportError by remember { mutableStateOf<String?>(null) }
+            val guestImportScope = rememberCoroutineScope()
 
             DisposableEffect(auth) {
                 val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
@@ -168,7 +175,22 @@ class MainActivity : ComponentActivity() {
             if (verifiedUid != null || canContinueAsGuest) {
                 if (verifiedUid != null) {
                     LaunchedEffect(verifiedUid) {
-                        (application as StudyApplication).activateCloudSync(verifiedUid)
+                        val app = application as StudyApplication
+                        try {
+                            val shouldOffer = withContext(Dispatchers.IO) {
+                                app.shouldOfferGuestImport(verifiedUid)
+                            }
+                            if (shouldOffer) {
+                                guestImportError = null
+                                guestImportPendingUid = verifiedUid
+                            } else {
+                                app.activateCloudSync(verifiedUid)
+                            }
+                        } catch (error: Exception) {
+                            // A preflight failure must never block the account. Continue with
+                            // normal cloud bootstrap; it will fail closed if reconciliation is needed.
+                            app.activateCloudSync(verifiedUid)
+                        }
                     }
                 }
                 val accountViewModel: StudyViewModel = viewModel(
@@ -198,6 +220,76 @@ class MainActivity : ComponentActivity() {
                             authRefresh += 1
                         }
                     )
+
+                    if (guestImportPendingUid == verifiedUid) {
+                        AlertDialog(
+                            onDismissRequest = {
+                                if (!guestImportBusy) {
+                                    guestImportPendingUid = null
+                                    (application as StudyApplication).activateCloudSync(verifiedUid)
+                                }
+                            },
+                            title = { Text("Bring your guest progress?") },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text(
+                                        "This device has study progress from Guest mode. You can import it into this verified account and sync it to the cloud."
+                                    )
+                                    Text(
+                                        "Plans, exams, focus history, XP, level, streak, daily target, and saved StudyOS settings will be imported. Existing cloud account progress will never be overwritten.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    guestImportError?.let {
+                                        Text(
+                                            it,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                Button(
+                                    enabled = !guestImportBusy,
+                                    onClick = {
+                                        guestImportBusy = true
+                                        guestImportError = null
+                                        guestImportScope.launch {
+                                            try {
+                                                val result = withContext(Dispatchers.IO) {
+                                                    (application as StudyApplication).importGuestProgressToAccount(verifiedUid)
+                                                }
+                                                guestImportPendingUid = null
+                                                (application as StudyApplication).activateCloudSync(verifiedUid)
+                                            } catch (error: Exception) {
+                                                guestImportError = error.localizedMessage
+                                                    ?: "Guest progress could not be imported. Nothing was intentionally deleted."
+                                                // Keep normal cloud sync gated only by the migration
+                                                // dialog; a failed import remains retryable.
+                                            } finally {
+                                                guestImportBusy = false
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Text(if (guestImportBusy) "Importing…" else "Import & Sync", maxLines = 1, softWrap = false)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    enabled = !guestImportBusy,
+                                    onClick = {
+                                        guestImportPendingUid = null
+                                        guestImportError = null
+                                        (application as StudyApplication).activateCloudSync(verifiedUid)
+                                    }
+                                ) {
+                                    Text("Keep Guest Data", maxLines = 1, softWrap = false)
+                                }
+                            }
+                        )
+                    }
                 }
             } else {
                 val systemIsDark = isSystemInDarkTheme()
