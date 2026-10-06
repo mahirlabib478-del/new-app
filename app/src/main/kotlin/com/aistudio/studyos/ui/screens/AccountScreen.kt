@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.repository.EmailNotVerifiedException
 import com.aistudio.studyos.data.repository.FirebaseAccountRepository
 import com.aistudio.studyos.StudyApplication
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import com.aistudio.studyos.ui.components.tactile3DButton
 import kotlinx.coroutines.launch
 
@@ -428,9 +429,11 @@ fun AccountScreen(
             onDismissRequest = { if (!busy) confirmProgressMerge = false },
             title = { Text("Merge local and cloud progress?") },
             text = {
-                Text(
-                    "StudyOS will add cloud study plans, exams and sessions that are not already on this device, reconcile progress totals, and upload the merged result. Existing local records will not be replaced. This device's theme and settings will be kept. If upload fails after the local merge, your merged local data remains and you can retry sync."
-                )
+                AnimatedReveal(index = 0) {
+                    Text(
+                        "StudyOS will add cloud study plans, exams and sessions that are not already on this device, reconcile progress totals, and upload the merged result. Existing local records will not be replaced. This device's theme and settings will be kept. If upload fails after the local merge, your merged local data remains and you can retry sync."
+                    )
+                }
             },
             confirmButton = {
                 Button(
@@ -468,12 +471,14 @@ fun AccountScreen(
             onDismissRequest = { confirmAction = null },
             title = { Text(if (confirmAction == "create") "Create account" else "Sign in") },
             text = {
-                Text(
-                    if (confirmAction == "create")
-                        "A verification email will be sent. Check your inbox and Spam/Junk folder if it doesn't arrive; automated messages can sometimes be filtered when the sender is unfamiliar. Verify before entering StudyOS. Your local study data remains on this device."
-                    else
-                        "Only verified email accounts can enter StudyOS. Existing local progress will remain untouched."
-                )
+                AnimatedReveal(index = 0) {
+                    Text(
+                        if (confirmAction == "create")
+                            "A verification email will be sent. Check your inbox and Spam/Junk folder if it doesn't arrive; automated messages can sometimes be filtered when the sender is unfamiliar. Verify before entering StudyOS. Your local study data remains on this device."
+                        else
+                            "Only verified email accounts can enter StudyOS. Existing local progress will remain untouched."
+                    )
+                }
             },
             confirmButton = {
                 Button(

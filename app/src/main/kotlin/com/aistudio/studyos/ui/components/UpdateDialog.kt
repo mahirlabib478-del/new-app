@@ -1,5 +1,6 @@
 package com.aistudio.studyos.ui.components
 
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,12 +67,13 @@ fun UpdateDialog(
         modifier = Modifier.testTag("update_dialog"),
         title = null,
         text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            AnimatedReveal(index = 0) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                 // Header badge icon
                 Box(
                     modifier = Modifier
@@ -258,6 +260,7 @@ fun UpdateDialog(
                         )
                     }
                 }
+            }
             }
         },
         confirmButton = {},
