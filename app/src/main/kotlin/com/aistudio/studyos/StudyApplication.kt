@@ -5,6 +5,7 @@ import com.aistudio.studyos.data.local.StudyDatabase
 import com.aistudio.studyos.data.local.ThemePreferences
 import com.aistudio.studyos.data.repository.StudyRepository
 import com.aistudio.studyos.data.repository.FirebaseProgressSyncRepository
+import com.aistudio.studyos.data.repository.LegacyProgressImportRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +85,7 @@ class StudyApplication : Application() {
                     if (uid != user?.uid) sync.stopAutomaticUpload()
                 }
                 if (user?.uid != activeCloudUid) activeCloudUid = null
-                user?.let { activateCloudSync(it.uid) }
+                // MainActivity gates activation so guest migration can be explicitly approved first.
             }
         }
 
