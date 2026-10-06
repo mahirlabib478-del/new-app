@@ -360,6 +360,21 @@ fun ProfileScreen(
         label = "profile_avatar_scale"
     )
 
+    // Visual celebration when the user's spendable XP actually increases.
+    // The first composition is ignored so opening Profile never triggers a false celebration.
+    var profileCelebrationScale by remember { mutableStateOf(1f) }
+    var profilePreviousXp by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(profile?.totalXP) {
+        val currentXp = profile?.totalXP
+        val previousXp = profilePreviousXp
+        profilePreviousXp = currentXp
+        if (currentXp != null && previousXp != null && currentXp > previousXp) {
+            profileCelebrationScale = 1.035f
+            kotlinx.coroutines.delay(180L)
+            profileCelebrationScale = 1f
+        }
+    }
+
     // Photo picker launcher (complies with Google Play permissions policy)
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -507,7 +522,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showXPShop = true }
-                    .scale(profilePassPulse)
+                    .scale(profilePassPulse * profileCelebrationScale)
                     .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp)
                     .testTag("profile_xp_perks_shop_card"),
                 shape = RoundedCornerShape(20.dp),
