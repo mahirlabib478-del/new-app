@@ -1090,7 +1090,7 @@ private fun CompactAmbientSoundBar(
             TextButton(
                 onClick = onToggle,
                 modifier = Modifier.tactile3DButton(
-                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                    backgroundColor = MaterialTheme.colorScheme.surface,
                     bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f),
                     cornerRadius = 10.dp,
                     depth = 2.dp
@@ -1264,7 +1264,7 @@ private fun AmbientSoundConfigDialog(
                                             depth = if (isSelected) 4.dp else 2.dp
                                         )
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                                        .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
                                         .clickable { onAmbientPresetChange(option) }
                                         .padding(vertical = 10.dp, horizontal = 4.dp),
                                     contentAlignment = Alignment.Center
