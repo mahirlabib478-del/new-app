@@ -4,6 +4,7 @@ import com.aistudio.studyos.service.CompactToast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -67,6 +69,16 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
     var isSpinning by remember { mutableStateOf(false) }
     var lastReward by remember { mutableStateOf<String?>(null) }
     val rotation = remember { Animatable(0f) }
+    val wheelScale by animateFloatAsState(
+        targetValue = if (isSpinning) 1.035f else 1f,
+        animationSpec = tween(260, easing = FastOutSlowInEasing),
+        label = "spin_wheel_scale"
+    )
+    val rewardScale by animateFloatAsState(
+        targetValue = if (lastReward != null) 1f else 0.94f,
+        animationSpec = tween(360, easing = FastOutSlowInEasing),
+        label = "spin_reward_scale"
+    )
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val profile by viewModel.userProfile.collectAsState()
@@ -148,6 +160,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                     modifier = Modifier
                          .size(250.dp)
                         .clip(CircleShape)
+                        .scale(wheelScale)
                         .graphicsLayer { rotationZ = rotation.value }
                         .shadow(10.dp, CircleShape)
                 ) {
@@ -194,7 +207,7 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
             }
 
             if (lastReward != null) {
-                AnimatedReveal(index = 0) {
+                AnimatedReveal(index = 0, modifier = Modifier.scale(rewardScale)) {
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.primaryContainer
@@ -288,7 +301,13 @@ fun SpinWheelSection(viewModel: StudyViewModel) {
                             depth = 5.dp
                         )
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.graphicsLayer {
+                            rotationZ = if (isSpinning) 90f else 0f
+                        }
+                    )
                     Spacer(Modifier.size(6.dp))
                     Text(
                         if (isSpinning) "Spinning…" else "Spin for " + cost + " XP",

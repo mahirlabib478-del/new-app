@@ -393,17 +393,32 @@ fun ProgressScreen(
                 ) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.LocalFireDepartment, "Streak", Modifier.size(28.dp), tint = MaterialTheme.colorScheme.tertiary)
+                            val streakIconScale by animateFloatAsState(
+                                targetValue = if (isStreakDoneToday && streak > 0) 1.1f else 1f,
+                                animationSpec = tween(420, easing = FastOutSlowInEasing),
+                                label = "streak_icon_scale"
+                            )
+                            Icon(
+                                Icons.Default.LocalFireDepartment,
+                                "Streak",
+                                Modifier.size(28.dp).scale(streakIconScale),
+                                tint = MaterialTheme.colorScheme.tertiary
+                            )
                             Spacer(Modifier.width(9.dp))
                             Column(Modifier.weight(1f)) {
                                 Text("STREAK", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(
-                                     if (streak == 1) "1 Day" else "${streak} Days",
-                                     fontSize = 26.sp,
-                                     fontWeight = FontWeight.Black,
-                                     maxLines = 1,
-                                     softWrap = false,
-                                     overflow = TextOverflow.Clip
+                                     AnimatedCounter(
+                                         target = streak,
+                                         suffix = if (streak == 1) " Day" else " Days",
+                                         durationMillis = 520,
+                                         style = MaterialTheme.typography.headlineSmall.copy(
+                                             fontSize = 26.sp,
+                                             fontWeight = FontWeight.Black
+                                         ),
+                                         maxLines = 1,
+                                         overflow = TextOverflow.Clip
+                                     )
                                  )
                             }
                             if (streakShieldCount > 0) {
