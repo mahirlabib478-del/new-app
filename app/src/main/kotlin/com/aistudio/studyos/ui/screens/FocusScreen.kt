@@ -272,7 +272,9 @@ fun FocusScreen(
             onDismissRequest = { showEndDialog = false },
             title = { Text("End Study Session?", fontWeight = FontWeight.Bold) },
             text = {
-                Text("Your elapsed study minutes will be saved to your progress and stats.")
+                AnimatedReveal(index = 0) {
+                    Text("Your elapsed study minutes will be saved to your progress and stats.")
+                }
             },
             confirmButton = {
                 TextButton(
