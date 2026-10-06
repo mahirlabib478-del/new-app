@@ -1,5 +1,6 @@
 package com.aistudio.studyos.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -514,12 +515,21 @@ private fun TodayFocusCard(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = todayMinutes.toString() + " / " + dailyGoal + " min",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (goalComplete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                )
+                AnimatedContent(
+                    targetState = todayMinutes,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(160)) togetherWith
+                            fadeOut(animationSpec = tween(100))
+                    },
+                    label = "home_today_minutes"
+                ) { minutes ->
+                    Text(
+                        text = minutes.toString() + " / " + dailyGoal + " min",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (goalComplete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             val animatedGoalProgress by animateFloatAsState(
@@ -556,9 +566,31 @@ private fun TodayFocusCard(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Icon(Icons.Default.PlayArrow, null, Modifier.size(20.dp))
+                AnimatedContent(
+                    targetState = goalComplete,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(160)) togetherWith
+                            fadeOut(animationSpec = tween(100))
+                    },
+                    label = "home_action_icon"
+                ) { complete ->
+                    Icon(
+                        if (complete) Icons.Default.CheckCircle else Icons.Default.PlayArrow,
+                        null,
+                        Modifier.size(20.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(actionLabel, fontWeight = FontWeight.Bold)
+                AnimatedContent(
+                    targetState = actionLabel,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(160)) togetherWith
+                            fadeOut(animationSpec = tween(100))
+                    },
+                    label = "home_action_label"
+                ) { label ->
+                    Text(label, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
