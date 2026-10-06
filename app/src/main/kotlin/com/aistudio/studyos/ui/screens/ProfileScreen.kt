@@ -363,6 +363,11 @@ fun ProfileScreen(
     // Visual celebration when the user's spendable XP actually increases.
     // The first composition is ignored so opening Profile never triggers a false celebration.
     var profileCelebrationScale by remember { mutableStateOf(1f) }
+    val profileCelebrationPulse by animateFloatAsState(
+        targetValue = profileCelebrationScale,
+        animationSpec = tween(180, easing = FastOutSlowInEasing),
+        label = "profile_xp_celebration"
+    )
     var profilePreviousXp by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(profile?.totalXP) {
         val currentXp = profile?.totalXP
@@ -522,7 +527,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showXPShop = true }
-                    .scale(profilePassPulse * profileCelebrationScale)
+                    .scale(profilePassPulse * profileCelebrationPulse)
                     .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp)
                     .testTag("profile_xp_perks_shop_card"),
                 shape = RoundedCornerShape(20.dp),
