@@ -507,6 +507,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showXPShop = true }
+                    .scale(profilePassPulse)
                     .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.48f), 20.dp, 5.dp)
                     .testTag("profile_xp_perks_shop_card"),
                 shape = RoundedCornerShape(20.dp),
