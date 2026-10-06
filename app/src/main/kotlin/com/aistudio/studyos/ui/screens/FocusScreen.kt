@@ -664,7 +664,7 @@ private fun FocusMoreOptionsDialog(
                 Surface(
                     modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 14.dp, 4.dp).clickable(onClick = onOpenShop),
                     shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("🛍️", fontSize = 22.sp)
