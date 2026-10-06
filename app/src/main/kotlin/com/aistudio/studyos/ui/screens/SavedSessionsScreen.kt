@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import com.aistudio.studyos.ui.components.tactile3DButton
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.StudyPlanEntity
@@ -79,7 +80,9 @@ fun SavedSessionsScreen(
             onDismissRequest = { planToDelete = null },
             title = { Text("Delete Saved Session?", fontWeight = FontWeight.Bold) },
             text = {
-                Text("Are you sure you want to remove \"${planToDelete?.title}\"? This action cannot be undone.")
+                AnimatedReveal(index = 0) {
+                    Text("Are you sure you want to remove \"${planToDelete?.title}\"? This action cannot be undone.")
+                }
             },
             confirmButton = {
                 TextButton(
