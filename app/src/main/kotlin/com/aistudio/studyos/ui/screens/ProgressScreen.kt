@@ -609,10 +609,15 @@ fun ProgressScreen(
                             }
                         }
                         weeklyData.forEach { day ->
+                            val animatedDayProgress by animateFloatAsState(
+                                targetValue = (day.minutes.toFloat() / maxWeekMinutes).coerceIn(0f, 1f),
+                                animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                label = "weekly_day_progress_${day.label}"
+                            )
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Text(day.label, Modifier.width(34.dp), fontSize = 11.sp, fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal)
                                 Box(Modifier.weight(1f).height(9.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.surface)) {
-                                    if (day.minutes > 0) Box(Modifier.fillMaxWidth(day.minutes.toFloat() / maxWeekMinutes).height(9.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.primary))
+                                    if (day.minutes > 0) Box(Modifier.fillMaxWidth(animatedDayProgress).height(9.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.primary))
                                 }
                                 Text(formatMinutes(day.minutes), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -638,10 +643,15 @@ fun ProgressScreen(
                             Text("Subjects", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(3.dp))
                             topSubjects.forEach { entry ->
+                                val animatedSubjectProgress by animateFloatAsState(
+                                    targetValue = (entry.value.toFloat() / maxSubjectMinutes).coerceIn(0f, 1f),
+                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                    label = "subject_progress_${entry.key}"
+                                )
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     Text(entry.key, Modifier.width(78.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp)
                                     Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surface)) {
-                                        Box(Modifier.fillMaxWidth(entry.value.toFloat() / maxSubjectMinutes).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary))
+                                        Box(Modifier.fillMaxWidth(animatedSubjectProgress).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary))
                                     }
                                     Text(formatMinutes(entry.value), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                 }
@@ -683,16 +693,21 @@ fun ProgressScreen(
                                         depth = 3.dp
                                     )
                             ) {
-                                if (analytics.planCompletionPercent > 0) {
-                                    Box(
-                                        Modifier
-                                            .fillMaxWidth(analytics.planCompletionPercent / 100f)
-                                            .height(7.dp)
-                                            .align(Alignment.CenterStart)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(MaterialTheme.colorScheme.primary)
-                                    )
-                                }
+                                val animatedPlanProgress by animateFloatAsState(
+                                targetValue = (analytics.planCompletionPercent / 100f).coerceIn(0f, 1f),
+                                animationSpec = tween(600, easing = FastOutSlowInEasing),
+                                label = "study_plan_completion_progress"
+                            )
+                            if (analytics.planCompletionPercent > 0) {
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth(animatedPlanProgress)
+                                        .height(7.dp)
+                                        .align(Alignment.CenterStart)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colorScheme.primary)
+                                )
+                            }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("${formatMinutes(analytics.actualMinutes)} completed", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
