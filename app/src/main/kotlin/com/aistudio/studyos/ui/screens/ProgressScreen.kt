@@ -99,6 +99,11 @@ private fun MissionProgressRow(
     progress: Float,
     complete: Boolean
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "mission_progress"
+    )
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(icon, fontSize = 17.sp)
@@ -112,7 +117,7 @@ private fun MissionProgressRow(
             )
         }
         LinearProgressIndicator(
-            progress = { progress.coerceIn(0f, 1f) },
+            progress = { animatedProgress },
             modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(4.dp)),
             color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.78f),
             trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)

@@ -134,10 +134,12 @@ fun HomeScreen(
 
         if (shieldSavedNotice != null) {
             item {
-                ShieldSavedBanner(
-                    streak = streak,
-                    onDismiss = { viewModel.dismissShieldNotice() }
-                )
+                AnimatedReveal(index = 1) {
+                    ShieldSavedBanner(
+                        streak = streak,
+                        onDismiss = { viewModel.dismissShieldNotice() }
+                    )
+                }
             }
         }
 
@@ -209,25 +211,29 @@ fun HomeScreen(
             }
 
         item {
-            StudyJourneyCard(
-                allLogs = allLogs,
-                activePlan = activePlan,
-                onOpenFocus = onOpenFocus,
-                onOpenStudy = onOpenStudy,
-                onOpenHistory = onOpenHistory
-            )
+            AnimatedReveal(index = 4) {
+                StudyJourneyCard(
+                    allLogs = allLogs,
+                    activePlan = activePlan,
+                    onOpenFocus = onOpenFocus,
+                    onOpenStudy = onOpenStudy,
+                    onOpenHistory = onOpenHistory
+                )
+            }
         }
 
         val nextExam = upcomingExams.firstOrNull()
         if (nextExam != null) {
             item {
-                NextExamCard(
-                    subject = nextExam.subject,
-                    daysRemaining = nextExam.daysRemaining,
-                    examDate = nextExam.examDate,
-                    topics = nextExam.syllabusTopics,
-                    onClick = onOpenExamPlanner
-                )
+                AnimatedReveal(index = 5) {
+                    NextExamCard(
+                        subject = nextExam.subject,
+                        daysRemaining = nextExam.daysRemaining,
+                        examDate = nextExam.examDate,
+                        topics = nextExam.syllabusTopics,
+                        onClick = onOpenExamPlanner
+                    )
+                }
             }
         }
 
