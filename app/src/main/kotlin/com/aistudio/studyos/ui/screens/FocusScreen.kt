@@ -840,13 +840,15 @@ private fun CircularTimerDisplay(
         else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
     }
 
+    // Subtle breathing effect while the timer is actively running.
+    // Paused sessions stay perfectly still so the state change is immediately readable.
     val timerPulse = if (isRunning) {
         val transition = rememberInfiniteTransition(label = "focus_timer_pulse")
         transition.animateFloat(
             initialValue = 1f,
-            targetValue = 1.0f,
+            targetValue = 1.016f,
             animationSpec = infiniteRepeatable(
-                animation = tween(900, easing = FastOutSlowInEasing),
+                animation = tween(1100, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Reverse
             ),
             label = "focus_timer_pulse_scale"
@@ -1878,6 +1880,15 @@ private fun FocusTimerControls(
         MaterialTheme.colorScheme.surface
     }
 
+    val playButtonScale by animateFloatAsState(
+        targetValue = if (isRunning) 1.04f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "focus_play_button_scale"
+    )
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -1909,6 +1920,7 @@ private fun FocusTimerControls(
             onClick = onToggle,
             modifier = Modifier
                 .size(76.dp)
+                .scale(playButtonScale)
                 .tactile3DButton(
                     backgroundColor = primaryColor,
                     bottomEdgeColor = primaryColor.copy(alpha = 0.48f),
