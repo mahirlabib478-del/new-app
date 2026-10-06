@@ -1766,7 +1766,7 @@ private fun AmbientSoundConfigDialog(
                                             .clip(RoundedCornerShape(10.dp))
                                             .clickable { onSelectAudio(audio) },
                                         shape = RoundedCornerShape(10.dp),
-                                        color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                        color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
                                         border = BorderStroke(
                                             width = if (isSelected) 1.5.dp else 1.dp,
                                             color = if (isSelected) MaterialTheme.colorScheme.secondary
