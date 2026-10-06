@@ -508,6 +508,27 @@ class FirebaseProgressSyncRepository(
         return "This device and cloud both contain progress. Nothing was overwritten. Use Restore only on an empty device, or explicitly resolve the copies before enabling sync."
     }
 
+    /** Returns true when the account already has meaningful cloud-owned progress. */
+    suspend fun hasMeaningfulCloudProgress(): Boolean {
+        val user = auth.currentUser
+            ?: throw IllegalStateException("Sign in before checking cloud progress.")
+        if (!user.isEmailVerified) throw IllegalStateException("Verify your email before checking cloud progress.")
+        val uid = user.uid
+        val ref = firestore.collection("users").document(uid)
+            .collection("progress").document("current")
+        val data = ref.get().asSuspendResult().data ?: return false
+        if (auth.currentUser?.uid != uid || auth.currentUser?.isEmailVerified != true) {
+            throw IllegalStateException("Account changed during cloud progress check. Please retry.")
+        }
+        val plans = (data["studyPlans"] as? List<*>)?.filterNotNull().orEmpty()
+        val exams = (data["exams"] as? List<*>)?.filterNotNull().orEmpty()
+        val sessions = (data["sessionLogs"] as? List<*>)?.filterNotNull().orEmpty()
+        val profiles = (data["profiles"] as? List<*>)?.filterNotNull().orEmpty()
+        val preferences = data["shopPreferences"].asMap().orEmpty()
+        return plans.isNotEmpty() || exams.isNotEmpty() || sessions.isNotEmpty() ||
+            preferences.isNotEmpty() || profiles.isNotEmpty()
+    }
+
     /**
      * Creates the first cloud backup only when no cloud document exists.
      * Existing cloud data is never overwritten by this action.
