@@ -349,6 +349,11 @@ fun ProfileScreen(
         animationSpec = tween(260),
         label = "profile_shield_scale"
     )
+    val profilePassPulse by animateFloatAsState(
+        targetValue = if (isWallpaperPassActive || isAudioPassActive || isBoosterActive) 1.02f else 1f,
+        animationSpec = tween(280),
+        label = "profile_active_pass_pulse"
+    )
     val profileAvatarScale by animateFloatAsState(
         targetValue = if (profileAccountUser != null) 1.04f else 1f,
         animationSpec = tween(320),
@@ -426,7 +431,7 @@ fun ProfileScreen(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                        modifier = Modifier.size(54.dp).scale(profileAvatarScale)
+                        modifier = Modifier.size(54.dp).scale(profileAvatarScale).animateContentSize(animationSpec = tween(220))
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             if (profileAvatarInitial != null) {
