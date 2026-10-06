@@ -271,6 +271,7 @@ fun XPShopBottomSheet(
 
             // ITEM 1: 🛡️ Streak Shield
             ShopItemCard(
+                animationIndex = 1,
                 icon = Icons.Default.Shield,
                 iconColor = MaterialTheme.colorScheme.primary,
                 title = "Streak Shield",
@@ -294,6 +295,7 @@ fun XPShopBottomSheet(
 
             // ITEM 2: 🖼️ Custom Wallpaper Pass (Custom days)
             ShopItemCard(
+                animationIndex = 2,
                 icon = Icons.Default.Image,
                 iconColor = MaterialTheme.colorScheme.primary,
                 title = "Custom Wallpaper Pass",
@@ -311,6 +313,7 @@ fun XPShopBottomSheet(
 
             // ITEM 3: 🎵 Custom Audio Pass (Custom days)
             ShopItemCard(
+                animationIndex = 3,
                 icon = Icons.Default.Headphones,
                 iconColor = MaterialTheme.colorScheme.primary,
                 title = "Custom Audio Pass",
@@ -478,6 +481,7 @@ private fun PremiumThemeRow(
 
 @Composable
 private fun ShopItemCard(
+    animationIndex: Int = 0,
     icon: ImageVector,
     iconColor: Color,
     title: String,
@@ -506,12 +510,13 @@ private fun ShopItemCard(
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        AnimatedReveal(index = animationIndex) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
             // Row 1: Icon, Title & Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -626,6 +631,7 @@ private fun ShopItemCard(
                         textAlign = TextAlign.Center
                     )
                 }
+            }
             }
         }
     }
