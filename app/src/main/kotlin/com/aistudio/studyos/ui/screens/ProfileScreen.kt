@@ -348,6 +348,11 @@ fun ProfileScreen(
         animationSpec = tween(260),
         label = "profile_shield_scale"
     )
+    val profileAvatarScale by animateFloatAsState(
+        targetValue = if (profileAccountUser != null) 1.04f else 1f,
+        animationSpec = tween(320),
+        label = "profile_avatar_scale"
+    )
 
     // Photo picker launcher (complies with Google Play permissions policy)
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -420,7 +425,7 @@ fun ProfileScreen(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                        modifier = Modifier.size(54.dp)
+                        modifier = Modifier.size(54.dp).scale(profileAvatarScale)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             if (profileAvatarInitial != null) {
