@@ -101,7 +101,6 @@ fun HomeScreen(
     val streak = profile?.streakDays ?: 0
     val level = profile?.currentLevel ?: 1
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
-    val totalXP = profile?.totalXP ?: 0
     val progressFraction = if (dailyGoal > 0) {
         (todayMinutes.toFloat() / dailyGoal).coerceIn(0f, 1f)
     } else 0f
@@ -129,7 +128,7 @@ fun HomeScreen(
     ) {
         item {
             AnimatedReveal(index = 0) {
-                HomeHeader(streak = streak, level = level, totalXP = totalXP)
+                HomeHeader(streak = streak, level = level, totalXP = profile?.totalXP ?: 0)
             }
         }
 
@@ -282,9 +281,7 @@ private fun HomeHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             StatPill(
-                modifier = Modifier
-                    .weight(1f)
-                    .animateContentSize(animationSpec = tween(260, easing = FastOutSlowInEasing)),
+                modifier = Modifier.weight(1f),
                 icon = {
                     Icon(
                         Icons.Default.LocalFireDepartment,
@@ -521,36 +518,693 @@ private fun TodayFocusCard(
             Spacer(modifier = Modifier.height(8.dp))
             val animatedGoalProgress by animateFloatAsState(
                 targetValue = progressFraction,
-                animationSpec = tween(300, easing = FastOutSlowInEasing),
-                label = "today_goal_progress"
+                animationSpec = tween(700, easing = FastOutSlowInEasing),
+                label = "daily_goal_progress"
             )
             LinearProgressIndicator(
                 progress = { animatedGoalProgress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
-                    .clip(RoundedCornerShape(50))
-                    .testTag("today_goal_progress"),
-                color = if (goalComplete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    .clip(RoundedCornerShape(4.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
             )
+
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onAction,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(16.dp),
+                    .height(48.dp)
+                    .tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.primary,
+                        bottomEdgeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.48f),
+                        cornerRadius = 15.dp,
+                        depth = 5.dp
+                    )
+                    .testTag("start_study_button"),
+                shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
+                Icon(Icons.Default.PlayArrow, null, Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
+                Text(actionLabel, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StudyJourneyCard(
+    allLogs: List<com.aistudio.studyos.data.local.entity.SessionLogEntity>,
+    activePlan: com.aistudio.studyos.data.local.entity.StudyPlanEntity?,
+    onOpenFocus: () -> Unit,
+    onOpenStudy: () -> Unit,
+    onOpenHistory: () -> Unit
+) {
+    val journeyDays = remember(allLogs) {
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        (-4..4).map { offset ->
+            val day = (today.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, offset) }
+            val nextDay = (day.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
+            val start = day.timeInMillis
+            val end = nextDay.timeInMillis
+            val minutes = if (offset <= 0) {
+                allLogs.filter { it.timestamp >= start && it.timestamp < end }.sumOf { it.durationMinutes }
+            } else 0
+            JourneyDay(day, minutes, offset == 0, offset > 0)
+        }
+    }
+    var selectedDay by remember { mutableStateOf<JourneyDay?>(null) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(280))
+            .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.58f), 24.dp, 8.dp)
+            .testTag("study_journey_card"),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Your Study Journey",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "Keep moving forward, one day at a time",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
-                    text = actionLabel,
+                    "View all",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onOpenHistory)
+                        .padding(6.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // A broad S-curve layout keeps the journey playful without relying on
+            // connector lines. Each node gently drifts left/right instead of zig-zagging.
+            val journeyPositions = listOf(
+                0.50f, 0.62f, 0.70f, 0.62f, 0.50f,
+                0.38f, 0.30f, 0.38f, 0.50f
+            )
+            val journeyStep = 132.dp
+
+            androidx.compose.foundation.layout.BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height((journeyStep.value * journeyDays.size + 44).dp)
+            ) {
+                // Floating study objects live in the open pockets of the curve.
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.School,
+                    label = "LEARN",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.12f,
+                        y = 30.dp
+                    )
+                )
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.TrackChanges,
+                    label = "FOCUS",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.73f,
+                        y = 138.dp
+                    )
+                )
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.Bolt,
+                    label = "XP",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.10f,
+                        y = 354.dp
+                    )
+                )
+                JourneyFloatingDecoration(
+                    icon = Icons.Default.Timer,
+                    label = "TIME",
+                    modifier = Modifier.offset(
+                        x = maxWidth * 0.74f,
+                        y = 570.dp
+                    )
+                )
+
+                journeyDays.forEachIndexed { index, day ->
+                    val isCompleted = !day.isFuture && day.minutes > 0
+                    val nodeSize = if (day.isToday) 86.dp else 72.dp
+                    JourneyNode(
+                        day = day,
+                        isCompleted = isCompleted,
+                        size = nodeSize,
+                        onClick = { selectedDay = day },
+                        modifier = Modifier.offset(
+                            x = maxWidth * journeyPositions[index] - nodeSize / 2,
+                            y = (index * journeyStep.value).dp
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    selectedDay?.let { day ->
+        val isCompleted = !day.isFuture && day.minutes > 0
+        AlertDialog(
+            onDismissRequest = { selectedDay = null },
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            shape = RoundedCornerShape(24.dp),
+            title = {
+                Text(
+                    text = if (day.isToday) {
+                        "Today • " + SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
+                    } else {
+                        SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
+                    },
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                AnimatedReveal(index = 1) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 14.dp, 3.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    when {
+                        day.isToday && activePlan != null -> {
+                            Text("Your active study plan is ready.")
+                            Text(
+                                "Continue your current session or open the Study Plan.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        day.isToday -> {
+                            Text(
+                                if (isCompleted) {
+                                    "You have already studied " + day.minutes + " minutes today."
+                                } else {
+                                    "You haven't studied yet today."
+                                }
+                            )
+                            Text(
+                                "Ready to make today count?",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        day.isFuture -> {
+                            Icon(Icons.Default.Event, null, tint = MaterialTheme.colorScheme.primary)
+                            Text("This day hasn't arrived yet.")
+                        }
+                        isCompleted -> {
+                            Text(day.minutes.toString() + " minutes studied on this day.")
+                            Text(
+                                "You can review the activity from History.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        else -> {
+                            Text("No study was recorded on this day.")
+                            Text(
+                                "Every day is a fresh start. Study today to keep moving forward.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    }
+                    }
+                }
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (day.isToday || (!day.isFuture && isCompleted)) Arrangement.End else Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = { selectedDay = null },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .height(40.dp)
+                            .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 4.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Close", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                    }
+
+                    if (day.isToday || (!day.isFuture && isCompleted)) {
+                        Spacer(Modifier.width(8.dp))
+                        if (day.isToday) {
+                            Button(
+                                onClick = {
+                                    selectedDay = null
+                                    if (activePlan != null) onOpenFocus() else onOpenStudy()
+                                },
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(if (activePlan != null) "Continue Session" else "Start a Session", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                            }
+                        } else {
+                            Button(
+                                onClick = { selectedDay = null; onOpenHistory() },
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .tactile3DButton(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f), 12.dp, 4.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("View Activity", maxLines = 1, softWrap = false, textAlign = TextAlign.Center)
+                            }
+                        }
+                    }
+                }
+            }        )
+    }
+}
+
+private data class JourneyDay(
+    val date: Calendar,
+    val minutes: Int,
+    val isToday: Boolean,
+    val isFuture: Boolean
+)
+
+@Composable
+private fun JourneyNode(
+    day: JourneyDay,
+    isCompleted: Boolean,
+    size: androidx.compose.ui.unit.Dp,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dateLabel = SimpleDateFormat("MMM d", Locale.getDefault()).format(day.date.time)
+    val primary = MaterialTheme.colorScheme.primary
+    val inactive = MaterialTheme.colorScheme.onSurfaceVariant
+    val nodeScale by animateFloatAsState(
+        targetValue = if (isCompleted || day.isToday) 1f else 0.94f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "journey_node_scale"
+    )
+    val todayPulse = if (day.isToday) {
+        val transition = rememberInfiniteTransition(label = "journey_today_pulse")
+        transition.animateFloat(
+            initialValue = 0.985f,
+            targetValue = 1.045f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(900, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "journey_today_pulse_scale"
+        ).value
+    } else 1f
+
+    val icon = when {
+        day.isToday -> "★"
+        isCompleted -> "✓"
+        day.isFuture -> "○"
+        else -> "·"
+    }
+
+    Column(
+        modifier = modifier
+            .graphicsLayer {
+                val nodeScaleValue = nodeScale * todayPulse
+                scaleX = nodeScaleValue
+                scaleY = nodeScaleValue
+            }
+            .clickable(onClick = onClick)
+            .testTag(
+                if (day.isToday) "journey_today_node"
+                else "journey_day_" + dateLabel.replace(" ", "_")
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier.size(size + 12.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            // Thick lower plate = the physical depth of the coin/button.
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .offset(y = 7.dp)
+                    .clip(CircleShape)
+                    .background(
+                        when {
+                            day.isToday -> primary.copy(alpha = 0.48f)
+                            isCompleted -> primary.copy(alpha = 0.42f)
+                            day.isFuture -> MaterialTheme.colorScheme.outline.copy(alpha = 0.20f)
+                            else -> Color.Black.copy(alpha = 0.28f)
+                        }
+                    )
+            )
+
+            if (day.isToday) {
+                Box(
+                    modifier = Modifier
+                        .size(size + 10.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 2.dp,
+                            color = primary.copy(alpha = 0.22f),
+                            shape = CircleShape
+                        )
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .shadow(
+                        elevation = if (day.isToday) 12.dp else 7.dp,
+                        shape = CircleShape,
+                        clip = false
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        when {
+                            day.isToday -> primary
+                            isCompleted -> primary.copy(alpha = 0.90f)
+                            day.isFuture -> MaterialTheme.colorScheme.surface
+                            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+                        }
+                    )
+                    .border(
+                        width = if (day.isToday) 2.dp else 1.dp,
+                        color = when {
+                            day.isToday -> primary.copy(alpha = 0.90f)
+                            isCompleted -> primary.copy(alpha = 0.45f)
+                            else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                        },
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    icon,
+                    fontSize = if (day.isToday) 25.sp else 19.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = when {
+                        day.isToday || isCompleted -> MaterialTheme.colorScheme.onPrimary
+                        else -> inactive.copy(alpha = if (day.isFuture) 0.62f else 0.72f)
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(1.dp))
+        Text(
+            if (day.isToday) "TODAY" else dateLabel,
+            fontSize = 10.sp,
+            fontWeight = if (day.isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
+            color = if (day.isToday) primary else inactive
+        )
+
+        when {
+            isCompleted -> {
+                Text(
+                    day.minutes.toString() + "m studied",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = inactive.copy(alpha = 0.82f)
+                )
+            }
+            day.isToday -> {
+                Text(
+                    "Your next step",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = primary.copy(alpha = 0.92f)
+                )
+            }
+            day.isFuture -> {
+                Text(
+                    "Locked",
+                    fontSize = 10.sp,
+                    color = inactive.copy(alpha = 0.58f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun JourneyFloatingDecoration(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    val transition = rememberInfiniteTransition(label = "journey_decor_$label")
+    val bob by transition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "journey_decor_bob_$label"
+    )
+    val tilt by transition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "journey_decor_tilt_$label"
+    )
+    val glow by transition.animateFloat(
+        initialValue = 0.10f,
+        targetValue = 0.22f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "journey_decor_glow_$label"
+    )
+
+    Column(
+        modifier = modifier
+            .size(84.dp)
+            .graphicsLayer {
+                translationY = bob.dp.toPx()
+                rotationZ = tilt
+            },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(58.dp)
+                .shadow(12.dp, RoundedCornerShape(16.dp), clip = false)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = glow),
+                    shape = RoundedCornerShape(16.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
+                modifier = Modifier.size(29.dp)
+            )
+        }
+        Text(
+            label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
+        )
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    modifier: Modifier,
+    icon: @Composable () -> Unit,
+    title: String,
+    subtitle: String,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                cornerRadius = 18.dp,
+                depth = 5.dp
+            )
+            .animateContentSize(animationSpec = tween(220))
+            .testTag(testTag)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            icon()
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun NextExamCard(
+    subject: String,
+    daysRemaining: Int,
+    examDate: String,
+    topics: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .tactile3DButton(
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                cornerRadius = 20.dp,
+                depth = 5.dp
+            )
+            .testTag("spotlight_upcoming_exam_card")
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(17.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Timer,
+                        null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Next exam",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = subject,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Text(
+                    text = if (daysRemaining > 0) daysRemaining.toString() + "d left" else examDate,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            if (topics.isNotBlank()) {
+                Spacer(modifier = Modifier.height(9.dp))
+                Text(
+                    text = topics,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    softWrap = false
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "View exam plan",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    Icons.Default.ArrowForward,
+                    null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
