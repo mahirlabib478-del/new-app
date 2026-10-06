@@ -520,7 +520,8 @@ private fun TodayFocusCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
             val animatedGoalProgress by animateFloatAsState(
-                targetValue = progressFraction,    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                targetValue = progressFraction,
+                animationSpec = tween(300, easing = FastOutSlowInEasing),
                 label = "today_goal_progress"
             )
             LinearProgressIndicator(
