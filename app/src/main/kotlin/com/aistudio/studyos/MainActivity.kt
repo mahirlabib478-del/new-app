@@ -111,6 +111,7 @@ import com.aistudio.studyos.ui.viewmodel.StudyViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
     object Home : Screen("home", "Home", Icons.Default.Home)
@@ -175,8 +176,8 @@ class MainActivity : ComponentActivity() {
             }
             val canContinueAsGuest = guestMode && auth.currentUser == null
             if (verifiedUid != null || canContinueAsGuest) {
-                if (verifiedUid != null) {
-                    val uid = verifiedUid
+                val uid = verifiedUid
+                if (uid != null) {
                     LaunchedEffect(uid) {
                         val app = application as StudyApplication
                         try {
@@ -224,7 +225,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
 
-                    if (guestImportPendingUid == uid) {
+                    if (uid != null && guestImportPendingUid == uid) {
                         AlertDialog(
                             onDismissRequest = {
                                 if (!guestImportBusy) {
