@@ -102,11 +102,6 @@ fun HomeScreen(
     val level = profile?.currentLevel ?: 1
     val dailyGoal = profile?.dailyGoalMinutes ?: 60
     val totalXP = profile?.totalXP ?: 0
-    val dashboardXPScale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(260, easing = FastOutSlowInEasing),
-        label = "home_xp_refresh"
-    )
     val progressFraction = if (dailyGoal > 0) {
         (todayMinutes.toFloat() / dailyGoal).coerceIn(0f, 1f)
     } else 0f
