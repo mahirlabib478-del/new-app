@@ -3,6 +3,7 @@ package com.aistudio.studyos.ui.components
 import com.aistudio.studyos.service.CompactToast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
