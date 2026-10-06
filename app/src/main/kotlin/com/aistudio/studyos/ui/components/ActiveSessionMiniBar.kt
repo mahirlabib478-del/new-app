@@ -1,5 +1,6 @@
 package com.aistudio.studyos.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -149,13 +150,18 @@ fun ActiveSessionMiniBar(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = timeFormatted,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    color = accentColor
-                )
+                AnimatedContent(
+                    targetState = timeFormatted,
+                    label = "mini_bar_timer",
+                ) { animatedTime ->
+                    Text(
+                        text = animatedTime,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = accentColor
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
@@ -175,11 +181,16 @@ fun ActiveSessionMiniBar(
                         contentColor = if (focusState.isRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 ) {
-                    Icon(
-                        imageVector = if (focusState.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (focusState.isRunning) "Pause" else "Play",
-                        modifier = Modifier.size(18.dp)
-                    )
+                    AnimatedContent(
+                        targetState = focusState.isRunning,
+                        label = "mini_bar_timer_toggle",
+                    ) { isRunning ->
+                        Icon(
+                            imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isRunning) "Pause" else "Play",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }
