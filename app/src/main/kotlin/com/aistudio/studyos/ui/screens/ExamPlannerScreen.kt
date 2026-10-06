@@ -191,7 +191,7 @@ fun ExamPlannerScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 4.dp)
+                            .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 4.dp)
                             .testTag("exam_card_${exam.id}"),
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
@@ -372,7 +372,7 @@ fun ExamPlannerScreen(
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (daysLeft == d)
                                         MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surfaceVariant
+                                    else MaterialTheme.colorScheme.surface
                                 )
                             ) {
                                 Box(
@@ -404,7 +404,7 @@ fun ExamPlannerScreen(
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (priority == p)
                                         MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surfaceVariant
+                                    else MaterialTheme.colorScheme.surface
                                 )
                             ) {
                                 Box(
