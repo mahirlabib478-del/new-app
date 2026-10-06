@@ -48,6 +48,68 @@ class StudyApplication : Application() {
         }
     }
 
+    /**
+     * Offer guest migration only when the target account is locally empty and its cloud
+     * snapshot is also empty. Existing account data is never silently replaced.
+     */
+    suspend fun shouldOfferGuestImport(uid: String): Boolean {
+        val authUser = FirebaseAuth.getInstance().currentUser
+        if (authUser?.uid != uid || !authUser.isEmailVerified) return false
+
+        val accountDb = databaseFor(uid)
+        val localHasProgress =
+            accountDb.studyPlanDao().getAllForBackup().isNotEmpty() ||
+                accountDb.examDao().getAllForBackup().isNotEmpty() ||
+                accountDb.sessionLogDao().getAllForBackup().isNotEmpty() ||
+                accountDb.userProfileDao().getAllForBackup().any {
+                    it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                        it.totalXpSpent > 0 || it.streakDays > 0
+                }
+        if (localHasProgress) return false
+
+        if (!LegacyProgressImportRepository(this, uid).hasLegacyProgress()) return false
+        return !cloudSyncFor(uid).hasMeaningfulCloudProgress()
+    }
+
+    /**
+     * Explicitly imports the isolated guest store into the UID-scoped account and then
+     * uploads the imported snapshot. Guest data is never deleted by this operation.
+     */
+    suspend fun importGuestProgressToAccount(uid: String): String {
+        val authUser = FirebaseAuth.getInstance().currentUser
+        require(authUser?.uid == uid && authUser.isEmailVerified) {
+            "A verified account is required to import guest progress."
+        }
+        val sync = cloudSyncFor(uid)
+        if (sync.hasMeaningfulCloudProgress()) {
+            throw IllegalStateException(
+                "This account already has cloud progress. Guest import was cancelled to protect existing data."
+            )
+        }
+
+        val accountDb = databaseFor(uid)
+        val accountAlreadyPopulated =
+            accountDb.studyPlanDao().getAllForBackup().isNotEmpty() ||
+                accountDb.examDao().getAllForBackup().isNotEmpty() ||
+                accountDb.sessionLogDao().getAllForBackup().isNotEmpty() ||
+                accountDb.userProfileDao().getAllForBackup().any {
+                    it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                        it.totalXpSpent > 0 || it.streakDays > 0
+                }
+
+        // A previous local import may have succeeded while its cloud upload failed.
+        // In that case retry only the upload instead of duplicating guest rows.
+        if (accountAlreadyPopulated) {
+            sync.uploadImportedGuestSnapshot()
+            return "Guest progress was already imported locally and is now synced."
+        }
+
+        val summary = LegacyProgressImportRepository(this, uid).importLegacyProgress()
+        if (summary.isEmpty) return "No guest progress was found to import."
+        sync.uploadImportedGuestSnapshot()
+        return "Guest progress imported and synced."
+    }
+
     @Synchronized
     fun activateCloudSync(uid: String) {
         val user = FirebaseAuth.getInstance().currentUser ?: return
