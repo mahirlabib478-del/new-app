@@ -56,6 +56,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -64,6 +65,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -174,22 +176,23 @@ class MainActivity : ComponentActivity() {
             val canContinueAsGuest = guestMode && auth.currentUser == null
             if (verifiedUid != null || canContinueAsGuest) {
                 if (verifiedUid != null) {
-                    LaunchedEffect(verifiedUid) {
+                    val uid = verifiedUid
+                    LaunchedEffect(uid) {
                         val app = application as StudyApplication
                         try {
                             val shouldOffer = withContext(Dispatchers.IO) {
-                                app.shouldOfferGuestImport(verifiedUid)
+                                app.shouldOfferGuestImport(uid)
                             }
                             if (shouldOffer) {
                                 guestImportError = null
-                                guestImportPendingUid = verifiedUid
+                                guestImportPendingUid = uid
                             } else {
-                                app.activateCloudSync(verifiedUid)
+                                app.activateCloudSync(uid)
                             }
                         } catch (error: Exception) {
                             // A preflight failure must never block the account. Continue with
                             // normal cloud bootstrap; it will fail closed if reconciliation is needed.
-                            app.activateCloudSync(verifiedUid)
+                            app.activateCloudSync(uid)
                         }
                     }
                 }
@@ -221,12 +224,12 @@ class MainActivity : ComponentActivity() {
                         }
                     )
 
-                    if (guestImportPendingUid == verifiedUid) {
+                    if (guestImportPendingUid == uid) {
                         AlertDialog(
                             onDismissRequest = {
                                 if (!guestImportBusy) {
                                     guestImportPendingUid = null
-                                    (application as StudyApplication).activateCloudSync(verifiedUid)
+                                    (application as StudyApplication).activateCloudSync(uid)
                                 }
                             },
                             title = { Text("Bring your guest progress?") },
@@ -258,10 +261,10 @@ class MainActivity : ComponentActivity() {
                                         guestImportScope.launch {
                                             try {
                                                 val result = withContext(Dispatchers.IO) {
-                                                    (application as StudyApplication).importGuestProgressToAccount(verifiedUid)
+                                                    (application as StudyApplication).importGuestProgressToAccount(uid)
                                                 }
                                                 guestImportPendingUid = null
-                                                (application as StudyApplication).activateCloudSync(verifiedUid)
+                                                (application as StudyApplication).activateCloudSync(uid)
                                             } catch (error: Exception) {
                                                 guestImportError = error.localizedMessage
                                                     ?: "Guest progress could not be imported. Nothing was intentionally deleted."
@@ -282,7 +285,7 @@ class MainActivity : ComponentActivity() {
                                     onClick = {
                                         guestImportPendingUid = null
                                         guestImportError = null
-                                        (application as StudyApplication).activateCloudSync(verifiedUid)
+                                        (application as StudyApplication).activateCloudSync(uid)
                                     }
                                 ) {
                                     Text("Keep Guest Data", maxLines = 1, softWrap = false)
