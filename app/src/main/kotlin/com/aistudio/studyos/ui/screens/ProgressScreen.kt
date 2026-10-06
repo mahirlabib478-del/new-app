@@ -2,6 +2,7 @@ package com.aistudio.studyos.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.animateContentSize
@@ -726,8 +727,26 @@ fun ProgressScreen(
                             Icon(Icons.Default.EmojiEvents, "Level", Modifier.size(27.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
-                                Text("Level ${currentLevel}", fontSize = 19.sp, fontWeight = FontWeight.Black)
-                                Text(currentRankTitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                AnimatedContent(
+                                    targetState = currentLevel,
+                                    transitionSpec = {
+                                        fadeIn(animationSpec = tween(180)) togetherWith
+                                            fadeOut(animationSpec = tween(120))
+                                    },
+                                    label = "progress_level_value"
+                                ) { levelValue ->
+                                    Text("Level \$levelValue", fontSize = 19.sp, fontWeight = FontWeight.Black)
+                                }
+                                AnimatedContent(
+                                    targetState = currentRankTitle,
+                                    transitionSpec = {
+                                        fadeIn(animationSpec = tween(180)) togetherWith
+                                            fadeOut(animationSpec = tween(120))
+                                    },
+                                    label = "progress_rank_title"
+                                ) { rankTitle ->
+                                    Text(rankTitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                             AnimatedCounter(
                                 target = profile?.totalXpEarned ?: 0,
@@ -743,9 +762,23 @@ fun ProgressScreen(
                             MissionProgressRow("📚", "Topics", "${mission.topicCount} / ${mission.targets.topicCountRequired}", mission.topicCount.toFloat() / mission.targets.topicCountRequired, mission.topicBreadthComplete)
                             MissionProgressRow("🎯", "Peak Focus", "${mission.peakFocusMinutes} / ${mission.targets.peakFocusMinutesRequired}m", mission.peakFocusMinutes.toFloat() / mission.targets.peakFocusMinutesRequired, mission.peakFocusComplete)
                             MissionProgressRow("🛍️", "Shop Investment", "${mission.xpSpent} / ${mission.targets.xpSpentRequired} XP", mission.xpSpent.toFloat() / mission.targets.xpSpentRequired, mission.shopInvestmentComplete)
-                            if (mission.allComplete && currentLevel < 100) {
-                                Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary) {
-                                    Text("Level ${currentLevel + 1} unlocked! 🎉", Modifier.padding(vertical = 10.dp).fillMaxWidth(), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                            AnimatedVisibility(
+                                visible = mission.allComplete && currentLevel < 100,
+                                enter = fadeIn(animationSpec = tween(220)),
+                                exit = fadeOut(animationSpec = tween(140))
+                            ) {
+                                Surface(
+                                    Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(220)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                ) {
+                                    Text(
+                                        "Level ${currentLevel + 1} unlocked! 🎉",
+                                        Modifier.padding(vertical = 10.dp).fillMaxWidth(),
+                                        textAlign = TextAlign.Center,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
                             }
                         }
