@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aistudio.studyos.ui.components.AnimatedReveal
 import com.aistudio.studyos.ui.components.tactile3DButton
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
@@ -77,7 +78,9 @@ fun ExamPlannerScreen(
             onDismissRequest = { examToDelete = null },
             title = { Text("Delete Exam?", fontWeight = FontWeight.Bold) },
             text = {
-                Text("Are you sure you want to delete ${examToDelete?.subject}? This action cannot be undone.")
+                AnimatedReveal(index = 0) {
+                    Text("Are you sure you want to delete ${examToDelete?.subject}? This action cannot be undone.")
+                }
             },
             confirmButton = {
                 TextButton(
@@ -327,7 +330,8 @@ fun ExamPlannerScreen(
             onDismissRequest = { showAddDialog = false },
             title = { Text("Add Upcoming Exam", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                AnimatedReveal(index = 0) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
                         value = subjectName,
                         onValueChange = { subjectName = it },
@@ -433,6 +437,7 @@ fun ExamPlannerScreen(
                         onValueChange = { confidence = it },
                         valueRange = 0f..100f
                     )
+                    }
                 }
             },
             confirmButton = {
