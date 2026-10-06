@@ -343,6 +343,12 @@ fun ProfileScreen(
     val isBoosterActive by viewModel.isDoubleXpBoosterActive.collectAsState()
     val activeBoosterMultiplier by viewModel.xpBoosterMultiplier.collectAsState()
 
+    val profileShieldScale by animateFloatAsState(
+        targetValue = if (streakShieldCount > 0) 1.08f else 1f,
+        animationSpec = tween(260),
+        label = "profile_shield_scale"
+    )
+
     // Photo picker launcher (complies with Google Play permissions policy)
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -562,7 +568,7 @@ fun ProfileScreen(
                                 Surface(
                                     shape = CircleShape,
                                     color = MaterialTheme.colorScheme.surface,
-                                    modifier = Modifier.size(30.dp).tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.34f), 15.dp, 3.dp)
+                                    modifier = Modifier.size(30.dp).scale(profileShieldScale).tactile3DButton(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary.copy(alpha = 0.34f), 15.dp, 3.dp)
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Icon(Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
