@@ -2,7 +2,9 @@ package com.aistudio.studyos.ui.components
 
 import com.aistudio.studyos.service.CompactToast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -494,6 +496,22 @@ private fun ShopItemCard(
     testTag: String,
     onAction: () -> Unit
 ) {
+    val buttonContainerColor by animateColorAsState(
+        targetValue = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(180),
+        label = "shop_button_container"
+    )
+    val buttonEdgeColor by animateColorAsState(
+        targetValue = if (isButtonEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+        animationSpec = tween(180),
+        label = "shop_button_edge"
+    )
+    val buttonScale by animateFloatAsState(
+        targetValue = if (isButtonEnabled) 1f else 0.985f,
+        animationSpec = tween(180),
+        label = "shop_button_scale"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -613,23 +631,36 @@ private fun ShopItemCard(
                     modifier = Modifier
                         .height(40.dp)
                         .widthIn(min = 112.dp, max = 166.dp)
+                        .graphicsLayer {
+                            scaleX = buttonScale
+                            scaleY = buttonScale
+                        }
                         .tactile3DButton(
-                            backgroundColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                            bottomEdgeColor = if (isButtonEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                            backgroundColor = buttonContainerColor,
+                            bottomEdgeColor = buttonEdgeColor,
                             cornerRadius = 12.dp,
                             depth = 4.dp
                         )
                         .testTag(testTag)
                 ) {
-                    Text(
-                        text = buttonLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
-                    )
+                    AnimatedContent(
+                        targetState = buttonLabel,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(140)) togetherWith
+                                fadeOut(animationSpec = tween(100))
+                        },
+                        label = "shop_button_label"
+                    ) { label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
             }
