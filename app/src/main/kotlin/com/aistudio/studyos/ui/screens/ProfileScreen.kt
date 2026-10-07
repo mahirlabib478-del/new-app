@@ -758,7 +758,7 @@ fun ProfileScreen(
                     .testTag("wallpaper_settings_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(
