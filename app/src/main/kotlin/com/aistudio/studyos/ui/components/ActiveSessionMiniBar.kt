@@ -70,8 +70,7 @@ fun ActiveSessionMiniBar(
     val seconds = focusState.secondsRemaining % 60
     val timeFormatted = String.format("%02d:%02d", minutes, seconds)
     val accentColor = if (focusState.isBreak) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
-    val miniSurface = if (focusState.isBreak) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surface
-    val miniOnSurface = if (focusState.isBreak) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
+    // Keep the mini bar readable across pitch-black, light and accent themes. The\n    // previous tertiary/surface split could become too low-contrast in some themes.\n    val miniSurface = MaterialTheme.colorScheme.surfaceVariant\n    val miniOnSurface = MaterialTheme.colorScheme.onSurfaceVariant
 
     Surface(
         modifier = modifier
@@ -170,14 +169,14 @@ fun ActiveSessionMiniBar(
                     modifier = Modifier
                         .size(34.dp)
                         .tactile3DButton(
-                            backgroundColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                            backgroundColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                             bottomEdgeColor = accentColor.copy(alpha = 0.42f),
                             cornerRadius = 50.dp,
                             depth = 4.dp
                         )
                         .testTag("mini_bar_toggle_timer"),
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                        containerColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                         contentColor = if (focusState.isRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 ) {
