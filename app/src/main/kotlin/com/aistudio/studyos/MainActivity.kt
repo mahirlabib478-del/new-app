@@ -584,11 +584,6 @@ fun MainApp(
                     NavigationBar(
                         modifier = Modifier
                             .padding(horizontal = 10.dp, vertical = 8.dp)
-                            .shadow(
-                                elevation = 8.dp,
-                                shape = RoundedCornerShape(28.dp),
-                                clip = false
-                            )
                             .clip(RoundedCornerShape(28.dp))
                             .background(MaterialTheme.colorScheme.surface)
                             .testTag("bottom_nav_bar"),
