@@ -736,7 +736,7 @@ fun ProgressScreen(
                                     },
                                     label = "progress_level_value"
                                 ) { levelValue ->
-                                    Text("Level \$levelValue", fontSize = 19.sp, fontWeight = FontWeight.Black)
+                                    Text("Level $levelValue", fontSize = 19.sp, fontWeight = FontWeight.Black)
                                 }
                                 AnimatedContent(
                                     targetState = currentRankTitle,
