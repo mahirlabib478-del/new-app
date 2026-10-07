@@ -81,7 +81,7 @@ fun ActiveSessionMiniBar(
             .clip(RoundedCornerShape(18.dp))
             .tactile3DButton(
                 backgroundColor = miniSurface,
-                bottomEdgeColor = accentColor.copy(alpha = 0.38f),
+                bottomEdgeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                 cornerRadius = 18.dp,
                 depth = 5.dp
             )
