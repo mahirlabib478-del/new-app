@@ -1,3 +1,4 @@
+# Verified clean Android CI workflow
 name: Study OS Android CI
 
 on:
