@@ -445,7 +445,7 @@ fun ProgressScreen(
                                 Icons.Default.LocalFireDepartment,
                                 "Streak",
                                 Modifier.size(28.dp).scale(streakIconScale),
-                                tint = MaterialTheme.colorScheme.tertiary
+                                tint = Color(0xFFFF6B35)
                             )
                             Spacer(Modifier.width(9.dp))
                             Column(
