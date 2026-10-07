@@ -100,6 +100,9 @@ class StudyApplication : Application() {
         // A previous local import may have succeeded while its cloud upload failed.
         // In that case retry only the upload instead of duplicating guest rows.
         if (accountAlreadyPopulated) {
+            // A previous import may have populated session history while leaving
+            // cached profile metadata stale. Reconcile before retrying the upload.
+            repositoryFor(uid).ensureCleanInitialData()
             sync.uploadImportedGuestSnapshot()
             return "Guest progress was already imported locally and is now synced."
         }
