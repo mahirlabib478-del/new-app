@@ -78,7 +78,7 @@ fun ActiveSessionMiniBar(
         modifier = modifier
             .fillMaxWidth()
              .padding(horizontal = 16.dp)
-            .padding(top = 4.dp, bottom = 12.dp)
+            .padding(top = 4.dp, bottom = 4.dp)
             .clip(RoundedCornerShape(18.dp))
             .tactile3DButton(
                 backgroundColor = miniSurface,
@@ -90,7 +90,7 @@ fun ActiveSessionMiniBar(
             .testTag("active_session_mini_bar"),
         shape = RoundedCornerShape(18.dp),
         color = miniSurface,
-        shadowElevation = 5.dp
+        shadowElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
