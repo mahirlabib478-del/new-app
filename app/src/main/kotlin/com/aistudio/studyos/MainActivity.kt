@@ -338,20 +338,20 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun WelcomeScreen(isDark: Boolean, onGetStarted: () -> Unit) {
-    val background = if (isDark) Color(0xFF000000) else Color(0xFFF6F1EA)
-    val accent = if (isDark) Color(0xFF00E5FF) else Color(0xFFC2410C)
-    val accentSoft = if (isDark) Color(0xFF80F5FF) else Color(0xFF9A3412)
-    val mutedText = if (isDark) Color(0xFFA0A0A0) else Color(0xFF57534E)
-    val primaryText = if (isDark) Color.White else Color(0xFF292524)
-    val outerOrb = if (isDark) Color(0xFF050B0C) else Color(0xFFFFE8D1)
-    val middleOrb = if (isDark) Color(0xFF080F10) else Color(0xFFFFF0E0)
-    val innerOrb = if (isDark) Color(0xFF0B2024) else Color(0xFFFED7AA)
-    val outerBorder = if (isDark) Color(0xFF123238) else Color(0xFFE0C4A8)
-    val middleBorder = if (isDark) Color(0xFF174047) else Color(0xFFE9B98F)
-    val innerBorder = if (isDark) Color(0xFF17606A) else Color(0xFFEA580C)
-    val logoSurface = if (isDark) Color(0xFF101010) else Color(0xFFFFF7F1)
-    val badgeSurface = if (isDark) Color(0xFF0B2024) else Color(0xFFFFEDD5)
-    val badgeBorder = if (isDark) Color(0xFF17606A) else Color(0xFFE0C4A8)
+    val background = MaterialTheme.colorScheme.background
+    val accent = MaterialTheme.colorScheme.primary
+    val accentSoft = MaterialTheme.colorScheme.onPrimaryContainer
+    val mutedText = MaterialTheme.colorScheme.onSurfaceVariant
+    val primaryText = MaterialTheme.colorScheme.onBackground
+    val outerOrb = MaterialTheme.colorScheme.surfaceVariant
+    val middleOrb = MaterialTheme.colorScheme.surface
+    val innerOrb = MaterialTheme.colorScheme.primaryContainer
+    val outerBorder = MaterialTheme.colorScheme.outlineVariant
+    val middleBorder = MaterialTheme.colorScheme.outline
+    val innerBorder = MaterialTheme.colorScheme.primary
+    val logoSurface = MaterialTheme.colorScheme.surface
+    val badgeSurface = MaterialTheme.colorScheme.primaryContainer
+    val badgeBorder = MaterialTheme.colorScheme.outline
 
     Column(
         modifier = Modifier

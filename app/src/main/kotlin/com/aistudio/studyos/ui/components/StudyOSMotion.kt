@@ -76,7 +76,7 @@ fun Modifier.inset3D(
         )
         drawContent()
         drawLine(
-            color = Color.Black.copy(alpha = 0.16f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f),
             start = androidx.compose.ui.geometry.Offset(10.dp.toPx(), size.height - 1.dp.toPx()),
             end = androidx.compose.ui.geometry.Offset(size.width - 10.dp.toPx(), size.height - 1.dp.toPx()),
             strokeWidth = 0.7.dp.toPx()
@@ -151,7 +151,7 @@ fun Modifier.tactile3DButton(
 
             // Thin specular highlight reinforces the raised top edge.
             drawLine(
-                color = Color.White.copy(alpha = 0.12f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                 start = androidx.compose.ui.geometry.Offset(radiusPx, 0.7.dp.toPx()),
                 end = androidx.compose.ui.geometry.Offset(
                     (size.width - radiusPx).coerceAtLeast(radiusPx),

@@ -935,7 +935,7 @@ private fun JourneyNode(
                             day.isToday -> primary.copy(alpha = 0.48f)
                             isCompleted -> primary.copy(alpha = 0.42f)
                             day.isFuture -> MaterialTheme.colorScheme.outline.copy(alpha = 0.20f)
-                            else -> Color.Black.copy(alpha = 0.28f)
+                            else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f)
                         }
                     )
             )
