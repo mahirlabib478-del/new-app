@@ -70,7 +70,10 @@ fun ActiveSessionMiniBar(
     val seconds = focusState.secondsRemaining % 60
     val timeFormatted = String.format("%02d:%02d", minutes, seconds)
     val accentColor = if (focusState.isBreak) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
-    // Keep the mini bar readable across pitch-black, light and accent themes. The\n    // previous tertiary/surface split could become too low-contrast in some themes.\n    val miniSurface = MaterialTheme.colorScheme.surfaceVariant\n    val miniOnSurface = MaterialTheme.colorScheme.onSurfaceVariant
+    // Keep the mini bar readable across pitch-black, light and accent themes.
+    // The previous tertiary/surface split could become too low-contrast in some themes.
+    val miniSurface = MaterialTheme.colorScheme.surfaceVariant
+    val miniOnSurface = MaterialTheme.colorScheme.onSurfaceVariant
 
     Surface(
         modifier = modifier
