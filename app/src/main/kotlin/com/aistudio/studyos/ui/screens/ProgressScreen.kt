@@ -130,35 +130,22 @@ private fun MissionProgressRow(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
         label = "mission_progress"
     )
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(icon, Modifier.width(28.dp), fontSize = 16.sp)
-        Text(
-            title,
-            Modifier.width(78.dp),
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        UnifiedProgressBar(
-            progress = animatedProgress,
-            complete = complete,
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            if (complete) "✓" else valueText,
-            Modifier.width(76.dp),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.End,
-            color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(icon, fontSize = 17.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            Text(
+                if (complete) "✓" else valueText,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        UnifiedProgressBar(progress = animatedProgress, complete = complete)
     }
 }
 
@@ -549,22 +536,8 @@ fun ProgressScreen(
                             }
                             Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                         }
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text("Today", Modifier.width(78.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            UnifiedProgressBar(
-                                progress = animatedDailyProgress,
-                                complete = progress >= 1f,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                if (remaining > 0) "${remaining}m left" else "Done ✓",
-                                Modifier.width(76.dp),
-                                fontSize = 10.sp,
-                                textAlign = TextAlign.End,
-                                fontWeight = FontWeight.Bold,
-                                color = if (remaining > 0) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        UnifiedProgressBar(progress = animatedDailyProgress, complete = progress >= 1f)
+                        Text(if (remaining > 0) "${remaining} min remaining" else "Daily target reached 🎉", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -752,25 +725,13 @@ fun ProgressScreen(
                             }
                             val animatedPlanProgress by animateFloatAsState(
                                 targetValue = (analytics.planCompletionPercent / 100f).coerceIn(0f, 1f),
-                                animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                animationSpec = tween(600, easing = FastOutSlowInEasing),
                                 label = "study_plan_completion_progress"
                             )
-                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                Text("Plan", Modifier.width(78.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                UnifiedProgressBar(
-                                    progress = animatedPlanProgress,
-                                    complete = analytics.planCompletionPercent >= 100,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    if (analytics.planCompletionPercent >= 100) "Done ✓" else "${analytics.planCompletionPercent}%",
-                                    Modifier.width(76.dp),
-                                    fontSize = 10.sp,
-                                    textAlign = TextAlign.End,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (analytics.planCompletionPercent >= 100) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            UnifiedProgressBar(
+                                progress = animatedPlanProgress,
+                                complete = analytics.planCompletionPercent >= 100
+                            )
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("${formatMinutes(analytics.actualMinutes)} completed", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text("${formatMinutes(analytics.activePlanRemainingMinutes)} remaining", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
