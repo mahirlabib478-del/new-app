@@ -77,6 +77,7 @@ import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedCounter
 import com.aistudio.studyos.ui.components.AnimatedReveal
+import com.aistudio.studyos.ui.components.tactile3DButton
 import com.aistudio.studyos.data.repository.ProgressAnalyticsCalculator
 import com.aistudio.studyos.data.repository.LevelMissionCalculator
 import com.aistudio.studyos.data.repository.LevelMissionProgress
@@ -404,7 +405,12 @@ fun ProgressScreen(
         if (selectedTab == 0) {
             item {
                 Card(
-                    modifier = Modifier
+                    modifier = Modifier.tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                        cornerRadius = 20.dp,
+                        depth = 5.dp
+                    )
                         .fillMaxWidth()
                         .testTag("streak_metric_card"),
                     shape = RoundedCornerShape(22.dp),
@@ -528,7 +534,12 @@ fun ProgressScreen(
                 )
                 val remaining = (dailyGoal - todayMinutes).coerceAtLeast(0)
                 Card(
-                    Modifier
+                    Modifier.tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                        cornerRadius = 20.dp,
+                        depth = 5.dp
+                    )
                         .fillMaxWidth()
                         .testTag("today_goal_analytics_card"),
                     shape = RoundedCornerShape(20.dp),
@@ -569,7 +580,12 @@ fun ProgressScreen(
                 val dayHeaders = listOf("S", "M", "T", "W", "T", "F", "S")
 
                 Card(
-                    Modifier
+                    Modifier.tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                        cornerRadius = 20.dp,
+                        depth = 5.dp
+                    )
                         .fillMaxWidth()
                         .testTag("monthly_activity_card"),
                     shape = RoundedCornerShape(20.dp),
@@ -687,7 +703,12 @@ fun ProgressScreen(
 
             item {
                 Card(
-                    Modifier
+                    Modifier.tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                        cornerRadius = 20.dp,
+                        depth = 5.dp
+                    )
                         .fillMaxWidth()
                         .testTag("weekly_progress_card"),
                     shape = RoundedCornerShape(20.dp),
@@ -740,7 +761,12 @@ fun ProgressScreen(
                     val topSubjects = subjectTotals.take(4)
                     val maxSubjectMinutes = topSubjects.maxOfOrNull { it.value }?.coerceAtLeast(1) ?: 1
                     Card(
-                        Modifier
+                        Modifier.tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                            cornerRadius = 20.dp,
+                            depth = 5.dp
+                        )
                             .fillMaxWidth()
                             .testTag("subject_analytics_card"),
                         shape = RoundedCornerShape(20.dp),
@@ -787,7 +813,12 @@ fun ProgressScreen(
             if (analytics.plannedMinutes > 0) {
                 item {
                     Card(
-                        Modifier
+                        Modifier.tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                            cornerRadius = 20.dp,
+                            depth = 5.dp
+                        )
                             .fillMaxWidth()
                             .testTag("plan_analytics_card"),
                         shape = RoundedCornerShape(20.dp),
@@ -824,7 +855,12 @@ fun ProgressScreen(
 
             item {
                 Card(
-                    Modifier
+                    Modifier.tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                        cornerRadius = 20.dp,
+                        depth = 5.dp
+                    )
                         .fillMaxWidth()
                         .testTag("gamification_card"),
                     shape = RoundedCornerShape(20.dp),
@@ -911,7 +947,12 @@ fun ProgressScreen(
 
             item {
                 Card(
-                    Modifier
+                    Modifier.tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                        cornerRadius = 20.dp,
+                        depth = 5.dp
+                    )
                         .fillMaxWidth()
                         .testTag("quick_stats_card"),
                     shape = RoundedCornerShape(20.dp),
@@ -966,7 +1007,12 @@ fun ProgressScreen(
             if (isAllLogsLoaded) {
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.tactile3DButton(
+                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                            cornerRadius = 20.dp,
+                            depth = 5.dp
+                        ).fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
@@ -1012,7 +1058,12 @@ fun ProgressScreen(
                 val timeString = remember(log.timestamp) { formatLogTimestamp(log.timestamp) }
 
                 Card(
-                    modifier = Modifier
+                    modifier = Modifier.tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f),
+                        cornerRadius = 20.dp,
+                        depth = 5.dp
+                    )
                         .fillMaxWidth()
                         .testTag("session_log_item_${log.id}"),
                     shape = RoundedCornerShape(16.dp),
