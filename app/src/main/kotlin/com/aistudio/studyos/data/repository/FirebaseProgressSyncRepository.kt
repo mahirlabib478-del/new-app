@@ -761,6 +761,15 @@ class FirebaseProgressSyncRepository(
             val mergedProfile = mergeProfiles(remoteProfiles.firstOrNull(), profiles.firstOrNull())
             val mergedPrefs = remotePrefs.toMutableMap().apply { putAll(localPrefs) }
 
+            // Free Bonus XP cooldown is monotonic: the newest claim timestamp
+            // must win regardless of which side (local/cloud) is newer.
+            val remoteFreeXpClaim = (remotePrefs["perk_last_free_xp_drop_claim_time"] as? Number)?.toLong() ?: 0L
+            val localFreeXpClaim = (localPrefs["perk_last_free_xp_drop_claim_time"] as? Number)?.toLong() ?: 0L
+            val latestFreeXpClaim = maxOf(remoteFreeXpClaim, localFreeXpClaim)
+            if (latestFreeXpClaim > 0L) {
+                mergedPrefs["perk_last_free_xp_drop_claim_time"] = latestFreeXpClaim
+            }
+
             val mergedSnapshot = hashMapOf<String, Any>(
                 "schemaVersion" to maxOf((remote["schemaVersion"] as? Number)?.toInt() ?: 1, 1),
                 "studyPlans" to mergedPlans.map { it.toCloudMap() },
