@@ -1478,16 +1478,18 @@ fun ProfileScreen(
                                 targetState = cacheCleanedSuccess,
                                 transitionSpec = { fadeIn(animationSpec = tween(180)) togetherWith fadeOut(animationSpec = tween(100)) },
                                 label = "cache_cleaned_success"
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        Icons.Default.CheckCircle,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Cache Cleaned Successfully!", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                            ) { isSuccess ->
+                                if (isSuccess) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Cache Cleaned Successfully!", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                    }
                                 }
                             }
                         } else {
