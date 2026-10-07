@@ -453,7 +453,7 @@ fun ProfileScreen(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                        modifier = Modifier.size(54.dp).scale(profileAvatarScale).animateContentSize(animationSpec = tween(220))
+                        modifier = Modifier.size(56.dp).scale(profileAvatarScale).animateContentSize(animationSpec = tween(220))
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             if (profileAvatarInitial != null) {
@@ -762,8 +762,8 @@ fun ProfileScreen(
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Header
                     Row(
@@ -1541,7 +1541,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), 22.dp, 4.dp)
+                    .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.38f), 22.dp, 4.dp)
                     .testTag("profile_contact_developer_card"),
                 shape = RoundedCornerShape(22.dp),
                 border = BorderStroke(
@@ -1617,7 +1617,7 @@ fun ProfileScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 13.dp),
+                                .padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
@@ -1669,6 +1669,7 @@ fun ProfileScreen(
                     }
                     Text(
                         text = "Usually the quickest way to get help or share feedback.",
+                        modifier = Modifier.fillMaxWidth().padding(top = 1.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

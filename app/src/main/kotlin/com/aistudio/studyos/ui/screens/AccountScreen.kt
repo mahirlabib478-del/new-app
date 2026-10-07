@@ -103,7 +103,7 @@ fun AccountScreen(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                modifier = Modifier.size(76.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 38.dp, 4.dp)
+                modifier = Modifier.size(72.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 36.dp, 4.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -157,7 +157,7 @@ fun AccountScreen(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                        modifier = Modifier.size(58.dp)
+                        modifier = Modifier.size(56.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
@@ -415,9 +415,13 @@ fun AccountScreen(
             Spacer(Modifier.height(12.dp))
             TextButton(
                 onClick = onForgotPassword,
-                modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 3.dp).testTag("btn_forgot_password")
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp)
+                    .tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.34f), 12.dp, 3.dp)
+                    .testTag("btn_forgot_password")
             ) {
-                Text("Forgot password?")
+                Text("Forgot password?", maxLines = 1, softWrap = false)
             }
         }
 

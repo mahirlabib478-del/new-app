@@ -167,17 +167,24 @@ fun ResetPasswordScreen(onBack: () -> Unit) {
                     Text(
                         it,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 10.dp)
                     )
                 }
                 if (message != null) {
                     Spacer(Modifier.height(2.dp))
                     OutlinedButton(
                         onClick = onBack,
-                        modifier = Modifier.fillMaxWidth().height(54.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 4.dp).testTag("btn_back_to_login"),
+                        modifier = Modifier.fillMaxWidth().height(54.dp).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.38f), 18.dp, 4.dp).testTag("btn_back_to_login"),
                         shape = RoundedCornerShape(18.dp)
                     ) {
-                        Text("Back to login")
+                        Text("Back to login", maxLines = 1, softWrap = false)
                     }
                 }
                 Divider(color = MaterialTheme.colorScheme.outlineVariant)
