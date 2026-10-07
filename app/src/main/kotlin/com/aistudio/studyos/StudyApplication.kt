@@ -106,6 +106,11 @@ class StudyApplication : Application() {
 
         val summary = LegacyProgressImportRepository(this, uid).importLegacyProgress()
         if (summary.isEmpty) return "No guest progress was found to import."
+
+        // Reconcile the imported profile against its imported session history before
+        // the first cloud upload. This prevents a stale cached streak (e.g. 1 day)
+        // from being persisted when the guest history already proves 2+ consecutive days.
+        repositoryFor(uid).ensureCleanInitialData()
         sync.uploadImportedGuestSnapshot()
         return "Guest progress imported and synced."
     }
