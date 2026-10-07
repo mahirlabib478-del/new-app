@@ -90,7 +90,8 @@ fun Modifier.tactile3DButton(
     backgroundColor: Color,
     bottomEdgeColor: Color,
     cornerRadius: Dp = 18.dp,
-    depth: Dp = 5.dp
+    depth: Dp = 5.dp,
+    shadowExtra: Dp = 3.dp
 ): Modifier = composed {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
@@ -125,7 +126,7 @@ fun Modifier.tactile3DButton(
             translationY = pressOffset.toPx()
         }
         .shadow(
-            elevation = depth + 3.dp,
+            elevation = depth + shadowExtra,
             shape = shape,
             clip = false
         )
