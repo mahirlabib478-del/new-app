@@ -724,7 +724,7 @@ private fun CurrentTopicIndicator(
         modifier = Modifier.fillMaxWidth()
     ) {
         // Phase Pill
-        val pillBgColor = if (isWallpaperActive) MaterialTheme.colorScheme.surface else if (isBreak) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer
+        // Use a neutral surface for the phase pill so its background stays stable\n        // across light/dark themes; the phase itself is communicated by the accent.\n        val pillBgColor = if (isWallpaperActive) {\n            MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)\n        } else {\n            MaterialTheme.colorScheme.surfaceVariant\n        }
         val pillTextColor = if (isBreak) {
             MaterialTheme.colorScheme.onTertiaryContainer
         } else {
