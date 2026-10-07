@@ -583,12 +583,13 @@ fun MainApp(
                     NavigationBar(
                         modifier = Modifier
                             .padding(horizontal = 10.dp, vertical = 8.dp)
-                            .tactile3DButton(
-                                backgroundColor = MaterialTheme.colorScheme.surface,
-                                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
-                                cornerRadius = 28.dp,
-                                depth = 5.dp
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(28.dp),
+                                clip = false
                             )
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(MaterialTheme.colorScheme.surface)
                             .testTag("bottom_nav_bar"),
                         containerColor = Color.Transparent,
                         contentColor = MaterialTheme.colorScheme.onBackground,
