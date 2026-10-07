@@ -546,10 +546,33 @@ class FirebaseProgressSyncRepository(
         val plans = (data["studyPlans"] as? List<*>)?.filterNotNull().orEmpty()
         val exams = (data["exams"] as? List<*>)?.filterNotNull().orEmpty()
         val sessions = (data["sessionLogs"] as? List<*>)?.filterNotNull().orEmpty()
-        val profiles = (data["profiles"] as? List<*>)?.filterNotNull().orEmpty()
+        val profiles = (data["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
         val preferences = data["shopPreferences"].asMap().orEmpty()
+        val meaningfulProfile = profiles.any {
+            it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                it.totalXpSpent > 0 || it.streakDays > 0 || it.currentLevel > 1 ||
+                it.levelStartStudyMinutes > 0 || it.levelStartXpEarned > 0 || it.levelStartXpSpent > 0 ||
+                it.dailyGoalMinutes != 60
+        }
+        val meaningfulPreference = preferences.any { (key, value) ->
+            when (key) {
+                "perk_streak_shield_count" -> (value as? Number)?.toInt()?.let { it > 0 } == true
+                "perk_custom_wallpaper_pass_expires",
+                "perk_custom_audio_pass_expires",
+                "perk_double_xp_booster_expires",
+                "spin_wheel_unlocked_at" -> (value as? Number)?.toLong()?.let { it > 0L } == true
+                "spin_wheel_spins_used" -> (value as? Number)?.toInt()?.let { it > 0 } == true
+                "perk_last_free_xp_drop_claim_time" -> (value as? Number)?.toLong()?.let { it > 0L } == true
+                "wallpaper_custom_user_uri",
+                "ambient_custom_audio_uri",
+                "ambient_custom_audio_list",
+                "ambient_selected_audio_id" -> !value.toString().isNullOrBlank()
+                else -> key.startsWith("perk_premium_theme_pass_expires_") &&
+                    (value as? Number)?.toLong()?.let { it > 0L } == true
+            }
+        }
         return plans.isNotEmpty() || exams.isNotEmpty() || sessions.isNotEmpty() ||
-            preferences.isNotEmpty() || profiles.isNotEmpty()
+            meaningfulProfile || meaningfulPreference
     }
 
     /**
@@ -632,11 +655,32 @@ class FirebaseProgressSyncRepository(
             val cloudPlans = (existing["studyPlans"] as? List<*>)?.filterNotNull().orEmpty()
             val cloudExams = (existing["exams"] as? List<*>)?.filterNotNull().orEmpty()
             val cloudSessions = (existing["sessionLogs"] as? List<*>)?.filterNotNull().orEmpty()
-            val cloudProfiles = (existing["profiles"] as? List<*>)?.filterNotNull().orEmpty()
+            val cloudProfiles = (existing["profiles"] as? List<*>)?.mapNotNull { it.asMap()?.toProfile() }.orEmpty()
             val cloudPreferences = existing["shopPreferences"].asMap().orEmpty()
             val cloudHasMeaningfulData =
                 cloudPlans.isNotEmpty() || cloudExams.isNotEmpty() || cloudSessions.isNotEmpty() ||
-                    cloudPreferences.isNotEmpty() || cloudProfiles.isNotEmpty()
+                    cloudProfiles.any {
+                        it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                            it.totalXpSpent > 0 || it.streakDays > 0 || it.currentLevel > 1 ||
+                            it.levelStartStudyMinutes > 0 || it.levelStartXpEarned > 0 || it.levelStartXpSpent > 0 ||
+                            it.dailyGoalMinutes != 60
+                    } || cloudPreferences.any { (key, value) ->
+                        when (key) {
+                            "perk_streak_shield_count" -> (value as? Number)?.toInt()?.let { it > 0 } == true
+                            "perk_custom_wallpaper_pass_expires",
+                            "perk_custom_audio_pass_expires",
+                            "perk_double_xp_booster_expires",
+                            "spin_wheel_unlocked_at" -> (value as? Number)?.toLong()?.let { it > 0L } == true
+                            "spin_wheel_spins_used" -> (value as? Number)?.toInt()?.let { it > 0 } == true
+                            "perk_last_free_xp_drop_claim_time" -> (value as? Number)?.toLong()?.let { it > 0L } == true
+                            "wallpaper_custom_user_uri",
+                            "ambient_custom_audio_uri",
+                            "ambient_custom_audio_list",
+                            "ambient_selected_audio_id" -> value.toString().isNotBlank()
+                            else -> key.startsWith("perk_premium_theme_pass_expires_") &&
+                                (value as? Number)?.toLong()?.let { it > 0L } == true
+                        }
+                    }
             if (cloudHasMeaningfulData) {
                 throw IllegalStateException(
                     "This account already has cloud progress. Guest import was cancelled to protect the existing cloud data."
