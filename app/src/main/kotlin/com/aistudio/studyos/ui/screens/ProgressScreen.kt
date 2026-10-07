@@ -76,7 +76,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
-import com.aistudio.studyos.ui.components.AnimatedCounter
 import com.aistudio.studyos.ui.components.AnimatedReveal
 import com.aistudio.studyos.ui.components.tactile3DButton
 import com.aistudio.studyos.data.repository.ProgressAnalyticsCalculator
@@ -899,12 +898,6 @@ fun ProgressScreen(
                                     Text(rankTitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            AnimatedCounter(
-                                target = profile?.totalXpEarned ?: 0,
-                                suffix = " XP",
-                                durationMillis = 700,
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            )
                         }
                         missionProgress?.let { mission ->
                             Text("${mission.completedCount}/5 promotion quests complete", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
