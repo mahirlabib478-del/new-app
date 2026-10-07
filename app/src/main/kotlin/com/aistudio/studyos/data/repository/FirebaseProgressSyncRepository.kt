@@ -244,14 +244,20 @@ class FirebaseProgressSyncRepository(
             cloudUploadUid = null
             throw IllegalStateException("Account changed during sync. Please retry.")
         }
-        val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any { it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0 }
+        val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() || localSessions.isNotEmpty() || localProfiles.any {
+            it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                it.totalXpSpent > 0 || it.streakDays > 0 || it.currentLevel > 1 ||
+                it.levelStartStudyMinutes > 0 || it.levelStartXpEarned > 0 || it.levelStartXpSpent > 0
+        }
 
         // Even in this UID-scoped database, populated local and cloud snapshots may
         // have diverged. Do not silently merge or overwrite either copy; keep uploads
         // disabled until the user explicitly resolves the conflict.
         val hasCloud = cloudPlans.isNotEmpty() || cloudExams.isNotEmpty() ||
             cloudSessions.isNotEmpty() || cloudShopPreferences.isNotEmpty() || cloudProfiles.any {
-                it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
+                it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                    it.totalXpSpent > 0 || it.streakDays > 0 || it.currentLevel > 1 ||
+                    it.levelStartStudyMinutes > 0 || it.levelStartXpEarned > 0 || it.levelStartXpSpent > 0
             }
         if (hasLocal) {
             cloudUploadUid = null
@@ -494,7 +500,9 @@ class FirebaseProgressSyncRepository(
         val localProfiles = database.userProfileDao().getAllForBackup()
         val hasLocal = localPlans.isNotEmpty() || localExams.isNotEmpty() ||
             localSessions.isNotEmpty() || localProfiles.any {
-                it.totalStudyMinutes > 0 || it.totalXP > 0 || it.streakDays > 0
+                it.totalStudyMinutes > 0 || it.totalXP > 0 || it.totalXpEarned > 0 ||
+                    it.totalXpSpent > 0 || it.streakDays > 0 || it.currentLevel > 1 ||
+                    it.levelStartStudyMinutes > 0 || it.levelStartXpEarned > 0 || it.levelStartXpSpent > 0
             }
         if (!hasLocal) {
             val result = restoreIfLocalEmpty()
