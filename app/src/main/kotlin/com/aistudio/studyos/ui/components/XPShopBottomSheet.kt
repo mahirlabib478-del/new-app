@@ -827,7 +827,7 @@ private fun PassDurationSelectionDialog(
                             IconButton(
                                 onClick = { if (selectedDays > 1) selectedDays-- },
                                 enabled = selectedDays > 1,
-                                modifier = Modifier.size(34.dp).tactile3DButton(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 18.dp, 3.dp)
+                                modifier = Modifier.size(34.dp)
                             ) {
                                 Icon(Icons.Default.Remove, contentDescription = "Decrease Days")
                             }
