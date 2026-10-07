@@ -136,11 +136,18 @@ fun XPShopBottomSheet(
     val cooldownMs by viewModel.freeXpDropCooldownRemainingMs.collectAsState()
     val isCooldownActive = cooldownMs > 0L
 
-    // Live ticker every second to update remaining cooldown
+    // Refresh immediately whenever the Shop opens. Cloud/guest restore can
+    // happen after the ViewModel is created, so the initial StateFlow value
+    // may otherwise still be the old local value.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.updateFreeXpDropCooldown()
+    }
+
+    // Live ticker every second to update remaining cooldown.
     androidx.compose.runtime.LaunchedEffect(isCooldownActive) {
         while (viewModel.freeXpDropCooldownRemainingMs.value > 0L) {
-            viewModel.updateFreeXpDropCooldown()
             delay(1000L)
+            viewModel.updateFreeXpDropCooldown()
         }
     }
 
