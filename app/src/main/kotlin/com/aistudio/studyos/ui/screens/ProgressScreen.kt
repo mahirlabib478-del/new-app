@@ -130,7 +130,7 @@ private fun MissionProgressRow(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        animationSpec = tween(500, easing = FastOutSlowInEasing),
         label = "mission_progress"
     )
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -725,7 +725,7 @@ fun ProgressScreen(
                             }
                             val animatedPlanProgress by animateFloatAsState(
                                 targetValue = (analytics.planCompletionPercent / 100f).coerceIn(0f, 1f),
-                                animationSpec = tween(600, easing = FastOutSlowInEasing),
+                                animationSpec = tween(500, easing = FastOutSlowInEasing),
                                 label = "study_plan_completion_progress"
                             )
                             UnifiedProgressBar(
