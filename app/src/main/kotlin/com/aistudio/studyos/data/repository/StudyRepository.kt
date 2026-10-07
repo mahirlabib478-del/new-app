@@ -246,10 +246,27 @@ class StudyRepository(
                 }
 
                 // Reconcile the entire missed calendar-day gap, not just a stale/today flag.
-                val gapResult = resolveStreakGap(profile, StudyStreakClock.today())
+                val today = StudyStreakClock.today()
+                val gapResult = resolveStreakGap(profile, today)
                 val resolvedProfile = gapResult.profile
-                if (resolvedProfile != profile) {
-                    database.userProfileDao().insertOrUpdate(resolvedProfile)
+
+                // Session history is authoritative for real study days. A restored
+                // cloud/guest snapshot can contain correct session logs while its
+                // cached profile streak is stale (for example, 1 instead of 2).
+                // Reconcile the cache from the actual consecutive dates at startup,
+                // while preserving a higher shield-protected streak.
+                val historyStreak = consecutiveLoggedStudyDaysEnding(today)
+                val reconciledProfile = if (historyStreak > resolvedProfile.streakDays) {
+                    resolvedProfile.copy(
+                        streakDays = historyStreak,
+                        lastActiveDate = today.toString()
+                    )
+                } else {
+                    resolvedProfile
+                }
+
+                if (reconciledProfile != profile) {
+                    database.userProfileDao().insertOrUpdate(reconciledProfile)
                 }
             }
         }
