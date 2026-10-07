@@ -44,7 +44,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -93,6 +92,34 @@ data class DayActivityData(
 )
 
 @Composable
+private fun UnifiedProgressBar(
+    progress: Float,
+    complete: Boolean = progress >= 1f,
+    modifier: Modifier = Modifier
+) {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    Box(
+        modifier = modifier
+            .height(8.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.09f))
+    ) {
+        if (clampedProgress > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(clampedProgress)
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        if (complete) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.82f)
+                    )
+            )
+        }
+    }
+}
+
+@Composable
 private fun MissionProgressRow(
     icon: String,
     title: String,
@@ -117,27 +144,7 @@ private fun MissionProgressRow(
                 color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animatedProgress)
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        if (complete) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)
-                        }
-                    )
-            )
-        }
+        UnifiedProgressBar(progress = animatedProgress, complete = complete)
     }
 }
 
@@ -528,7 +535,7 @@ fun ProgressScreen(
                             }
                             Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                         }
-                        LinearProgressIndicator(progress = { animatedDailyProgress }, modifier = Modifier.fillMaxWidth().height(9.dp).clip(RoundedCornerShape(5.dp)))
+                        UnifiedProgressBar(progress = animatedDailyProgress, complete = progress >= 1f)
                         Text(if (remaining > 0) "${remaining} min remaining" else "Daily target reached 🎉", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -645,9 +652,11 @@ fun ProgressScreen(
                             )
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Text(day.label, Modifier.width(34.dp), fontSize = 11.sp, fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal)
-                                Box(Modifier.weight(1f).height(9.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.surface)) {
-                                    if (day.minutes > 0) Box(Modifier.fillMaxWidth(animatedDayProgress).height(9.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.primary))
-                                }
+                                UnifiedProgressBar(
+                                    progress = animatedDayProgress,
+                                    complete = animatedDayProgress >= 1f,
+                                    modifier = Modifier.weight(1f)
+                                )
                                 Text(formatMinutes(day.minutes), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -679,9 +688,11 @@ fun ProgressScreen(
                                 )
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     Text(entry.key, Modifier.width(78.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp)
-                                    Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surface)) {
-                                        Box(Modifier.fillMaxWidth(animatedSubjectProgress).height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary))
-                                    }
+                                    UnifiedProgressBar(
+                                        progress = animatedSubjectProgress,
+                                        complete = animatedSubjectProgress >= 1f,
+                                        modifier = Modifier.weight(1f)
+                                    )
                                     Text(formatMinutes(entry.value), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                 }
                             }
@@ -711,33 +722,15 @@ fun ProgressScreen(
                                 }
                                 Text("${analytics.planCompletionPercent}%", fontSize = 17.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                             }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(11.dp)
-                                    .tactile3DButton(
-                                        backgroundColor = MaterialTheme.colorScheme.surface,
-                                        bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
-                                        cornerRadius = 6.dp,
-                                        depth = 3.dp
-                                    )
-                            ) {
-                                val animatedPlanProgress by animateFloatAsState(
+                            val animatedPlanProgress by animateFloatAsState(
                                 targetValue = (analytics.planCompletionPercent / 100f).coerceIn(0f, 1f),
                                 animationSpec = tween(600, easing = FastOutSlowInEasing),
                                 label = "study_plan_completion_progress"
                             )
-                            if (analytics.planCompletionPercent > 0) {
-                                Box(
-                                    Modifier
-                                        .fillMaxWidth(animatedPlanProgress)
-                                        .height(7.dp)
-                                        .align(Alignment.CenterStart)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(MaterialTheme.colorScheme.primary)
-                                )
-                            }
-                            }
+                            UnifiedProgressBar(
+                                progress = animatedPlanProgress,
+                                complete = analytics.planCompletionPercent >= 100
+                            )
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("${formatMinutes(analytics.actualMinutes)} completed", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text("${formatMinutes(analytics.activePlanRemainingMinutes)} remaining", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
