@@ -103,7 +103,7 @@ private fun UnifiedProgressBar(
         modifier = modifier
             .height(8.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.09f))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         if (clampedProgress > 0f) {
             Box(
