@@ -517,9 +517,10 @@ class FirebaseProgressSyncRepository(
             return "Cloud sync connected. Checking latest progress…"
         }
 
-        cloudUploadUid = null
-        _syncStatus.value = "Progress needs reconciliation"
-        return "This device and cloud both contain progress. Nothing was overwritten. Use Restore only on an empty device, or explicitly resolve the copies before enabling sync."
+        // This is the same verified UID, so local and cloud snapshots belong to the
+        // same account. Reconcile them automatically instead of leaving sync permanently
+        // paused after a sign-out/re-login or an interrupted first upload.
+        return mergeCloudIntoLocalAndUpload()
     }
 
     /** Returns true when the account already has meaningful cloud-owned progress. */
