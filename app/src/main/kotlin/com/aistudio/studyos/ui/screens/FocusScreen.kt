@@ -726,7 +726,11 @@ private fun CurrentTopicIndicator(
         // Phase Pill
         // Use a neutral surface for the phase pill so its background stays stable
         // across light/dark themes; the phase itself is communicated by the accent.
-        val pillBgColor = if (isWallpaperActive) {\n            MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)\n        } else {\n            MaterialTheme.colorScheme.surfaceVariant\n        }
+        val pillBgColor = if (isWallpaperActive) {
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        }
         val pillTextColor = if (isBreak) {
             MaterialTheme.colorScheme.onTertiaryContainer
         } else {
