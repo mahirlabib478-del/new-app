@@ -45,6 +45,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -76,7 +77,6 @@ import com.aistudio.studyos.data.local.entity.SessionLogEntity
 import com.aistudio.studyos.ui.viewmodel.StudyViewModel
 import com.aistudio.studyos.ui.components.AnimatedCounter
 import com.aistudio.studyos.ui.components.AnimatedReveal
-import com.aistudio.studyos.ui.components.tactile3DButton
 import com.aistudio.studyos.data.repository.ProgressAnalyticsCalculator
 import com.aistudio.studyos.data.repository.LevelMissionCalculator
 import com.aistudio.studyos.data.repository.LevelMissionProgress
@@ -98,26 +98,16 @@ private fun UnifiedProgressBar(
     complete: Boolean = progress >= 1f,
     modifier: Modifier = Modifier
 ) {
-    val clampedProgress = progress.coerceIn(0f, 1f)
-    Box(
+    val clampedProgress = if (progress.isNaN() || progress.isInfinite()) 0f else progress.coerceIn(0f, 1f)
+    LinearProgressIndicator(
+        progress = { clampedProgress },
         modifier = modifier
+            .fillMaxWidth()
             .height(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f))
-    ) {
-        if (clampedProgress > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(clampedProgress)
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        if (complete) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.82f)
-                    )
-            )
-        }
-    }
+            .clip(RoundedCornerShape(4.dp)),
+        color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.88f),
+        trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+    )
 }
 
 @Composable
@@ -128,14 +118,15 @@ private fun MissionProgressRow(
     progress: Float,
     complete: Boolean
 ) {
+    val safeProgress = if (progress.isNaN() || progress.isInfinite()) 0f else progress.coerceIn(0f, 1f)
     val animatedProgress by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
+        targetValue = safeProgress,
         animationSpec = tween(500, easing = FastOutSlowInEasing),
-        label = "mission_progress"
+        label = "mission_progress_$title"
     )
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(icon, fontSize = 17.sp)
+            Text(icon, fontSize = 16.sp)
             Spacer(Modifier.width(8.dp))
             Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             Text(
@@ -242,22 +233,19 @@ private fun formatMinutes(minutes: Int): String {
 
 @Composable
 private fun StatCell(label: String, value: String, modifier: Modifier = Modifier) {
-    val valueScale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(350),
-        label = "progress_stat_scale"
-    )
     Surface(
-        modifier = modifier.animateContentSize(animationSpec = tween(220)).tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.40f), 14.dp, 3.dp),
+        modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
     ) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 11.dp)) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
             Text(
                 value,
                 fontSize = 17.sp,
-                modifier = Modifier.scale(valueScale),
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
@@ -266,7 +254,7 @@ private fun StatCell(label: String, value: String, modifier: Modifier = Modifier
             )
             Text(
                 label,
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -416,11 +404,14 @@ fun ProgressScreen(
         if (selectedTab == 0) {
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().testTag("streak_metric_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.42f), 20.dp, 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("streak_metric_card"),
                     shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
                 ) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val streakIconScale by animateFloatAsState(
                                 targetValue = if (isStreakDoneToday && streak > 0) 1.1f else 1f,
@@ -433,7 +424,7 @@ fun ProgressScreen(
                                 Modifier.size(28.dp).scale(streakIconScale),
                                 tint = Color(0xFFFF6B35)
                             )
-                            Spacer(Modifier.width(9.dp))
+                            Spacer(Modifier.width(10.dp))
                             Column(
                                 Modifier
                                     .weight(1f)
@@ -466,31 +457,49 @@ fun ProgressScreen(
                                 enter = fadeIn(animationSpec = tween(180)),
                                 exit = fadeOut(animationSpec = tween(120))
                             ) {
-                                Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                                    Text("🛡️ ${streakShieldCount}", fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                                ) {
+                                    Text(
+                                        "🛡️ $streakShieldCount",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)
+                                    )
                                 }
                             }
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Spacer(Modifier.height(3.dp))
-                        weeklyData.forEach { day ->
+                            weeklyData.forEach { day ->
                                 val active = day.minutes > 0
                                 Surface(
-                                    Modifier.weight(1f).height(44.dp)
-                                        .tactile3DButton(
-                                            backgroundColor = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                                            bottomEdgeColor = if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.50f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
-                                            cornerRadius = 10.dp,
-                                            depth = 4.dp
-                                        ),
+                                    Modifier
+                                        .weight(1f)
+                                        .height(46.dp),
                                     shape = RoundedCornerShape(10.dp),
-                                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                                    border = if (day.isToday && !active) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
                                 ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                                        Text(day.label.take(1), fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                                            color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(if (active) "✓" else if (day.isToday) "•" else "○", fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                                            color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            day.label.take(1),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Spacer(Modifier.height(2.dp))
+                                        Text(
+                                            if (active) "✓" else if (day.isToday) "•" else "○",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
                                 }
                             }
@@ -501,7 +510,8 @@ fun ProgressScreen(
                                 streak > 0 -> "Study today to keep your streak alive"
                                 else -> "Complete a study session today to start your streak"
                             },
-                            fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
                             color = if (isStreakDoneToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -517,27 +527,36 @@ fun ProgressScreen(
                     label = "daily_goal_progress"
                 )
                 val remaining = (dailyGoal - todayMinutes).coerceAtLeast(0)
-                Card(Modifier.fillMaxWidth()
-                        .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surface,
-                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
-                            cornerRadius = 20.dp,
-                            depth = 5.dp
-                        )
-                        .testTag("today_goal_analytics_card"), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .testTag("today_goal_analytics_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Schedule, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(8.dp))
                             Column(Modifier.weight(1f)) {
-                                Text("TODAY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("${formatMinutes(todayMinutes)} / ${formatMinutes(dailyGoal)}", fontSize = 22.sp, fontWeight = FontWeight.Black)
+                                Text("TODAY'S GOAL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${formatMinutes(todayMinutes)} / ${formatMinutes(dailyGoal)}", fontSize = 20.sp, fontWeight = FontWeight.Black)
                             }
-                            Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                            Text("${(progress * 100).toInt()}%", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                         }
                         UnifiedProgressBar(progress = animatedDailyProgress, complete = progress >= 1f)
-                        Text(if (remaining > 0) "${remaining} min remaining" else "Daily target reached 🎉", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(
+                                if (remaining > 0) "${remaining} min remaining" else "Daily target reached 🎉",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
+                            )
+                            if (progress >= 1f) {
+                                Text("Completed", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
                     }
                 }
             }
@@ -547,16 +566,17 @@ fun ProgressScreen(
                 val firstDayOffset = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK) - 1
                 val cells: List<DayActivityData?> = List(firstDayOffset) { null } + monthlyData
                 val selectedDay = monthlyData.firstOrNull { it.dayNumber == selectedMonthDay }
-                Card(Modifier.fillMaxWidth()
-                        .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surface,
-                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
-                            cornerRadius = 20.dp,
-                            depth = 5.dp
-                        )
-                        .testTag("monthly_activity_card"), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                val dayHeaders = listOf("S", "M", "T", "W", "T", "F", "S")
+
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .testTag("monthly_activity_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Study Activity", fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -565,78 +585,116 @@ fun ProgressScreen(
                                     fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                                Text("${activeMonthDays}/${monthlyData.size}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    "${activeMonthDays}/${monthlyData.size}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                                )
                             }
                         }
-                        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+
+                        // Weekday labels
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            dayHeaders.forEach { header ->
+                                Box(
+                                    modifier = Modifier.weight(1f),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = header,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Calendar days grid
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             cells.chunked(7).forEach { week ->
+                                val paddedWeek = if (week.size < 7) week + List(7 - week.size) { null } else week
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                                    week.forEach { day ->
-                                        if (day == null) Box(Modifier.weight(1f).size(28.dp))
-                                        else {
-                                            val intensity = if (maxMinutes > 0 && day.minutes > 0) (day.minutes.toFloat() / maxMinutes).coerceIn(0.15f, 1f) else 0f
+                                    paddedWeek.forEach { day ->
+                                        if (day == null) {
+                                            Box(Modifier.weight(1f).height(30.dp))
+                                        } else {
+                                            val intensity = if (maxMinutes > 0 && day.minutes > 0) {
+                                                (day.minutes.toFloat() / maxMinutes).coerceIn(0.18f, 1f)
+                                            } else 0f
                                             val isSelected = day.dayNumber == selectedMonthDay
                                             val dayFill = when {
                                                 isSelected -> MaterialTheme.colorScheme.primary
-                                                intensity > 0f -> MaterialTheme.colorScheme.primary.copy(alpha = 0.18f + 0.70f * intensity)
-                                                else -> MaterialTheme.colorScheme.surface
+                                                intensity > 0f -> MaterialTheme.colorScheme.primary.copy(alpha = 0.20f + 0.65f * intensity)
+                                                else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                                             }
                                             Box(
                                                 Modifier
                                                     .weight(1f)
-                                                    .size(30.dp)
-                                                    .tactile3DButton(
-                                                        backgroundColor = dayFill,
-                                                        bottomEdgeColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else if (intensity > 0f) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.28f),
-                                                        cornerRadius = 15.dp,
-                                                        depth = if (isSelected) 3.dp else 2.dp
-                                                    )
+                                                    .height(30.dp)
+                                                    .clip(CircleShape)
+                                                    .background(dayFill)
                                                     .clickable { selectedMonthDay = day.dayNumber }
                                                     .border(
                                                         width = if (isSelected || day.isToday) 1.5.dp else 1.dp,
-                                                        color = if (isSelected) MaterialTheme.colorScheme.primary else if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                                                        else if (day.isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+                                                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
                                                         shape = CircleShape
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                Text(day.dayNumber.toString(), fontSize = 9.sp,
+                                                Text(
+                                                    text = day.dayNumber.toString(),
+                                                    fontSize = 10.sp,
                                                     fontWeight = if (day.dayNumber == selectedMonthDay || day.isToday) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (isSelected || intensity > 0.55f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
+                                                    color = if (isSelected || intensity > 0.55f) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                                )
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+
                         selectedDay?.let { day ->
-                            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface,
-                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))) {
-                                Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                            Surface(
+                                Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                            ) {
+                                Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
                                     Text("Day ${day.dayNumber}${if (day.isToday) " • Today" else ""}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                     Text("${formatMinutes(day.minutes)} studied", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
+
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Month total: ${formatMinutes(totalMonthMinutes)}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Peak: ${formatMinutes(peakMonthDay?.minutes ?: 0)}", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                            Text("Peak: ${formatMinutes(peakMonthDay?.minutes ?: 0)}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
             }
 
             item {
-                Card(Modifier.fillMaxWidth()
-                        .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surface,
-                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
-                            cornerRadius = 20.dp,
-                            depth = 5.dp
-                        )
-                        .testTag("weekly_progress_card"), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .testTag("weekly_progress_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Insights, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(8.dp))
@@ -647,18 +705,30 @@ fun ProgressScreen(
                         }
                         weeklyData.forEach { day ->
                             val animatedDayProgress by animateFloatAsState(
-                                targetValue = (day.minutes.toFloat() / maxWeekMinutes).coerceIn(0f, 1f),
+                                targetValue = if (maxWeekMinutes > 0) (day.minutes.toFloat() / maxWeekMinutes).coerceIn(0f, 1f) else 0f,
                                 animationSpec = tween(500, easing = FastOutSlowInEasing),
                                 label = "weekly_day_progress_${day.label}"
                             )
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                Text(day.label, Modifier.width(34.dp), fontSize = 11.sp, fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal)
+                                Text(
+                                    day.label,
+                                    Modifier.width(36.dp),
+                                    fontSize = 12.sp,
+                                    fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (day.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                )
                                 UnifiedProgressBar(
                                     progress = animatedDayProgress,
-                                    complete = animatedDayProgress >= 1f,
-                                    modifier = Modifier.weight(1f)
+                                    complete = animatedDayProgress >= 1f && day.minutes > 0,
+                                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
                                 )
-                                Text(formatMinutes(day.minutes), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    formatMinutes(day.minutes),
+                                    Modifier.widthIn(min = 48.dp),
+                                    fontSize = 11.sp,
+                                    textAlign = TextAlign.End,
+                                    color = if (day.minutes > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
@@ -669,18 +739,16 @@ fun ProgressScreen(
                 item {
                     val topSubjects = subjectTotals.take(4)
                     val maxSubjectMinutes = topSubjects.maxOfOrNull { it.value }?.coerceAtLeast(1) ?: 1
-                    Card(Modifier.fillMaxWidth()
-                        .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surface,
-                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
-                            cornerRadius = 20.dp,
-                            depth = 5.dp
-                        )
-                        .testTag("subject_analytics_card"), shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .testTag("subject_analytics_card"),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                    ) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text("Subjects", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(3.dp))
                             topSubjects.forEach { entry ->
                                 val animatedSubjectProgress by animateFloatAsState(
                                     targetValue = (entry.value.toFloat() / maxSubjectMinutes).coerceIn(0f, 1f),
@@ -688,13 +756,27 @@ fun ProgressScreen(
                                     label = "subject_progress_${entry.key}"
                                 )
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    Text(entry.key, Modifier.width(78.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp)
+                                    Text(
+                                        entry.key,
+                                        Modifier.widthIn(min = 60.dp, max = 95.dp),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                     UnifiedProgressBar(
                                         progress = animatedSubjectProgress,
                                         complete = animatedSubjectProgress >= 1f,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
                                     )
-                                    Text(formatMinutes(entry.value), Modifier.width(48.dp), fontSize = 10.sp, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    Text(
+                                        formatMinutes(entry.value),
+                                        Modifier.widthIn(min = 48.dp),
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.End,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
                                 }
                             }
                         }
@@ -704,16 +786,15 @@ fun ProgressScreen(
 
             if (analytics.plannedMinutes > 0) {
                 item {
-                    Card(Modifier.fillMaxWidth()
-                        .tactile3DButton(
-                            backgroundColor = MaterialTheme.colorScheme.surface,
-                            bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
-                            cornerRadius = 20.dp,
-                            depth = 5.dp
-                        )
-                        .testTag("plan_analytics_card"), shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .testTag("plan_analytics_card"),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                    ) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.School, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.width(8.dp))
@@ -742,9 +823,15 @@ fun ProgressScreen(
             }
 
             item {
-                Card(Modifier.fillMaxWidth().testTag("gamification_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .testTag("gamification_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.EmojiEvents, "Level", Modifier.size(27.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(10.dp))
@@ -778,12 +865,18 @@ fun ProgressScreen(
                             )
                         }
                         missionProgress?.let { mission ->
-                            Text("${mission.completedCount}/5 promotion quests complete", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            MissionProgressRow("📘", "Focus", "${mission.studyMinutes} / ${mission.targets.studyMinutesRequired}m", mission.studyMinutes.toFloat() / mission.targets.studyMinutesRequired, mission.studyTimeComplete)
-                            MissionProgressRow("⭐", "XP", "${mission.xpEarned} / ${mission.targets.xpRequired}", mission.xpEarned.toFloat() / mission.targets.xpRequired, mission.xpComplete)
-                            MissionProgressRow("📚", "Topics", "${mission.topicCount} / ${mission.targets.topicCountRequired}", mission.topicCount.toFloat() / mission.targets.topicCountRequired, mission.topicBreadthComplete)
-                            MissionProgressRow("🎯", "Peak Focus", "${mission.peakFocusMinutes} / ${mission.targets.peakFocusMinutesRequired}m", mission.peakFocusMinutes.toFloat() / mission.targets.peakFocusMinutesRequired, mission.peakFocusComplete)
-                            MissionProgressRow("🛍️", "Shop Investment", "${mission.xpSpent} / ${mission.targets.xpSpentRequired} XP", mission.xpSpent.toFloat() / mission.targets.xpSpentRequired, mission.shopInvestmentComplete)
+                            Text("${mission.completedCount}/5 promotion quests complete", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            val studyTarget = mission.targets.studyMinutesRequired.coerceAtLeast(1)
+                            val xpTarget = mission.targets.xpRequired.coerceAtLeast(1)
+                            val topicTarget = mission.targets.topicCountRequired.coerceAtLeast(1)
+                            val peakTarget = mission.targets.peakFocusMinutesRequired.coerceAtLeast(1)
+                            val spentTarget = mission.targets.xpSpentRequired.coerceAtLeast(1)
+
+                            MissionProgressRow("📘", "Focus Time", "${mission.studyMinutes} / ${studyTarget}m", mission.studyMinutes.toFloat() / studyTarget, mission.studyTimeComplete)
+                            MissionProgressRow("⭐", "XP Earned", "${mission.xpEarned} / ${xpTarget}", mission.xpEarned.toFloat() / xpTarget, mission.xpComplete)
+                            MissionProgressRow("📚", "Topics Covered", "${mission.topicCount} / ${topicTarget}", mission.topicCount.toFloat() / topicTarget, mission.topicBreadthComplete)
+                            MissionProgressRow("🎯", "Peak Daily Focus", "${mission.peakFocusMinutes} / ${peakTarget}m", mission.peakFocusMinutes.toFloat() / peakTarget, mission.peakFocusComplete)
+                            MissionProgressRow("🛍️", "Shop Investment", "${mission.xpSpent} / ${spentTarget} XP", mission.xpSpent.toFloat() / spentTarget, mission.shopInvestmentComplete)
                             AnimatedVisibility(
                                 visible = mission.allComplete && currentLevel < 100,
                                 enter = fadeIn(animationSpec = tween(220)),
@@ -817,9 +910,15 @@ fun ProgressScreen(
             }
 
             item {
-                Card(Modifier.fillMaxWidth().testTag("quick_stats_card").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.60f), 20.dp, 7.dp), shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .testTag("quick_stats_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+                ) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Quick Stats", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             StatCell("Study Time", formatMinutes(currentYearMinutes), Modifier.weight(1f))
@@ -915,11 +1014,12 @@ fun ProgressScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("session_log_item_${log.id}").tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface, 20.dp, 4.dp),
+                        .testTag("session_log_item_${log.id}"),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
-                    )
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Row(

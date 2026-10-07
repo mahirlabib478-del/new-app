@@ -557,8 +557,16 @@ fun MainApp(
         bottomBar = {
             AnimatedVisibility(
                 visible = showBottomBar,
-                enter = fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing)),
-                exit = fadeOut(animationSpec = tween(140, easing = FastOutSlowInEasing))
+                enter = fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
+                    slideInVertically(
+                        animationSpec = tween(250, easing = FastOutSlowInEasing),
+                        initialOffsetY = { fullHeight -> (fullHeight * 0.3f).toInt() }
+                    ),
+                exit = fadeOut(animationSpec = tween(160, easing = FastOutSlowInEasing)) +
+                    slideOutVertically(
+                        animationSpec = tween(200, easing = FastOutSlowInEasing),
+                        targetOffsetY = { fullHeight -> (fullHeight * 0.3f).toInt() }
+                    )
             ) {
                 Column {
                     if (showMiniBar) {
@@ -631,6 +639,12 @@ fun MainApp(
             }
         }
     ) { innerPadding ->
+        val targetBottomPadding = if (isAtBottomNav && !isNavigatingToFocus) innerPadding.calculateBottomPadding() else 0.dp
+        val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
+            targetValue = targetBottomPadding,
+            animationSpec = tween(280, easing = FastOutSlowInEasing),
+            label = "navhost_bottom_padding"
+        )
         NavHost(
             navController = navController,
             startDestination = startDestination,
@@ -638,35 +652,51 @@ fun MainApp(
                 .fillMaxSize()
                 .padding(
                     top = innerPadding.calculateTopPadding(),
-                    bottom = if (isAtBottomNav) innerPadding.calculateBottomPadding() else 0.dp
+                    bottom = animatedBottomPadding
                 ),
             enterTransition = {
-                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
-                    slideInHorizontally(
-                        animationSpec = tween(260, easing = FastOutSlowInEasing),
-                        initialOffsetX = { fullWidth -> (fullWidth * 0.08f).toInt() }
-                    )
+                if (targetState.destination.route == Screen.Focus.route) {
+                    fadeIn(animationSpec = tween(240, easing = FastOutSlowInEasing))
+                } else {
+                    fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
+                        slideInHorizontally(
+                            animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            initialOffsetX = { fullWidth -> (fullWidth * 0.08f).toInt() }
+                        )
+                }
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing)) +
-                    slideOutHorizontally(
-                        animationSpec = tween(220, easing = FastOutSlowInEasing),
-                        targetOffsetX = { fullWidth -> -(fullWidth * 0.05f).toInt() }
-                    )
+                if (targetState.destination.route == Screen.Focus.route) {
+                    fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing))
+                } else {
+                    fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing),
+                            targetOffsetX = { fullWidth -> -(fullWidth * 0.05f).toInt() }
+                        )
+                }
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
-                    slideInHorizontally(
-                        animationSpec = tween(260, easing = FastOutSlowInEasing),
-                        initialOffsetX = { fullWidth -> -(fullWidth * 0.08f).toInt() }
-                    )
+                if (initialState.destination.route == Screen.Focus.route) {
+                    fadeIn(animationSpec = tween(260, easing = FastOutSlowInEasing))
+                } else {
+                    fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) +
+                        slideInHorizontally(
+                            animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            initialOffsetX = { fullWidth -> -(fullWidth * 0.08f).toInt() }
+                        )
+                }
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing)) +
-                    slideOutHorizontally(
-                        animationSpec = tween(220, easing = FastOutSlowInEasing),
-                        targetOffsetX = { fullWidth -> (fullWidth * 0.05f).toInt() }
-                    )
+                if (initialState.destination.route == Screen.Focus.route) {
+                    fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing))
+                } else {
+                    fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing),
+                            targetOffsetX = { fullWidth -> (fullWidth * 0.05f).toInt() }
+                        )
+                }
             }
         ) {
             composable(Screen.Home.route) {
@@ -776,16 +806,22 @@ fun MainApp(
             composable(
                 route = Screen.Focus.route,
                 enterTransition = {
-                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                    slideInVertically(
+                        animationSpec = tween(320, easing = FastOutSlowInEasing),
+                        initialOffsetY = { fullHeight -> (fullHeight * 0.12f).toInt() }
+                    ) + fadeIn(animationSpec = tween(260, easing = FastOutSlowInEasing))
                 },
                 exitTransition = {
-                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
+                    fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing))
                 },
                 popEnterTransition = {
-                    fadeIn(animationSpec = tween(180, easing = FastOutSlowInEasing))
+                    fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing))
                 },
                 popExitTransition = {
-                    fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing))
+                    slideOutVertically(
+                        animationSpec = tween(280, easing = FastOutSlowInEasing),
+                        targetOffsetY = { fullHeight -> (fullHeight * 0.12f).toInt() }
+                    ) + fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing))
                 }
             ) {
                 DisposableEffect(Unit) {

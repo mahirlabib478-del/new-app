@@ -62,6 +62,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Tune
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.Headphones
@@ -136,6 +137,9 @@ fun FocusScreen(
     viewModel: StudyViewModel,
     onBack: () -> Unit
 ) {
+    BackHandler {
+        onBack()
+    }
     val state by viewModel.focusState.collectAsState()
     val primaryColor = if (state.isBreak) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
     var showEndDialog by remember { mutableStateOf(false) }
@@ -889,6 +893,9 @@ private fun CircularTimerDisplay(
                         val innerHighlight = Stroke(width = 3.dp.toPx())
                         val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
                         val radius = (size.minDimension - 40.dp.toPx()) / 2f
+                        val arcTopLeft = androidx.compose.ui.geometry.Offset(center.x - radius, center.y - radius)
+                        val arcSize = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f)
+
                         drawCircle(
                             color = timerBevelColor,
                             radius = radius,
@@ -901,32 +908,40 @@ private fun CircularTimerDisplay(
                             center = center,
                             style = backgroundStroke
                         )
-                        drawArc(
-                            color = primaryColor.copy(alpha = 0.20f),
-                            startAngle = -90f,
-                            sweepAngle = animatedProgress * 360f,
-                            useCenter = false,
-                            style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                        drawArc(
-                            color = primaryColor,
-                            startAngle = -90f,
-                            sweepAngle = animatedProgress * 360f,
-                            useCenter = false,
-                            style = activeStroke
-                        )
-                        drawArc(
-                            color = Color.White.copy(alpha = 0.16f),
-                            startAngle = -90f,
-                            sweepAngle = (animatedProgress * 220f).coerceAtLeast(0f),
-                            useCenter = false,
-                            style = innerHighlight
-                        )
                         if (animatedProgress > 0f) {
-                            val angle = Math.toRadians((-90f + animatedProgress * 360f).toDouble())
+                            val sweep = animatedProgress * 360f
+                            drawArc(
+                                color = primaryColor.copy(alpha = 0.20f),
+                                startAngle = -90f,
+                                sweepAngle = sweep,
+                                useCenter = false,
+                                topLeft = arcTopLeft,
+                                size = arcSize,
+                                style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
+                            )
+                            drawArc(
+                                color = primaryColor,
+                                startAngle = -90f,
+                                sweepAngle = sweep,
+                                useCenter = false,
+                                topLeft = arcTopLeft,
+                                size = arcSize,
+                                style = activeStroke
+                            )
+                            drawArc(
+                                color = Color.White.copy(alpha = 0.16f),
+                                startAngle = -90f,
+                                sweepAngle = (sweep * 0.6f).coerceAtLeast(0f),
+                                useCenter = false,
+                                topLeft = arcTopLeft,
+                                size = arcSize,
+                                style = innerHighlight
+                            )
+
+                            val angle = Math.toRadians((-90f + sweep).toDouble())
                             val beadCenter = androidx.compose.ui.geometry.Offset(
-                                center.x + (radius - 3.dp.toPx()) * cos(angle).toFloat(),
-                                center.y + (radius - 3.dp.toPx()) * sin(angle).toFloat()
+                                center.x + radius * cos(angle).toFloat(),
+                                center.y + radius * sin(angle).toFloat()
                             )
                             drawCircle(
                                 color = primaryColor.copy(alpha = 0.24f),
