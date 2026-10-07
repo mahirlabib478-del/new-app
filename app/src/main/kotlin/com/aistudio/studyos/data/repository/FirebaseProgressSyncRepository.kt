@@ -276,13 +276,20 @@ class FirebaseProgressSyncRepository(
                 remote.levelStartedAtMillis > local.levelStartedAtMillis -> remote
                 else -> local
             }
+            val mergedEarned = maxOf(
+                local.totalXpEarned,
+                remote.totalXpEarned,
+                local.totalXP + local.totalXpSpent,
+                remote.totalXP + remote.totalXpSpent
+            )
+            val mergedSpent = maxOf(local.totalXpSpent, remote.totalXpSpent)
             levelState.copy(
                 id = local.id,
                 streakDays = maxOf(local.streakDays, remote.streakDays),
                 totalStudyMinutes = maxOf(local.totalStudyMinutes, remote.totalStudyMinutes),
-                totalXP = maxOf(local.totalXP, remote.totalXP),
-                totalXpSpent = maxOf(local.totalXpSpent, remote.totalXpSpent),
-                totalXpEarned = maxOf(local.totalXpEarned, remote.totalXpEarned),
+                totalXP = (mergedEarned - mergedSpent).coerceAtLeast(0),
+                totalXpSpent = mergedSpent,
+                totalXpEarned = mergedEarned,
                 currentLevel = maxOf(local.currentLevel, remote.currentLevel),
                 dailyGoalMinutes = local.dailyGoalMinutes,
                 lastActiveDate = selectStreakDate(local, remote)
@@ -376,13 +383,20 @@ class FirebaseProgressSyncRepository(
                     remoteProfile.levelStartedAtMillis > localProfile.levelStartedAtMillis -> remoteProfile
                     else -> localProfile
                 }
+                val mergedEarned = maxOf(
+                    localProfile.totalXpEarned,
+                    remoteProfile.totalXpEarned,
+                    localProfile.totalXP + localProfile.totalXpSpent,
+                    remoteProfile.totalXP + remoteProfile.totalXpSpent
+                )
+                val mergedSpent = maxOf(localProfile.totalXpSpent, remoteProfile.totalXpSpent)
                 levelState.copy(
                     id = 1,
                     streakDays = maxOf(localProfile.streakDays, remoteProfile.streakDays),
                     totalStudyMinutes = maxOf(localProfile.totalStudyMinutes, remoteProfile.totalStudyMinutes),
-                    totalXP = maxOf(localProfile.totalXP, remoteProfile.totalXP),
-                    totalXpSpent = maxOf(localProfile.totalXpSpent, remoteProfile.totalXpSpent),
-                    totalXpEarned = maxOf(localProfile.totalXpEarned, remoteProfile.totalXpEarned),
+                    totalXP = (mergedEarned - mergedSpent).coerceAtLeast(0),
+                    totalXpSpent = mergedSpent,
+                    totalXpEarned = mergedEarned,
                     currentLevel = maxOf(localProfile.currentLevel, remoteProfile.currentLevel),
                     dailyGoalMinutes = localProfile.dailyGoalMinutes
                 )
@@ -725,13 +739,20 @@ class FirebaseProgressSyncRepository(
     ): UserProfileEntity? {
         if (remote == null) return local
         if (local == null) return remote
+        val mergedEarned = maxOf(
+            local.totalXpEarned,
+            remote.totalXpEarned,
+            local.totalXP + local.totalXpSpent,
+            remote.totalXP + remote.totalXpSpent
+        )
+        val mergedSpent = maxOf(local.totalXpSpent, remote.totalXpSpent)
         return local.copy(
             id = local.id,
             streakDays = maxOf(local.streakDays, remote.streakDays),
             totalStudyMinutes = maxOf(local.totalStudyMinutes, remote.totalStudyMinutes),
-            totalXP = maxOf(local.totalXP, remote.totalXP),
-            totalXpSpent = maxOf(local.totalXpSpent, remote.totalXpSpent),
-            totalXpEarned = maxOf(local.totalXpEarned, remote.totalXpEarned),
+            totalXP = (mergedEarned - mergedSpent).coerceAtLeast(0),
+            totalXpSpent = mergedSpent,
+            totalXpEarned = mergedEarned,
             currentLevel = maxOf(local.currentLevel, remote.currentLevel),
             levelStartStudyMinutes = maxOf(local.levelStartStudyMinutes, remote.levelStartStudyMinutes),
             levelStartXpEarned = maxOf(local.levelStartXpEarned, remote.levelStartXpEarned),
