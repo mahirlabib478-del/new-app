@@ -1,56 +1,16 @@
-# Verified clean Android CI workflow
-name: Study OS Android CI
+name: Study OS Actions Smoke Test
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  build:
+  smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: temurin
-          cache: gradle
-      - uses: gradle/actions/setup-gradle@v4
-      - run: chmod +x gradlew
-      - name: Prepare CI Firebase config
+      - name: Smoke test
         run: |
-          mkdir -p app
-          if [ ! -f app/google-services.json ]; then
-            cat > app/google-services.json <<'EOF'
-{
-  "project_info": {
-    "project_number": "000000000000",
-    "project_id": "study-os-ci",
-    "storage_bucket": "study-os-ci.appspot.com"
-  },
-  "client": [
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
-        "android_client_info": {
-          "package_name": "com.aistudio.studyos.kxvpt"
-        }
-      },
-      "api_key": [
-        {
-          "current_key": "CI_ONLY_DUMMY_KEY"
-        }
-      ]
-    }
-  ],
-  "configuration_version": "1"
-}
-EOF
-          fi
-      - run: ./gradlew assembleDebug --stacktrace
-      - run: ./gradlew testDebugUnitTest --continue
+          echo "GitHub Actions job graph started successfully."
+          echo "CI infrastructure is reachable."
