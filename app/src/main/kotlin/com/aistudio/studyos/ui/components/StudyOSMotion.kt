@@ -46,7 +46,6 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import kotlin.math.roundToInt
 
-
 fun Modifier.tactile3D(
     depth: Dp = 4.dp,
     color: Color,
@@ -63,25 +62,29 @@ fun Modifier.inset3D(
     color: Color,
     shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp),
     depth: Dp = 3.dp
-): Modifier = this
-    .clip(shape)
-    .shadow(elevation = depth, shape = shape, clip = false)
-    .drawWithContent {
-        drawRoundRect(
-            color = color.copy(alpha = 0.42f),
-            size = size,
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                16.dp.toPx(), 16.dp.toPx()
+): Modifier = composed {
+    val edgeHighlight = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f)
+
+    this
+        .clip(shape)
+        .shadow(elevation = depth, shape = shape, clip = false)
+        .drawWithContent {
+            drawRoundRect(
+                color = color.copy(alpha = 0.42f),
+                size = size,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                    16.dp.toPx(), 16.dp.toPx()
+                )
             )
-        )
-        drawContent()
-        drawLine(
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f),
-            start = androidx.compose.ui.geometry.Offset(10.dp.toPx(), size.height - 1.dp.toPx()),
-            end = androidx.compose.ui.geometry.Offset(size.width - 10.dp.toPx(), size.height - 1.dp.toPx()),
-            strokeWidth = 0.7.dp.toPx()
-        )
-    }
+            drawContent()
+            drawLine(
+                color = edgeHighlight,
+                start = androidx.compose.ui.geometry.Offset(10.dp.toPx(), size.height - 1.dp.toPx()),
+                end = androidx.compose.ui.geometry.Offset(size.width - 10.dp.toPx(), size.height - 1.dp.toPx()),
+                strokeWidth = 0.7.dp.toPx()
+            )
+        }
+}
 
 fun Modifier.tactile3DButton(
     backgroundColor: Color,
@@ -98,6 +101,7 @@ fun Modifier.tactile3DButton(
     )
     val shape = RoundedCornerShape(cornerRadius)
     val extrusionDepth = if (pressed) depth * 0.22f else depth
+    val edgeHighlight = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
 
     this
         .pointerInput(Unit) {
@@ -130,7 +134,6 @@ fun Modifier.tactile3DButton(
             val depthPx = extrusionDepth.toPx()
             val radiusPx = cornerRadius.toPx()
 
-            // Paint the solid lower extrusion first so it never covers text or icons.
             drawRoundRect(
                 color = bottomEdgeColor,
                 size = size,
@@ -146,12 +149,10 @@ fun Modifier.tactile3DButton(
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(radiusPx, radiusPx)
             )
 
-            // Content stays above the 3D body.
             drawContent()
 
-            // Thin specular highlight reinforces the raised top edge.
             drawLine(
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                color = edgeHighlight,
                 start = androidx.compose.ui.geometry.Offset(radiusPx, 0.7.dp.toPx()),
                 end = androidx.compose.ui.geometry.Offset(
                     (size.width - radiusPx).coerceAtLeast(radiusPx),
@@ -161,6 +162,7 @@ fun Modifier.tactile3DButton(
             )
         }
 }
+
 @Composable
 fun AnimatedReveal(
     index: Int = 0,
