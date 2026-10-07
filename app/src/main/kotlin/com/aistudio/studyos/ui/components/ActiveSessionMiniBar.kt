@@ -77,7 +77,7 @@ fun ActiveSessionMiniBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-             .padding(horizontal = 16.dp, vertical = 4.dp)
+             .padding(horizontal = 16.dp, top = 4.dp, bottom = 12.dp)
             .clip(RoundedCornerShape(18.dp))
             .tactile3DButton(
                 backgroundColor = miniSurface,
