@@ -6,20 +6,12 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source with git
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git -c http.extraheader="AUTHORIZATION: bearer $GH_TOKEN" clone --depth 1 --branch "$GITHUB_REF_NAME" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" source
-          cd source
-          git rev-parse HEAD
+      - name: Checkout source
+        run: git clone --depth 1 --branch "$GITHUB_REF_NAME" "https://github.com/$GITHUB_REPOSITORY.git" source
 
       - name: Prepare CI Firebase config
         working-directory: source
@@ -51,7 +43,7 @@ jobs:
 }
 EOF
 
-      - name: Verify Java and build Android APK
+      - name: Build Android APK
         working-directory: source
         run: |
           java -version
