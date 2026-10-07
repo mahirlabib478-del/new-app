@@ -1,4 +1,4 @@
-name: Study OS Actions Smoke Test
+name: Study OS Android CI
 
 on:
   push:
@@ -6,11 +6,58 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  smoke:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Smoke test
+      - name: Checkout source with git
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "GitHub Actions job graph started successfully."
-          echo "CI infrastructure is reachable."
+          git -c http.extraheader="AUTHORIZATION: bearer $GH_TOKEN" clone --depth 1 --branch "$GITHUB_REF_NAME" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" source
+          cd source
+          git rev-parse HEAD
+
+      - name: Prepare CI Firebase config
+        working-directory: source
+        run: |
+          mkdir -p app
+          cat > app/google-services.json <<'EOF'
+{
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "study-os-ci",
+    "storage_bucket": "study-os-ci.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+        "android_client_info": {
+          "package_name": "com.aistudio.studyos.kxvpt"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "CI_ONLY_DUMMY_KEY"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}
+EOF
+
+      - name: Verify Java and build Android APK
+        working-directory: source
+        run: |
+          java -version
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Run unit tests
+        working-directory: source
+        run: ./gradlew testDebugUnitTest --continue
