@@ -448,12 +448,25 @@ fun ProgressScreen(
                                 tint = MaterialTheme.colorScheme.tertiary
                             )
                             Spacer(Modifier.width(9.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text("STREAK", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Column(
+                                Modifier
+                                    .weight(1f)
+                                    .widthIn(min = 0.dp)
+                            ) {
+                                Text(
+                                    "STREAK",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Clip
+                                )
                                 AnimatedCounter(
                                     target = streak,
                                     suffix = if (streak == 1) " Day" else " Days",
                                     durationMillis = 520,
+                                    modifier = Modifier.fillMaxWidth(),
                                     style = MaterialTheme.typography.headlineSmall.copy(
                                         fontSize = 26.sp,
                                         fontWeight = FontWeight.Black
