@@ -579,7 +579,7 @@ fun MainApp(
                             },
                             onToggleTimer = { viewModel.toggleTimer() }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
                     NavigationBar(
