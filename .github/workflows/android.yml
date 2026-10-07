@@ -1,3 +1,4 @@
+# CI: Android build + unit-test verification
 name: Android CI
 
 on:
