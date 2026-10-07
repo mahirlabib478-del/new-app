@@ -141,7 +141,7 @@ fun ActiveSessionMiniBar(
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = miniOnSurface.copy(alpha = 0.88f)
+                        color = miniOnSurface.copy(alpha = 0.78f)
                     )
                 }
             }
@@ -172,15 +172,15 @@ fun ActiveSessionMiniBar(
                     modifier = Modifier
                         .size(34.dp)
                         .tactile3DButton(
-                            backgroundColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                            backgroundColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                             bottomEdgeColor = accentColor.copy(alpha = 0.42f),
                             cornerRadius = 50.dp,
                             depth = 4.dp
                         )
                         .testTag("mini_bar_toggle_timer"),
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                        contentColor = if (focusState.isRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        containerColor = if (focusState.isRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (focusState.isRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 ) {
                     AnimatedContent(

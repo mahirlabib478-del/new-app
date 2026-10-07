@@ -727,13 +727,15 @@ private fun CurrentTopicIndicator(
         // Use a neutral surface for the phase pill so its background stays stable
         // across light/dark themes; the phase itself is communicated by the accent.
         val pillBgColor = if (isWallpaperActive) {
-            MaterialTheme.colorScheme.surface.copy(alpha = 0.90f)
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
         } else {
             MaterialTheme.colorScheme.surfaceVariant
         }
-        // Use the phase accent directly so the label remains readable against the
-        // neutral pill in every light/dark preset.
-        val pillTextColor = primaryColor
+        val pillTextColor = if (isBreak) {
+            MaterialTheme.colorScheme.onTertiaryContainer
+        } else {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        }
 
         Box(
             modifier = Modifier
@@ -843,12 +845,7 @@ private fun CircularTimerDisplay(
     val trackColor = when {
         isWallpaperActive -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
         isLight -> MaterialTheme.colorScheme.outlineVariant
-        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f)
-    }
-    val timerBevelColor = if (isWallpaperActive) {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
-    } else {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = if (isLight) 0.08f else 0.12f)
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
     }
 
     // Subtle breathing effect while the timer is actively running.
@@ -890,7 +887,7 @@ private fun CircularTimerDisplay(
                         val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
                         val radius = (size.minDimension - 40.dp.toPx()) / 2f
                         drawCircle(
-                            color = timerBevelColor,
+                            color = Color.Black.copy(alpha = if (isLight) 0.10f else 0.34f),
                             radius = radius,
                             center = center,
                             style = bevelStroke
@@ -952,7 +949,11 @@ private fun CircularTimerDisplay(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            val timerColor = MaterialTheme.colorScheme.onSurface
+            val timerColor = if (isLight) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f)
+            }
 
             Text(
                 text = timeFormatted,
@@ -966,9 +967,9 @@ private fun CircularTimerDisplay(
 
             // 📊 42% completed indicator
             val progressBadgeBg = if (isWallpaperActive) {
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.78f)
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                primaryColor.copy(alpha = 0.10f)
             }
 
             Box(

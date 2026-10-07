@@ -343,14 +343,14 @@ private fun StatPill(
 ) {
     Row(
         modifier = modifier
-            .height(36.dp)
+            .height(40.dp)
             .tactile3DButton(
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 14.dp,
                 depth = 4.dp
             )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = 10.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
@@ -1113,6 +1113,7 @@ private fun QuickActionCard(
 ) {
     Card(
         modifier = modifier
+            .height(126.dp)
             .tactile3DButton(
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
@@ -1128,8 +1129,10 @@ private fun QuickActionCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             icon()
             Text(

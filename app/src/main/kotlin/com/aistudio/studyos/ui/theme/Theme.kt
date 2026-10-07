@@ -23,8 +23,10 @@ private val PitchBlackColorScheme = darkColorScheme(
     onBackground = Color.White,
     surface = PitchBlackSurface,
     onSurface = Color.White,
-    surfaceVariant = Color(0xFF1E1E1E),
-    onSurfaceVariant = Color(0xFFA0A0A0)
+    surfaceVariant = Color(0xFF202020),
+    onSurfaceVariant = Color(0xFFB0B0B0),
+    outline = Color(0xFF343434),
+    outlineVariant = Color(0xFF252525)
 )
 
 private val CyberpunkColorScheme = darkColorScheme(
@@ -74,8 +76,10 @@ private val SkyNightColorScheme = darkColorScheme(
     onBackground = Color(0xFFF0F9FF),
     surface = SkyNightSurface,
     onSurface = Color(0xFFF0F9FF),
-    surfaceVariant = Color(0xFF102A43),
-    onSurfaceVariant = Color(0xFF94A3B8)
+    surfaceVariant = Color(0xFF163653),
+    onSurfaceVariant = Color(0xFFA9B9C9),
+    outline = Color(0xFF2C4B67),
+    outlineVariant = Color(0xFF1B334B)
 )
 
 private val LearningGreenColorScheme = lightColorScheme(
@@ -89,14 +93,14 @@ private val LearningGreenColorScheme = lightColorScheme(
     onSecondaryContainer = Color(0xFF31502A),
     tertiary = Color(0xFFFFC800),
     onTertiary = Color(0xFF3D3000),
-    background = LearningGreenBg,
-    onBackground = Color(0xFF2B2B2B),
-    surface = LearningGreenSurface,
-    onSurface = Color(0xFF2B2B2B),
-    surfaceVariant = LearningGreenSurface,
-    onSurfaceVariant = Color(0xFF454A42),
-    outline = Color(0xFFBFCDB4),
-    outlineVariant = Color(0xFFDDE3D5)
+    background = Color(0xFFEFF2E8),
+    onBackground = Color(0xFF293026),
+    surface = Color(0xFFF5F7F0),
+    onSurface = Color(0xFF293026),
+    surfaceVariant = Color(0xFFECEFE6),
+    onSurfaceVariant = Color(0xFF3F493C),
+    outline = Color(0xFFB7C5AD),
+    outlineVariant = Color(0xFFD2DCCB)
 )
 
 private val SunriseColorScheme = lightColorScheme(
