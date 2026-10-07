@@ -23,13 +23,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -119,46 +117,26 @@ private fun MissionProgressRow(
                 color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        androidx.compose.foundation.layout.BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
         ) {
-            val progressWidth = maxWidth * animatedProgress
-            val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-            val progressColor = if (complete) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)
-            }
-
             Box(
                 modifier = Modifier
+                    .fillMaxWidth(animatedProgress)
                     .fillMaxSize()
-                    .background(trackColor)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        if (complete) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)
+                        }
+                    )
             )
-            if (animatedProgress > 0f) {
-                Box(
-                    modifier = Modifier
-                        .width(progressWidth)
-                        .height(8.dp)
-                        .align(Alignment.CenterStart)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(progressColor)
-                )
-            }
-            if (!complete && animatedProgress > 0f) {
-                val dotOffset = (progressWidth - 3.dp).coerceIn(0.dp, maxWidth - 6.dp)
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .align(Alignment.CenterStart)
-                        .offset(x = dotOffset)
-                        .clip(CircleShape)
-                        .background(progressColor)
-                )
-            }
         }
     }
 }
