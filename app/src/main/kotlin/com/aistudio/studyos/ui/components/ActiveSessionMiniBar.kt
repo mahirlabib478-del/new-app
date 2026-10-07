@@ -84,7 +84,8 @@ fun ActiveSessionMiniBar(
                 backgroundColor = miniSurface,
                 bottomEdgeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                 cornerRadius = 18.dp,
-                depth = 5.dp
+                depth = 5.dp,
+                shadowExtra = 0.dp
             )
             .clickable { onOpenFocus() }
             .testTag("active_session_mini_bar"),
