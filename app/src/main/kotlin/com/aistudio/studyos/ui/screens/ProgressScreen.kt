@@ -85,6 +85,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.isSystemInDarkTheme
 
 data class DayActivityData(
     val dayName: String,
@@ -107,7 +108,11 @@ private fun UnifiedProgressBar(
             .height(8.dp)
             .clip(RoundedCornerShape(4.dp)),
         color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.88f),
-        trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+        trackColor = if (isSystemInDarkTheme()) {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+        }
     )
 }
 
