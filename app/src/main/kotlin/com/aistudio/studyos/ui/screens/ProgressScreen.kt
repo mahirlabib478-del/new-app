@@ -118,12 +118,47 @@ private fun MissionProgressRow(
                 color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        LinearProgressIndicator(
-            progress = { animatedProgress },
-            modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(4.dp)),
-            color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.78f),
-            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-        )
+        androidx.compose.foundation.layout.BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+        ) {
+            val progressWidth = maxWidth * animatedProgress
+            val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+            val progressColor = if (complete) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(trackColor)
+            )
+            if (animatedProgress > 0f) {
+                Box(
+                    modifier = Modifier
+                        .width(progressWidth)
+                        .height(8.dp)
+                        .align(Alignment.CenterStart)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(progressColor)
+                )
+            }
+            if (!complete && animatedProgress > 0f) {
+                val dotOffset = (progressWidth - 3.dp).coerceIn(0.dp, maxWidth - 6.dp)
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .align(Alignment.CenterStart)
+                        .offset(x = dotOffset)
+                        .clip(CircleShape)
+                        .background(progressColor)
+                )
+            }
+        }
     }
 }
 
