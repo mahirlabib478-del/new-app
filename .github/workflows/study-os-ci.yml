@@ -18,16 +18,27 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - run: |
+      - name: Prepare debug signing key
+        run: |
           if [ ! -f debug.keystore ]; then
             keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
-          mkdir -p app
-          printf '%s' '{"project_info":{"project_number":"000000000000","project_id":"study-os-ci","storage_bucket":"study-os-ci.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.aistudio.studyos.kxvpt"}},"api_key":[{"current_key":"CI_ONLY_DUMMY_KEY"}]}],"configuration_version":"1"}' > app/google-services.json
 
-      - run: chmod +x gradlew && ./gradlew assembleDebug --stacktrace
+      - name: Validate Firebase configuration
+        run: |
+          test -f app/google-services.json
+          grep -q '"project_id": "study-os-98831"' app/google-services.json
+          grep -q '"package_name": "com.aistudio.studyos.kxvpt"' app/google-services.json
+          if grep -q 'CI_ONLY_DUMMY_KEY' app/google-services.json; then
+            echo "Dummy Firebase API key detected"
+            exit 1
+          fi
 
-      - run: ./gradlew testDebugUnitTest --continue
+      - name: Build debug APK
+        run: chmod +x gradlew && ./gradlew assembleDebug --stacktrace
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --continue
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
