@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: git clone --depth 1 --branch "$GITHUB_REF_NAME" "https://github.com/$GITHUB_REPOSITORY.git" source
+      - run: cd source && if [ ! -f debug.keystore ]; then keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"; fi
       - run: mkdir -p source/app && printf '%s' '{"project_info":{"project_number":"000000000000","project_id":"study-os-ci","storage_bucket":"study-os-ci.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.aistudio.studyos.kxvpt"}},"api_key":[{"current_key":"CI_ONLY_DUMMY_KEY"}]}],"configuration_version":"1"}' > source/app/google-services.json
       - run: cd source && chmod +x gradlew && java -version && ./gradlew assembleDebug --stacktrace
       - run: cd source && ./gradlew testDebugUnitTest --continue
