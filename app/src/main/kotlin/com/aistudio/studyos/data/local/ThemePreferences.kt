@@ -437,6 +437,15 @@ class ThemePreferences(context: Context, storageName: String = LEGACY_STORAGE_NA
             if (key !in allowedKeys && !key.startsWith("${KEY_STYLE_PREFIX}_") &&
                 !key.startsWith("${KEY_PREMIUM_THEME_PASS_PREFIX}_")
             ) return@forEach
+            // Free Bonus XP cooldown is a timestamp. Keep the newest
+            // local/cloud value so a stale snapshot can never resurrect a
+            // previously claimed bonus after sign-in or guest import.
+            if (key == KEY_LAST_FREE_XP_DROP_CLAIM_TIME) {
+                val incomingTimestamp = (value as? Number)?.toLong() ?: return@forEach
+                editor.putLong(key, maxOf(getLastFreeXpDropClaimTime(), incomingTimestamp))
+                return@forEach
+            }
+
             when (value) {
                 is String -> editor.putString(key, value)
                 is Boolean -> editor.putBoolean(key, value)
