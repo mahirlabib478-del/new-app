@@ -85,7 +85,6 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import androidx.compose.foundation.isSystemInDarkTheme
 
 data class DayActivityData(
     val dayName: String,
@@ -108,11 +107,12 @@ private fun UnifiedProgressBar(
             .height(8.dp)
             .clip(RoundedCornerShape(4.dp)),
         color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.88f),
-        trackColor = if (isSystemInDarkTheme()) {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
-        }
+        // Derive contrast from the active StudyOS theme itself, not the phone's
+        // system appearance. This keeps the track visible even when a custom
+        // dark/light app theme differs from the device setting.
+        trackColor = MaterialTheme.colorScheme.onSurface.copy(
+            alpha = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) 0.22f else 0.10f
+        )
     )
 }
 
