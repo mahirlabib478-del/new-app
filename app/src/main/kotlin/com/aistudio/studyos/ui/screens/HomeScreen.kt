@@ -434,8 +434,8 @@ private fun TodayFocusCard(
         modifier = Modifier
             .fillMaxWidth()
             .tactile3DButton(
-                backgroundColor = if (activePlan != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                bottomEdgeColor = if (activePlan != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.42f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 24.dp,
                 depth = 6.dp
             )
@@ -443,7 +443,7 @@ private fun TodayFocusCard(
             .testTag("today_engine_hero_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (activePlan != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -471,12 +471,12 @@ private fun TodayFocusCard(
                         text = if (activePlan != null) "Continue studying" else "Today's focus",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = recommendationTitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
