@@ -547,7 +547,7 @@ private fun TodayFocusCard(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp)),
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
+                trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.70f)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
