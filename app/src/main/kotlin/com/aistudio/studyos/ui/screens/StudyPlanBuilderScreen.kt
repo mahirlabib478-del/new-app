@@ -389,7 +389,13 @@ fun StudyPlanBuilderScreen(
                                         selected = focusMinutes == minutes,
                                         onClick = { focusMinutes = minutes },
                                         label = { Text("${minutes}m") },
-                                        modifier = Modifier.tactile3DButton(if (focusMinutes == minutes) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, if (focusMinutes == minutes) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 12.dp, 3.dp).testTag("focus_block_${minutes}")
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            containerColor = MaterialTheme.colorScheme.surface,
+                                            labelColor = MaterialTheme.colorScheme.onSurface,
+                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        ),
+                                        modifier = Modifier.testTag("focus_block_${minutes}")
                                     )
                                 }
                             }
@@ -412,7 +418,12 @@ fun StudyPlanBuilderScreen(
                                         selected = breakMinutes == minutes,
                                         onClick = { breakMinutes = minutes },
                                         label = { Text("${minutes} min") },
-                                        modifier = Modifier.tactile3DButton(if (breakMinutes == minutes) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, if (breakMinutes == minutes) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), 12.dp, 3.dp)
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            containerColor = MaterialTheme.colorScheme.surface,
+                                            labelColor = MaterialTheme.colorScheme.onSurface,
+                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
                                     )
                                 }
                             }
