@@ -471,12 +471,12 @@ private fun TodayFocusCard(
                         text = if (activePlan != null) "Continue studying" else "Today's focus",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = recommendationTitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f) else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -485,7 +485,7 @@ private fun TodayFocusCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
+                            .background(if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
                             .padding(horizontal = 8.dp, vertical = 5.dp)
                     ) {
                         Text(
@@ -516,7 +516,7 @@ private fun TodayFocusCard(
                     text = "Today's goal",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                 )
                 AnimatedContent(
                     targetState = todayMinutes,
@@ -530,7 +530,7 @@ private fun TodayFocusCard(
                         text = minutes.toString() + " / " + dailyGoal + " min",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (goalComplete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        color = if (goalComplete) MaterialTheme.colorScheme.primary else if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -547,7 +547,7 @@ private fun TodayFocusCard(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp)),
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
+                trackColor = if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.22f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
