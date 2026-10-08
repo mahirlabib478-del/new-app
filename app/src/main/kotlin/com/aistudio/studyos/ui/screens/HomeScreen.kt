@@ -345,8 +345,8 @@ private fun StatPill(
         modifier = modifier
             .height(40.dp)
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                backgroundColor = if (activePlan != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = if (activePlan != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.42f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 14.dp,
                 depth = 4.dp
             )
@@ -443,7 +443,7 @@ private fun TodayFocusCard(
             .testTag("today_engine_hero_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (activePlan != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
         )
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -485,7 +485,7 @@ private fun TodayFocusCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
                             .padding(horizontal = 8.dp, vertical = 5.dp)
                     ) {
                         Text(
@@ -516,7 +516,7 @@ private fun TodayFocusCard(
                     text = "Today's goal",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 AnimatedContent(
                     targetState = todayMinutes,
@@ -530,7 +530,7 @@ private fun TodayFocusCard(
                         text = minutes.toString() + " / " + dailyGoal + " min",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (goalComplete) MaterialTheme.colorScheme.primary else if (activePlan != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        color = if (goalComplete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
