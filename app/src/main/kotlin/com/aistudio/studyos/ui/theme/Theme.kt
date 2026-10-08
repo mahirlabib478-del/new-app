@@ -26,7 +26,10 @@ private val PitchBlackColorScheme = darkColorScheme(
     surfaceVariant = Color(0xFF202020),
     onSurfaceVariant = Color(0xFFB0B0B0),
     outline = Color(0xFF343434),
-    outlineVariant = Color(0xFF252525)
+    outlineVariant = Color(0xFF252525),
+    surfaceContainer = PitchBlackSurface,
+    surfaceContainerHigh = PitchBlackSurface,
+    surfaceContainerHighest = PitchBlackSurface
 )
 
 private val CyberpunkColorScheme = darkColorScheme(
@@ -44,7 +47,10 @@ private val CyberpunkColorScheme = darkColorScheme(
     onSurface = Color(0xFFF9F5FF),
     surfaceVariant = Color(0xFF261844),
     onSurfaceVariant = Color(0xFFB9A9CC),
-    outline = Color(0xFF6C3A78)
+    outline = Color(0xFF6C3A78),
+    surfaceContainer = CyberpunkSurface,
+    surfaceContainerHigh = CyberpunkSurface,
+    surfaceContainerHighest = CyberpunkSurface
 )
 
 private val CyberRunnerColorScheme = lightColorScheme(
@@ -63,7 +69,10 @@ private val CyberRunnerColorScheme = lightColorScheme(
     surfaceVariant = CyberRunnerSurface,
     onSurfaceVariant = Color(0xFF44444B),
     outline = Color(0xFFD4D4D8),
-    outlineVariant = Color(0xFFE4E4E7)
+    outlineVariant = Color(0xFFE4E4E7),
+    surfaceContainer = CyberRunnerSurface,
+    surfaceContainerHigh = CyberRunnerSurface,
+    surfaceContainerHighest = CyberRunnerSurface
 )
 
 private val SkyNightColorScheme = darkColorScheme(
@@ -79,7 +88,10 @@ private val SkyNightColorScheme = darkColorScheme(
     surfaceVariant = Color(0xFF163653),
     onSurfaceVariant = Color(0xFFA9B9C9),
     outline = Color(0xFF2C4B67),
-    outlineVariant = Color(0xFF1B334B)
+    outlineVariant = Color(0xFF1B334B),
+    surfaceContainer = SkyNightSurface,
+    surfaceContainerHigh = SkyNightSurface,
+    surfaceContainerHighest = SkyNightSurface
 )
 
 private val LearningGreenColorScheme = lightColorScheme(
@@ -100,7 +112,10 @@ private val LearningGreenColorScheme = lightColorScheme(
     surfaceVariant = Color(0xFFECEFE6),
     onSurfaceVariant = Color(0xFF3F493C),
     outline = Color(0xFFB7C5AD),
-    outlineVariant = Color(0xFFD2DCCB)
+    outlineVariant = Color(0xFFD2DCCB),
+    surfaceContainer = LearningGreenSurface,
+    surfaceContainerHigh = LearningGreenSurface,
+    surfaceContainerHighest = LearningGreenSurface
 )
 
 private val SunriseColorScheme = lightColorScheme(
@@ -119,7 +134,10 @@ private val SunriseColorScheme = lightColorScheme(
     surfaceVariant = SunriseSurface,
     onSurfaceVariant = Color(0xFF49433D),
     outline = Color(0xFFE0C4A8),
-    outlineVariant = Color(0xFFE9DED1)
+    outlineVariant = Color(0xFFE9DED1),
+    surfaceContainer = SunriseSurface,
+    surfaceContainerHigh = SunriseSurface,
+    surfaceContainerHighest = SunriseSurface
 )
 
 private val ObsidianGoldColorScheme = darkColorScheme(
@@ -136,7 +154,10 @@ private val ObsidianGoldColorScheme = darkColorScheme(
     surfaceVariant = Color(0xFF111111),
     onSurfaceVariant = Color(0xFFA3A3A3),
     outline = Color(0xFF333333),
-    outlineVariant = Color(0xFF1F1F1F)
+    outlineVariant = Color(0xFF1F1F1F),
+    surfaceContainer = Color(0xFF0A0A0A),
+    surfaceContainerHigh = Color(0xFF0A0A0A),
+    surfaceContainerHighest = Color(0xFF0A0A0A)
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -155,7 +176,10 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = Color(0xFFF8F9F5),
     onSurfaceVariant = Color(0xFF454C42),
     outline = Color(0xFFD0D6CB),
-    outlineVariant = Color(0xFFDEE3D9)
+    outlineVariant = Color(0xFFDEE3D9),
+    surfaceContainer = Color(0xFFF8F9F5),
+    surfaceContainerHigh = Color(0xFFF8F9F5),
+    surfaceContainerHighest = Color(0xFFF8F9F5)
 )
 
 private val StudyOSShapes = Shapes(
