@@ -434,8 +434,8 @@ private fun TodayFocusCard(
         modifier = Modifier
             .fillMaxWidth()
             .tactile3DButton(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                backgroundColor = if (activePlan != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = if (activePlan != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.42f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 24.dp,
                 depth = 6.dp
             )
@@ -443,7 +443,7 @@ private fun TodayFocusCard(
             .testTag("today_engine_hero_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (activePlan != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
         )
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -755,9 +755,9 @@ private fun StudyJourneyCard(
             text = {
                 AnimatedReveal(index = 1) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth().tactile3DButton(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline.copy(alpha = 0.36f), 14.dp, 3.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surface
+                        color = Color.Transparent
                     ) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when {
