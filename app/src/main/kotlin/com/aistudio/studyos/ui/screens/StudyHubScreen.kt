@@ -243,11 +243,14 @@ private fun ReadyCard(onCreate: () -> Unit, onQuickFocus: () -> Unit) {
                     ), shape = RoundedCornerShape(14.dp)) {
                     Text("Create Plan")
                 }
-                OutlinedButton(
-                    onClick = onQuickFocus,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
+                OutlinedButton(onClick = onQuickFocus, modifier = Modifier
+                    .weight(1f)
+                    .tactile3DButton(
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        bottomEdgeColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+                        cornerRadius = 14.dp,
+                        depth = 4.dp
+                    ), shape = RoundedCornerShape(14.dp)) {
                     Text("Quick Focus")
                 }
             }
