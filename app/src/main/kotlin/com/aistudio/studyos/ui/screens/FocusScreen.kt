@@ -1035,9 +1035,9 @@ private fun CompactAmbientSoundBar(
             .testTag("ambient_sound_card")
             .tactile3DButton(
                 backgroundColor = MaterialTheme.colorScheme.surface,
-                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.48f),
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.26f),
                 cornerRadius = 16.dp,
-                depth = 5.dp
+                depth = 2.dp
             )
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() },
@@ -1054,14 +1054,14 @@ private fun CompactAmbientSoundBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -1070,7 +1070,7 @@ private fun CompactAmbientSoundBar(
                             backgroundColor = if (isAnyPlaying) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                             bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f),
                             cornerRadius = 19.dp,
-                            depth = 2.dp
+                            depth = 1.dp
                         )
                         .clip(CircleShape)
                         .background(
@@ -1115,9 +1115,9 @@ private fun CompactAmbientSoundBar(
                 onClick = onToggle,
                 modifier = Modifier.tactile3DButton(
                     backgroundColor = MaterialTheme.colorScheme.surface,
-                    bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f),
+                    bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.20f),
                     cornerRadius = 10.dp,
-                    depth = 2.dp
+                    depth = 1.dp
                 ).testTag("btn_toggle_ambient")
             ) {
                 Text(
