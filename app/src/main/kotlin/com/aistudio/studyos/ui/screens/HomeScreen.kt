@@ -737,7 +737,9 @@ private fun StudyJourneyCard(
         val isCompleted = !day.isFuture && day.minutes > 0
         AlertDialog(
             onDismissRequest = { selectedDay = null },
-            containerColor = MaterialTheme.colorScheme.surface,
+            // The calendar day window should use the same base background as the screen,
+            // not the elevated/darker surface container.
+            containerColor = MaterialTheme.colorScheme.background,
             tonalElevation = 8.dp,
             shape = RoundedCornerShape(24.dp),
             title = {
