@@ -1575,12 +1575,10 @@ private fun AmbientSoundConfigDialog(
                                 border = BorderStroke(
                                     1.5.dp,
                                     MaterialTheme.colorScheme.outline.copy(alpha = 0.70f)
-                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f)
                                 ),
                                 modifier = Modifier.fillMaxWidth().tactile3DButton(
                                     MaterialTheme.colorScheme.surface,
-                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.60f)
-                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.50f),
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.60f),
                                     12.dp,
                                     4.dp
                                 )
