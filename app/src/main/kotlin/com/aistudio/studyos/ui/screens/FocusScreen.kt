@@ -1574,12 +1574,12 @@ private fun AmbientSoundConfigDialog(
                                 color = MaterialTheme.colorScheme.surface,
                                 border = BorderStroke(
                                     1.5.dp,
-                                    if (isLightPreset(currentTheme)) MaterialTheme.colorScheme.outline.copy(alpha = 0.70f)
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.70f)
                                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f)
                                 ),
                                 modifier = Modifier.fillMaxWidth().tactile3DButton(
                                     MaterialTheme.colorScheme.surface,
-                                    if (isLightPreset(currentTheme)) MaterialTheme.colorScheme.outline.copy(alpha = 0.60f)
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.60f)
                                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.50f),
                                     12.dp,
                                     4.dp
