@@ -531,7 +531,7 @@ fun FocusScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // ⏱️ Timer Controls (Reset, Big Play/Pause, Skip)
             FocusTimerControls(
