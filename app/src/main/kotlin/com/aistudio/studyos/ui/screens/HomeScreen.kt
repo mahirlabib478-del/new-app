@@ -345,8 +345,8 @@ private fun StatPill(
         modifier = modifier
             .height(40.dp)
             .tactile3DButton(
-                backgroundColor = if (activePlan != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                bottomEdgeColor = if (activePlan != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.42f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                bottomEdgeColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
                 cornerRadius = 14.dp,
                 depth = 4.dp
             )
