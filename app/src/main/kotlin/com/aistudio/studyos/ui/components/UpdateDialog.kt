@@ -60,6 +60,7 @@ fun UpdateDialog(
                 onDismiss()
             }
         },
+        containerColor = MaterialTheme.colorScheme.surface,
         properties = DialogProperties(
             dismissOnBackPress = !updateInfo.isMandatory,
             dismissOnClickOutside = !updateInfo.isMandatory
