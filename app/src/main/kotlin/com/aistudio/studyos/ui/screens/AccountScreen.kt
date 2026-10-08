@@ -473,6 +473,7 @@ fun AccountScreen(
     if (confirmAction != null) {
         AlertDialog(
             onDismissRequest = { confirmAction = null },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text(if (confirmAction == "create") "Create account" else "Sign in") },
             text = {
                 AnimatedReveal(index = 0) {
