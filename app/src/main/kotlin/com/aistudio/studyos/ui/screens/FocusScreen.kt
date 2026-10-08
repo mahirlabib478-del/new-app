@@ -1334,10 +1334,8 @@ private fun AmbientSoundConfigDialog(
                             FilledTonalButton(
                                 onClick = onToggleAmbient,
                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = if (isAmbientPlaying) MaterialTheme.colorScheme.errorContainer
-                                    else MaterialTheme.colorScheme.primaryContainer,
-                                    contentColor = if (isAmbientPlaying) MaterialTheme.colorScheme.onErrorContainer
-                                    else MaterialTheme.colorScheme.onPrimaryContainer
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
                                 shape = RoundedCornerShape(12.dp),
                                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 11.dp),
